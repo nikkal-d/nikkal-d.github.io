@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Εύρεση Διπλότυπων</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 { color: #333; }
+    textarea {
+      width: 100%;
+      height: 150px;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔍 Εύρεση Διπλότυπων</h2>
+  <p>Βάλε ονόματα ή αριθμούς (χωρισμένα με κόμμα ή Enter):</p>
+  <textarea id="input"></textarea><br>
+  <button onclick="findDuplicates()">Έλεγχος</button>
+  <div class="result" id="result"></div>
+
+  <script>
+    function findDuplicates() {
+      const input = document.getElementById("input").value;
+      const items = input.split(/[\s,]+/).filter(Boolean);
+      const seen = new Set();
+      const duplicates = new Set();
+
+      for (const item of items) {
+        const normalized = item.trim().toLowerCase();
+        if (seen.has(normalized)) {
+          duplicates.add(item.trim());
+        } else {
+          seen.add(normalized);
+        }
+      }
+
+      const resultDiv = document.getElementById("result");
+      if (duplicates.size > 0) {
+        resultDiv.innerHTML = "Διπλότυπα: " + Array.from(duplicates).join(", ");
+      } else {
+        resultDiv.innerHTML = "✅ Δεν βρέθηκαν διπλότυπα!";
+      }
+    }
+  </script>
+</body>
+</html>
