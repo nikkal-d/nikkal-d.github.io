@@ -126,6 +126,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <div style="text-align:right;margin:10px 20px;">
   <button id="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
+    <div style="text-align:right;margin:10px 20px;">
+  <button id="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
+  <select id="langSelect" onchange="switchLanguage(this.value)">
+    <option value="el">🇬🇷 EL</option>
+    <option value="en">🇬🇧 EN</option>
+  </select>
+</div>
+
 </div>
 
 
@@ -257,8 +265,52 @@ document.getElementById("columnSelect").addEventListener("change", () => {
       .join("\n");
   }
 });
+  // ----- Διγλωσσία EN/EL -----
+const translations = {
+  el: {
+    header: "FindMyDuplicates",
+    textareaPlaceholder: "Επικόλλησε δεδομένα από Excel ή CSV...",
+    columnLabel: "Έλεγχος διπλοτύπων στη στήλη:",
+    analyzeBtn: "Ανάλυση",
+    downloadBtn: "Κατέβασε",
+    noDuplicates: "✅ Δεν βρέθηκαν διπλότυπα.",
+    footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi"
+  },
+  en: {
+    header: "FindMyDuplicates",
+    textareaPlaceholder: "Paste data from Excel or CSV...",
+    columnLabel: "Check duplicates in column:",
+    analyzeBtn: "Analyze",
+    downloadBtn: "Download",
+    noDuplicates: "✅ No duplicates found.",
+    footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi"
+  }
+};
+
+function switchLanguage(lang) {
+  const t = translations[lang];
+  if(!t) return;
+
+  document.querySelector("header").textContent = t.header;
+  document.getElementById("inputList").placeholder = t.textareaPlaceholder;
+  document.querySelector("label[for='columnSelect']").textContent = t.columnLabel;
+  document.querySelector("button[onclick='processData()']").textContent = t.analyzeBtn;
+  document.getElementById("downloadBtn").textContent = "⬇️ " + t.downloadBtn;
+  document.querySelector("footer").textContent = t.footer;
+
+  localStorage.setItem("lang", lang);
+}
+
+// Εφαρμογή αποθηκευμένης γλώσσας στην εκκίνηση
+window.addEventListener("DOMContentLoaded", ()=>{
+  const savedLang = localStorage.getItem("lang") || "el";
+  document.getElementById("langSelect").value = savedLang;
+  switchLanguage(savedLang);
+});
+
 </script>
 </body>
 </html>
+
 
 
