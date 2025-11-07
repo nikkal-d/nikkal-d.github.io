@@ -1,351 +1,96 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FindMyDuplicates</title>
-  <meta name="description" content="Find and remove duplicate names or numbers easily online.">
-  <meta property="og:title" content="FindMyDuplicates">
-  <meta property="og:description" content="Απλό εργαλείο για εύρεση και διαγραφή διπλότυπων λιστών.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://nikkal-d.github.io/">
-  <meta property="og:image" content="favicon.png">
-  <link rel="icon" type="image/png" href="favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FindMyDuplicates</title>
 
-  <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+<!-- Google Tag Manager -->
+<script>
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-PZ2ZH59T');</script>
+})(window,document,'script','dataLayer','GTM-PZ2ZH59T');
+</script>
 <!-- End Google Tag Manager -->
-  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-XXXXXXX');
-  </script> -->
 
-
-  <style>
-    :root {
-      --accent: #ff9800;
-      --bg: #ffffff;
-      --text: #222;
-      --panel: #f9f9f9;
-      --duplicate: #ffe0b2;
-    }
-    [data-theme="dark"] {
-      --bg: #121212;
-      --text: #f0f0f0;
-      --panel: #1e1e1e;
-      --duplicate: #ffb74d;
-    }
-    body {
-      font-family: "Poppins", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 0;
-      transition: background 0.3s, color 0.3s;
-    }
-    header {
-      background: var(--accent);
-      color: white;
-      padding: 20px;
-      font-size: 1.8em;
-      font-weight: 600;
-      text-align: center;
-      position: relative;
-    }
-    #controls {
-      position: absolute;
-      right: 15px;
-      top: 20px;
-    }
-    #controls button {
-      margin-left: 6px;
-      border: none;
-      background: #fff;
-      color: var(--accent);
-      font-weight: bold;
-      padding: 5px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    main {
-      max-width: 850px;
-      margin: 20px auto;
-      padding: 10px 20px;
-      background: var(--panel);
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    textarea {
-      width: 100%;
-      height: 150px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      padding: 10px;
-      font-size: 1em;
-      resize: vertical;
-    }
-    input[type="file"] {
-      display: none;
-    }
-    .buttons button {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
-      margin: 10px 5px;
-      font-size: 1em;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .buttons button:hover {
-      background: #e68900;
-    }
-    .stats {
-      margin: 10px 0;
-      font-weight: bold;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.95em;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background: #f3f3f3;
-    }
-    [data-theme="dark"] th {
-      background: #333;
-    }
-    .duplicate {
-      background: var(--duplicate);
-      cursor: pointer;
-    }
-    footer {
-      text-align: center;
-      background: #111;
-      color: white;
-      padding: 12px;
-      margin-top: 40px;
-      font-size: 0.9em;
-      letter-spacing: 0.5px;
-    }
-  </style>
+<style>
+body {
+  font-family: "Poppins", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #222;
+}
+header {
+  background: #ff9800;
+  color: #fff;
+  text-align: center;
+  font-size: 1.8em;
+  padding: 20px;
+  font-weight: bold;
+}
+main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 20px;
+}
+section {
+  flex: 1;
+  min-width: 45%;
+  background: #f9f9f9;
+  margin: 10px;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+textarea {
+  width: 100%;
+  height: 150px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 1em;
+  resize: vertical;
+}
+button, select {
+  background: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 10px 5px;
+  font-size: 1em;
+  cursor: pointer;
+}
+button:hover { background: #e68900; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+  margin-top: 10px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+.dup {
+  text-decoration: underline;
+  text-decoration-color: red;
+  text-decoration-thickness: 2px;
+}
+footer {
+  text-align: center;
+  background: #111;
+  color: #fff;
+  padding: 12px;
+  margin-top: 40px;
+  font-size: 0.9em;
+}
+</style>
 </head>
 
-<body data-theme="light">
-   <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PZ2ZH59T"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-  <header>
-    FindMyDuplicates
-    <div id="controls">
-      <button onclick="toggleTheme()">🌙</button>
-      <button onclick="toggleLang()"><span id="langLabel">EN</span></button>
-    </div>
-  </header>
-
-  <main>
-    <h2 id="title">Επικόλλησε ή γράψε τα στοιχεία σου:</h2>
-    <textarea id="inputList" placeholder="Πληκτρολόγησε ονόματα ή αριθμούς, έναν ανά γραμμή..."></textarea>
-    <div>
-      <label><input type="checkbox" id="caseSensitive"> Διαφοροποίηση πεζών-κεφαλαίων</label>
-    </div>
-    <div class="buttons">
-      <label for="fileInput" class="buttons"><button>📂 Άνοιγμα αρχείου</button></label>
-      <input type="file" id="fileInput" accept=".txt,.csv">
-      <button onclick="findDuplicates()" id="findBtn">Εύρεση Διπλοτύπων</button>
-      <button onclick="clearAll()" id="clearBtn">Καθάρισε</button>
-      <button onclick="downloadResults()" id="downloadBtn">Κατέβασε Αποτελέσματα</button>
-    </div>
-
-    <div class="stats" id="stats"></div>
-
-    <h3 id="allHeader">Όλα τα στοιχεία:</h3>
-    <table id="allTable">
-      <thead><tr><th>#</th><th>Τιμή</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <h3 id="dupHeader">Βρέθηκαν διπλότυπα:</h3>
-    <table id="dupTable">
-      <thead><tr><th>#</th><th>Διπλότυπο</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </main>
-
-  <footer>© 2025 FindMyDuplicates | Built by Niki Kalantzi</footer>
-
-  <script>
-    let data = [], duplicates = [];
-    const input = document.getElementById("inputList");
-
-    // ---------- AUTO RESTORE ----------
-    window.onload = () => {
-      const saved = localStorage.getItem("listData");
-      if (saved) input.value = saved;
-      const theme = localStorage.getItem("theme") || "light";
-      document.body.dataset.theme = theme;
-      const lang = localStorage.getItem("lang") || "el";
-      if (lang !== "el") toggleLang();
-    };
-
-    // ---------- AUTO SAVE ----------
-    setInterval(() => {
-      localStorage.setItem("listData", input.value);
-    }, 3000);
-
-    // ---------- FILE UPLOAD ----------
-    document.getElementById("fileInput").addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const text = ev.target.result;
-        const firstCol = text.split(/\r?\n/).map(line => line.split(",")[0]);
-        input.value = firstCol.join("\n");
-      };
-      reader.readAsText(file);
-    });
-
-    // ---------- FIND DUPLICATES ----------
-    function findDuplicates() {
-      const raw = input.value;
-      if (!raw.trim()) { alert("Παρακαλώ εισήγαγε δεδομένα!"); return; }
-      const caseSensitive = document.getElementById("caseSensitive").checked;
-      const items = raw.split(/\n|,/)
-        .map(x => x.trim().replace(/[^\wΑ-Ωα-ωά-ώ0-9]/g, ""))
-        .filter(x => x !== "")
-        .map(x => caseSensitive ? x : x.toLowerCase());
-      data = items;
-
-      const counts = {};
-      items.forEach(i => counts[i] = (counts[i] || 0) + 1);
-      duplicates = Object.keys(counts).filter(k => counts[k] > 1);
-
-      showAll(items);
-      showDuplicates();
-      showStats();
-    }
-
-    // ---------- DISPLAY ----------
-    function showAll(items) {
-      const tbody = document.querySelector("#allTable tbody");
-      tbody.innerHTML = "";
-      items.forEach((v,i)=>{
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${i+1}</td><td>${v}</td>`;
-        tbody.appendChild(tr);
-      });
-    }
-    function showDuplicates() {
-      const tbody = document.querySelector("#dupTable tbody");
-      tbody.innerHTML = "";
-      duplicates.forEach((v,i)=>{
-        const tr = document.createElement("tr");
-        tr.classList.add("duplicate");
-        tr.innerHTML = `<td>${i+1}</td><td>${v}</td>`;
-        tr.onclick = ()=> removeDuplicate(v,tr);
-        tbody.appendChild(tr);
-      });
-    }
-    function removeDuplicate(v,tr){
-      duplicates = duplicates.filter(x=>x!==v);
-      data = data.filter(x=>x!==v);
-      tr.remove();
-      showAll(data);
-      showStats();
-    }
-
-    // ---------- STATS ----------
-    function showStats(){
-      const s = document.getElementById("stats");
-      const total = data.length;
-      const uniq = new Set(data).size;
-      const dups = duplicates.length;
-      const percent = total? ((dups/total)*100).toFixed(1):0;
-      s.innerHTML = `Σύνολο: ${total} | Μοναδικά: ${uniq} | Διπλότυπα: ${dups} (${percent}%)`;
-    }
-
-    // ---------- CLEAR ----------
-    function clearAll(){
-      input.value = "";
-      document.querySelector("#allTable tbody").innerHTML="";
-      document.querySelector("#dupTable tbody").innerHTML="";
-      document.getElementById("stats").innerHTML="";
-      duplicates=[]; data=[];
-      localStorage.removeItem("listData");
-    }
-
-    // ---------- DOWNLOAD ----------
-    function downloadResults(){
-      if(!data.length){alert("Δεν υπάρχουν δεδομένα!");return;}
-      const blob = new Blob([data.join("\n")],{type:"text/plain"});
-      const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);
-      a.download="FindMyDuplicates_results.txt";
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    // ---------- THEME TOGGLE ----------
-    function toggleTheme(){
-      const body=document.body;
-      const newTheme=body.dataset.theme==="light"?"dark":"light";
-      body.dataset.theme=newTheme;
-      localStorage.setItem("theme",newTheme);
-      document.querySelector('#controls button').textContent = newTheme==="dark"?"☀️":"🌙";
-    }
-
-    // ---------- LANGUAGE TOGGLE ----------
-    let lang="el";
-    const texts={
-      el:{
-        title:"Επικόλλησε ή γράψε τα στοιχεία σου:",
-        findBtn:"Εύρεση Διπλοτύπων",
-        clearBtn:"Καθάρισε",
-        downloadBtn:"Κατέβασε Αποτελέσματα",
-        allHeader:"Όλα τα στοιχεία:",
-        dupHeader:"Βρέθηκαν διπλότυπα:",
-        caseLabel:"Διαφοροποίηση πεζών-κεφαλαίων"
-      },
-      en:{
-        title:"Paste or type your items:",
-        findBtn:"Find Duplicates",
-        clearBtn:"Clear",
-        downloadBtn:"Download Results",
-        allHeader:"All Entries:",
-        dupHeader:"Found Duplicates:",
-        caseLabel:"Case sensitive"
-      }
-    };
-    function toggleLang(){
-      lang = lang==="el"?"en":"el";
-      localStorage.setItem("lang",lang);
-      document.getElementById("langLabel").textContent = lang==="el"?"EN":"EL";
-      const t=texts[lang];
-      document.getElementById("title").textContent=t.title;
-      document.getElementById("findBtn").textContent=t.findBtn;
-      document.getElementById("clearBtn").textContent=t.clearBtn;
-      document.getElementById("downloadBtn").textContent=t.downloadBtn;
-      document.getElementById("allHeader").textContent=t.allHeader;
-      document.getElementById("dupHeader").textContent=t.dupHeader;
-      document.querySelector("label[for='caseSensitive']").innerHTML=
-        `<input type="checkbox" id="caseSensitive"> ${t.caseLabel}`;
-    }
-  </script>
-</body>
-</html>
+<body>
+<!-- Google Tag Manager (no
