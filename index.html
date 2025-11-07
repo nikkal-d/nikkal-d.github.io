@@ -128,4 +128,74 @@
 
 <body>
   <header>
-    <img src="logo.png" al
+    <img src="logo.png" alt="FindMyDuplicates logo">
+    <h1>FindMyDuplicates</h1>
+  </header>
+
+  <main>
+    <h2>Εύρεση Διπλότυπων | Duplicate Finder</h2>
+
+    <p><b>➡️ Οδηγίες / Instructions:</b></p>
+    <ul style="text-align:left; display:inline-block;">
+      <li>Πληκτρολόγησε ή επικόλλησε τη λίστα (ονόματα ή αριθμούς).</li>
+      <li>Ή επίλεξε ένα αρχείο <b>.csv</b> ή <b>.txt</b>.</li>
+      <li>Πάτησε "Έλεγχος / Check".</li>
+    </ul>
+
+    <textarea id="input" placeholder="Γράψε ή επικόλλησε εδώ / Type or paste here..."></textarea><br>
+    <input type="file" id="fileInput" accept=".txt,.csv"><br>
+    <button onclick="findDuplicates()">Έλεγχος / Check</button>
+    <button onclick="copyResults()">Αντιγραφή / Copy Results</button>
+
+    <div class="result" id="result">Αποτελέσματα θα εμφανιστούν εδώ / Results will appear here...</div>
+  </main>
+
+  <footer>
+    © 2025 FindMyDuplicates | Built by nikkal-d
+  </footer>
+
+  <script>
+    // Ανάγνωση αρχείου
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('input').value = e.target.result;
+      };
+      reader.readAsText(file);
+    });
+
+    // Εύρεση διπλότυπων
+    function findDuplicates() {
+      const input = document.getElementById("input").value;
+      const items = input.split(/[\s,;]+/).filter(Boolean);
+      const seen = new Set();
+      const duplicates = new Set();
+
+      for (const item of items) {
+        const normalized = item.trim().toLowerCase();
+        if (seen.has(normalized)) {
+          duplicates.add(item.trim());
+        } else {
+          seen.add(normalized);
+        }
+      }
+
+      const resultDiv = document.getElementById("result");
+      if (duplicates.size > 0) {
+        resultDiv.textContent = "Διπλότυπα / Duplicates:\n" + Array.from(duplicates).join(", ");
+      } else {
+        resultDiv.textContent = "✅ Δεν βρέθηκαν διπλότυπα / No duplicates found!";
+      }
+    }
+
+    // Αντιγραφή αποτελεσμάτων
+    function copyResults() {
+      const text = document.getElementById("result").textContent;
+      navigator.clipboard.writeText(text);
+      alert("Αντιγράφηκαν τα αποτελέσματα! / Results copied!");
+    }
+  </script>
+</body>
+</html>
