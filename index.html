@@ -88,6 +88,30 @@ footer {
   padding: 12px;
   margin-top: 40px;
   font-size: 0.9em;
+
+  body.dark {
+  background: #121212;
+  color: #eee;
+}
+body.dark header {
+  background: #333;
+  color: #ff9800;
+}
+body.dark section {
+  background: #1e1e1e;
+  box-shadow: 0 2px 6px rgba(255,255,255,0.05);
+}
+body.dark table, body.dark th, body.dark td {
+  border-color: #444;
+}
+body.dark button, body.dark select {
+  background: #ff9800;
+  color: #fff;
+}
+body.dark footer {
+  background: #000;
+}
+
 }
 </style>
 </head>
@@ -99,6 +123,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <header>FindMyDuplicates</header>
+
+  <div style="text-align:right;margin:10px 20px;">
+  <button id="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
+</div>
+
 
 <div style="text-align:center;margin:15px;">
   <textarea id="inputList" placeholder="Επικόλλησε δεδομένα από Excel ή CSV..."></textarea><br>
@@ -231,4 +260,5 @@ document.getElementById("columnSelect").addEventListener("change", () => {
 </script>
 </body>
 </html>
+
 
