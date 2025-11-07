@@ -247,6 +247,8 @@ function processData() {
       opt.textContent = "Στήλη " + (i + 1);
       colSelect.appendChild(opt);
     });
+    document.querySelectorAll("section").forEach(s => s.classList.add("fade-in"));
+
   }
 
   document.getElementById("duplicatesList").textContent = "";
@@ -359,6 +361,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
 </script>
 </body>
 </html>
+
 
 
 
