@@ -93,4 +93,121 @@ footer {
 </head>
 
 <body>
-<!-- Google Tag Manager (no
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PZ2ZH59T"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<header>FindMyDuplicates</header>
+
+<div style="text-align:center;margin:15px;">
+  <textarea id="inputList" placeholder="Επικόλλησε δεδομένα από Excel ή CSV..."></textarea><br>
+  <label for="columnSelect">Έλεγχος διπλοτύπων στη στήλη:</label>
+  <select id="columnSelect"><option value="">-- επιλέξτε --</option></select>
+  <button onclick="processData()">Ανάλυση</button>
+</div>
+
+<main>
+  <section>
+    <h3>Δεδομένα</h3>
+    <table id="dataTable"><thead></thead><tbody></tbody></table>
+  </section>
+  <section>
+    <h3>Αναφορές διπλοτύπων</h3>
+    <div id="duplicatesList" style="white-space:pre-line;"></div>
+  </section>
+</main>
+
+<footer>© 2025 FindMyDuplicates | Built by Niki Kalantzi</footer>
+
+<script>
+let tableData = [];
+
+function processData() {
+  const text = document.getElementById("inputList").value.trim();
+  if (!text) return alert("Επικόλλησε πρώτα δεδομένα!");
+
+  // Ανίχνευση tabs ή κόμματα (Excel, CSV)
+  const rows = text.split(/\r?\n/).map(r => r.split(/\t|,/));
+  tableData = rows.filter(r => r.some(cell => cell.trim() !== ""));
+  renderTable(tableData);
+
+  // Γέμισμα dropdown για επιλογή στήλης
+  const colSelect = document.getElementById("columnSelect");
+  colSelect.innerHTML = '<option value="">-- επιλέξτε --</option>';
+  if (tableData[0]) {
+    tableData[0].forEach((_, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = "Στήλη " + (i + 1);
+      colSelect.appendChild(opt);
+    });
+  }
+
+  document.getElementById("duplicatesList").textContent = "";
+}
+
+function renderTable(data) {
+  const table = document.getElementById("dataTable");
+  const head = table.querySelector("thead");
+  const body = table.querySelector("tbody");
+  head.innerHTML = "";
+  body.innerHTML = "";
+  if (!data.length) return;
+
+  // Επικεφαλίδες
+  const header = document.createElement("tr");
+  data[0].forEach((_, i) => {
+    const th = document.createElement("th");
+    th.textContent = "Στήλη " + (i + 1);
+    header.appendChild(th);
+  });
+  head.appendChild(header);
+
+  // Σώμα
+  data.forEach((row) => {
+    const tr = document.createElement("tr");
+    row.forEach((cell) => {
+      const td = document.createElement("td");
+      td.textContent = cell;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+
+// Ανίχνευση διπλοτύπων στη στήλη που επέλεξε ο χρήστης
+document.getElementById("columnSelect").addEventListener("change", () => {
+  const col = document.getElementById("columnSelect").value;
+  if (col === "") return;
+  const seen = {};
+  const dups = [];
+  const bodyRows = document.querySelectorAll("#dataTable tbody tr");
+  bodyRows.forEach((tr, rowIndex) => {
+    const cell = tr.children[col];
+    if (!cell) return;
+    const val = cell.textContent.trim();
+    if (val) {
+      if (seen[val]) {
+        dups.push([seen[val], rowIndex]);
+        cell.classList.add("dup");
+        bodyRows[seen[val]].children[col].classList.add("dup");
+      } else {
+        seen[val] = rowIndex;
+      }
+    }
+  });
+
+  // Αναφορές δεξιά
+  const dupDiv = document.getElementById("duplicatesList");
+  dupDiv.textContent = "";
+  if (dups.length === 0) dupDiv.textContent = "✅ Δεν βρέθηκαν διπλότυπα.";
+  else {
+    dupDiv.textContent = dups
+      .map(d => `🔴 Η σειρά ${d[0] + 1} με τη σειρά ${d[1] + 1} είναι ίδιες.`)
+      .join("\n");
+  }
+});
+</script>
+</body>
+</html>
