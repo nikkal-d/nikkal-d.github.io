@@ -107,6 +107,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <button onclick="processData()">Ανάλυση</button>
 </div>
 
+  <!-- κουμπί Κατέβασε με dropdown -->
+<div class="dropdown" style="text-align:center;">
+  <button id="downloadBtn" onclick="toggleDownloadMenu()">⬇️ Κατέβασε</button>
+  <div id="downloadMenu" style="
+    display:none;
+    position:absolute;
+    background:#fff;
+    border:1px solid #ccc;
+    border-radius:8px;
+    margin-top:5px;
+    padding:5px;
+    text-align:left;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  ">
+    <button onclick="downloadList('unique')" style="display:block;width:100%;border:none;background:none;padding:6px;cursor:pointer;">Χωρίς διπλότυπα</button>
+    <button onclick="downloadList('duplicates')" style="display:block;width:100%;border:none;background:none;padding:6px;cursor:pointer;">Μόνο τα διπλότυπα</button>
+  </div>
+</div>
+
+
 <main>
   <section>
     <h3>Δεδομένα</h3>
@@ -211,3 +231,4 @@ document.getElementById("columnSelect").addEventListener("change", () => {
 </script>
 </body>
 </html>
+
