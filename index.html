@@ -15,6 +15,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 <!-- End Google Tag Manager -->
 
+  <script>window.addEventListener('load', gisLoaded);</script>
+
+
 <style>
 body {
   font-family: "Poppins", Arial, sans-serif;
@@ -115,7 +118,14 @@ body.dark footer {
   background: #000;
 }
 
+  #driveButtons button {
+  transition: background 0.25s ease;
 }
+#driveButtons button:hover {
+  background: #e68900;
+}
+
+
 
 /* ------------------- Αισθητικές βελτιώσεις ------------------- */
 body {
@@ -484,6 +494,7 @@ async function loadFromDrive() {
 </script>
 </body>
 </html>
+
 
 
 
