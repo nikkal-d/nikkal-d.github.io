@@ -214,6 +214,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <button id="loadDriveBtn" onclick="loadFromDrive()" disabled>📂 Φόρτωση από Drive</button>
 </div>
 
+  <div id="statusMsg" style="
+  text-align:center;
+  margin-top:10px;
+  font-weight:bold;
+  color:#ff9800;
+"></div>
+
+
   <!-- κουμπί Κατέβασε με dropdown -->
 <div class="dropdown" style="text-align:center;">
   <button id="downloadBtn" onclick="toggleDownloadMenu()">⬇️ Κατέβασε</button>
@@ -432,27 +440,34 @@ function gisLoaded() {
   gisInited = true;
 }
 
+  function setStatus(msg, color="#ff9800"){
+  const div=document.getElementById("statusMsg");
+  div.style.color=color;
+  div.textContent=msg;
+}
+
+// ----- Σύνδεση -----
 function handleAuthClick() {
-  if (!gapiInited) { alert("Το API δεν έχει φορτώσει ακόμη. Δοκίμασε σε 1-2 δευτερόλεπτα."); return; }
+  if (!gapiInited) { setStatus("⏳ Το API φορτώνει... δοκίμασε ξανά.", "red"); return; }
   tokenClient.callback = (resp) => {
     if (resp.error !== undefined) throw (resp);
     document.getElementById('saveDriveBtn').disabled = false;
     document.getElementById('loadDriveBtn').disabled = false;
-    alert("✅ Συνδέθηκες επιτυχώς με Google!");
+    setStatus("✅ Συνδέθηκες επιτυχώς με Google!", "green");
   };
+  setStatus("🔐 Άνοιγμα παραθύρου σύνδεσης...");
   tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-// ----- Αποθήκευση στο Google Drive -----
+// ----- Αποθήκευση -----
 async function saveToDrive() {
-  const text = document.getElementById("inputList").value;
-  if (!text.trim()) { alert("Δεν υπάρχουν δεδομένα!"); return; }
+  const text = document.getElementById("inputList").value.trim();
+  if (!text){ setStatus("⚠️ Δεν υπάρχουν δεδομένα!", "red"); return; }
+
+  setStatus("⏳ Αποθήκευση στο Google Drive...");
 
   const file = new Blob([text], { type: "text/plain" });
-  const metadata = {
-    name: "FindMyDuplicates_List.txt",
-    mimeType: "text/plain"
-  };
+  const metadata = { name: "FindMyDuplicates_List.txt", mimeType: "text/plain" };
   const form = new FormData();
   form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
   form.append("file", file);
@@ -464,20 +479,22 @@ async function saveToDrive() {
     body: form,
   });
 
-  if (res.ok) alert("☁️ Η λίστα αποθηκεύτηκε στο Google Drive!");
-  else alert("❌ Σφάλμα κατά την αποθήκευση!");
+  if (res.ok) setStatus("☁️ Η λίστα αποθηκεύτηκε επιτυχώς στο Drive!", "green");
+  else setStatus("❌ Σφάλμα κατά την αποθήκευση!", "red");
 }
 
-// ----- Φόρτωση από Google Drive -----
+// ----- Φόρτωση -----
 async function loadFromDrive() {
+  setStatus("⏳ Αναζήτηση αρχείου στο Google Drive...");
+
   const token = gapi.client.getToken();
   const res = await gapi.client.drive.files.list({
     q: "name='FindMyDuplicates_List.txt'",
     fields: "files(id, name)",
   });
 
-  if (res.result.files.length === 0) {
-    alert("Δεν βρέθηκε αρχείο στο Drive!");
+  if (!res.result.files.length) {
+    setStatus("⚠️ Δεν βρέθηκε αρχείο στο Drive!", "red");
     return;
   }
 
@@ -485,15 +502,15 @@ async function loadFromDrive() {
   const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
     headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
   });
+
   const text = await fileRes.text();
   document.getElementById("inputList").value = text;
-  alert("📂 Φορτώθηκε η λίστα από το Google Drive!");
+  setStatus("📂 Φορτώθηκε η λίστα από το Drive!", "green");
 }
-
-  
 </script>
 </body>
 </html>
+
 
 
 
