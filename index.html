@@ -458,57 +458,103 @@ function handleAuthClick() {
   tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-// ----- Αποθήκευση -----
+// ----- Αποθήκευση σε φάκελο "FindMyDuplicates" -----
 async function saveToDrive() {
   const text = document.getElementById("inputList").value.trim();
   if (!text){ setStatus("⚠️ Δεν υπάρχουν δεδομένα!", "red"); return; }
-
   setStatus("⏳ Αποθήκευση στο Google Drive...");
 
+  const folderName = "FindMyDuplicates";
+  const token = gapi.client.getToken();
+
+  // Έλεγχος αν υπάρχει ήδη φάκελος
+  const folderRes = await gapi.client.drive.files.list({
+    q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
+    fields: "files(id, name)",
+  });
+
+  let folderId;
+  if (folderRes.result.files.length > 0) {
+    folderId = folderRes.result.files[0].id;
+  } else {
+    // Δημιουργία φακέλου αν δεν υπάρχει
+    const folderMetadata = {
+      name: folderName,
+      mimeType: "application/vnd.google-apps.folder",
+    };
+    const createFolder = await gapi.client.drive.files.create({
+      resource: folderMetadata,
+      fields: "id",
+    });
+    folderId = createFolder.result.id;
+    setStatus("📁 Δημιουργήθηκε φάκελος FindMyDuplicates", "green");
+  }
+
+  // Δημιουργία αρχείου μέσα στο φάκελο
+  const fileName = `List_${new Date().toISOString().split("T")[0]}.txt`;
+  const metadata = {
+    name: fileName,
+    mimeType: "text/plain",
+    parents: [folderId],
+  };
+
   const file = new Blob([text], { type: "text/plain" });
-  const metadata = { name: "FindMyDuplicates_List.txt", mimeType: "text/plain" };
   const form = new FormData();
   form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
   form.append("file", file);
 
-  const token = gapi.client.getToken();
   const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
     method: "POST",
     headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
     body: form,
   });
 
-  if (res.ok) setStatus("☁️ Η λίστα αποθηκεύτηκε επιτυχώς στο Drive!", "green");
+  if (res.ok) setStatus(`☁️ Αποθηκεύτηκε το αρχείο ${fileName} στο φάκελο FindMyDuplicates!`, "green");
   else setStatus("❌ Σφάλμα κατά την αποθήκευση!", "red");
 }
 
-// ----- Φόρτωση -----
+// ----- Φόρτωση από φάκελο "FindMyDuplicates" -----
 async function loadFromDrive() {
-  setStatus("⏳ Αναζήτηση αρχείου στο Google Drive...");
+  setStatus("⏳ Αναζήτηση φακέλου στο Google Drive...");
 
   const token = gapi.client.getToken();
-  const res = await gapi.client.drive.files.list({
-    q: "name='FindMyDuplicates_List.txt'",
+  const folderRes = await gapi.client.drive.files.list({
+    q: "mimeType='application/vnd.google-apps.folder' and name='FindMyDuplicates' and trashed=false",
     fields: "files(id, name)",
   });
 
-  if (!res.result.files.length) {
-    setStatus("⚠️ Δεν βρέθηκε αρχείο στο Drive!", "red");
+  if (!folderRes.result.files.length) {
+    setStatus("⚠️ Δεν βρέθηκε φάκελος FindMyDuplicates!", "red");
     return;
   }
 
-  const fileId = res.result.files[0].id;
-  const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+  const folderId = folderRes.result.files[0].id;
+  const fileRes = await gapi.client.drive.files.list({
+    q: `'${folderId}' in parents and trashed=false and mimeType='text/plain'`,
+    fields: "files(id, name, createdTime)",
+    orderBy: "createdTime desc",
+  });
+
+  if (!fileRes.result.files.length) {
+    setStatus("⚠️ Δεν βρέθηκαν αρχεία στον φάκελο!", "red");
+    return;
+  }
+
+  const fileId = fileRes.result.files[0].id;
+  const fileName = fileRes.result.files[0].name;
+  const fileContent = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
     headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
   });
 
-  const text = await fileRes.text();
+  const text = await fileContent.text();
   document.getElementById("inputList").value = text;
-  setStatus("📂 Φορτώθηκε η λίστα από το Drive!", "green");
+  setStatus(`📂 Φορτώθηκε το αρχείο ${fileName} από τον φάκελο FindMyDuplicates!`, "green");
 }
+
 </script>
 </body>
 </html>
+
 
 
 
