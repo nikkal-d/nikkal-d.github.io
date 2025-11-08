@@ -220,6 +220,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   color:#ff9800;
 "></div>
 
+        <div id="historyPanel" style="
+  text-align:center;
+  margin-top:15px;
+  border-top:1px solid #ccc;
+  padding-top:10px;
+  display:none;
+">
+  <h3>📜 Ιστορικό Αρχείων</h3>
+  <div id="historyList" style="margin-top:8px;font-size:0.9em;"></div>
+</div>
+
 
   <!-- κουμπί Κατέβασε με dropdown -->
 <div class="dropdown" style="text-align:center;">
@@ -513,7 +524,7 @@ async function saveToDrive() {
   else setStatus("❌ Σφάλμα κατά την αποθήκευση!", "red");
 }
 
-// ----- Φόρτωση από φάκελο "FindMyDuplicates" -----
+// ----- Φόρτωση από φάκελο + Ιστορικό Αρχείων -----
 async function loadFromDrive() {
   setStatus("⏳ Αναζήτηση φακέλου στο Google Drive...");
 
@@ -525,6 +536,7 @@ async function loadFromDrive() {
 
   if (!folderRes.result.files.length) {
     setStatus("⚠️ Δεν βρέθηκε φάκελος FindMyDuplicates!", "red");
+    document.getElementById("historyPanel").style.display = "none";
     return;
   }
 
@@ -535,25 +547,45 @@ async function loadFromDrive() {
     orderBy: "createdTime desc",
   });
 
-  if (!fileRes.result.files.length) {
-    setStatus("⚠️ Δεν βρέθηκαν αρχεία στον φάκελο!", "red");
+  const files = fileRes.result.files;
+  const historyDiv = document.getElementById("historyList");
+  const historyPanel = document.getElementById("historyPanel");
+  historyDiv.innerHTML = "";
+
+  if (!files.length) {
+    setStatus("⚠️ Δεν υπάρχουν αποθηκευμένα αρχεία!", "red");
+    historyPanel.style.display = "none";
     return;
   }
 
-  const fileId = fileRes.result.files[0].id;
-  const fileName = fileRes.result.files[0].name;
-  const fileContent = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-    headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
-  });
+  // Εμφάνιση πάνελ
+  historyPanel.style.display = "block";
+  setStatus(`📂 Βρέθηκαν ${files.length} αποθηκευμένα αρχεία.`, "green");
 
-  const text = await fileContent.text();
-  document.getElementById("inputList").value = text;
-  setStatus(`📂 Φορτώθηκε το αρχείο ${fileName} από τον φάκελο FindMyDuplicates!`, "green");
+  files.forEach((f, i) => {
+    const date = new Date(f.createdTime).toLocaleString("el-GR");
+    const btn = document.createElement("button");
+    btn.textContent = `${f.name} (${date})`;
+    btn.style.margin = "4px";
+    btn.style.padding = "5px 8px";
+    btn.style.cursor = "pointer";
+    btn.onclick = async () => {
+      setStatus(`⏳ Φόρτωση ${f.name}...`);
+      const fileContent = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, {
+        headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
+      });
+      const text = await fileContent.text();
+      document.getElementById("inputList").value = text;
+      setStatus(`✅ Φορτώθηκε το αρχείο ${f.name}!`, "green");
+    };
+    historyDiv.appendChild(btn);
+  });
 }
 
 </script>
 </body>
 </html>
+
 
 
 
