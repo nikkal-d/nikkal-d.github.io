@@ -357,10 +357,36 @@ window.addEventListener("DOMContentLoaded", ()=>{
   document.getElementById("langSelect").value = savedLang;
   switchLanguage(savedLang);
 });
+// ----- Διόρθωση Dark / Light mode -----
+function toggleTheme() {
+  const body = document.body;
+  const current = body.classList.contains("dark") ? "dark" : "light";
+  const next = current === "dark" ? "light" : "dark";
 
+  body.classList.remove(current);
+  body.classList.add(next);
+
+  // Αποθήκευση στο localStorage
+  localStorage.setItem("theme", next);
+
+  // Αλλαγή εικονιδίου στο κουμπί
+  const toggleBtn = document.getElementById("themeToggle");
+  if (toggleBtn) toggleBtn.textContent = next === "dark" ? "☀️" : "🌙";
+}
+
+// Εφαρμογή αποθηκευμένου θέματος κατά την εκκίνηση
+window.addEventListener("DOMContentLoaded", () => {
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.body.classList.add(savedTheme);
+  const toggleBtn = document.getElementById("themeToggle");
+  if (toggleBtn) toggleBtn.textContent = savedTheme === "dark" ? "☀️" : "🌙";
+});
+
+  
 </script>
 </body>
 </html>
+
 
 
 
