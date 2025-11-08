@@ -172,6 +172,25 @@ section:hover {
   background: rgba(255,152,0,0.1);
   border-radius: 6px;
 }
+        @keyframes fadeIn {
+  from {opacity: 0; transform: translateY(10px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+
+#historyList button {
+  border:none;
+  border-radius:6px;
+  padding:4px 6px;
+  margin:2px;
+  cursor:pointer;
+  background:#ff9800;
+  color:#fff;
+  transition:background 0.3s ease;
+}
+#historyList button:hover {
+  background:#e68900;
+}
+
 
 </style>
   <script async defer src="https://apis.google.com/js/api.js"></script>
@@ -228,7 +247,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   display:none;
 ">
   <h3>📜 Ιστορικό Αρχείων</h3>
-  <div id="historyList" style="margin-top:8px;font-size:0.9em;"></div>
+  <div id="historyList" style="margin-top:12px;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px;
+  "></div>
+</div>
+
 </div>
 
 
@@ -524,7 +550,7 @@ async function saveToDrive() {
   else setStatus("❌ Σφάλμα κατά την αποθήκευση!", "red");
 }
 
-// ----- Φόρτωση από φάκελο + Ιστορικό Αρχείων -----
+// ----- Φόρτωση από φάκελο + Ιστορικό Αρχείων με animation -----
 async function loadFromDrive() {
   setStatus("⏳ Αναζήτηση φακέλου στο Google Drive...");
 
@@ -558,18 +584,42 @@ async function loadFromDrive() {
     return;
   }
 
-  // Εμφάνιση πάνελ
   historyPanel.style.display = "block";
   setStatus(`📂 Βρέθηκαν ${files.length} αποθηκευμένα αρχεία.`, "green");
 
   files.forEach((f, i) => {
     const date = new Date(f.createdTime).toLocaleString("el-GR");
-    const btn = document.createElement("button");
-    btn.textContent = `${f.name} (${date})`;
-    btn.style.margin = "4px";
-    btn.style.padding = "5px 8px";
-    btn.style.cursor = "pointer";
-    btn.onclick = async () => {
+
+    const card = document.createElement("div");
+    card.style.cssText = `
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:10px;
+      padding:10px 12px;
+      width:220px;
+      text-align:center;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      transition:transform 0.3s ease, box-shadow 0.3s ease;
+      animation:fadeIn 0.4s ease forwards;
+      opacity:0;
+    `;
+    card.style.animationDelay = `${i * 0.08}s`;
+    card.innerHTML = `
+      <strong>${f.name}</strong><br>
+      <small>${date}</small><br>
+      <div style="margin-top:6px;">
+        <button class="btnLoad">📥 Φόρτωση</button>
+        <button class="btnDownload">⬇️</button>
+        <button class="btnDelete">🗑️</button>
+      </div>
+    `;
+
+    // Fade-in animation
+    card.addEventListener("animationend", () => { card.style.opacity = 1; });
+
+    // --- Κουμπιά ---
+    const loadBtn = card.querySelector(".btnLoad");
+    loadBtn.onclick = async () => {
       setStatus(`⏳ Φόρτωση ${f.name}...`);
       const fileContent = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, {
         headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
@@ -578,13 +628,34 @@ async function loadFromDrive() {
       document.getElementById("inputList").value = text;
       setStatus(`✅ Φορτώθηκε το αρχείο ${f.name}!`, "green");
     };
-    historyDiv.appendChild(btn);
+
+    const downloadBtn = card.querySelector(".btnDownload");
+    downloadBtn.onclick = async () => {
+      const link = document.createElement("a");
+      link.href = `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media&access_token=${token.access_token}`;
+      link.download = f.name;
+      link.click();
+      setStatus(`⬇️ Κατέβηκε το αρχείο ${f.name}`, "green");
+    };
+
+    const deleteBtn = card.querySelector(".btnDelete");
+    deleteBtn.onclick = async () => {
+      if (confirm(`Διαγραφή του αρχείου ${f.name};`)) {
+        await gapi.client.drive.files.delete({ fileId: f.id });
+        card.remove();
+        setStatus(`🗑️ Διαγράφηκε το αρχείο ${f.name}`, "orange");
+      }
+    };
+
+    historyDiv.appendChild(card);
   });
 }
+
 
 </script>
 </body>
 </html>
+
 
 
 
