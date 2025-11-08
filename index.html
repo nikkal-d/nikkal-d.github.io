@@ -168,6 +168,9 @@ section:hover {
 }
 
 </style>
+  <script async defer src="https://apis.google.com/js/api.js"></script>
+<script async defer src="https://accounts.google.com/gsi/client"></script>
+
 </head>
 
 <body>
@@ -193,6 +196,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <label for="columnSelect">Έλεγχος διπλοτύπων στη στήλη:</label>
   <select id="columnSelect"><option value="">-- επιλέξτε --</option></select>
   <button onclick="processData()">Ανάλυση</button>
+</div>
+
+  <div id="driveButtons" style="text-align:center;margin:10px;">
+  <button id="loginBtn" onclick="handleAuthClick()">🔐 Σύνδεση με Google</button>
+  <button id="saveDriveBtn" onclick="saveToDrive()" disabled>☁️ Αποθήκευση στο Drive</button>
+  <button id="loadDriveBtn" onclick="loadFromDrive()" disabled>📂 Φόρτωση από Drive</button>
 </div>
 
   <!-- κουμπί Κατέβασε με dropdown -->
@@ -384,11 +393,98 @@ window.addEventListener("DOMContentLoaded", () => {
   const toggleBtn = document.getElementById("themeToggle");
   if (toggleBtn) toggleBtn.textContent = savedTheme === "dark" ? "☀️" : "🌙";
 });
+// ---------- GOOGLE DRIVE SYNC ----------
+const CLIENT_ID = "7674481557-tr33gquj964b83jorc7lr8vahjrde34o.apps.googleusercontent.com";
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+
+window.onload = function() {
+  gapi.load('client', initializeGapiClient);
+};
+
+async function initializeGapiClient() {
+  await gapi.client.init({
+    apiKey: "", // optional, δεν χρειάζεται για απλή χρήση
+    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+  });
+  gapiInited = true;
+}
+
+function gisLoaded() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: '',
+  });
+  gisInited = true;
+}
+
+function handleAuthClick() {
+  if (!gapiInited) { alert("Το API δεν έχει φορτώσει ακόμη. Δοκίμασε σε 1-2 δευτερόλεπτα."); return; }
+  tokenClient.callback = (resp) => {
+    if (resp.error !== undefined) throw (resp);
+    document.getElementById('saveDriveBtn').disabled = false;
+    document.getElementById('loadDriveBtn').disabled = false;
+    alert("✅ Συνδέθηκες επιτυχώς με Google!");
+  };
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+// ----- Αποθήκευση στο Google Drive -----
+async function saveToDrive() {
+  const text = document.getElementById("inputList").value;
+  if (!text.trim()) { alert("Δεν υπάρχουν δεδομένα!"); return; }
+
+  const file = new Blob([text], { type: "text/plain" });
+  const metadata = {
+    name: "FindMyDuplicates_List.txt",
+    mimeType: "text/plain"
+  };
+  const form = new FormData();
+  form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+  form.append("file", file);
+
+  const token = gapi.client.getToken();
+  const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+    method: "POST",
+    headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
+    body: form,
+  });
+
+  if (res.ok) alert("☁️ Η λίστα αποθηκεύτηκε στο Google Drive!");
+  else alert("❌ Σφάλμα κατά την αποθήκευση!");
+}
+
+// ----- Φόρτωση από Google Drive -----
+async function loadFromDrive() {
+  const token = gapi.client.getToken();
+  const res = await gapi.client.drive.files.list({
+    q: "name='FindMyDuplicates_List.txt'",
+    fields: "files(id, name)",
+  });
+
+  if (res.result.files.length === 0) {
+    alert("Δεν βρέθηκε αρχείο στο Drive!");
+    return;
+  }
+
+  const fileId = res.result.files[0].id;
+  const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
+  });
+  const text = await fileRes.text();
+  document.getElementById("inputList").value = text;
+  alert("📂 Φορτώθηκε η λίστα από το Google Drive!");
+}
 
   
 </script>
 </body>
 </html>
+
 
 
 
