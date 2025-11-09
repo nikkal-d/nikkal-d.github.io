@@ -576,15 +576,12 @@ function handleAuthClick() {
 
 // ----- Αποθήκευση σε φάκελο "FindMyDuplicates" -----
 async function saveToDrive() {
-  if (!gapiInited) {
-    setStatus("⚠️ Το API δεν είναι έτοιμο ακόμα!", "red");
-    return;
-  }
-
-  try {
-    setStatus("⏳ Αποθήκευση στο Google Drive...");
+  const text = document.getElementById("inputList").value.trim();
+  if (!text){ setStatus("⚠️ Δεν υπάρχουν δεδομένα!", "red"); return; }
+  setStatus("⏳ Αποθήκευση στο Google Drive...");
   const folderName = "FindMyDuplicates";
   const token = gapi.client.getToken();
+}
 
   // Έλεγχος αν υπάρχει ήδη φάκελος
   const folderRes = await safeGoogleRequest(() => 
@@ -742,6 +739,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
