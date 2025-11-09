@@ -7,10 +7,9 @@
 
 <!-- Google Tag Manager -->
 <!-- Google API + Identity Services -->
-<script src="https://apis.google.com/js/api.js"
-        onload="gapiLoaded()" async defer></script>
-<script src="https://accounts.google.com/gsi/client"
-        onload="gisLoaded()" async defer></script>
+<script src="https://apis.google.com/js/api.js" onload="gapiLoaded()" async defer></script>
+<script src="https://accounts.google.com/gsi/client" onload="gisLoaded()" async defer></script>
+
 
 
 
@@ -474,7 +473,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
 // ---------- GOOGLE DRIVE SYNC ----------
 const CLIENT_ID = "7674481557-tr33gquj964b83jorc7lr8vahjrde34o.apps.googleusercontent.com";
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email openid';
+
 
 let tokenClient;
 let gapiInited = false;
@@ -784,6 +784,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
