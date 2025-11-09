@@ -419,6 +419,10 @@ window.addEventListener("DOMContentLoaded", ()=>{
   const savedLang = localStorage.getItem("lang") || "el";
   document.getElementById("langSelect").value = savedLang;
   switchLanguage(savedLang);
+
+const savedTheme = localStorage.getItem("theme") || "light";
+document.body.classList.add(savedTheme);
+document.getElementById("themeToggle").textContent = savedTheme === "dark" ? "☀️" : "🌙";
 });
 // ----- Διόρθωση Dark / Light mode -----
 function toggleTheme() {
@@ -758,19 +762,11 @@ async function safeGoogleRequest(fn, delay = 1500) {
     status.textContent = "";
   }
 }
-let lastRequestTime = 0;
-async function safeGoogleRequest(fn, delay = 1500) {
-  const now = Date.now();
-  const elapsed = now - lastRequestTime;
-  if (elapsed < delay) {
-    await new Promise(r => setTimeout(r, delay - elapsed));
-  }
-
-
 
 </script>
 </body>
 </html>
+
 
 
 
