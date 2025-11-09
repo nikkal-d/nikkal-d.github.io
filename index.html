@@ -576,10 +576,13 @@ function handleAuthClick() {
 
 // ----- Αποθήκευση σε φάκελο "FindMyDuplicates" -----
 async function saveToDrive() {
-  const text = document.getElementById("inputList").value.trim();
-  if (!text){ setStatus("⚠️ Δεν υπάρχουν δεδομένα!", "red"); return; }
-  setStatus("⏳ Αποθήκευση στο Google Drive...");
+  if (!gapiInited) {
+    setStatus("⚠️ Το API δεν είναι έτοιμο ακόμα!", "red");
+    return;
+  }
 
+  try {
+    setStatus("⏳ Αποθήκευση στο Google Drive...");
   const folderName = "FindMyDuplicates";
   const token = gapi.client.getToken();
 
@@ -680,6 +683,7 @@ async function loadFromDrive() {
       headers: new Headers({ Authorization: "Bearer " + token.access_token }),
     });
 
+    document.getElementById("inputList").value = "";
     const text = await fileContent.text();
     document.getElementById("inputList").value = text;
     setStatus(`✅ Φορτώθηκε το αρχείο ${fileName} από το Google Drive!`, "green");
@@ -728,7 +732,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
   link.href = URL.createObjectURL(blob);
   link.download = "FindMyDuplicates" + suffix + ".txt";
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   setStatus("⬇️ Το αρχείο κατέβηκε επιτυχώς!", "green");
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 
@@ -738,6 +742,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
