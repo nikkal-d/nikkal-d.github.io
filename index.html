@@ -192,8 +192,6 @@ section:hover {
 
 
 </style>
-  <script async defer src="https://apis.google.com/js/api.js"></script>
-<script async defer src="https://accounts.google.com/gsi/client"></script>
 
 </head>
 
@@ -440,13 +438,7 @@ function toggleTheme() {
 }
 
 // Εφαρμογή αποθηκευμένου θέματος κατά την εκκίνηση
-window.addEventListener("DOMContentLoaded", () => {
-  const savedTheme = localStorage.getItem("theme") || "light";
-  document.body.classList.add(savedTheme);
-  const toggleBtn = document.getElementById("themeToggle");
-  if (toggleBtn) toggleBtn.textContent = savedTheme === "dark" ? "☀️" : "🌙";
-});
-        window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   const saved = localStorage.getItem("googleToken");
   if (saved) {
     const token = JSON.parse(saved);
@@ -455,11 +447,10 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById('loadDriveBtn').disabled = false;
     setStatus("✅ Επανασυνδέθηκες αυτόματα στο Google Drive!", "green");
   }
- window.addEventListener("DOMContentLoaded", async () => {
+
   if (gapi && gapi.client) {
     await checkAndRefreshToken();
   } else {
-    // Αν δεν έχει φορτώσει ακόμα το gapi.js, δοκίμασε ξανά μετά από λίγο
     const timer = setInterval(async () => {
       if (gapi && gapi.client) {
         clearInterval(timer);
@@ -469,7 +460,6 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-});
 
 // ---------- GOOGLE DRIVE SYNC ----------
 const CLIENT_ID = "7674481557-tr33gquj964b83jorc7lr8vahjrde34o.apps.googleusercontent.com";
@@ -775,15 +765,13 @@ async function safeGoogleRequest(fn, delay = 1500) {
   if (elapsed < delay) {
     await new Promise(r => setTimeout(r, delay - elapsed));
   }
-  lastRequestTime = Date.now();
-  return await fn();
-}
 
 
 
 </script>
 </body>
 </html>
+
 
 
 
