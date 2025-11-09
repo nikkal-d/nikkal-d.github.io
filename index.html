@@ -230,6 +230,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <button id="loginBtn" onclick="handleAuthClick()">🔐 Σύνδεση με Google</button>
   <button id="saveDriveBtn" onclick="saveToDrive()" disabled>☁️ Αποθήκευση στο Drive</button>
   <button id="loadDriveBtn" onclick="loadFromDrive()" disabled>📂 Φόρτωση από Drive</button>
+<button id="logoutBtn" onclick="logoutGoogle()" style="display:none;">🚪 Αποσύνδεση</button>
+
 </div>
 
   <div id="statusMsg" style="
@@ -447,6 +449,17 @@ window.addEventListener("DOMContentLoaded", () => {
   const toggleBtn = document.getElementById("themeToggle");
   if (toggleBtn) toggleBtn.textContent = savedTheme === "dark" ? "☀️" : "🌙";
 });
+        window.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("googleToken");
+  if (saved) {
+    const token = JSON.parse(saved);
+    gapi.client.setToken(token);
+    document.getElementById('saveDriveBtn').disabled = false;
+    document.getElementById('loadDriveBtn').disabled = false;
+    setStatus("✅ Επανασυνδέθηκες αυτόματα στο Google Drive!", "green");
+  }
+});
+
 // ---------- GOOGLE DRIVE SYNC ----------
 const CLIENT_ID = "7674481557-tr33gquj964b83jorc7lr8vahjrde34o.apps.googleusercontent.com";
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -482,18 +495,36 @@ function gisLoaded() {
   div.textContent=msg;
 }
 
-// ----- Σύνδεση -----
+// ----- Επανασύνδεση Google χωρίς αποσύνδεση -----
 function handleAuthClick() {
   if (!gapiInited) { setStatus("⏳ Το API φορτώνει... δοκίμασε ξανά.", "red"); return; }
+
   tokenClient.callback = (resp) => {
     if (resp.error !== undefined) throw (resp);
+    const token = gapi.client.getToken();
+    localStorage.setItem("googleToken", JSON.stringify(token)); // αποθήκευση
     document.getElementById('saveDriveBtn').disabled = false;
     document.getElementById('loadDriveBtn').disabled = false;
     setStatus("✅ Συνδέθηκες επιτυχώς με Google!", "green");
   };
-  setStatus("🔐 Άνοιγμα παραθύρου σύνδεσης...");
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+
+  setStatus("🔐 Έλεγχος για υπάρχουσα σύνδεση...");
+
+  // Αν υπάρχει ήδη token στο localStorage
+  const saved = localStorage.getItem("googleToken");
+  if (saved) {
+    const token = JSON.parse(saved);
+    gapi.client.setToken(token);
+    document.getElementById('saveDriveBtn').disabled = false;
+    document.getElementById('loadDriveBtn').disabled = false;
+    setStatus("✅ Είσαι ήδη συνδεδεμένη με Google!", "green");
+  } else {
+    // Πρώτη φορά ή δεν υπάρχει αποθηκευμένο token
+    setStatus("🔐 Άνοιγμα παραθύρου σύνδεσης...");
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  }
 }
+
 
 // ----- Αποθήκευση σε φάκελο "FindMyDuplicates" -----
 async function saveToDrive() {
@@ -650,11 +681,19 @@ async function loadFromDrive() {
     historyDiv.appendChild(card);
   });
 }
+function logoutGoogle(){
+  localStorage.removeItem("googleToken");
+  gapi.client.setToken(null);
+  document.getElementById('saveDriveBtn').disabled = true;
+  document.getElementById('loadDriveBtn').disabled = true;
+  setStatus("👋 Αποσυνδέθηκες από το Google Drive.", "orange");
+}
 
 
 </script>
 </body>
 </html>
+
 
 
 
