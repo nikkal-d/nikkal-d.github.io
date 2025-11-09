@@ -691,42 +691,7 @@ async function loadFromDrive() {
 }
 
 
-    // Fade-in animation
-    card.addEventListener("animationend", () => { card.style.opacity = 1; });
-
-    // --- Κουμπιά ---
-    const loadBtn = card.querySelector(".btnLoad");
-    loadBtn.onclick = async () => {
-      setStatus(`⏳ Φόρτωση ${f.name}...`);
-      const fileContent = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, {
-        headers: new Headers({ "Authorization": "Bearer " + token.access_token }),
-      });
-      const text = await fileContent.text();
-      document.getElementById("inputList").value = text;
-      setStatus(`✅ Φορτώθηκε το αρχείο ${f.name}!`, "green");
-    };
-
-    const downloadBtn = card.querySelector(".btnDownload");
-    downloadBtn.onclick = async () => {
-      const link = document.createElement("a");
-      link.href = `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media&access_token=${token.access_token}`;
-      link.download = f.name;
-      link.click();
-      setStatus(`⬇️ Κατέβηκε το αρχείο ${f.name}`, "green");
-    };
-
-    const deleteBtn = card.querySelector(".btnDelete");
-    deleteBtn.onclick = async () => {
-      if (confirm(`Διαγραφή του αρχείου ${f.name};`)) {
-       await safeGoogleRequest(() => gapi.client.drive.files.delete({ fileId: f.id }));
-        card.remove();
-        setStatus(`🗑️ Διαγράφηκε το αρχείο ${f.name}`, "orange");
-      }
-    };
-
-    historyDiv.appendChild(card);
-  });
-}
+   
 function logoutGoogle(){
   localStorage.removeItem("googleToken");
   gapi.client.setToken(null);
@@ -749,15 +714,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
   return await fn();
 }
 
- async function setLoading(state) {
-  const status = document.getElementById("status");
-  if (state) {
-    status.textContent = "⏳ Επικοινωνία με Google...";
-    status.style.color = "orange";
-  } else {
-    status.textContent = "";
-  }
-}
+
   function downloadList(withDuplicates = true) {
   const text = document.getElementById("inputList").value.trim();
   if (!text) {
@@ -773,12 +730,15 @@ async function safeGoogleRequest(fn, delay = 1500) {
   link.click();
   URL.revokeObjectURL(link.href);
   setStatus("⬇️ Το αρχείο κατέβηκε επιτυχώς!", "green");
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
 }
 
 
 </script>
 </body>
 </html>
+
 
 
 
