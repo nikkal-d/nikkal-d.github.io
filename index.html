@@ -474,7 +474,10 @@ let gapiInited = false;
 let gisInited = false;
 
   function gapiLoaded() {
-  gapi.load('client', initializeGapiClient);
+  // Μικρή καθυστέρηση για σταθερή φόρτωση του API
+  setTimeout(() => {
+    gapi.load('client', initializeGapiClient);
+  }, 800);
 }
 
 async function initializeGapiClient() {
@@ -745,6 +748,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
