@@ -653,13 +653,11 @@ async function loadFromDrive() {
       return;
     }
 
-    // Εύρεση φακέλου FindMyDuplicates
-    const folderRes = await safeGoogleRequest(() =>
-      gapi.client.drive.files.list({
-        q: "mimeType='application/vnd.google-apps.folder' and name='FindMyDuplicates' and trashed=false",
-        fields: "files(id, name)",
-      })
-    );
+    // Βρίσκουμε το φάκελο FindMyDuplicates
+    const folderRes = await gapi.client.drive.files.list({
+      q: "mimeType='application/vnd.google-apps.folder' and name='FindMyDuplicates' and trashed=false",
+      fields: "files(id, name)",
+    });
 
     if (!folderRes.result.files.length) {
       setStatus("⚠️ Δεν βρέθηκε φάκελος FindMyDuplicates!", "red");
@@ -668,36 +666,49 @@ async function loadFromDrive() {
 
     const folderId = folderRes.result.files[0].id;
 
-    // Εύρεση αρχείων μέσα στο φάκελο
-    const fileRes = await safeGoogleRequest(() =>
-      gapi.client.drive.files.list({
-        q: `'${folderId}' in parents and trashed=false and mimeType='text/plain'`,
-        fields: "files(id, name, createdTime)",
-        orderBy: "createdTime desc",
-      })
-    );
+    // Βρίσκουμε όλα τα αρχεία μέσα στο φάκελο
+    const fileRes = await gapi.client.drive.files.list({
+      q: `'${folderId}' in parents and trashed=false and mimeType='text/plain'`,
+      fields: "files(id, name, createdTime)",
+      orderBy: "createdTime desc",
+    });
 
-    if (!fileRes.result.files.length) {
+    const files = fileRes.result.files;
+    if (!files.length) {
       setStatus("⚠️ Δεν υπάρχουν αποθηκευμένα αρχεία!", "red");
       return;
     }
 
-    const fileId = fileRes.result.files[0].id;
-    const fileName = fileRes.result.files[0].name;
+    // Δημιουργούμε λίστα με κουμπιά για κάθε αρχείο
+    let listHTML = "<div id='driveFileList' style='position:fixed;top:20%;left:50%;transform:translateX(-50%);background:white;padding:20px;border-radius:12px;box-shadow:0 0 15px rgba(0,0,0,0.3);z-index:9999;max-height:60vh;overflow-y:auto'>";
+    listHTML += "<h3>📂 Επέλεξε αρχείο για φόρτωση</h3>";
+    listHTML += "<button onclick='document.getElementById(\"driveFileList\").remove()' style='float:right'>❌ Κλείσιμο</button><br>";
 
-    // Κατέβασμα περιεχομένου
-    const fileContent = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: new Headers({ Authorization: "Bearer " + token.access_token }),
+    files.forEach(f => {
+      listHTML += `<button style='margin:5px;display:block;width:100%' onclick='loadSpecificFile("${f.id}", "${f.name}")'>${f.name}</button>`;
     });
+    listHTML += "</div>";
 
-    document.getElementById("inputList").value = "";
-    const text = await fileContent.text();
-    document.getElementById("inputList").value = text;
-    setStatus(`✅ Φορτώθηκε το αρχείο ${fileName} από το Google Drive!`, "green");
-
+    document.body.insertAdjacentHTML("beforeend", listHTML);
   } catch (err) {
     console.error(err);
     setStatus("❌ Σφάλμα κατά τη φόρτωση από Drive!", "red");
+  }
+}
+
+  async function loadSpecificFile(fileId, fileName) {
+  try {
+    const token = gapi.client.getToken();
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: new Headers({ Authorization: "Bearer " + token.access_token }),
+    });
+    const text = await response.text();
+    document.getElementById("inputList").value = text;
+    setStatus(`✅ Φορτώθηκε το αρχείο ${fileName} από το Google Drive!`, "green");
+    document.getElementById("driveFileList").remove();
+  } catch (err) {
+    console.error(err);
+    setStatus("❌ Σφάλμα κατά τη φόρτωση του αρχείου!", "red");
   }
 }
 
@@ -748,6 +759,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
