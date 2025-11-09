@@ -200,10 +200,6 @@ section:hover {
 
 <body>
 
-        
-
-  setStatus("✅ Έτοιμο για σύνδεση με Google!");
-
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PZ2ZH59T"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -492,7 +488,7 @@ async function initializeGapiClient() {
   await safeGoogleRequest(() => gapi.client.init({
     apiKey: "", // optional, δεν χρειάζεται για απλή χρήση
     discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-  });
+  }));
   gapiInited = true;
 }
 
@@ -593,10 +589,13 @@ async function saveToDrive() {
   const token = gapi.client.getToken();
 
   // Έλεγχος αν υπάρχει ήδη φάκελος
-  const folderRes = await safeGoogleRequest(() => gapi.client.drive.files.list({
+  const folderRes = await safeGoogleRequest(() => 
+  gapi.client.drive.files.list({
     q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
     fields: "files(id, name)",
-  });
+  })
+);
+
 
   let folderId;
   if (folderRes.result.files.length > 0) {
@@ -729,7 +728,7 @@ async function loadFromDrive() {
     const deleteBtn = card.querySelector(".btnDelete");
     deleteBtn.onclick = async () => {
       if (confirm(`Διαγραφή του αρχείου ${f.name};`)) {
-       await safeGoogleRequest(() => gapi.client.drive.files.delete({ fileId: f.id });
+       await safeGoogleRequest(() => gapi.client.drive.files.delete({ fileId: f.id }));
         card.remove();
         setStatus(`🗑️ Διαγράφηκε το αρχείο ${f.name}`, "orange");
       }
@@ -785,6 +784,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
