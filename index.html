@@ -257,7 +257,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- κουμπί Κατέβασε με dropdown -->
 <div class="dropdown" style="text-align:center;">
-  <button id="downloadBtn" onclick="toggleDownloadMenu()">⬇️ Κατέβασε</button>
+ <button onclick="downloadList(true)">⬇️ Κατέβασε με διπλότυπα</button>
+<button onclick="downloadList(false)">⬇️ Κατέβασε χωρίς διπλότυπα</button>
   <div id="downloadMenu" style="
     display:none;
     position:absolute;
@@ -631,69 +632,64 @@ async function saveToDrive() {
   else setStatus("❌ Σφάλμα κατά την αποθήκευση!", "red");
 }
 
-// ----- Φόρτωση από φάκελο + Ιστορικό Αρχείων με animation -----
+// ----- Φόρτωση αρχείων από φάκελο "FindMyDuplicates" -----
 async function loadFromDrive() {
-  setStatus("⏳ Αναζήτηση φακέλου στο Google Drive...");
+  try {
+    setStatus("⏳ Αναζήτηση αρχείων στο Google Drive...");
 
-  const token = gapi.client.getToken();
-  const folderRes = await gapi.client.drive.files.list({
-    q: "mimeType='application/vnd.google-apps.folder' and name='FindMyDuplicates' and trashed=false",
-    fields: "files(id, name)",
-  });
+    const token = gapi.client.getToken();
+    if (!token) {
+      setStatus("⚠️ Δεν υπάρχει ενεργή σύνδεση!", "red");
+      return;
+    }
 
-  if (!folderRes.result.files.length) {
-    setStatus("⚠️ Δεν βρέθηκε φάκελος FindMyDuplicates!", "red");
-    document.getElementById("historyPanel").style.display = "none";
-    return;
+    // Εύρεση φακέλου FindMyDuplicates
+    const folderRes = await safeGoogleRequest(() =>
+      gapi.client.drive.files.list({
+        q: "mimeType='application/vnd.google-apps.folder' and name='FindMyDuplicates' and trashed=false",
+        fields: "files(id, name)",
+      })
+    );
+
+    if (!folderRes.result.files.length) {
+      setStatus("⚠️ Δεν βρέθηκε φάκελος FindMyDuplicates!", "red");
+      return;
+    }
+
+    const folderId = folderRes.result.files[0].id;
+
+    // Εύρεση αρχείων μέσα στο φάκελο
+    const fileRes = await safeGoogleRequest(() =>
+      gapi.client.drive.files.list({
+        q: `'${folderId}' in parents and trashed=false and mimeType='text/plain'`,
+        fields: "files(id, name, createdTime)",
+        orderBy: "createdTime desc",
+      })
+    );
+
+    if (!fileRes.result.files.length) {
+      setStatus("⚠️ Δεν υπάρχουν αποθηκευμένα αρχεία!", "red");
+      return;
+    }
+
+    const fileId = fileRes.result.files[0].id;
+    const fileName = fileRes.result.files[0].name;
+
+    // Κατέβασμα περιεχομένου
+    const fileContent = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: new Headers({ Authorization: "Bearer " + token.access_token }),
+    });
+
+    const text = await fileContent.text();
+    document.getElementById("inputList").value = text;
+    setStatus(`✅ Φορτώθηκε το αρχείο ${fileName} από το Google Drive!`, "green");
+
+  } catch (err) {
+    console.error(err);
+    setStatus("❌ Σφάλμα κατά τη φόρτωση από Drive!", "red");
   }
+}
 
-  const folderId = folderRes.result.files[0].id;
-  const fileRes = await gapi.client.drive.files.list({
-    q: `'${folderId}' in parents and trashed=false and mimeType='text/plain'`,
-    fields: "files(id, name, createdTime)",
-    orderBy: "createdTime desc",
-  });
-
-  const files = fileRes.result.files;
-  const historyDiv = document.getElementById("historyList");
-  const historyPanel = document.getElementById("historyPanel");
-  historyDiv.innerHTML = "";
-
-  if (!files.length) {
-    setStatus("⚠️ Δεν υπάρχουν αποθηκευμένα αρχεία!", "red");
-    historyPanel.style.display = "none";
-    return;
-  }
-
-  historyPanel.style.display = "block";
-  setStatus(`📂 Βρέθηκαν ${files.length} αποθηκευμένα αρχεία.`, "green");
-
-  files.forEach((f, i) => {
-    const date = new Date(f.createdTime).toLocaleString("el-GR");
-
-    const card = document.createElement("div");
-    card.style.cssText = `
-      background:#fff;
-      border:1px solid #ddd;
-      border-radius:10px;
-      padding:10px 12px;
-      width:220px;
-      text-align:center;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
-      transition:transform 0.3s ease, box-shadow 0.3s ease;
-      animation:fadeIn 0.4s ease forwards;
-      opacity:0;
-    `;
-    card.style.animationDelay = `${i * 0.08}s`;
-    card.innerHTML = `
-      <strong>${f.name}</strong><br>
-      <small>${date}</small><br>
-      <div style="margin-top:6px;">
-        <button class="btnLoad">📥 Φόρτωση</button>
-        <button class="btnDownload">⬇️</button>
-        <button class="btnDelete">🗑️</button>
-      </div>
-    `;
 
     // Fade-in animation
     card.addEventListener("animationend", () => { card.style.opacity = 1; });
@@ -762,10 +758,28 @@ async function safeGoogleRequest(fn, delay = 1500) {
     status.textContent = "";
   }
 }
+  function downloadList(withDuplicates = true) {
+  const text = document.getElementById("inputList").value.trim();
+  if (!text) {
+    setStatus("⚠️ Δεν υπάρχουν δεδομένα για κατέβασμα!", "red");
+    return;
+  }
+
+  const blob = new Blob([text], { type: "text/plain" });
+  const link = document.createElement("a");
+  const suffix = withDuplicates ? "_withDuplicates" : "_noDuplicates";
+  link.href = URL.createObjectURL(blob);
+  link.download = "FindMyDuplicates" + suffix + ".txt";
+  link.click();
+  URL.revokeObjectURL(link.href);
+  setStatus("⬇️ Το αρχείο κατέβηκε επιτυχώς!", "green");
+}
+
 
 </script>
 </body>
 </html>
+
 
 
 
