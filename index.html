@@ -747,10 +747,35 @@ function logoutGoogle(){
   setStatus("👋 Αποσυνδέθηκες από το Google Drive.", "orange");
 }
 
+        // ----- Σύστημα ελέγχου ρυθμού αιτημάτων προς Google -----
+let lastRequestTime = 0;
+
+async function safeGoogleRequest(fn, delay = 1500) {
+  const now = Date.now();
+  const elapsed = now - lastRequestTime;
+  if (elapsed < delay) {
+    await new Promise(r => setTimeout(r, delay - elapsed));
+  }
+  lastRequestTime = Date.now();
+  return await fn();
+}
+
+ async function setLoading(state) {
+  const status = document.getElementById("status");
+  if (state) {
+    status.textContent = "⏳ Επικοινωνία με Google...";
+    status.style.color = "orange";
+  } else {
+    status.textContent = "";
+  }
+}
+
+
 
 </script>
 </body>
 </html>
+
 
 
 
