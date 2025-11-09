@@ -442,7 +442,8 @@ function toggleTheme() {
 // Εφαρμογή αποθηκευμένου θέματος κατά την εκκίνηση
 window.addEventListener("DOMContentLoaded", async () => {
   const saved = localStorage.getItem("googleToken");
-  if (saved) {
+
+  if (saved && window.gapi && window.gapi.client) {
     const token = JSON.parse(saved);
     gapi.client.setToken(token);
     document.getElementById('saveDriveBtn').disabled = false;
@@ -450,11 +451,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     setStatus("✅ Επανασυνδέθηκες αυτόματα στο Google Drive!", "green");
   }
 
-  if (gapi && gapi.client) {
+  if (window.gapi && window.gapi.client) {
     await checkAndRefreshToken();
   } else {
     const timer = setInterval(async () => {
-      if (gapi && gapi.client) {
+      if (window.gapi && window.gapi.client) {
         clearInterval(timer);
         await checkAndRefreshToken();
       }
@@ -477,10 +478,10 @@ let gisInited = false;
 }
 
 async function initializeGapiClient() {
-  await safeGoogleRequest(() => gapi.client.init({
+  await gapi.client.init({
     apiKey: "", // optional, δεν χρειάζεται για απλή χρήση
     discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-  }));
+  });
   gapiInited = true;
 }
 
@@ -744,6 +745,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
