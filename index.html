@@ -489,7 +489,7 @@ let gisInited = false;
 }
 
 async function initializeGapiClient() {
-  await gapi.client.init({
+  await safeGoogleRequest(() => gapi.client.init({
     apiKey: "", // optional, δεν χρειάζεται για απλή χρήση
     discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
   });
@@ -593,7 +593,7 @@ async function saveToDrive() {
   const token = gapi.client.getToken();
 
   // Έλεγχος αν υπάρχει ήδη φάκελος
-  const folderRes = await gapi.client.drive.files.list({
+  const folderRes = await safeGoogleRequest(() => gapi.client.drive.files.list({
     q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
     fields: "files(id, name)",
   });
@@ -729,7 +729,7 @@ async function loadFromDrive() {
     const deleteBtn = card.querySelector(".btnDelete");
     deleteBtn.onclick = async () => {
       if (confirm(`Διαγραφή του αρχείου ${f.name};`)) {
-        await gapi.client.drive.files.delete({ fileId: f.id });
+       await safeGoogleRequest(() => gapi.client.drive.files.delete({ fileId: f.id });
         card.remove();
         setStatus(`🗑️ Διαγράφηκε το αρχείο ${f.name}`, "orange");
       }
@@ -775,6 +775,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
