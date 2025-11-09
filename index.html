@@ -200,6 +200,8 @@ section:hover {
 
 <body>
 
+        
+
   setStatus("✅ Έτοιμο για σύνδεση με Google!");
 
 <!-- Google Tag Manager (noscript) -->
@@ -458,6 +460,20 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById('loadDriveBtn').disabled = false;
     setStatus("✅ Επανασυνδέθηκες αυτόματα στο Google Drive!", "green");
   }
+ window.addEventListener("DOMContentLoaded", async () => {
+  if (gapi && gapi.client) {
+    await checkAndRefreshToken();
+  } else {
+    // Αν δεν έχει φορτώσει ακόμα το gapi.js, δοκίμασε ξανά μετά από λίγο
+    const timer = setInterval(async () => {
+      if (gapi && gapi.client) {
+        clearInterval(timer);
+        await checkAndRefreshToken();
+      }
+    }, 500);
+  }
+});
+
 });
 
 // ---------- GOOGLE DRIVE SYNC ----------
@@ -484,11 +500,52 @@ function gisLoaded() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
-    callback: '',
+    callback: (resp) => {
+      if (resp.error !== undefined) throw (resp);
+      // Αποθήκευση token & ώρας λήξης
+      const token = {
+        ...gapi.client.getToken(),
+        expires_at: Date.now() + 3600 * 1000 // +1 ώρα
+      };
+      localStorage.setItem("googleToken", JSON.stringify(token));
+      afterLogin();
+    },
   });
-  gisInited = true;
 }
 
+function afterLogin(){
+  document.getElementById('saveDriveBtn').disabled = false;
+  document.getElementById('loadDriveBtn').disabled = false;
+  document.getElementById('logoutBtn').style.display = "inline-block";
+  setStatus("✅ Συνδεδεμένη στο Google Drive!", "green");
+}
+
+async function checkAndRefreshToken(){
+  const saved = localStorage.getItem("googleToken");
+  if (!saved) return false;
+  const token = JSON.parse(saved);
+
+  // Αν λήγει σε λιγότερο από 5 λεπτά → ανανέωση
+  if (Date.now() > token.expires_at - 5*60*1000){
+    try {
+      console.log("🔄 Ανανεώνεται το token...");
+      tokenClient.requestAccessToken({ prompt: '' }); // χωρίς popup
+      return true;
+    } catch(e){
+      console.warn("❌ Αποτυχία ανανέωσης token", e);
+      localStorage.removeItem("googleToken");
+      setStatus("⚠️ Χρειάζεται επανασύνδεση στο Google.", "red");
+      return false;
+    }
+  } else {
+    // ακόμα έγκυρο
+    gapi.client.setToken(token);
+    afterLogin();
+    return true;
+  }
+}
+
+        
   function setStatus(msg, color="#ff9800"){
   const div=document.getElementById("statusMsg");
   div.style.color=color;
@@ -686,6 +743,7 @@ function logoutGoogle(){
   gapi.client.setToken(null);
   document.getElementById('saveDriveBtn').disabled = true;
   document.getElementById('loadDriveBtn').disabled = true;
+  document.getElementById('logoutBtn').style.display = "none";
   setStatus("👋 Αποσυνδέθηκες από το Google Drive.", "orange");
 }
 
@@ -693,6 +751,7 @@ function logoutGoogle(){
 </script>
 </body>
 </html>
+
 
 
 
