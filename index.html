@@ -252,8 +252,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   "></div>
 </div>
 
-</div>
-
 
   <!-- κουμπί Κατέβασε με dropdown -->
 <div class="dropdown" style="text-align:center;">
@@ -409,7 +407,6 @@ function switchLanguage(lang) {
   document.getElementById("inputList").placeholder = t.textareaPlaceholder;
   document.querySelector("label[for='columnSelect']").textContent = t.columnLabel;
   document.querySelector("button[onclick='processData()']").textContent = t.analyzeBtn;
-  document.getElementById("downloadBtn").textContent = "⬇️ " + t.downloadBtn;
   document.querySelector("footer").textContent = t.footer;
 
   localStorage.setItem("lang", lang);
@@ -577,20 +574,26 @@ function handleAuthClick() {
 // ----- Αποθήκευση σε φάκελο "FindMyDuplicates" -----
 async function saveToDrive() {
   const text = document.getElementById("inputList").value.trim();
-  if (!text){ setStatus("⚠️ Δεν υπάρχουν δεδομένα!", "red"); return; }
+  if (!text){ 
+    setStatus("⚠️ Δεν υπάρχουν δεδομένα!", "red"); 
+    return; 
+  }
   setStatus("⏳ Αποθήκευση στο Google Drive...");
+
   const folderName = "FindMyDuplicates";
   const token = gapi.client.getToken();
-}
+  if (!token) {
+    setStatus("⚠️ Δεν υπάρχει ενεργή σύνδεση!", "red");
+    return;
+  }
 
   // Έλεγχος αν υπάρχει ήδη φάκελος
   const folderRes = await safeGoogleRequest(() => 
-  gapi.client.drive.files.list({
-    q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
-    fields: "files(id, name)",
-  })
-);
-
+    gapi.client.drive.files.list({
+      q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
+      fields: "files(id, name)",
+    })
+  );
 
   let folderId;
   if (folderRes.result.files.length > 0) {
@@ -628,8 +631,11 @@ async function saveToDrive() {
     body: form,
   });
 
-  if (res.ok) setStatus(`☁️ Αποθηκεύτηκε το αρχείο ${fileName} στο φάκελο FindMyDuplicates!`, "green");
-  else setStatus("❌ Σφάλμα κατά την αποθήκευση!", "red");
+  if (res.ok) {
+    setStatus(`☁️ Αποθηκεύτηκε το αρχείο ${fileName} στο φάκελο FindMyDuplicates!`, "green");
+  } else {
+    setStatus("❌ Σφάλμα κατά την αποθήκευση!", "red");
+  }
 }
 
 // ----- Φόρτωση αρχείων από φάκελο "FindMyDuplicates" -----
@@ -729,7 +735,6 @@ async function safeGoogleRequest(fn, delay = 1500) {
   link.href = URL.createObjectURL(blob);
   link.download = "FindMyDuplicates" + suffix + ".txt";
   link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   setStatus("⬇️ Το αρχείο κατέβηκε επιτυχώς!", "green");
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 
@@ -739,6 +744,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
