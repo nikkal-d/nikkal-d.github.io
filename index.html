@@ -681,8 +681,10 @@ async function loadFromDrive() {
 
     // Δημιουργούμε λίστα με κουμπιά για κάθε αρχείο
     let listHTML = "<div id='driveFileList' style='position:fixed;top:20%;left:50%;transform:translateX(-50%);background:white;padding:20px;border-radius:12px;box-shadow:0 0 15px rgba(0,0,0,0.3);z-index:9999;max-height:60vh;overflow-y:auto'>";
-    listHTML += "<h3>📂 Επέλεξε αρχείο για φόρτωση</h3>";
-    listHTML += "<button onclick='document.getElementById(\"driveFileList\").remove()' style='float:right'>❌ Κλείσιμο</button><br>";
+    listHTML += "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;'>";
+listHTML += "<h3 style='margin:0'>📂 Επέλεξε αρχείο</h3>";
+listHTML += "<button onclick='document.getElementById(\"driveFileList\").remove()' style='background:#ff9800;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;'>❌ Κλείσιμο</button>";
+listHTML += "</div>";
 
     files.forEach(f => {
       listHTML += `<button style='margin:5px;display:block;width:100%' onclick='loadSpecificFile("${f.id}", "${f.name}")'>${f.name}</button>`;
@@ -759,6 +761,7 @@ async function safeGoogleRequest(fn, delay = 1500) {
 </script>
 </body>
 </html>
+
 
 
 
