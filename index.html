@@ -222,6 +222,50 @@ section:hover {
   background:#e68900;
 }
 
+  .top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 25px;
+  background: var(--header-bg, #fff);
+  color: var(--header-text, #333);
+  border-bottom: 1px solid #ccc;
+}
+
+.left-section h1 {
+  font-size: 22px;
+  color: #ff6600;
+  margin: 0;
+}
+
+.right-section {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.theme-btn, .info-button {
+  background-color: #ff6600;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 15px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.theme-btn:hover, .info-button:hover {
+  background-color: #e65500;
+}
+
+/* 🌗 Dark mode */
+body.dark-mode .top-bar {
+  --header-bg: #222;
+  --header-text: #eee;
+  border-bottom: 1px solid #444;
+}
+
 
 </style>
 
@@ -242,6 +286,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <option value="el">🇬🇷 EL</option>
     <option value="en">🇬🇧 EN</option>
   </select>
+</div>
+
+  <div class="top-bar">
+  <div class="left-section">
+    <h1>FindMyDuplicates</h1>
+  </div>
+
+  <div class="right-section">
+    <!-- Κουμπί Dark/Light -->
+    <button id="themeToggle" class="theme-btn">🌞</button>
+
+    <!-- Κουμπί Πώς Λειτουργεί -->
+    <button id="howItWorksBtn" class="info-button">❓ Πώς λειτουργεί</button>
+  </div>
 </div>
 
 
@@ -863,6 +921,7 @@ window.onclick=(e)=>{if(e.target===modal)modal.style.display="none";};
 
 </body>
 </html>
+
 
 
 
