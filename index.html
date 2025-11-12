@@ -791,8 +791,79 @@ async function safeGoogleRequest(fn, delay = 1500) {
 
 
 </script>
+
+
+  <!-- 🔹 Κουμπί Πώς Λειτουργεί -->
+<button id="howItWorksBtn" class="info-button">❓ Πώς λειτουργεί</button>
+
+<!-- 🔹 Modal Παράθυρο -->
+<div id="howItWorksModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>🔍 Πώς λειτουργεί το FindMyDuplicates</h2>
+    <ol>
+      <li><strong>Επικόλλησε ή φόρτωσε τη λίστα σου</strong> – Επικόλλησε δεδομένα ή φόρτωσε αρχείο από Google Drive.</li>
+      <li><strong>Πάτα “Έλεγχος για διπλότυπα”</strong> – Η εφαρμογή ελέγχει κάθε γραμμή/στήλη και εντοπίζει όσα επαναλαμβάνονται.</li>
+      <li><strong>Δες τα αποτελέσματα</strong> – Τα διπλότυπα εμφανίζονται με κόκκινη επισήμανση, και στη δεξιά λίστα φαίνονται συγκεντρωμένα.</li>
+      <li><strong>Κατέβασε ή επεξεργάσου</strong> – Διόρθωσε ή αποθήκευσε τη νέα καθαρή λίστα σου.</li>
+    </ol>
+    <p><em>Υποστηρίζεται Google Drive, Light/Dark mode και δίγλωσση διεπαφή.</em></p>
+    <hr>
+    <h2>🌐 How FindMyDuplicates Works</h2>
+    <ol>
+      <li><strong>Paste or upload your list</strong> – Paste data directly or load from Google Drive.</li>
+      <li><strong>Click “Check for duplicates”</strong> – The app scans each row/column and finds repetitions.</li>
+      <li><strong>See results</strong> – Duplicates appear in red and are listed clearly on the right.</li>
+      <li><strong>Edit or download</strong> – Remove or save your cleaned list easily.</li>
+    </ol>
+    <p><em>Supports Google Drive, Light/Dark mode and bilingual UI.</em></p>
+  </div>
+</div>
+
+<!-- 🔹 CSS -->
+<style>
+.info-button {
+  background-color:#ff6600;color:#fff;border:none;border-radius:10px;
+  padding:10px 20px;font-size:16px;cursor:pointer;transition:0.3s;
+}
+.info-button:hover{background-color:#e65500;}
+
+.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;
+  background-color:rgba(0,0,0,0.6);}
+.modal-content{
+  background-color:var(--modal-bg,#fff);
+  color:var(--modal-text,#333);
+  margin:8% auto;padding:20px 30px;border-radius:12px;
+  width:90%;max-width:700px;line-height:1.6;
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:background-color .3s,color .3s;
+}
+.modal-content h2{color:#ff6600;}
+.modal-content ol{padding-left:20px;}
+.close{float:right;font-size:24px;cursor:pointer;color:var(--modal-text,#333);}
+.close:hover{color:#ff6600;}
+
+/* 🌗 Dark mode */
+body.dark-mode .modal-content{
+  --modal-bg:#222;
+  --modal-text:#eee;
+}
+body.dark-mode .close{color:#eee;}
+</style>
+
+<!-- 🔹 JavaScript -->
+<script>
+const modal=document.getElementById("howItWorksModal");
+const btn=document.getElementById("howItWorksBtn");
+const span=document.querySelector(".close");
+
+btn.onclick=()=>modal.style.display="block";
+span.onclick=()=>modal.style.display="none";
+window.onclick=(e)=>{if(e.target===modal)modal.style.display="none";};
+</script>
+
 </body>
 </html>
+
 
 
 
