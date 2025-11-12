@@ -292,12 +292,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <header>FindMyDuplicates</header>
 
-  <div style="text-align:right;margin:10px 20px;">
-  <button id="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
-  <select id="langSelect" onchange="switchLanguage(this.value)">
-    <option value="el">🇬🇷 EL</option>
-    <option value="en">🇬🇧 EN</option>
-  </select>
+  
 </div>
 
   <div class="top-bar">
@@ -311,6 +306,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- Κουμπί Πώς Λειτουργεί -->
     <button id="howItWorksBtn" class="info-button">❓ Πώς λειτουργεί</button>
+    <select id="langSelect" onchange="switchLanguage(this.value)">
+    <option value="el">🇬🇷 EL</option>
+    <option value="en">🇬🇧 EN</option>
+  </select>
   </div>
 </div>
 
@@ -933,6 +932,7 @@ window.onclick=(e)=>{if(e.target===modal)modal.style.display="none";};
 
 </body>
 </html>
+
 
 
 
