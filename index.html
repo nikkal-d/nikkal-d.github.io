@@ -537,7 +537,7 @@
         columnLabel: "Έλεγχος διπλοτύπων στη στήλη:",
         analyzeBtn: "Ανάλυση",
         dataSection: "Δεδομένα",
-        dupSection: "Αναφορές διπλοτύπων",
+        dupSection: "Αναφορές διπλότυπων",
         loginBtn: "🔐 Σύνδεση με Google",
         saveDriveBtn: "☁️ Αποθήκευση στο Drive",
         loadDriveBtn: "📂 Φόρτωση από Drive",
@@ -607,7 +607,6 @@
     function switchLanguage(lang) {
       applyLanguage(lang);
       localStorage.setItem("lang", lang);
-      // ξαναγράφουμε headers στη γλώσσα
       renderTable(tableData);
     }
 
@@ -617,7 +616,7 @@
         .trim()
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, ""); // βγάζει τόνους
+        .replace(/[\u0300-\u036f]/g, "");
     }
 
     // ----------------- TABLE / ANALYSIS -----------------
@@ -646,7 +645,7 @@
 
       document.getElementById("duplicatesList").textContent = "";
       document.querySelectorAll("section").forEach(s => s.classList.add("fade-in"));
-      analyzeColumn(); // κάνει ανάλυση αμέσως (αν δεν έχει στήλη → auto-row mode)
+      analyzeColumn();
     }
 
     function renderTable(data) {
@@ -703,7 +702,6 @@
       const bodyRows = document.querySelectorAll("#dataTable tbody tr");
 
       if (col === "") {
-        // AUTO MODE – έλεγχος διπλοτύπων σε ολόκληρες γραμμές
         const seen = {};
         const dups = [];
         tableData.forEach((row, i) => {
@@ -736,13 +734,12 @@
         return;
       }
 
-      // MODE ανά στήλη
       const colIndex = parseInt(col, 10);
       const seen = {};
       const dups = [];
 
       bodyRows.forEach((tr, rowIndex) => {
-        const cell = tr.children[colIndex + 1]; // +1 λόγω στήλης index
+        const cell = tr.children[colIndex + 1];
         if (!cell) return;
         const val = normalizeValue(cell.textContent);
         if (!val) return;
@@ -770,7 +767,7 @@
       }
     }
 
-    // ----------------- LOCAL FILE IMPORT (TXT / CSV / EXCEL) -----------------
+    // ----------------- LOCAL FILE IMPORT -----------------
     function loadFromLocalFile() {
       const input = document.getElementById("fileInput");
       if (!input.files || !input.files[0]) {
@@ -954,7 +951,6 @@
       }
       setStatus(msg, "green");
 
-      // κλείνουμε το μενού
       const menu = document.getElementById("advancedMenu");
       if (menu) menu.style.display = "none";
     }
@@ -975,7 +971,7 @@
     }
 
     // ----------------- GOOGLE DRIVE -----------------
-    const CLIENT_ID = "7674481557-tr33gquj964b83jorc7lr8vahjrde34o.apps.googleusercontent.com";
+    const CLIENT_ID = "7674481557-sj07ang21ap523vf4qkr4e3nadkjk8de.apps.googleusercontent.com";
     const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email openid";
 
     let tokenClient;
@@ -983,17 +979,23 @@
     let gisInited = false;
 
     function gapiLoaded() {
+      if (!window.gapi) return;
       gapi.load("client", initializeGapiClient);
     }
 
     async function initializeGapiClient() {
-      await gapi.client.init({
-        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-      });
-      gapiInited = true;
+      try {
+        await gapi.client.init({
+          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+        });
+        gapiInited = true;
+      } catch (e) {
+        console.error("GAPI init error", e);
+      }
     }
 
     function gisLoaded() {
+      if (!window.google || !google.accounts || !google.accounts.oauth2) return;
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
@@ -1002,11 +1004,22 @@
       gisInited = true;
     }
 
+    // έξτρα fallback σε περίπτωση που τα onload δεν παίξουν τέλεια
+    function tryInitApisFallback() {
+      if (!gapiInited && window.gapi) {
+        gapiLoaded();
+      }
+      if (!gisInited && window.google && window.google.accounts && window.google.accounts.oauth2) {
+        gisLoaded();
+      }
+    }
+
     function handleAuthClick() {
       if (!gapiInited || !gisInited) {
         setStatus(currentLang === "el"
           ? "⏳ Το Google API φορτώνει... δοκίμασε ξανά σε λίγο."
           : "⏳ Google API is loading... please try again.", "red");
+        tryInitApisFallback();
         return;
       }
 
@@ -1297,7 +1310,6 @@
 
     // ----------------- INIT -----------------
     window.addEventListener("DOMContentLoaded", () => {
-      // Γλώσσα: πρώτα από localStorage, αλλιώς από browser
       const savedLang = localStorage.getItem("lang");
       let initialLang = savedLang;
       if (!initialLang) {
@@ -1311,23 +1323,26 @@
         switchLanguage(e.target.value);
       });
 
-      // Theme
       applyThemeFromStorage();
       document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 
-      // Modal
       initHowItWorksModal();
-
-      // Advanced menu
       initAdvancedMenu();
 
-      // Προσπάθεια για auto reconnect στο Drive
+      // fallback προσπάθεια για init των APIs
+      const apiInterval = setInterval(() => {
+        tryInitApisFallback();
+        if (gapiInited && gisInited) {
+          clearInterval(apiInterval);
+        }
+      }, 500);
+
       const reconnectInterval = setInterval(() => {
         if (gapiInited) {
           clearInterval(reconnectInterval);
           tryAutoReconnect();
         }
-      }, 500);
+      }, 800);
     });
   </script>
 </body>
