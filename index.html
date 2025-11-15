@@ -20,22 +20,28 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://nikkal-d.github.io/">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="fmd-icon.png">
+
   <!-- Social Sharing -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="FindMyDuplicates – Βρες εύκολα διπλότυπα ονόματα ή αριθμούς!">
   <meta property="og:description" content="Δωρεάν online εργαλείο που εντοπίζει διπλότυπα σε λίστες και αποθηκεύει στο Google Drive. Εύκολο, γρήγορο, δίγλωσσο.">
-  <meta property="og:image" content="https://nikkal-d.github.io/favicon.png">
+  <meta property="og:image" content="https://nikkal-d.github.io/fmd-icon.png">
   <meta property="og:url" content="https://nikkal-d.github.io/">
   <meta property="og:site_name" content="FindMyDuplicates">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="FindMyDuplicates – Free Duplicate Finder">
   <meta name="twitter:description" content="Find duplicate names or numbers online. Save your lists to Google Drive. Free & bilingual!">
-  <meta name="twitter:image" content="https://nikkal-d.github.io/favicon.png">
+  <meta name="twitter:image" content="https://nikkal-d.github.io/fmd-icon.png">
 
   <!-- Google API + Identity Services -->
   <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+
+  <!-- SheetJS για Excel import -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     :root {
@@ -201,6 +207,10 @@
       transform: scale(1.03);
     }
 
+    input[type="file"] {
+      margin-top: 8px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -345,10 +355,6 @@
 </head>
 
 <body>
-  <!-- (προαιρετικό) GTM noscript αν το χρειάζεσαι -->
-  <!-- <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PZ2ZH59T"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> -->
-
   <header id="mainHeader">FindMyDuplicates</header>
 
   <div class="top-bar">
@@ -367,9 +373,18 @@
 
   <div style="text-align:center;margin:15px;">
     <textarea id="inputList" placeholder="Επικόλλησε δεδομένα από Excel ή CSV..."></textarea><br>
+
+    <div style="margin-top:8px;">
+      <input type="file" id="fileInput" accept=".txt,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+      <button class="action" onclick="loadFromLocalFile()">
+        📂 Φόρτωση αρχείου (TXT / CSV / Excel)
+      </button>
+    </div>
+
+    <br>
     <label id="columnLabel" for="columnSelect">Έλεγχος διπλοτύπων στη στήλη:</label>
     <select id="columnSelect">
-      <option value="">-- επιλέξτε --</option>
+      <option value="">--</option>
     </select>
     <button id="analyzeBtn" class="action" onclick="processData()">Ανάλυση</button>
   </div>
@@ -410,21 +425,21 @@
       <span class="close">&times;</span>
       <h2>🔍 Πώς λειτουργεί το FindMyDuplicates</h2>
       <ol>
-        <li><strong>Επικόλλησε ή φόρτωσε τη λίστα σου</strong> – Επικόλλησε δεδομένα ή φόρτωσε αρχείο από Google Drive.</li>
-        <li><strong>Πάτα “Ανάλυση” και επίλεξε στήλη</strong> – Η εφαρμογή ελέγχει τη στήλη που επέλεξες και εντοπίζει όσα επαναλαμβάνονται.</li>
+        <li><strong>Επικόλλησε ή φόρτωσε τη λίστα σου</strong> – Επικόλλησε δεδομένα ή φόρτωσε αρχείο από Google Drive ή από αρχείο Excel/CSV.</li>
+        <li><strong>Πάτα “Ανάλυση”</strong> – Αν δεν επιλέξεις στήλη, η εφαρμογή ψάχνει αυτόματα για διπλότυπες γραμμές. Αν επιλέξεις στήλη, ψάχνει διπλότυπες τιμές μόνο εκεί.</li>
         <li><strong>Δες τα αποτελέσματα</strong> – Τα διπλότυπα υπογραμμίζονται με κόκκινο στον πίνακα και εμφανίζονται στη δεξιά λίστα.</li>
-        <li><strong>Κατέβασε ή αποθήκευσε</strong> – Μπορείς να κατεβάσεις τη λίστα ή να την αποθηκεύσεις στο Google Drive.</li>
+        <li><strong>Κατέβασε ή αποθήκευσε</strong> – Μπορείς να κατεβάσεις τη λίστα σου ή να την αποθηκεύσεις στο Google Drive.</li>
       </ol>
-      <p><em>Υποστηρίζεται Google Drive, Light/Dark mode και δίγλωσση διεπαφή.</em></p>
+      <p><em>Υποστηρίζεται Google Drive, Light/Dark mode, εισαγωγή Excel και δίγλωσση διεπαφή.</em></p>
       <hr>
       <h2>🌐 How FindMyDuplicates Works</h2>
       <ol>
-        <li><strong>Paste or load your list</strong> – Paste data or load a file from Google Drive.</li>
-        <li><strong>Click “Analyze” and choose a column</strong> – The app checks that column and finds repeated values.</li>
+        <li><strong>Paste or load your list</strong> – Paste data, load from Google Drive, or import a local Excel/CSV/TXT file.</li>
+        <li><strong>Click “Analyze”</strong> – If no column is selected, the app looks for duplicate rows. If you pick a column, it looks for duplicate values only in that column.</li>
         <li><strong>View the results</strong> – Duplicates are underlined in red and listed on the right panel.</li>
         <li><strong>Download or save</strong> – Download your list or save it back to Google Drive.</li>
       </ol>
-      <p><em>Supports Google Drive, Light/Dark mode and bilingual UI.</em></p>
+      <p><em>Supports Google Drive, Light/Dark mode, Excel import and bilingual UI.</em></p>
     </div>
   </div>
 
@@ -450,7 +465,8 @@
         downloadWithout: "⬇️ Κατέβασε χωρίς διπλότυπα",
         noDuplicates: "✅ Δεν βρέθηκαν διπλότυπα.",
         footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi",
-        howBtn: "❓ Πώς λειτουργεί"
+        howBtn: "❓ Πώς λειτουργεί",
+        fileButton: "📂 Φόρτωση αρχείου (TXT / CSV / Excel)"
       },
       en: {
         header: "FindMyDuplicates",
@@ -468,7 +484,8 @@
         downloadWithout: "⬇️ Download without duplicates",
         noDuplicates: "✅ No duplicates found.",
         footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi",
-        howBtn: "❓ How it works"
+        howBtn: "❓ How it works",
+        fileButton: "📂 Load file (TXT / CSV / Excel)"
       }
     };
 
@@ -491,6 +508,7 @@
       document.getElementById("downloadWithoutBtn").textContent = t.downloadWithout;
       document.getElementById("footerText").textContent = t.footer;
       document.getElementById("howItWorksBtn").textContent = t.howBtn;
+      document.querySelector("button[onclick='loadFromLocalFile()']").textContent = t.fileButton;
     }
 
     function switchLanguage(lang) {
@@ -498,11 +516,20 @@
       localStorage.setItem("lang", lang);
     }
 
+    // ----------------- HELPERS -----------------
+    function normalizeValue(val) {
+      return val
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, ""); // βγάζει τόνους
+    }
+
     // ----------------- TABLE / ANALYSIS -----------------
     function processData() {
       const text = document.getElementById("inputList").value.trim();
       if (!text) {
-        alert(currentLang === "el" ? "Επικόλλησε πρώτα δεδομένα!" : "Paste some data first!");
+        alert(currentLang === "el" ? "Επικόλλησε πρώτα δεδομένα ή φόρτωσε αρχείο!" : "Paste some data or load a file first!");
         return;
       }
 
@@ -524,6 +551,7 @@
 
       document.getElementById("duplicatesList").textContent = "";
       document.querySelectorAll("section").forEach(s => s.classList.add("fade-in"));
+      analyzeColumn(); // κάνει ανάλυση αμέσως (αν δεν έχει στήλη → auto-row mode)
     }
 
     function renderTable(data) {
@@ -535,7 +563,6 @@
 
       if (!data.length) return;
 
-      // Δημιουργούμε generic header
       const headerRow = document.createElement("tr");
       data[0].forEach((_, i) => {
         const th = document.createElement("th");
@@ -561,13 +588,47 @@
       const col = document.getElementById("columnSelect").value;
       const t = translations[currentLang];
 
-      // Καθαρίζουμε προηγούμενα highlights
       document.querySelectorAll("#dataTable td").forEach(td => td.classList.remove("dup"));
-      document.getElementById("duplicatesList").textContent = "";
+      const dupDiv = document.getElementById("duplicatesList");
+      dupDiv.textContent = "";
 
-      if (col === "") return;
+      if (!tableData.length) return;
+
+      if (col === "") {
+        // AUTO MODE – έλεγχος διπλοτύπων σε ολόκληρες γραμμές
+        const seen = {};
+        const dups = [];
+        tableData.forEach((row, i) => {
+          const norm = row.map(normalizeValue).join("||");
+          if (seen[norm] !== undefined) {
+            dups.push([seen[norm], i]);
+          } else {
+            seen[norm] = i;
+          }
+        });
+
+        const bodyRows = document.querySelectorAll("#dataTable tbody tr");
+        dups.forEach(pair => {
+          const [r1, r2] = pair;
+          bodyRows[r1].querySelectorAll("td").forEach(td => td.classList.add("dup"));
+          bodyRows[r2].querySelectorAll("td").forEach(td => td.classList.add("dup"));
+        });
+
+        if (!dups.length) {
+          dupDiv.textContent = t.noDuplicates;
+        } else {
+          dupDiv.textContent = dups
+            .map(pair => currentLang === "el"
+              ? `🔴 Η σειρά ${pair[0] + 1} με τη σειρά ${pair[1] + 1} είναι ίδιες (ολόκληρη γραμμή).`
+              : `🔴 Row ${pair[0] + 1} and row ${pair[1] + 1} are identical (whole row).`
+            )
+            .join("\n");
+        }
+        return;
+      }
+
+      // MODE ανά στήλη
       const colIndex = parseInt(col, 10);
-
       const bodyRows = document.querySelectorAll("#dataTable tbody tr");
       const seen = {};
       const dups = [];
@@ -575,7 +636,7 @@
       bodyRows.forEach((tr, rowIndex) => {
         const cell = tr.children[colIndex];
         if (!cell) return;
-        const val = cell.textContent.trim();
+        const val = normalizeValue(cell.textContent);
         if (!val) return;
 
         if (seen[val] !== undefined) {
@@ -588,17 +649,54 @@
         }
       });
 
-      const dupDiv = document.getElementById("duplicatesList");
       if (!dups.length) {
         dupDiv.textContent = t.noDuplicates;
       } else {
-        dupDiv.textContent = dups.map(pair => {
-          if (currentLang === "el") {
-            return `🔴 Η σειρά ${pair[0] + 1} με τη σειρά ${pair[1] + 1} είναι ίδιες.`;
-          } else {
-            return `🔴 Row ${pair[0] + 1} and row ${pair[1] + 1} are duplicates.`;
-          }
-        }).join("\n");
+        dupDiv.textContent = dups
+          .map(pair => currentLang === "el"
+            ? `🔴 Η σειρά ${pair[0] + 1} με τη σειρά ${pair[1] + 1} έχουν διπλότυπη τιμή στη στήλη ${colIndex + 1}.`
+            : `🔴 Row ${pair[0] + 1} and row ${pair[1] + 1} have a duplicate value in column ${colIndex + 1}.`
+          )
+          .join("\n");
+      }
+    }
+
+    // ----------------- LOCAL FILE IMPORT (TXT / CSV / EXCEL) -----------------
+    function loadFromLocalFile() {
+      const input = document.getElementById("fileInput");
+      if (!input.files || !input.files[0]) {
+        alert(currentLang === "el" ? "Επίλεξε πρώτα ένα αρχείο!" : "Please choose a file first!");
+        return;
+      }
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      const isExcel = /sheet|excel/i.test(file.type) || /\.(xls|xlsx)$/i.test(file.name);
+      const isText = /text|csv/i.test(file.type) || /\.(txt|csv)$/i.test(file.name);
+
+      if (isText) {
+        reader.onload = e => {
+          document.getElementById("inputList").value = e.target.result;
+          processData();
+        };
+        reader.readAsText(file);
+      } else if (isExcel) {
+        reader.onload = e => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          // Μετατρέπουμε σε text με tabs
+          const text = json.map(row => row.join("\t")).join("\n");
+          document.getElementById("inputList").value = text;
+          processData();
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        alert(currentLang === "el"
+          ? "Υποστηρίζονται μόνο TXT, CSV ή Excel αρχεία."
+          : "Only TXT, CSV or Excel files are supported.");
       }
     }
 
@@ -624,8 +722,7 @@
       const div = document.getElementById("statusMsg");
       if (!div) return;
       div.textContent = msg;
-      if (color) div.style.color = color;
-      else div.style.color = "#ff9800";
+      div.style.color = color || "#ff9800";
     }
 
     // ----------------- DOWNLOAD -----------------
@@ -637,7 +734,6 @@
       }
 
       if (!withDuplicates && tableData.length) {
-        // Καθαρή λίστα: αφαιρούμε διπλές γραμμές
         const seen = new Set();
         const cleaned = [];
         tableData.forEach(row => {
@@ -737,8 +833,7 @@
 
     async function tryAutoReconnect() {
       const saved = localStorage.getItem("googleToken");
-      if (!saved) return;
-      if (!gapiInited) return;
+      if (!saved || !gapiInited) return;
 
       const token = JSON.parse(saved);
       if (token.expires_at && Date.now() < token.expires_at) {
@@ -777,7 +872,6 @@
       try {
         const folderName = "FindMyDuplicates";
 
-        // Βρίσκουμε ή δημιουργούμε φάκελο
         const folderRes = await gapi.client.drive.files.list({
           q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
           fields: "files(id, name)",
@@ -868,7 +962,6 @@
           return;
         }
 
-        // Δημιουργούμε popup επιλογής αρχείου
         const existing = document.getElementById("driveFileList");
         if (existing) existing.remove();
 
@@ -878,7 +971,8 @@
         container.style.top = "20%";
         container.style.left = "50%";
         container.style.transform = "translateX(-50%)";
-        container.style.background = "#fff";
+        container.style.background = document.body.classList.contains("dark") ? "#222" : "#fff";
+        container.style.color = document.body.classList.contains("dark") ? "#eee" : "#333";
         container.style.padding = "20px";
         container.style.borderRadius = "12px";
         container.style.boxShadow = "0 0 15px rgba(0,0,0,0.3)";
@@ -886,11 +980,6 @@
         container.style.maxHeight = "60vh";
         container.style.overflowY = "auto";
         container.style.minWidth = "260px";
-
-        if (document.body.classList.contains("dark")) {
-          container.style.background = "#222";
-          container.style.color = "#eee";
-        }
 
         const titleBar = document.createElement("div");
         titleBar.style.display = "flex";
@@ -951,7 +1040,6 @@
           ? `✅ Φορτώθηκε το αρχείο ${fileName} από το Google Drive!`
           : `✅ File ${fileName} loaded from Google Drive!`, "green");
         if (container) container.remove();
-        // Ξανακάνουμε ανάλυση/στήλες
         processData();
       } catch (err) {
         console.error(err);
@@ -995,10 +1083,15 @@
 
     // ----------------- INIT -----------------
     window.addEventListener("DOMContentLoaded", () => {
-      // Γλώσσα
-      const savedLang = localStorage.getItem("lang") || "el";
-      document.getElementById("langSelect").value = savedLang;
-      applyLanguage(savedLang);
+      // Γλώσσα: πρώτα από localStorage, αλλιώς από browser
+      const savedLang = localStorage.getItem("lang");
+      let initialLang = savedLang;
+      if (!initialLang) {
+        const navLang = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+        initialLang = navLang.startsWith("el") ? "el" : "en";
+      }
+      document.getElementById("langSelect").value = initialLang;
+      applyLanguage(initialLang);
 
       document.getElementById("langSelect").addEventListener("change", (e) => {
         switchLanguage(e.target.value);
