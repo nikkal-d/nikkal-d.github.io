@@ -231,6 +231,15 @@
       border-color: #444;
     }
 
+    th.row-index {
+      width: 40px;
+      text-align: center;
+    }
+    td.row-index {
+      text-align: center;
+      font-weight: 600;
+    }
+
     .dup {
       text-decoration: underline;
       text-decoration-color: red;
@@ -276,6 +285,57 @@
     .download-bar {
       text-align: center;
       margin: 10px 0;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .advanced-download {
+      position: relative;
+      display: inline-block;
+    }
+
+    .advanced-menu {
+      display: none;
+      position: absolute;
+      top: 110%;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 999;
+      min-width: 260px;
+      overflow: hidden;
+    }
+
+    .advanced-menu button {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+
+    .advanced-menu button:hover {
+      background: #f2f2f2;
+    }
+
+    body.dark .advanced-menu {
+      background: #222;
+      border-color: #444;
+    }
+
+    body.dark .advanced-menu button {
+      background: #222;
+      color: #eee;
+    }
+
+    body.dark .advanced-menu button:hover {
+      background: #333;
     }
 
     /* Modal (How it works) */
@@ -400,7 +460,16 @@
 
   <div class="download-bar">
     <button id="downloadWithBtn" class="action" onclick="downloadList(true)">⬇️ Κατέβασε με διπλότυπα</button>
-    <button id="downloadWithoutBtn" class="action" onclick="downloadList(false)">⬇️ Κατέβασε χωρίς διπλότυπα</button>
+    <button id="downloadWithoutBtn" class="action" onclick="downloadList(false)">⬇️ Κατέβασε χωρίς διπλότυπα (γραμμή)</button>
+
+    <div class="advanced-download">
+      <button id="advancedDownloadBtn" class="action">🧹 Προηγμένο κατέβασμα</button>
+      <div id="advancedMenu" class="advanced-menu">
+        <button id="advRow" onclick="downloadClean('row')">Χωρίς διπλότυπα (ολόκληρη γραμμή)</button>
+        <button id="advCol" onclick="downloadClean('column')">Χωρίς διπλότυπα (ανά στήλη)</button>
+        <button id="advAny" onclick="downloadClean('any')">Χωρίς διπλότυπα (οποιαδήποτε κοινή τιμή)</button>
+      </div>
+    </div>
   </div>
 
   <main>
@@ -425,11 +494,17 @@
       <span class="close">&times;</span>
       <h2>🔍 Πώς λειτουργεί το FindMyDuplicates</h2>
       <ol>
-        <li><strong>Επικόλλησε ή φόρτωσε τη λίστα σου</strong> – Επικόλλησε δεδομένα ή φόρτωσε αρχείο από Google Drive ή από αρχείο Excel/CSV.</li>
+        <li><strong>Επικόλλησε ή φόρτωσε τη λίστα σου</strong> – Επικόλλησε δεδομένα, φόρτωσε αρχείο από Google Drive ή από τοπικό αρχείο (Excel/CSV/TXT).</li>
         <li><strong>Πάτα “Ανάλυση”</strong> – Αν δεν επιλέξεις στήλη, η εφαρμογή ψάχνει αυτόματα για διπλότυπες γραμμές. Αν επιλέξεις στήλη, ψάχνει διπλότυπες τιμές μόνο εκεί.</li>
         <li><strong>Δες τα αποτελέσματα</strong> – Τα διπλότυπα υπογραμμίζονται με κόκκινο στον πίνακα και εμφανίζονται στη δεξιά λίστα.</li>
         <li><strong>Κατέβασε ή αποθήκευσε</strong> – Μπορείς να κατεβάσεις τη λίστα σου ή να την αποθηκεύσεις στο Google Drive.</li>
       </ol>
+      <p><strong>Προηγμένο κατέβασμα:</strong></p>
+      <ul>
+        <li><strong>Ολόκληρη γραμμή:</strong> αφαιρεί μόνο γραμμές που είναι απολύτως ίδιες.</li>
+        <li><strong>Ανά στήλη:</strong> αφαιρεί γραμμές που έχουν την ίδια τιμή στην επιλεγμένη στήλη (π.χ. ίδιο email), ακόμη κι αν τα άλλα πεδία διαφέρουν.</li>
+        <li><strong>Οποιαδήποτε κοινή τιμή:</strong> αφαιρεί γραμμές που μοιράζονται οποιοδήποτε κοινό στοιχείο (όνομα/τηλέφωνο/email) με προηγούμενη γραμμή.</li>
+      </ul>
       <p><em>Υποστηρίζεται Google Drive, Light/Dark mode, εισαγωγή Excel και δίγλωσση διεπαφή.</em></p>
       <hr>
       <h2>🌐 How FindMyDuplicates Works</h2>
@@ -439,6 +514,12 @@
         <li><strong>View the results</strong> – Duplicates are underlined in red and listed on the right panel.</li>
         <li><strong>Download or save</strong> – Download your list or save it back to Google Drive.</li>
       </ol>
+      <p><strong>Advanced download:</strong></p>
+      <ul>
+        <li><strong>Entire row:</strong> removes only rows that match 100%.</li>
+        <li><strong>By column:</strong> removes rows that share the same value in the selected column (e.g. same email), even if other fields differ.</li>
+        <li><strong>Any shared value:</strong> removes rows that share any value (name/phone/email) with a previous row.</li>
+      </ul>
       <p><em>Supports Google Drive, Light/Dark mode, Excel import and bilingual UI.</em></p>
     </div>
   </div>
@@ -462,7 +543,11 @@
         loadDriveBtn: "📂 Φόρτωση από Drive",
         logoutBtn: "🚪 Αποσύνδεση",
         downloadWith: "⬇️ Κατέβασε με διπλότυπα",
-        downloadWithout: "⬇️ Κατέβασε χωρίς διπλότυπα",
+        downloadWithout: "⬇️ Κατέβασε χωρίς διπλότυπα (γραμμή)",
+        advBtn: "🧹 Προηγμένο κατέβασμα",
+        advRow: "Χωρίς διπλότυπα (ολόκληρη γραμμή)",
+        advCol: "Χωρίς διπλότυπα (ανά στήλη)",
+        advAny: "Χωρίς διπλότυπα (οποιαδήποτε κοινή τιμή)",
         noDuplicates: "✅ Δεν βρέθηκαν διπλότυπα.",
         footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi",
         howBtn: "❓ Πώς λειτουργεί",
@@ -481,7 +566,11 @@
         loadDriveBtn: "📂 Load from Drive",
         logoutBtn: "🚪 Sign out",
         downloadWith: "⬇️ Download with duplicates",
-        downloadWithout: "⬇️ Download without duplicates",
+        downloadWithout: "⬇️ Download without duplicates (row)",
+        advBtn: "🧹 Advanced download",
+        advRow: "Remove duplicates (entire row)",
+        advCol: "Remove duplicates (by column)",
+        advAny: "Remove duplicates (any shared value)",
         noDuplicates: "✅ No duplicates found.",
         footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi",
         howBtn: "❓ How it works",
@@ -509,11 +598,17 @@
       document.getElementById("footerText").textContent = t.footer;
       document.getElementById("howItWorksBtn").textContent = t.howBtn;
       document.querySelector("button[onclick='loadFromLocalFile()']").textContent = t.fileButton;
+      document.getElementById("advancedDownloadBtn").textContent = t.advBtn;
+      document.getElementById("advRow").textContent = t.advRow;
+      document.getElementById("advCol").textContent = t.advCol;
+      document.getElementById("advAny").textContent = t.advAny;
     }
 
     function switchLanguage(lang) {
       applyLanguage(lang);
       localStorage.setItem("lang", lang);
+      // ξαναγράφουμε headers στη γλώσσα
+      renderTable(tableData);
     }
 
     // ----------------- HELPERS -----------------
@@ -564,6 +659,11 @@
       if (!data.length) return;
 
       const headerRow = document.createElement("tr");
+      const thIndex = document.createElement("th");
+      thIndex.textContent = "#";
+      thIndex.classList.add("row-index");
+      headerRow.appendChild(thIndex);
+
       data[0].forEach((_, i) => {
         const th = document.createElement("th");
         th.textContent = (currentLang === "el" ? "Στήλη " : "Column ") + (i + 1);
@@ -571,8 +671,14 @@
       });
       head.appendChild(headerRow);
 
-      data.forEach(row => {
+      data.forEach((row, idx) => {
         const tr = document.createElement("tr");
+
+        const tdIndex = document.createElement("td");
+        tdIndex.textContent = idx + 1;
+        tdIndex.classList.add("row-index");
+        tr.appendChild(tdIndex);
+
         row.forEach(cell => {
           const td = document.createElement("td");
           td.textContent = cell;
@@ -594,6 +700,8 @@
 
       if (!tableData.length) return;
 
+      const bodyRows = document.querySelectorAll("#dataTable tbody tr");
+
       if (col === "") {
         // AUTO MODE – έλεγχος διπλοτύπων σε ολόκληρες γραμμές
         const seen = {};
@@ -607,11 +715,12 @@
           }
         });
 
-        const bodyRows = document.querySelectorAll("#dataTable tbody tr");
         dups.forEach(pair => {
           const [r1, r2] = pair;
-          bodyRows[r1].querySelectorAll("td").forEach(td => td.classList.add("dup"));
-          bodyRows[r2].querySelectorAll("td").forEach(td => td.classList.add("dup"));
+          const tr1 = bodyRows[r1];
+          const tr2 = bodyRows[r2];
+          tr1.querySelectorAll("td:not(.row-index)").forEach(td => td.classList.add("dup"));
+          tr2.querySelectorAll("td:not(.row-index)").forEach(td => td.classList.add("dup"));
         });
 
         if (!dups.length) {
@@ -629,12 +738,11 @@
 
       // MODE ανά στήλη
       const colIndex = parseInt(col, 10);
-      const bodyRows = document.querySelectorAll("#dataTable tbody tr");
       const seen = {};
       const dups = [];
 
       bodyRows.forEach((tr, rowIndex) => {
-        const cell = tr.children[colIndex];
+        const cell = tr.children[colIndex + 1]; // +1 λόγω στήλης index
         if (!cell) return;
         const val = normalizeValue(cell.textContent);
         if (!val) return;
@@ -643,7 +751,8 @@
           const firstIndex = seen[val];
           dups.push([firstIndex, rowIndex]);
           cell.classList.add("dup");
-          bodyRows[firstIndex].children[colIndex].classList.add("dup");
+          const firstCell = bodyRows[firstIndex].children[colIndex + 1];
+          if (firstCell) firstCell.classList.add("dup");
         } else {
           seen[val] = rowIndex;
         }
@@ -687,7 +796,6 @@
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          // Μετατρέπουμε σε text με tabs
           const text = json.map(row => row.join("\t")).join("\n");
           document.getElementById("inputList").value = text;
           processData();
@@ -725,7 +833,7 @@
       div.style.color = color || "#ff9800";
     }
 
-    // ----------------- DOWNLOAD -----------------
+    // ----------------- DOWNLOAD SIMPLE -----------------
     function downloadList(withDuplicates = true) {
       let text = document.getElementById("inputList").value.trim();
       if (!text) {
@@ -758,6 +866,112 @@
         : "⬇️ File downloaded successfully!",
         "green"
       );
+    }
+
+    // ----------------- DOWNLOAD ADVANCED -----------------
+    function rowsToText(rows) {
+      return rows.map(r => r.join("\t")).join("\n");
+    }
+
+    function downloadClean(mode) {
+      if (!tableData.length) {
+        setStatus(currentLang === "el"
+          ? "⚠️ Δεν υπάρχουν δεδομένα για καθάρισμα!"
+          : "⚠️ No data to clean!", "red");
+        return;
+      }
+
+      let cleaned = [];
+
+      if (mode === "row") {
+        const seen = new Set();
+        tableData.forEach(row => {
+          const key = row.map(normalizeValue).join("||");
+          if (!seen.has(key)) {
+            seen.add(key);
+            cleaned.push(row);
+          }
+        });
+      } else if (mode === "column") {
+        const colVal = document.getElementById("columnSelect").value;
+        if (colVal === "") {
+          alert(currentLang === "el"
+            ? "Επίλεξε πρώτα στήλη για καθάρισμα ανά στήλη!"
+            : "Select a column first for column-based cleaning!");
+          return;
+        }
+        const colIndex = parseInt(colVal, 10);
+        const seen = new Set();
+        tableData.forEach(row => {
+          const val = normalizeValue(row[colIndex] || "");
+          if (!val) {
+            cleaned.push(row);
+          } else if (!seen.has(val)) {
+            seen.add(val);
+            cleaned.push(row);
+          }
+        });
+      } else if (mode === "any") {
+        const used = new Set();
+        tableData.forEach(row => {
+          const values = row.map(normalizeValue).filter(v => v);
+          let conflict = false;
+          for (const v of values) {
+            if (used.has(v)) {
+              conflict = true;
+              break;
+            }
+          }
+          if (!conflict) {
+            values.forEach(v => used.add(v));
+            cleaned.push(row);
+          }
+        });
+      }
+
+      const text = rowsToText(cleaned);
+      const blob = new Blob([text], { type: "text/plain" });
+      const link = document.createElement("a");
+      let suffix;
+      if (mode === "row") suffix = "_noDuplicates_row";
+      else if (mode === "column") suffix = "_noDuplicates_column";
+      else suffix = "_noDuplicates_any";
+
+      link.href = URL.createObjectURL(blob);
+      link.download = "FindMyDuplicates" + suffix + ".txt";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+      let msg;
+      if (currentLang === "el") {
+        if (mode === "row") msg = "⬇️ Το αρχείο κατέβηκε χωρίς διπλότυπα (ολόκληρη γραμμή).";
+        else if (mode === "column") msg = "⬇️ Το αρχείο κατέβηκε χωρίς διπλότυπα ανά στήλη.";
+        else msg = "⬇️ Το αρχείο κατέβηκε χωρίς διπλότυπα (οποιαδήποτε κοινή τιμή).";
+      } else {
+        if (mode === "row") msg = "⬇️ File downloaded without duplicate rows (entire row).";
+        else if (mode === "column") msg = "⬇️ File downloaded without duplicates by column.";
+        else msg = "⬇️ File downloaded without duplicates (any shared value).";
+      }
+      setStatus(msg, "green");
+
+      // κλείνουμε το μενού
+      const menu = document.getElementById("advancedMenu");
+      if (menu) menu.style.display = "none";
+    }
+
+    // ----------------- ADVANCED MENU TOGGLE -----------------
+    function initAdvancedMenu() {
+      const btn = document.getElementById("advancedDownloadBtn");
+      const menu = document.getElementById("advancedMenu");
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        menu.style.display = (menu.style.display === "block" ? "none" : "block");
+      });
+      window.addEventListener("click", (e) => {
+        if (!document.querySelector(".advanced-download").contains(e.target)) {
+          menu.style.display = "none";
+        }
+      });
     }
 
     // ----------------- GOOGLE DRIVE -----------------
@@ -1103,6 +1317,9 @@
 
       // Modal
       initHowItWorksModal();
+
+      // Advanced menu
+      initAdvancedMenu();
 
       // Προσπάθεια για auto reconnect στο Drive
       const reconnectInterval = setInterval(() => {
