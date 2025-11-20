@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <title>Photobook Studio · Templates</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #020617;
+      --border: #1f2937;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56,189,248,0.3);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --radius-lg: 18px;
+    }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #020617 100%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      border-bottom: 1px solid var(--border);
+      background: rgba(2,6,23,0.92);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.8rem;
+    }
+    nav a:hover {
+      border-color: var(--accent-soft);
+      color: var(--text);
+    }
+    nav a.active {
+      border-color: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 1.5rem;
+    }
+
+    h1 { margin-top: 0; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .template-card {
+      border: 1px solid rgba(148,163,184,0.25);
+      border-radius: var(--radius-lg);
+      background: rgba(15,23,42,0.9);
+      padding: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .template-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 30px rgba(15,23,42,0.8);
+      border-color: var(--accent-soft);
+    }
+
+    .template-thumb {
+      border-radius: 12px;
+      overflow: hidden;
+      height: 160px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .template-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .template-title {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .template-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+      background: rgba(2,6,23,0.95);
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">📚 Photobook Studio</div>
+  <nav>
+    <a href="index.html">Find My Duplicates</a>
+    <a href="photobook.html">Photobook Editor</a>
+    <a href="projects.html">Projects</a>
+    <a href="templates.html" class="active">Templates</a>
+    <a href="stickers.html">Stickers</a>
+    <a href="viewer.html">Viewer</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Έτοιμα Templates</h1>
+  <p>Διάλεξε ένα έτοιμο βιβλίο και φόρτωσέ το στον editor.</p>
+
+  <div class="grid" id="templates-grid"></div>
+</main>
+
+<footer>
+  © 2025 Photobook Studio · Templates
+</footer>
+
+<script>
+  const templates = [
+    {
+      id: "wedding",
+      title: "💍 Wedding Album",
+      pages: [
+        "https://images.pexels.com/photos/2959192/pexels-photo-2959192.jpeg",
+        "https://images.pexels.com/photos/256737/pexels-photo-256737.jpeg",
+        "https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg"
+      ]
+    },
+    {
+      id: "baby",
+      title: "👶 Baby Book",
+      pages: [
+        "https://images.pexels.com/photos/3770582/pexels-photo-3770582.jpeg",
+        "https://images.pexels.com/photos/3875230/pexels-photo-3875230.jpeg"
+      ]
+    },
+    {
+      id: "travel",
+      title: "✈️ Travel Memories",
+      pages: [
+        "https://images.pexels.com/photos/346885/pexels-photo-346885.jpeg",
+        "https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg"
+      ]
+    },
+    {
+      id: "scrapbook",
+      title: "📒 Scrapbook Style",
+      pages: [
+        "https://images.pexels.com/photos/733853/pexels-photo-733853.jpeg"
+      ]
+    },
+    {
+      id: "minimal",
+      title: "🌙 Minimal Aesthetic",
+      pages: [
+        "https://images.pexels.com/photos/670720/pexels-photo-670720.jpeg"
+      ]
+    },
+    {
+      id: "portfolio",
+      title: "🎨 Artist Portfolio",
+      pages: [
+        "https://images.pexels.com/photos/167964/pexels-photo-167964.jpeg",
+        "https://images.pexels.com/photos/46274/pexels-photo-46274.jpeg"
+      ]
+    }
+  ];
+
+  const grid = document.getElementById("templates-grid");
+
+  templates.forEach(t => {
+    const card = document.createElement("div");
+    card.className = "template-card";
+
+    const thumb = document.createElement("div");
+    thumb.className = "template-thumb";
+
+    if (t.pages[0]) {
+      const img = document.createElement("img");
+      img.src = t.pages[0];
+      thumb.appendChild(img);
+    } else {
+      thumb.textContent = "No preview";
+    }
+
+    const title = document.createElement("div");
+    title.className = "template-title";
+    title.textContent = t.title;
+
+    const meta = document.createElement("div");
+    meta.className = "template-meta";
+    meta.textContent = `${t.pages.length} σελίδες`;
+
+    card.appendChild(thumb);
+    card.appendChild(title);
+    card.appendChild(meta);
+
+    card.addEventListener("click", () => {
+      localStorage.setItem("selected-template", JSON.stringify(t));
+      location.href = "photobook.html?template=" + t.id;
+    });
+
+    grid.appendChild(card);
+  });
+</script>
+</body>
+</html>
