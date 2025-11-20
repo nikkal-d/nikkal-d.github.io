@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-644PCR8B8S"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-644PCR8B8S');
+  </script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>FindMyDuplicates – Εύρεση διπλότυπων λιστών online</title>
+  <meta name="description" content="Βρες εύκολα διπλότυπα ονόματα ή αριθμούς σε λίστες. Δωρεάν εργαλείο online, με αποθήκευση στο Google Drive. | Find duplicates online fast and free.">
+  <meta name="keywords" content="διπλότυπα, εύρεση διπλότυπων, λίστες, google drive, duplicates finder, online tool, free, find duplicates">
+  <meta name="author" content="Niki Kalantzi">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nikkal-d.github.io/">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="fmd-icon.png">
+
+  <!-- Social Sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="FindMyDuplicates – Βρες εύκολα διπλότυπα ονόματα ή αριθμούς!">
+  <meta property="og:description" content="Δωρεάν online εργαλείο που εντοπίζει διπλότυπα σε λίστες και αποθηκεύει στο Google Drive. Εύκολο, γρήγορο, δίγλωσσο.">
+  <meta property="og:image" content="https://nikkal-d.github.io/fmd-icon.png">
+  <meta property="og:url" content="https://nikkal-d.github.io/">
+  <meta property="og:site_name" content="FindMyDuplicates">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FindMyDuplicates – Free Duplicate Finder">
+  <meta name="twitter:description" content="Find duplicate names or numbers online. Save your lists to Google Drive. Free & bilingual!">
+  <meta name="twitter:image" content="https://nikkal-d.github.io/fmd-icon.png">
+
+  <!-- Google API + Identity Services -->
+  <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+
+  <!-- SheetJS για Excel import -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --accent: #ff9800;
+      --accent-hover: #e68900;
+    }
+
+    body {
+      font-family: "Poppins", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #222222;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    body.dark {
+      background: #121212;
+      color: #eeeeee;
+    }
+
+    header {
+      background: var(--accent);
+      color: #ffffff;
+      text-align: center;
+      font-size: 1.8em;
+      padding: 20px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+
+    body.dark header {
+      background: #333;
+      color: var(--accent);
+    }
+
+    /* Top bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 25px;
+      background: #ffffff;
+      color: #333333;
+      border-bottom: 1px solid #cccccc;
+    }
+
+    body.dark .top-bar {
+      background: #222222;
+      color: #eeeeee;
+      border-bottom: 1px solid #444444;
+    }
+
+    .left-section h1 {
+      font-size: 20px;
+      margin: 0;
+      color: var(--accent);
+    }
+
+    .right-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .theme-btn,
+    .info-button {
+      background-color: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .theme-btn:hover,
+    .info-button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    select {
+      border-radius: 8px;
+      padding: 8px 14px;
+      border: 1px solid #ccc;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    body.dark select {
+      background: #1e1e1e;
+      color: #eee;
+      border-color: #444;
+    }
+
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      padding: 20px;
+      gap: 10px;
+    }
+
+    section {
+      flex: 1;
+      min-width: 45%;
+      background: #f9f9f9;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    section:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    body.dark section {
+      background: #1e1e1e;
+      box-shadow: 0 2px 6px rgba(255, 255, 255, 0.05);
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-size: 1em;
+      resize: vertical;
+      transition: box-shadow 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 5px 2px rgba(255, 152, 0, 0.4);
+    }
+
+    body.dark textarea {
+      background: #1e1e1e;
+      color: #eee;
+      border-color: #444;
+    }
+
+    button.action {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin: 10px 5px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.25s ease, transform 0.1s ease;
+    }
+
+    button.action:hover {
+      background: var(--accent-hover);
+      transform: scale(1.03);
+    }
+
+    input[type="file"] {
+      margin-top: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95em;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      background: #fff;
+    }
+
+    body.dark th,
+    body.dark td {
+      background: #1e1e1e;
+      border-color: #444;
+    }
+
+    th.row-index {
+      width: 40px;
+      text-align: center;
+    }
+    td.row-index {
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .dup {
+      text-decoration: underline;
+      text-decoration-color: red;
+      text-decoration-thickness: 2px;
+    }
+
+    footer {
+      text-align: center;
+      background: #111111;
+      color: #ffffff;
+      padding: 12px;
+      margin-top: 40px;
+      font-size: 0.9em;
+    }
+
+    body.dark footer {
+      background: #000000;
+    }
+
+    #statusMsg {
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 0.8s forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .download-bar {
+      text-align: center;
+      margin: 10px 0;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .advanced-download {
+      position: relative;
+      display: inline-block;
+    }
+
+    .advanced-menu {
+      display: none;
+      position: absolute;
+      top: 110%;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 999;
+      min-width: 260px;
+      overflow: hidden;
+    }
+
+    .advanced-menu button {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+
+    .advanced-menu button:hover {
+      background: #f2f2f2;
+    }
+
+    body.dark .advanced-menu {
+      background: #222;
+      border-color: #444;
+    }
+
+    body.dark .advanced-menu button {
+      background: #222;
+      color: #eee;
+    }
+
+    body.dark .advanced-menu button:hover {
+      background: #333;
+    }
+
+    /* Modal (How it works) */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-content {
+      background-color: var(--modal-bg, #ffffff);
+      color: var(--modal-text, #333333);
+      margin: 8% auto;
+      padding: 20px 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 700px;
+      line-height: 1.6;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .modal-content h2 {
+      color: var(--accent);
+    }
+
+    .modal-content ol {
+      padding-left: 20px;
+    }
+
+    .close {
+      float: right;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--modal-text, #333333);
+    }
+
+    .close:hover {
+      color: var(--accent);
+    }
+
+    body.dark .modal-content {
+      --modal-bg: #222222;
+      --modal-text: #eeeeee;
+    }
+
+    body.dark .close {
+      color: #eeeeee;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      main {
+        flex-direction: column;
+      }
+
+      section {
+        min-width: 100%;
+      }
+
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .right-section {
+        align-self: flex-end;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header id="mainHeader">FindMyDuplicates</header>
+
+  <div class="top-bar">
+    <div class="left-section">
+      <h1 id="logoTitle">FindMyDuplicates</h1>
+    </div>
+    <div class="right-section">
+      <button id="themeToggle" class="theme-btn">🌙</button>
+      <button id="howItWorksBtn" class="info-button">❓ Πώς λειτουργεί</button>
+      <select id="langSelect">
+        <option value="el">🇬🇷 EL</option>
+        <option value="en">🇬🇧 EN</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin:15px;">
+    <textarea id="inputList" placeholder="Επικόλλησε δεδομένα από Excel ή CSV..."></textarea><br>
+
+    <div style="margin-top:8px;">
+      <input type="file" id="fileInput" accept=".txt,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+      <button class="action" onclick="loadFromLocalFile()">
+        📂 Φόρτωση αρχείου (TXT / CSV / Excel)
+      </button>
+    </div>
+
+    <br>
+    <label id="columnLabel" for="columnSelect">Έλεγχος διπλοτύπων στη στήλη:</label>
+    <select id="columnSelect">
+      <option value="">--</option>
+    </select>
+    <button id="analyzeBtn" class="action" onclick="processData()">Ανάλυση</button>
+  </div>
+
+  <div id="driveButtons" style="text-align:center;margin:10px;">
+    <button id="loginBtn" class="action" onclick="handleAuthClick()">🔐 Σύνδεση με Google</button>
+    <button id="saveDriveBtn" class="action" onclick="saveToDrive()" disabled>☁️ Αποθήκευση στο Drive</button>
+    <button id="loadDriveBtn" class="action" onclick="loadFromDrive()" disabled>📂 Φόρτωση από Drive</button>
+    <button id="logoutBtn" class="action" onclick="logoutGoogle()" style="display:none;">🚪 Αποσύνδεση</button>
+  </div>
+
+  <div id="statusMsg"></div>
+
+  <div class="download-bar">
+    <button id="downloadWithBtn" class="action" onclick="downloadList(true)">⬇️ Κατέβασε με διπλότυπα</button>
+    <button id="downloadWithoutBtn" class="action" onclick="downloadList(false)">⬇️ Κατέβασε χωρίς διπλότυπα (γραμμή)</button>
+
+    <div class="advanced-download">
+      <button id="advancedDownloadBtn" class="action">🧹 Προηγμένο κατέβασμα</button>
+      <div id="advancedMenu" class="advanced-menu">
+        <button id="advRow" onclick="downloadClean('row')">Χωρίς διπλότυπα (ολόκληρη γραμμή)</button>
+        <button id="advCol" onclick="downloadClean('column')">Χωρίς διπλότυπα (ανά στήλη)</button>
+        <button id="advAny" onclick="downloadClean('any')">Χωρίς διπλότυπα (οποιαδήποτε κοινή τιμή)</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <section>
+      <h3 id="dataSectionTitle">Δεδομένα</h3>
+      <table id="dataTable">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+    <section>
+      <h3 id="duplicatesSectionTitle">Αναφορές διπλοτύπων</h3>
+      <div id="duplicatesList" style="white-space:pre-line;"></div>
+    </section>
+  </main>
+
+  <footer id="footerText">© 2025 FindMyDuplicates | Built by Niki Kalantzi</footer>
+
+  <!-- Modal "Πώς λειτουργεί" -->
+  <div id="howItWorksModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>🔍 Πώς λειτουργεί το FindMyDuplicates</h2>
+      <ol>
+        <li><strong>Επικόλλησε ή φόρτωσε τη λίστα σου</strong> – Επικόλλησε δεδομένα, φόρτωσε αρχείο από Google Drive ή από τοπικό αρχείο (Excel/CSV/TXT).</li>
+        <li><strong>Πάτα “Ανάλυση”</strong> – Αν δεν επιλέξεις στήλη, η εφαρμογή ψάχνει αυτόματα για διπλότυπες γραμμές. Αν επιλέξεις στήλη, ψάχνει διπλότυπες τιμές μόνο εκεί.</li>
+        <li><strong>Δες τα αποτελέσματα</strong> – Τα διπλότυπα υπογραμμίζονται με κόκκινο στον πίνακα και εμφανίζονται στη δεξιά λίστα.</li>
+        <li><strong>Κατέβασε ή αποθήκευσε</strong> – Μπορείς να κατεβάσεις τη λίστα σου ή να την αποθηκεύσεις στο Google Drive.</li>
+      </ol>
+      <p><strong>Προηγμένο κατέβασμα:</strong></p>
+      <ul>
+        <li><strong>Ολόκληρη γραμμή:</strong> αφαιρεί μόνο γραμμές που είναι απολύτως ίδιες.</li>
+        <li><strong>Ανά στήλη:</strong> αφαιρεί γραμμές που έχουν την ίδια τιμή στην επιλεγμένη στήλη (π.χ. ίδιο email), ακόμη κι αν τα άλλα πεδία διαφέρουν.</li>
+        <li><strong>Οποιαδήποτε κοινή τιμή:</strong> αφαιρεί γραμμές που μοιράζονται οποιοδήποτε κοινό στοιχείο (όνομα/τηλέφωνο/email) με προηγούμενη γραμμή.</li>
+      </ul>
+      <p><em>Υποστηρίζεται Google Drive, Light/Dark mode, εισαγωγή Excel και δίγλωσση διεπαφή.</em></p>
+      <hr>
+      <h2>🌐 How FindMyDuplicates Works</h2>
+      <ol>
+        <li><strong>Paste or load your list</strong> – Paste data, load from Google Drive, or import a local Excel/CSV/TXT file.</li>
+        <li><strong>Click “Analyze”</strong> – If no column is selected, the app looks for duplicate rows. If you pick a column, it looks for duplicate values only in that column.</li>
+        <li><strong>View the results</strong> – Duplicates are underlined in red and listed on the right panel.</li>
+        <li><strong>Download or save</strong> – Download your list or save it back to Google Drive.</li>
+      </ol>
+      <p><strong>Advanced download:</strong></p>
+      <ul>
+        <li><strong>Entire row:</strong> removes only rows that match 100%.</li>
+        <li><strong>By column:</strong> removes rows that share the same value in the selected column (e.g. same email), even if other fields differ.</li>
+        <li><strong>Any shared value:</strong> removes rows that share any value (name/phone/email) with a previous row.</li>
+      </ul>
+      <p><em>Supports Google Drive, Light/Dark mode, Excel import and bilingual UI.</em></p>
+    </div>
+  </div>
+
+  <script>
+    // ----------------- GLOBALS -----------------
+    let tableData = [];
+    let currentLang = "el";
+
+    const translations = {
+      el: {
+        header: "FindMyDuplicates",
+        logo: "FindMyDuplicates",
+        textareaPlaceholder: "Επικόλλησε δεδομένα από Excel ή CSV...",
+        columnLabel: "Έλεγχος διπλοτύπων στη στήλη:",
+        analyzeBtn: "Ανάλυση",
+        dataSection: "Δεδομένα",
+        dupSection: "Αναφορές διπλότυπων",
+        loginBtn: "🔐 Σύνδεση με Google",
+        saveDriveBtn: "☁️ Αποθήκευση στο Drive",
+        loadDriveBtn: "📂 Φόρτωση από Drive",
+        logoutBtn: "🚪 Αποσύνδεση",
+        downloadWith: "⬇️ Κατέβασε με διπλότυπα",
+        downloadWithout: "⬇️ Κατέβασε χωρίς διπλότυπα (γραμμή)",
+        advBtn: "🧹 Προηγμένο κατέβασμα",
+        advRow: "Χωρίς διπλότυπα (ολόκληρη γραμμή)",
+        advCol: "Χωρίς διπλότυπα (ανά στήλη)",
+        advAny: "Χωρίς διπλότυπα (οποιαδήποτε κοινή τιμή)",
+        noDuplicates: "✅ Δεν βρέθηκαν διπλότυπα.",
+        footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi",
+        howBtn: "❓ Πώς λειτουργεί",
+        fileButton: "📂 Φόρτωση αρχείου (TXT / CSV / Excel)"
+      },
+      en: {
+        header: "FindMyDuplicates",
+        logo: "FindMyDuplicates",
+        textareaPlaceholder: "Paste data from Excel or CSV...",
+        columnLabel: "Check duplicates in column:",
+        analyzeBtn: "Analyze",
+        dataSection: "Data",
+        dupSection: "Duplicate reports",
+        loginBtn: "🔐 Sign in with Google",
+        saveDriveBtn: "☁️ Save to Drive",
+        loadDriveBtn: "📂 Load from Drive",
+        logoutBtn: "🚪 Sign out",
+        downloadWith: "⬇️ Download with duplicates",
+        downloadWithout: "⬇️ Download without duplicates (row)",
+        advBtn: "🧹 Advanced download",
+        advRow: "Remove duplicates (entire row)",
+        advCol: "Remove duplicates (by column)",
+        advAny: "Remove duplicates (any shared value)",
+        noDuplicates: "✅ No duplicates found.",
+        footer: "© 2025 FindMyDuplicates | Built by Niki Kalantzi",
+        howBtn: "❓ How it works",
+        fileButton: "📂 Load file (TXT / CSV / Excel)"
+      }
+    };
+
+    function applyLanguage(lang) {
+      const t = translations[lang] || translations.el;
+      currentLang = lang;
+
+      document.getElementById("mainHeader").textContent = t.header;
+      document.getElementById("logoTitle").textContent = t.logo;
+      document.getElementById("inputList").placeholder = t.textareaPlaceholder;
+      document.getElementById("columnLabel").textContent = t.columnLabel;
+      document.getElementById("analyzeBtn").textContent = t.analyzeBtn;
+      document.getElementById("dataSectionTitle").textContent = t.dataSection;
+      document.getElementById("duplicatesSectionTitle").textContent = t.dupSection;
+      document.getElementById("loginBtn").textContent = t.loginBtn;
+      document.getElementById("saveDriveBtn").textContent = t.saveDriveBtn;
+      document.getElementById("loadDriveBtn").textContent = t.loadDriveBtn;
+      document.getElementById("logoutBtn").textContent = t.logoutBtn;
+      document.getElementById("downloadWithBtn").textContent = t.downloadWith;
+      document.getElementById("downloadWithoutBtn").textContent = t.downloadWithout;
+      document.getElementById("footerText").textContent = t.footer;
+      document.getElementById("howItWorksBtn").textContent = t.howBtn;
+      document.querySelector("button[onclick='loadFromLocalFile()']").textContent = t.fileButton;
+      document.getElementById("advancedDownloadBtn").textContent = t.advBtn;
+      document.getElementById("advRow").textContent = t.advRow;
+      document.getElementById("advCol").textContent = t.advCol;
+      document.getElementById("advAny").textContent = t.advAny;
+    }
+
+    function switchLanguage(lang) {
+      applyLanguage(lang);
+      localStorage.setItem("lang", lang);
+      renderTable(tableData);
+    }
+
+    // ----------------- HELPERS -----------------
+    function normalizeValue(val) {
+      return val
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    // ----------------- TABLE / ANALYSIS -----------------
+    function processData() {
+      const text = document.getElementById("inputList").value.trim();
+      if (!text) {
+        alert(currentLang === "el" ? "Επικόλλησε πρώτα δεδομένα ή φόρτωσε αρχείο!" : "Paste some data or load a file first!");
+        return;
+      }
+
+      const rows = text.split(/\r?\n/).map(r => r.split(/\t|,/));
+      tableData = rows.filter(r => r.some(cell => cell.trim() !== ""));
+
+      renderTable(tableData);
+
+      const colSelect = document.getElementById("columnSelect");
+      colSelect.innerHTML = '<option value="">--</option>';
+      if (tableData.length > 0) {
+        tableData[0].forEach((_, i) => {
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.textContent = (currentLang === "el" ? "Στήλη " : "Column ") + (i + 1);
+          colSelect.appendChild(opt);
+        });
+      }
+
+      document.getElementById("duplicatesList").textContent = "";
+      document.querySelectorAll("section").forEach(s => s.classList.add("fade-in"));
+      analyzeColumn();
+    }
+
+    function renderTable(data) {
+      const table = document.getElementById("dataTable");
+      const head = table.querySelector("thead");
+      const body = table.querySelector("tbody");
+      head.innerHTML = "";
+      body.innerHTML = "";
+
+      if (!data.length) return;
+
+      const headerRow = document.createElement("tr");
+      const thIndex = document.createElement("th");
+      thIndex.textContent = "#";
+      thIndex.classList.add("row-index");
+      headerRow.appendChild(thIndex);
+
+      data[0].forEach((_, i) => {
+        const th = document.createElement("th");
+        th.textContent = (currentLang === "el" ? "Στήλη " : "Column ") + (i + 1);
+        headerRow.appendChild(th);
+      });
+      head.appendChild(headerRow);
+
+      data.forEach((row, idx) => {
+        const tr = document.createElement("tr");
+
+        const tdIndex = document.createElement("td");
+        tdIndex.textContent = idx + 1;
+        tdIndex.classList.add("row-index");
+        tr.appendChild(tdIndex);
+
+        row.forEach(cell => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+    }
+
+    document.getElementById("columnSelect").addEventListener("change", analyzeColumn);
+
+    function analyzeColumn() {
+      const col = document.getElementById("columnSelect").value;
+      const t = translations[currentLang];
+
+      document.querySelectorAll("#dataTable td").forEach(td => td.classList.remove("dup"));
+      const dupDiv = document.getElementById("duplicatesList");
+      dupDiv.textContent = "";
+
+      if (!tableData.length) return;
+
+      const bodyRows = document.querySelectorAll("#dataTable tbody tr");
+
+      if (col === "") {
+        const seen = {};
+        const dups = [];
+        tableData.forEach((row, i) => {
+          const norm = row.map(normalizeValue).join("||");
+          if (seen[norm] !== undefined) {
+            dups.push([seen[norm], i]);
+          } else {
+            seen[norm] = i;
+          }
+        });
+
+        dups.forEach(pair => {
+          const [r1, r2] = pair;
+          const tr1 = bodyRows[r1];
+          const tr2 = bodyRows[r2];
+          tr1.querySelectorAll("td:not(.row-index)").forEach(td => td.classList.add("dup"));
+          tr2.querySelectorAll("td:not(.row-index)").forEach(td => td.classList.add("dup"));
+        });
+
+        if (!dups.length) {
+          dupDiv.textContent = t.noDuplicates;
+        } else {
+          dupDiv.textContent = dups
+            .map(pair => currentLang === "el"
+              ? `🔴 Η σειρά ${pair[0] + 1} με τη σειρά ${pair[1] + 1} είναι ίδιες (ολόκληρη γραμμή).`
+              : `🔴 Row ${pair[0] + 1} and row ${pair[1] + 1} are identical (whole row).`
+            )
+            .join("\n");
+        }
+        return;
+      }
+
+      const colIndex = parseInt(col, 10);
+      const seen = {};
+      const dups = [];
+
+      bodyRows.forEach((tr, rowIndex) => {
+        const cell = tr.children[colIndex + 1];
+        if (!cell) return;
+        const val = normalizeValue(cell.textContent);
+        if (!val) return;
+
+        if (seen[val] !== undefined) {
+          const firstIndex = seen[val];
+          dups.push([firstIndex, rowIndex]);
+          cell.classList.add("dup");
+          const firstCell = bodyRows[firstIndex].children[colIndex + 1];
+          if (firstCell) firstCell.classList.add("dup");
+        } else {
+          seen[val] = rowIndex;
+        }
+      });
+
+      if (!dups.length) {
+        dupDiv.textContent = t.noDuplicates;
+      } else {
+        dupDiv.textContent = dups
+          .map(pair => currentLang === "el"
+            ? `🔴 Η σειρά ${pair[0] + 1} με τη σειρά ${pair[1] + 1} έχουν διπλότυπη τιμή στη στήλη ${colIndex + 1}.`
+            : `🔴 Row ${pair[0] + 1} and row ${pair[1] + 1} have a duplicate value in column ${colIndex + 1}.`
+          )
+          .join("\n");
+      }
+    }
+
+    // ----------------- LOCAL FILE IMPORT -----------------
+    function loadFromLocalFile() {
+      const input = document.getElementById("fileInput");
+      if (!input.files || !input.files[0]) {
+        alert(currentLang === "el" ? "Επίλεξε πρώτα ένα αρχείο!" : "Please choose a file first!");
+        return;
+      }
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      const isExcel = /sheet|excel/i.test(file.type) || /\.(xls|xlsx)$/i.test(file.name);
+      const isText = /text|csv/i.test(file.type) || /\.(txt|csv)$/i.test(file.name);
+
+      if (isText) {
+        reader.onload = e => {
+          document.getElementById("inputList").value = e.target.result;
+          processData();
+        };
+        reader.readAsText(file);
+      } else if (isExcel) {
+        reader.onload = e => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          const text = json.map(row => row.join("\t")).join("\n");
+          document.getElementById("inputList").value = text;
+          processData();
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        alert(currentLang === "el"
+          ? "Υποστηρίζονται μόνο TXT, CSV ή Excel αρχεία."
+          : "Only TXT, CSV or Excel files are supported.");
+      }
+    }
+
+    // ----------------- THEME -----------------
+    function applyThemeFromStorage() {
+      const savedTheme = localStorage.getItem("theme") || "light";
+      const isDark = savedTheme === "dark";
+      document.body.classList.toggle("dark", isDark);
+      const btn = document.getElementById("themeToggle");
+      if (btn) btn.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    function toggleTheme() {
+      const isDark = !document.body.classList.contains("dark");
+      document.body.classList.toggle("dark", isDark);
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      const btn = document.getElementById("themeToggle");
+      if (btn) btn.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    // ----------------- STATUS -----------------
+    function setStatus(msg, color = null) {
+      const div = document.getElementById("statusMsg");
+      if (!div) return;
+      div.textContent = msg;
+      div.style.color = color || "#ff9800";
+    }
+
+    // ----------------- DOWNLOAD SIMPLE -----------------
+    function downloadList(withDuplicates = true) {
+      let text = document.getElementById("inputList").value.trim();
+      if (!text) {
+        setStatus(currentLang === "el" ? "⚠️ Δεν υπάρχουν δεδομένα για κατέβασμα!" : "⚠️ No data to download!", "red");
+        return;
+      }
+
+      if (!withDuplicates && tableData.length) {
+        const seen = new Set();
+        const cleaned = [];
+        tableData.forEach(row => {
+          const line = row.join("\t");
+          if (!seen.has(line)) {
+            seen.add(line);
+            cleaned.push(line);
+          }
+        });
+        text = cleaned.join("\n");
+      }
+
+      const blob = new Blob([text], { type: "text/plain" });
+      const link = document.createElement("a");
+      const suffix = withDuplicates ? "_withDuplicates" : "_noDuplicates";
+      link.href = URL.createObjectURL(blob);
+      link.download = "FindMyDuplicates" + suffix + ".txt";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      setStatus(currentLang === "el"
+        ? "⬇️ Το αρχείο κατέβηκε επιτυχώς!"
+        : "⬇️ File downloaded successfully!",
+        "green"
+      );
+    }
+
+    // ----------------- DOWNLOAD ADVANCED -----------------
+    function rowsToText(rows) {
+      return rows.map(r => r.join("\t")).join("\n");
+    }
+
+    function downloadClean(mode) {
+      if (!tableData.length) {
+        setStatus(currentLang === "el"
+          ? "⚠️ Δεν υπάρχουν δεδομένα για καθάρισμα!"
+          : "⚠️ No data to clean!", "red");
+        return;
+      }
+
+      let cleaned = [];
+
+      if (mode === "row") {
+        const seen = new Set();
+        tableData.forEach(row => {
+          const key = row.map(normalizeValue).join("||");
+          if (!seen.has(key)) {
+            seen.add(key);
+            cleaned.push(row);
+          }
+        });
+      } else if (mode === "column") {
+        const colVal = document.getElementById("columnSelect").value;
+        if (colVal === "") {
+          alert(currentLang === "el"
+            ? "Επίλεξε πρώτα στήλη για καθάρισμα ανά στήλη!"
+            : "Select a column first for column-based cleaning!");
+          return;
+        }
+        const colIndex = parseInt(colVal, 10);
+        const seen = new Set();
+        tableData.forEach(row => {
+          const val = normalizeValue(row[colIndex] || "");
+          if (!val) {
+            cleaned.push(row);
+          } else if (!seen.has(val)) {
+            seen.add(val);
+            cleaned.push(row);
+          }
+        });
+      } else if (mode === "any") {
+        const used = new Set();
+        tableData.forEach(row => {
+          const values = row.map(normalizeValue).filter(v => v);
+          let conflict = false;
+          for (const v of values) {
+            if (used.has(v)) {
+              conflict = true;
+              break;
+            }
+          }
+          if (!conflict) {
+            values.forEach(v => used.add(v));
+            cleaned.push(row);
+          }
+        });
+      }
+
+      const text = rowsToText(cleaned);
+      const blob = new Blob([text], { type: "text/plain" });
+      const link = document.createElement("a");
+      let suffix;
+      if (mode === "row") suffix = "_noDuplicates_row";
+      else if (mode === "column") suffix = "_noDuplicates_column";
+      else suffix = "_noDuplicates_any";
+
+      link.href = URL.createObjectURL(blob);
+      link.download = "FindMyDuplicates" + suffix + ".txt";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+      let msg;
+      if (currentLang === "el") {
+        if (mode === "row") msg = "⬇️ Το αρχείο κατέβηκε χωρίς διπλότυπα (ολόκληρη γραμμή).";
+        else if (mode === "column") msg = "⬇️ Το αρχείο κατέβηκε χωρίς διπλότυπα ανά στήλη.";
+        else msg = "⬇️ Το αρχείο κατέβηκε χωρίς διπλότυπα (οποιαδήποτε κοινή τιμή).";
+      } else {
+        if (mode === "row") msg = "⬇️ File downloaded without duplicate rows (entire row).";
+        else if (mode === "column") msg = "⬇️ File downloaded without duplicates by column.";
+        else msg = "⬇️ File downloaded without duplicates (any shared value).";
+      }
+      setStatus(msg, "green");
+
+      const menu = document.getElementById("advancedMenu");
+      if (menu) menu.style.display = "none";
+    }
+
+    // ----------------- ADVANCED MENU TOGGLE -----------------
+    function initAdvancedMenu() {
+      const btn = document.getElementById("advancedDownloadBtn");
+      const menu = document.getElementById("advancedMenu");
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        menu.style.display = (menu.style.display === "block" ? "none" : "block");
+      });
+      window.addEventListener("click", (e) => {
+        if (!document.querySelector(".advanced-download").contains(e.target)) {
+          menu.style.display = "none";
+        }
+      });
+    }
+
+    // ----------------- GOOGLE DRIVE -----------------
+    const CLIENT_ID = "7674481557-sj07ang21ap523vf4qkr4e3nadkjk8de.apps.googleusercontent.com";
+    const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email openid";
+
+    let tokenClient;
+    let gapiInited = false;
+    let gisInited = false;
+
+    function gapiLoaded() {
+      if (!window.gapi) return;
+      gapi.load("client", initializeGapiClient);
+    }
+
+    async function initializeGapiClient() {
+      try {
+        await gapi.client.init({
+          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+        });
+        gapiInited = true;
+      } catch (e) {
+        console.error("GAPI init error", e);
+      }
+    }
+
+    function gisLoaded() {
+      if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: "",
+      });
+      gisInited = true;
+    }
+
+    // έξτρα fallback σε περίπτωση που τα onload δεν παίξουν τέλεια
+    function tryInitApisFallback() {
+      if (!gapiInited && window.gapi) {
+        gapiLoaded();
+      }
+      if (!gisInited && window.google && window.google.accounts && window.google.accounts.oauth2) {
+        gisLoaded();
+      }
+    }
+
+    function handleAuthClick() {
+      if (!gapiInited || !gisInited) {
+        setStatus(currentLang === "el"
+          ? "⏳ Το Google API φορτώνει... δοκίμασε ξανά σε λίγο."
+          : "⏳ Google API is loading... please try again.", "red");
+        tryInitApisFallback();
+        return;
+      }
+
+      const saved = localStorage.getItem("googleToken");
+      if (saved) {
+        const token = JSON.parse(saved);
+        gapi.client.setToken(token);
+        afterLogin();
+        setStatus(currentLang === "el"
+          ? "✅ Είσαι ήδη συνδεδεμένη με Google!"
+          : "✅ You are already signed in with Google!", "green");
+        return;
+      }
+
+      tokenClient.callback = (resp) => {
+        if (resp.error !== undefined) {
+          console.error(resp);
+          setStatus("❌ Google auth error", "red");
+          return;
+        }
+        const token = gapi.client.getToken();
+        const tokenWithExpiry = { ...token, expires_at: Date.now() + 55 * 60 * 1000 };
+        localStorage.setItem("googleToken", JSON.stringify(tokenWithExpiry));
+        afterLogin();
+        setStatus(currentLang === "el"
+          ? "✅ Συνδέθηκες επιτυχώς με Google!"
+          : "✅ Successfully signed in with Google!", "green");
+      };
+
+      tokenClient.requestAccessToken({ prompt: "consent" });
+    }
+
+    function afterLogin() {
+      document.getElementById("saveDriveBtn").disabled = false;
+      document.getElementById("loadDriveBtn").disabled = false;
+      document.getElementById("logoutBtn").style.display = "inline-block";
+    }
+
+    async function tryAutoReconnect() {
+      const saved = localStorage.getItem("googleToken");
+      if (!saved || !gapiInited) return;
+
+      const token = JSON.parse(saved);
+      if (token.expires_at && Date.now() < token.expires_at) {
+        gapi.client.setToken(token);
+        afterLogin();
+        setStatus(currentLang === "el"
+          ? "✅ Επανασυνδέθηκες αυτόματα στο Google Drive."
+          : "✅ Automatically reconnected to Google Drive.", "green");
+      } else {
+        localStorage.removeItem("googleToken");
+      }
+    }
+
+    async function saveToDrive() {
+      const text = document.getElementById("inputList").value.trim();
+      if (!text) {
+        setStatus(currentLang === "el"
+          ? "⚠️ Δεν υπάρχουν δεδομένα!"
+          : "⚠️ No data to save!", "red");
+        return;
+      }
+
+      const token = gapi.client.getToken();
+      if (!token) {
+        setStatus(currentLang === "el"
+          ? "⚠️ Δεν υπάρχει ενεργή σύνδεση Google."
+          : "⚠️ No active Google session.", "red");
+        return;
+      }
+
+      setStatus(currentLang === "el"
+        ? "⏳ Αποθήκευση στο Google Drive..."
+        : "⏳ Saving to Google Drive..."
+      );
+
+      try {
+        const folderName = "FindMyDuplicates";
+
+        const folderRes = await gapi.client.drive.files.list({
+          q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
+          fields: "files(id, name)",
+        });
+
+        let folderId;
+        if (folderRes.result.files && folderRes.result.files.length > 0) {
+          folderId = folderRes.result.files[0].id;
+        } else {
+          const createFolder = await gapi.client.drive.files.create({
+            resource: { name: folderName, mimeType: "application/vnd.google-apps.folder" },
+            fields: "id",
+          });
+          folderId = createFolder.result.id;
+        }
+
+        const fileName = `List_${new Date().toISOString().split("T")[0]}.txt`;
+        const metadata = {
+          name: fileName,
+          mimeType: "text/plain",
+          parents: [folderId],
+        };
+
+        const file = new Blob([text], { type: "text/plain" });
+        const form = new FormData();
+        form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+        form.append("file", file);
+
+        const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+          method: "POST",
+          headers: new Headers({ Authorization: "Bearer " + token.access_token }),
+          body: form,
+        });
+
+        if (res.ok) {
+          setStatus(currentLang === "el"
+            ? `☁️ Αποθηκεύτηκε το αρχείο ${fileName}!`
+            : `☁️ File ${fileName} saved to Drive!`, "green");
+        } else {
+          setStatus("❌ Error while saving to Drive!", "red");
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus("❌ Error while saving to Drive!", "red");
+      }
+    }
+
+    async function loadFromDrive() {
+      try {
+        const token = gapi.client.getToken();
+        if (!token) {
+          setStatus(currentLang === "el"
+            ? "⚠️ Δεν υπάρχει ενεργή σύνδεση Google."
+            : "⚠️ No active Google session.", "red");
+          return;
+        }
+
+        setStatus(currentLang === "el"
+          ? "⏳ Αναζήτηση αρχείων στο Google Drive..."
+          : "⏳ Searching files on Google Drive..."
+        );
+
+        const folderRes = await gapi.client.drive.files.list({
+          q: "mimeType='application/vnd.google-apps.folder' and name='FindMyDuplicates' and trashed=false",
+          fields: "files(id, name)",
+        });
+
+        if (!folderRes.result.files || !folderRes.result.files.length) {
+          setStatus(currentLang === "el"
+            ? "⚠️ Δεν βρέθηκε φάκελος FindMyDuplicates!"
+            : "⚠️ No FindMyDuplicates folder found!", "red");
+          return;
+        }
+
+        const folderId = folderRes.result.files[0].id;
+
+        const fileRes = await gapi.client.drive.files.list({
+          q: `'${folderId}' in parents and trashed=false and mimeType='text/plain'`,
+          fields: "files(id, name, createdTime)",
+          orderBy: "createdTime desc",
+        });
+
+        const files = fileRes.result.files || [];
+        if (!files.length) {
+          setStatus(currentLang === "el"
+            ? "⚠️ Δεν υπάρχουν αποθηκευμένα αρχεία!"
+            : "⚠️ No saved files found!", "red");
+          return;
+        }
+
+        const existing = document.getElementById("driveFileList");
+        if (existing) existing.remove();
+
+        const container = document.createElement("div");
+        container.id = "driveFileList";
+        container.style.position = "fixed";
+        container.style.top = "20%";
+        container.style.left = "50%";
+        container.style.transform = "translateX(-50%)";
+        container.style.background = document.body.classList.contains("dark") ? "#222" : "#fff";
+        container.style.color = document.body.classList.contains("dark") ? "#eee" : "#333";
+        container.style.padding = "20px";
+        container.style.borderRadius = "12px";
+        container.style.boxShadow = "0 0 15px rgba(0,0,0,0.3)";
+        container.style.zIndex = "9999";
+        container.style.maxHeight = "60vh";
+        container.style.overflowY = "auto";
+        container.style.minWidth = "260px";
+
+        const titleBar = document.createElement("div");
+        titleBar.style.display = "flex";
+        titleBar.style.justifyContent = "space-between";
+        titleBar.style.alignItems = "center";
+        titleBar.style.marginBottom = "10px";
+
+        const h3 = document.createElement("h3");
+        h3.style.margin = "0";
+        h3.textContent = currentLang === "el" ? "📂 Επέλεξε αρχείο" : "📂 Choose a file";
+
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = currentLang === "el" ? "❌ Κλείσιμο" : "❌ Close";
+        closeBtn.style.background = "#ff9800";
+        closeBtn.style.color = "#fff";
+        closeBtn.style.border = "none";
+        closeBtn.style.borderRadius = "6px";
+        closeBtn.style.padding = "5px 10px";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.onclick = () => container.remove();
+
+        titleBar.appendChild(h3);
+        titleBar.appendChild(closeBtn);
+        container.appendChild(titleBar);
+
+        files.forEach(f => {
+          const btn = document.createElement("button");
+          btn.style.margin = "5px 0";
+          btn.style.display = "block";
+          btn.style.width = "100%";
+          btn.style.padding = "8px";
+          btn.style.borderRadius = "8px";
+          btn.style.border = "1px solid #ccc";
+          btn.style.background = document.body.classList.contains("dark") ? "#333" : "#f7f7f7";
+          btn.style.cursor = "pointer";
+          btn.textContent = f.name;
+          btn.onclick = () => loadSpecificFile(f.id, f.name, container);
+          container.appendChild(btn);
+        });
+
+        document.body.appendChild(container);
+        setStatus("");
+      } catch (err) {
+        console.error(err);
+        setStatus("❌ Error while loading from Drive!", "red");
+      }
+    }
+
+    async function loadSpecificFile(fileId, fileName, container) {
+      try {
+        const token = gapi.client.getToken();
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: new Headers({ Authorization: "Bearer " + token.access_token }),
+        });
+        const text = await response.text();
+        document.getElementById("inputList").value = text;
+        setStatus(currentLang === "el"
+          ? `✅ Φορτώθηκε το αρχείο ${fileName} από το Google Drive!`
+          : `✅ File ${fileName} loaded from Google Drive!`, "green");
+        if (container) container.remove();
+        processData();
+      } catch (err) {
+        console.error(err);
+        setStatus("❌ Error while loading file from Drive!", "red");
+      }
+    }
+
+    function logoutGoogle() {
+      localStorage.removeItem("googleToken");
+      if (gapi.client && gapi.client.setToken) {
+        gapi.client.setToken(null);
+      }
+      document.getElementById("saveDriveBtn").disabled = true;
+      document.getElementById("loadDriveBtn").disabled = true;
+      document.getElementById("logoutBtn").style.display = "none";
+      setStatus(currentLang === "el"
+        ? "👋 Αποσυνδέθηκες από το Google Drive."
+        : "👋 Signed out from Google Drive.", "orange");
+    }
+
+    // ----------------- HOW IT WORKS MODAL -----------------
+    function initHowItWorksModal() {
+      const modal = document.getElementById("howItWorksModal");
+      const btn = document.getElementById("howItWorksBtn");
+      const closeSpan = modal.querySelector(".close");
+
+      btn.addEventListener("click", () => {
+        modal.style.display = "block";
+      });
+
+      closeSpan.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+
+      window.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.style.display = "none";
+        }
+      });
+    }
+
+    // ----------------- INIT -----------------
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedLang = localStorage.getItem("lang");
+      let initialLang = savedLang;
+      if (!initialLang) {
+        const navLang = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+        initialLang = navLang.startsWith("el") ? "el" : "en";
+      }
+      document.getElementById("langSelect").value = initialLang;
+      applyLanguage(initialLang);
+
+      document.getElementById("langSelect").addEventListener("change", (e) => {
+        switchLanguage(e.target.value);
+      });
+
+      applyThemeFromStorage();
+      document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+
+      initHowItWorksModal();
+      initAdvancedMenu();
+
+      // fallback προσπάθεια για init των APIs
+      const apiInterval = setInterval(() => {
+        tryInitApisFallback();
+        if (gapiInited && gisInited) {
+          clearInterval(apiInterval);
+        }
+      }, 500);
+
+      const reconnectInterval = setInterval(() => {
+        if (gapiInited) {
+          clearInterval(reconnectInterval);
+          tryAutoReconnect();
+        }
+      }, 800);
+    });
+  </script>
+</body>
+</html>
