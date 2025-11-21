@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Photobook Studio · Editor & Flipbook</title>
+  <title>Photobook Editor · Nikkal Studio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="manifest" href="manifest.webmanifest">
@@ -11,15 +11,11 @@
   <style>
     :root {
       --bg: #020617;
-      --bg-elevated: #020617;
-      --panel: #020617;
-      --panel-soft: #020617;
       --border: #1f2937;
       --accent: #38bdf8;
-      --accent-soft: rgba(56,189,248,0.25);
+      --accent-soft: rgba(56,189,248,0.35);
       --text: #e5e7eb;
       --muted: #9ca3af;
-      --danger: #f97373;
       --radius-lg: 18px;
     }
 
@@ -59,7 +55,7 @@
     }
 
     .brand span.logo {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
     }
 
     nav {
@@ -95,10 +91,10 @@
 
     main {
       flex: 1;
-      max-width: 1220px;
+      max-width: 1200px;
       width: 100%;
       margin: 0 auto 2rem;
-      padding: 1.5rem 1.25rem 2rem;
+      padding: 1.5rem 1.25rem 2.5rem;
     }
 
     h1 {
@@ -415,7 +411,7 @@
 <body>
 <header>
   <div class="brand">
-    <span class="logo">📚</span> Photobook Studio
+    <span class="logo">📚</span> Nikkal Studio
   </div>
   <nav>
     <a href="duplicates.html">Find My Duplicates</a>
@@ -428,13 +424,13 @@
 </header>
 
 <main>
-  <h1>Photobook Editor & Flipbook</h1>
+  <h1>Photobook Editor</h1>
   <p class="subtitle">
-    Εισήγαγε φωτογραφίες ή PDF, επεξεργάσου τις σελίδες, δες το βιβλίο με γύρισμα σελίδας·
-    εξήγαγε PDF, ZIP ή μοίρασέ το online με link.
+    Ανέβασε φωτογραφίες ή PDF (Canva), επεξεργάσου τις σελίδες, δες flipbook, εξήγαγε PDF/ZIP ή μοιράσου online με link & password.
   </p>
 
   <div class="layout">
+    <!-- Αριστερό: εισαγωγή & εξαγωγή -->
     <section class="card">
       <div class="card-header">
         <div>
@@ -472,16 +468,16 @@
           <span class="page-count" id="page-count">0 / 0</span>
         </div>
         <div class="nav-group">
-          <span class="hint">Πάτησε σε μικρογραφία για επεξεργασία σελίδας.</span>
+          <span class="hint">Κλικ σε μικρογραφία για επεξεργασία σελίδας.</span>
         </div>
       </div>
-    </section>
 
-    <section class="card">
-      <div class="card-header">
+      <hr style="border-color:#1f2937;margin:1rem 0;opacity:0.5;">
+
+      <div class="card-header" style="margin-top:0;">
         <div>
           <div class="card-title">2. Εξαγωγή & διαμοιρασμός</div>
-          <div class="card-subtitle">PDF, offline flipbook, online sharing (Firebase)</div>
+          <div class="card-subtitle">PDF, offline flipbook ZIP, online sharing με password & QR.</div>
         </div>
       </div>
 
@@ -491,7 +487,7 @@
         <button id="export-zip" class="btn">📚 Export σε flipbook ZIP</button>
       </div>
       <p class="hint">
-        Το <strong>flipbook ZIP</strong> περιέχει ένα μικρό site (<code>index.html</code> + εικόνες) που ανοίγει offline σαν βιβλίο.
+        Το <strong>flipbook ZIP</strong> περιέχει ένα μικρό site (<code>index.html</code> + images) που ανοίγει offline σαν βιβλίο.
       </p>
 
       <div class="section-label">Διαμοιρασμός online</div>
@@ -499,8 +495,8 @@
         <button id="share-online" class="btn secondary">🔗 Share online (Firebase)</button>
       </div>
       <p class="hint" id="share-status">
-        Με το Share online, οι σελίδες ανεβαίνουν στο Firebase και δημιουργείται link τύπου:
-        <code>.../viewer.html?id=XXXX</code> (αντιγράφεται αυτόματα στο clipboard).
+        Με το Share online οι σελίδες ανεβαίνουν στο cloud και παίρνεις link τύπου:
+        <code>…/viewer.html?id=XXXX</code>.
       </p>
 
       <div id="share-extra">
@@ -522,75 +518,74 @@
         </div>
       </div>
 
-      <div class="section-label">Ρυθμίσεις flipbook</div>
+      <div class="section-label" style="margin-top:1rem;">Ρυθμίσεις flipbook</div>
       <div class="controls-row">
         <button id="toggle-sound" class="btn sm">🔊 Ήχος: ON</button>
         <button id="rebuild-book" class="btn sm">♻️ Αναδόμηση flipbook</button>
       </div>
       <p class="hint">
-        Μετά από αλλαγές στον editor, πάτα <strong>Αναδόμηση</strong> για να δεις το νέο αποτέλεσμα.
+        Μετά από πολλές αλλαγές στον editor, πάτα <strong>Αναδόμηση</strong> για να δεις το νέο αποτέλεσμα.
       </p>
     </section>
+
+    <!-- Δεξί: flipbook + editor -->
+    <section class="card">
+      <div class="split-row">
+        <div>
+          <div class="card-header" style="padding:0 0 0.4rem;">
+            <div>
+              <div class="card-title">3. Προεπισκόπηση flipbook</div>
+              <div class="card-subtitle">Γύρισμα σελίδων με click, drag, swipe.</div>
+            </div>
+          </div>
+          <div class="preview-panel">
+            <div id="flipbook-container">
+              <div id="flipbook">
+                <p style="color:#9ca3af;font-size:0.85rem;">
+                  Πρόσθεσε σελίδες για να εμφανιστεί εδώ το βιβλίο.
+                </p>
+              </div>
+            </div>
+            <div class="nav-row" style="margin-top:0.6rem;">
+              <div class="nav-group">
+                <button id="btn-first" class="btn sm">⏮ Πρώτη</button>
+                <button id="btn-prev2" class="btn sm">⬅️ Πίσω</button>
+                <button id="btn-next2" class="btn sm">➡️ Μπροστά</button>
+                <button id="btn-last" class="btn sm">⏭ Τελευταία</button>
+              </div>
+              <div class="nav-group">
+                <span class="hint">Click στις γωνίες, drag ή swipe σε κινητό.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-panel">
+          <div class="panel-toolbar">
+            <span class="label">4. Editor σελίδας</span>
+          </div>
+          <div class="panel-toolbar">
+            <button id="editor-add-text" class="btn sm">📝 Κείμενο</button>
+            <button id="editor-add-rect" class="btn sm">⬛ Σχήμα</button>
+            <button id="editor-add-sticker" class="btn sm">✨ Sticker (URL)</button>
+            <button id="editor-undo" class="btn sm">↩️ Undo</button>
+            <button id="editor-redo" class="btn sm">↪️ Redo</button>
+            <button id="editor-apply" class="btn sm primary">✅ Εφαρμογή στη σελίδα</button>
+          </div>
+          <p class="hint">
+            Διάλεξε σελίδα από τα thumbnails, πρόσθεσε κείμενα/stickers και πάτα <strong>Εφαρμογή στη σελίδα</strong>.
+          </p>
+          <div id="editor-canvas-wrapper">
+            <canvas id="editor-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
-
-  <div style="height: 1.5rem;"></div>
-
-  <section class="card">
-    <div class="split-row">
-      <div>
-        <div class="card-header" style="padding: 0 0 0.4rem;">
-          <div>
-            <div class="card-title">3. Προεπισκόπηση flipbook</div>
-            <div class="card-subtitle">Γύρισμα σελίδων με κλικ, swipe, κουμπιά</div>
-          </div>
-        </div>
-        <div class="preview-panel">
-          <div id="flipbook-container">
-            <div id="flipbook">
-              <p style="color:#9ca3af;font-size:0.85rem;">
-                Πρόσθεσε σελίδες για να εμφανιστεί εδώ το βιβλίο.
-              </p>
-            </div>
-          </div>
-          <div class="nav-row" style="margin-top:0.6rem;">
-            <div class="nav-group">
-              <button id="btn-first" class="btn sm">⏮ Πρώτη</button>
-              <button id="btn-prev2" class="btn sm">⬅️ Πίσω</button>
-              <button id="btn-next2" class="btn sm">➡️ Μπροστά</button>
-              <button id="btn-last" class="btn sm">⏭ Τελευταία</button>
-            </div>
-            <div class="nav-group">
-              <span class="hint">Υποστηρίζει click στις γωνίες, drag και swipe σε κινητό.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="editor-panel">
-        <div class="panel-toolbar">
-          <span class="label">4. Editor σελίδας</span>
-        </div>
-        <div class="panel-toolbar">
-          <button id="editor-add-text" class="btn sm">📝 Κείμενο</button>
-          <button id="editor-add-rect" class="btn sm">⬛ Σχήμα</button>
-          <button id="editor-add-sticker" class="btn sm">✨ Sticker (URL)</button>
-          <button id="editor-undo" class="btn sm">↩️ Undo</button>
-          <button id="editor-redo" class="btn sm">↪️ Redo</button>
-          <button id="editor-apply" class="btn sm primary">✅ Εφαρμογή στη σελίδα</button>
-        </div>
-        <p class="hint">
-          Διάλεξε σελίδα από τα thumbnails, κάνε αλλαγές στον καμβά και πάτησε <strong>Εφαρμογή στη σελίδα</strong>.
-        </p>
-        <div id="editor-canvas-wrapper">
-          <canvas id="editor-canvas"></canvas>
-        </div>
-      </div>
-    </div>
-  </section>
 </main>
 
 <footer>
-  © 2025 Photobook Studio · by Niki
+  © 2025 Nikkal Studio · Photobook Editor
 </footer>
 
 <audio id="page-sound" preload="auto">
@@ -600,6 +595,7 @@
 <script type="module">
   import { uploadPhotobook } from "./saveToFirebase.js";
 
+  // Πίνακας με σελίδες ως dataURL (string)
   const pages = [];
   let currentPageIndex = 0;
   let pageFlip = null;
@@ -634,12 +630,11 @@
   function refreshThumbnails() {
     const strip = document.getElementById('thumb-strip');
     strip.innerHTML = '';
-    pages.forEach((p, i) => {
+    pages.forEach((dataUrl, i) => {
       const div = document.createElement('div');
       div.className = 'thumb';
-      div.dataset.pageIndex = i;
       const img = document.createElement('img');
-      img.src = p.editedDataUrl || p.imageUrl;
+      img.src = dataUrl;
       div.appendChild(img);
       const badge = document.createElement('div');
       badge.className = 'thumb-index';
@@ -708,8 +703,8 @@
   }
 
   function loadPageIntoEditor(index) {
-    const page = pages[index];
-    if (!page) return;
+    const dataUrl = pages[index];
+    if (!dataUrl) return;
     fabricCanvas.clear();
     undoStack = [];
     redoStack = [];
@@ -740,13 +735,13 @@
       fabricCanvas.renderAll();
       pushUndoSnapshot();
     };
-    img.src = page.editedDataUrl || page.imageUrl;
+    img.src = dataUrl;
   }
 
   function applyEditorToCurrentPage() {
     if (!pages[currentPageIndex]) return;
     const dataUrl = fabricCanvas.toDataURL({ format: 'png', quality: 0.92 });
-    pages[currentPageIndex].editedDataUrl = dataUrl;
+    pages[currentPageIndex] = dataUrl;
     refreshThumbnails();
     buildFlipbook();
   }
@@ -771,12 +766,12 @@
       mobileScrollSupport: true
     });
 
-    const pageEls = pages.map(p => {
+    const pageEls = pages.map(dataUrl => {
       const div = document.createElement('div');
       div.className = 'page';
       div.innerHTML = `
       <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#020617;">
-        <img src="${p.editedDataUrl || p.imageUrl}" style="max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;">
+        <img src="${dataUrl}" style="max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;">
       </div>`;
       return div;
     });
@@ -800,11 +795,7 @@
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = e => {
-        pages.push({
-          id: crypto.randomUUID(),
-          imageUrl: e.target.result,
-          editedDataUrl: null
-        });
+        pages.push(e.target.result);
         refreshThumbnails();
         buildFlipbook();
         if (pages.length === 1) {
@@ -832,11 +823,7 @@
       canvas.height = viewport.height;
       await page.render({ canvasContext: ctx, viewport }).promise;
       const dataUrl = canvas.toDataURL('image/png');
-      pages.push({
-        id: crypto.randomUUID(),
-        imageUrl: dataUrl,
-        editedDataUrl: null
-      });
+      pages.push(dataUrl);
     }
     refreshThumbnails();
     buildFlipbook();
@@ -856,7 +843,7 @@
 
     for (let i = 0; i < pages.length; i++) {
       if (i > 0) doc.addPage();
-      const imgData = pages[i].editedDataUrl || pages[i].imageUrl;
+      const imgData = pages[i];
       const img = new Image();
       await new Promise(resolve => { img.onload = resolve; img.src = imgData; });
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -884,7 +871,7 @@
     const zip = new JSZip();
     const imgFolder = zip.folder('images');
     for (let i = 0; i < pages.length; i++) {
-      const dataUrl = pages[i].editedDataUrl || pages[i].imageUrl;
+      const dataUrl = pages[i];
       const base64Data = dataUrl.split(',')[1];
       imgFolder.file(`page-${i + 1}.png`, base64Data, { base64: true });
     }
@@ -941,19 +928,22 @@ flip.loadFromHTML(pagesEls);
       return;
     }
     const status = document.getElementById('share-status');
+
+    const title = prompt('Τίτλος βιβλίου; (προαιρετικό)');
     const password = prompt('Θέλεις να βάλεις password στο βιβλίο; (άφησε κενό αν όχι)');
     const safePassword = password && password.trim() !== '' ? password.trim() : null;
 
     try {
       status.textContent = 'Ανέβασμα στο cloud… Παρακαλώ περίμενε.';
-      const id = await uploadPhotobook(pages, { password: safePassword });
+
+      const id = await uploadPhotobook(pages, title, safePassword);
       const link = `${location.origin}/viewer.html?id=${id}`;
 
       try {
         await navigator.clipboard.writeText(link);
-        alert('Το βιβλίο ανέβηκε!\nΤο link αντιγράφηκε στο clipboard:\n\n' + link);
+        alert('Το βιβλίο ανέβηκε!\\nΤο link αντιγράφηκε στο clipboard:\\n\\n' + link);
       } catch {
-        alert('Το βιβλίο ανέβηκε!\nLink:\n' + link);
+        alert('Το βιβλίο ανέβηκε!\\nLink:\\n' + link);
       }
 
       status.textContent = 'Έτοιμο! Μπορείς να μοιραστείς το link: ' + link;
@@ -1064,28 +1054,9 @@ flip.loadFromHTML(pagesEls);
     document.getElementById('editor-apply').addEventListener('click', applyEditorToCurrentPage);
   }
 
-  function loadTemplateIfAny() {
-    const templateJSON = localStorage.getItem("selected-template");
-    if (templateJSON) {
-      const template = JSON.parse(templateJSON);
-      template.pages.forEach(url => {
-        pages.push({
-          id: crypto.randomUUID(),
-          imageUrl: url,
-          editedDataUrl: null
-        });
-      });
-      localStorage.removeItem("selected-template");
-      refreshThumbnails();
-      buildFlipbook();
-      loadPageIntoEditor(0);
-    }
-  }
-
   window.addEventListener('DOMContentLoaded', () => {
     initFabricEditor();
     initEvents();
-    loadTemplateIfAny();
     updatePageCount();
   });
 </script>
