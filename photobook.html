@@ -7,6 +7,7 @@
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#020617">
+  <link rel="stylesheet" href="page-flip.css">
 
   <style>
     :root {
@@ -115,9 +116,7 @@
     }
 
     @media (max-width: 960px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
+      .layout { grid-template-columns: 1fr; }
     }
 
     .card {
@@ -190,28 +189,30 @@
     }
 
     .btn.sm { padding: 0.3rem 0.75rem; font-size: 0.75rem; }
+
     .btn.primary {
       background: linear-gradient(135deg, #38bdf8, #6366f1);
       border-color: transparent;
       color: #ecfeff;
       box-shadow: 0 12px 36px rgba(56,189,248,0.5);
     }
-    .btn.secondary {
-      border-style: dashed;
-    }
+
+    .btn.secondary { border-style: dashed; }
+
     .btn.danger {
       border-color: rgba(248,113,113,0.7);
       color: #fecaca;
     }
+
     .btn:hover {
       border-color: var(--accent-soft);
       background: rgba(15,23,42,1);
       transform: translateY(-1px);
       box-shadow: 0 10px 30px rgba(15,23,42,0.9);
     }
-    .btn.primary:hover {
-      filter: brightness(1.05);
-    }
+
+    .btn.primary:hover { filter: brightness(1.05); }
+
     .btn:active {
       transform: translateY(0);
       box-shadow: 0 6px 18px rgba(15,23,42,0.9);
@@ -231,6 +232,7 @@
       color: var(--muted);
       background: rgba(15,23,42,0.85);
     }
+
     .file-label:hover {
       border-color: var(--accent-soft);
       color: var(--text);
@@ -314,9 +316,7 @@
     }
 
     @media (max-width: 1040px) {
-      .split-row {
-        grid-template-columns: 1fr;
-      }
+      .split-row { grid-template-columns: 1fr; }
     }
 
     .preview-panel {
@@ -401,7 +401,6 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css">
   <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
@@ -592,11 +591,9 @@
   <source src="flip.mp3" type="audio/mpeg">
 </audio>
 
-
 <script type="module">
   import { uploadPhotobook } from "./saveToFirebase.js";
 
-  // Πίνακας με σελίδες ως dataURL (string)
   const pages = [];
   let currentPageIndex = 0;
   let pageFlip = null;
@@ -770,10 +767,10 @@
     const pageEls = pages.map(dataUrl => {
       const div = document.createElement('div');
       div.className = 'page';
-      div.innerHTML = `
-      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#020617;">
-        <img src="${dataUrl}" style="max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;">
-      </div>`;
+      div.innerHTML =
+        '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#020617;">' +
+        '<img src="' + dataUrl + '" style="max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;">' +
+        '</div>';
       return div;
     });
 
@@ -877,8 +874,8 @@
       imgFolder.file(`page-${i + 1}.png`, base64Data, { base64: true });
     }
 
-    const html = `
-<!DOCTYPE html>
+    const html =
+`<!DOCTYPE html>
 <html lang="el">
 <head>
 <meta charset="UTF-8">
@@ -908,7 +905,7 @@ for(let i=1;i<=total;i++){
  pagesEls.push(d);
 }
 flip.loadFromHTML(pagesEls);
-</script>
+<\/script>
 </body>
 </html>`.trim();
 
@@ -942,9 +939,9 @@ flip.loadFromHTML(pagesEls);
 
       try {
         await navigator.clipboard.writeText(link);
-        alert('Το βιβλίο ανέβηκε!\\nΤο link αντιγράφηκε στο clipboard:\\n\\n' + link);
+        alert('Το βιβλίο ανέβηκε!\nΤο link αντιγράφηκε στο clipboard:\n\n' + link);
       } catch {
-        alert('Το βιβλίο ανέβηκε!\\nLink:\\n' + link);
+        alert('Το βιβλίο ανέβηκε!\nLink:\n' + link);
       }
 
       status.textContent = 'Έτοιμο! Μπορείς να μοιραστείς το link: ' + link;
@@ -962,7 +959,8 @@ flip.loadFromHTML(pagesEls);
         height: 110
       });
 
-      const embedCode = `<iframe src="${link}" style="width:100%;max-width:900px;height:600px;border:none;border-radius:12px;overflow:hidden;"></iframe>`;
+      const embedCode =
+        `<iframe src="${link}" style="width:100%;max-width:900px;height:600px;border:none;border-radius:12px;overflow:hidden;"></iframe>`;
       embedBox.value = embedCode;
     } catch (err) {
       console.error(err);
