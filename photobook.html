@@ -320,9 +320,13 @@ function loadPageToCanvas() {
     fabricImg.scaleToWidth(canvas.width);
     fabricCanvas.add(fabricImg);
     fabricCanvas.renderAll();
+
+    // 🔥 ΑΠΟΛΥΤΩΣ ΑΠΑΡΑΙΤΗΤΟ ΓΙΑ UNDO REDO
+    saveState();
   };
   img.src = pages[currentPage];
 }
+
 
 // Add new blank page
 document.getElementById('addPageBtn').onclick = () => {
@@ -330,7 +334,9 @@ document.getElementById('addPageBtn').onclick = () => {
   currentPage = pages.length - 1;
   loadPageToCanvas();
   refreshThumbnails();
+  saveState(); // 🔥 σημαντικό
 };
+
 
 // Delete current page
 document.getElementById('deletePageBtn').onclick = () => {
@@ -339,7 +345,9 @@ document.getElementById('deletePageBtn').onclick = () => {
   currentPage = 0;
   loadPageToCanvas();
   refreshThumbnails();
+  saveState(); // 🔥 must have
 };
+
 
 // Add text
 // Add text
