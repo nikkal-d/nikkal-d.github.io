@@ -474,31 +474,45 @@ if (textDeleteBtn) {
 
 
 // Undo/Redo
+// Undo / Redo – σωστή στοίβα ιστορικού
 let undoStack = [];
 let redoStack = [];
 
-fabricCanvas.on('object:added', saveState);
-fabricCanvas.on('object:removed', saveState);
-fabricCanvas.on('object:modified', saveState);
-
+// αποθηκεύουμε ΠΑΝΤΑ το τρέχον state
 function saveState() {
-  undoStack.push(JSON.stringify(fabricCanvas));
+  const json = fabricCanvas.toJSON();
+  undoStack.push(json);
+  if (undoStack.length > 50) {
+    // κρατάμε max 50 βήματα ιστορικού
+    undoStack.shift();
+  }
+  // κάθε φορά που κάνουμε καινούρια ενέργεια, καθαρίζουμε το redo
   redoStack = [];
 }
 
+// αρχικό state (άδειος καμβάς)
+saveState();
+
+// κουμπί Undo
 document.getElementById('undoBtn').onclick = () => {
-  if (!undoStack.length) return;
-  redoStack.push(JSON.stringify(fabricCanvas));
-  const prev = undoStack.pop();
+  if (undoStack.length < 2) return; // δεν υπάρχει προηγούμενο
+  // το τελευταίο είναι το τρέχον state — το σπρώχνουμε στο redo
+  const current = undoStack.pop();
+  redoStack.push(current);
+
+  // το αμέσως προηγούμενο είναι αυτό που θέλουμε να φορτώσουμε
+  const prev = undoStack[undoStack.length - 1];
   fabricCanvas.loadFromJSON(prev, () => fabricCanvas.renderAll());
 };
 
+// κουμπί Redo
 document.getElementById('redoBtn').onclick = () => {
   if (!redoStack.length) return;
-  undoStack.push(JSON.stringify(fabricCanvas));
   const next = redoStack.pop();
+  undoStack.push(next);
   fabricCanvas.loadFromJSON(next, () => fabricCanvas.renderAll());
 };
+
 
 // Render Flipbook
 function renderFlipbook() {
