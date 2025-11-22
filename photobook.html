@@ -92,6 +92,40 @@ input, select {
     border: 1px solid #334155;
     color: white;
 }
+
+.text-tools-group {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #1e293b;
+    font-size: 12px;
+}
+
+.text-tools-group label {
+    font-size: 11px;
+    display: block;
+    margin-top: 6px;
+    margin-bottom: 2px;
+}
+
+.text-tools-group input,
+.text-tools-group select {
+    font-size: 12px;
+}
+
+.text-style-buttons {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+
+.text-style-buttons button {
+    flex: 1;
+    padding: 4px 6px;
+    font-size: 11px;
+    width: auto;
+}
+
 </style>
 
     <!-- JS LIBRARIES -->
@@ -132,6 +166,42 @@ input, select {
 <button id="addTemplateBtn">Προσθήκη Template</button>
 <button id="undoBtn">↶ Undo</button>
 <button id="redoBtn">↷ Redo</button>
+
+<div class="text-tools-group">
+  <strong style="font-size:12px;">Ρυθμίσεις κειμένου</strong>
+
+  <label for="textFont">Γραμματοσειρά</label>
+  <select id="textFont">
+    <option value="Arial">Arial</option>
+    <option value="Times New Roman">Times New Roman</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Courier New">Courier New</option>
+  </select>
+
+  <label for="textSize">Μέγεθος</label>
+  <input type="number" id="textSize" value="40" min="8" max="150">
+
+  <label for="textColor">Χρώμα</label>
+  <input type="color" id="textColor" value="#000000">
+
+  <div class="text-style-buttons">
+    <button type="button" id="textBoldBtn"><b>B</b></button>
+    <button type="button" id="textItalicBtn"><i>I</i></button>
+    <button type="button" id="textUnderlineBtn"><u>U</u></button>
+  </div>
+
+  <label for="textAlign">Στοίχιση</label>
+  <select id="textAlign">
+    <option value="left">Αριστερά</option>
+    <option value="center">Κέντρο</option>
+    <option value="right">Δεξιά</option>
+  </select>
+
+  <button type="button" id="textDeleteBtn">🗑️ Διαγραφή κειμένου</button>
+</div>
+
+<hr>
+
 
 <hr>
 
@@ -272,15 +342,136 @@ document.getElementById('deletePageBtn').onclick = () => {
 };
 
 // Add text
-document.getElementById('addTextBtn').onclick = () => {
+// Add text
+const addTextBtn = document.getElementById('addTextBtn');
+const textFontEl = document.getElementById('textFont');
+const textSizeEl = document.getElementById('textSize');
+const textColorEl = document.getElementById('textColor');
+const textAlignEl = document.getElementById('textAlign');
+const textBoldBtn = document.getElementById('textBoldBtn');
+const textItalicBtn = document.getElementById('textItalicBtn');
+const textUnderlineBtn = document.getElementById('textUnderlineBtn');
+const textDeleteBtn = document.getElementById('textDeleteBtn');
+
+function getActiveText() {
+  const active = fabricCanvas.getActiveObject();
+  if (!active) return null;
+  if (active.type === 'i-text' || active.type === 'text' || active.type === 'textbox') {
+    return active;
+  }
+  return null;
+}
+
+function updateTextControls() {
+  const t = getActiveText();
+  if (!t) return;
+  if (textFontEl) textFontEl.value = t.fontFamily || 'Arial';
+  if (textSizeEl) textSizeEl.value = t.fontSize || 40;
+  if (textColorEl && typeof t.fill === 'string') textColorEl.value = t.fill;
+  if (textAlignEl && t.textAlign) textAlignEl.value = t.textAlign;
+}
+
+addTextBtn.onclick = () => {
   const text = new fabric.IText('Κείμενο', {
     left: 100,
     top: 100,
-    fontSize: 40,
-    fill: 'black'
+    fontSize: Number(textSizeEl?.value) || 40,
+    fill: textColorEl?.value || '#000000',
+    fontFamily: textFontEl?.value || 'Arial'
   });
   fabricCanvas.add(text);
+  fabricCanvas.setActiveObject(text);
+  fabricCanvas.renderAll();
+  if (typeof saveState === 'function') saveState();
+  updateTextControls();
 };
+
+// ενημέρωση controls όταν επιλέγεις αντικείμενο
+fabricCanvas.on('selection:created', updateTextControls);
+fabricCanvas.on('selection:updated', updateTextControls);
+
+// αλλαγές από controls προς το κείμενο
+if (textFontEl) {
+  textFontEl.addEventListener('change', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set('fontFamily', textFontEl.value);
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textSizeEl) {
+  textSizeEl.addEventListener('change', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set('fontSize', Number(textSizeEl.value) || 40);
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textColorEl) {
+  textColorEl.addEventListener('change', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set('fill', textColorEl.value);
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textAlignEl) {
+  textAlignEl.addEventListener('change', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set('textAlign', textAlignEl.value);
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textBoldBtn) {
+  textBoldBtn.addEventListener('click', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set('fontWeight', t.fontWeight === 'bold' ? 'normal' : 'bold');
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textItalicBtn) {
+  textItalicBtn.addEventListener('click', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set('fontStyle', t.fontStyle === 'italic' ? 'normal' : 'italic');
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textUnderlineBtn) {
+  textUnderlineBtn.addEventListener('click', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set('underline', !t.underline);
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textDeleteBtn) {
+  textDeleteBtn.addEventListener('click', () => {
+    const t = getActiveText();
+    if (!t) return;
+    fabricCanvas.remove(t);
+    fabricCanvas.discardActiveObject();
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
 
 // Undo/Redo
 let undoStack = [];
