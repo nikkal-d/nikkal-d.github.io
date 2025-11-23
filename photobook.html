@@ -512,6 +512,8 @@
       <input type="text" id="stickerUrl" placeholder="https://...png" style="width:100%;font-size:0.75rem;padding:0.25rem 0.4rem;border-radius:999px;border:1px solid var(--border);background:#020617;color:var(--text);">
       <button id="addStickerUrlBtn" class="btn sm" style="margin-top:0.25rem;">➕ Προσθήκη sticker</button>
     </div>
+    
+     <button id="addTemplateBtn">📐 Template</button>
 
     <!-- Pages / Export -->
     <div class="sidebar-section">
@@ -579,6 +581,56 @@
 
 <script type="module">
   import { uploadPhotobook } from "./saveToFirebase.js";
+  import { loadPhotobook } from "./loadFromFirebase.js";
+  
+  import { db } from "./firebase-init.js";
+import { collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+let currentUserEmail = null;
+
+function initLogin() {
+  const userLabel = document.getElementById('user-label');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  // διάβασμα email από localStorage
+  const saved = localStorage.getItem('pb-user-email');
+  if (saved) {
+    currentUserEmail = saved;
+    userLabel.textContent = saved;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    const email = prompt('Γράψε το email σου για να αποθηκεύεται το photobook σου:');
+    if (!email) return;
+    currentUserEmail = email.trim();
+    userLabel.textContent = currentUserEmail;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+    localStorage.setItem('pb-user-email', currentUserEmail);
+
+    try {
+      await addDoc(collection(db, "users"), {
+        email: currentUserEmail,
+        createdAt: Timestamp.now()
+      });
+    } catch (e) {
+      console.warn('Δεν μπόρεσα να αποθηκεύσω το email στο Firestore', e);
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    if (!confirm('Σίγουρα αποσύνδεση;')) return;
+    currentUserEmail = null;
+    userLabel.textContent = 'Επισκέπτης';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+    localStorage.removeItem('pb-user-email');
+  });
+}
+
 
   const canvasEl = document.getElementById('canvas');
   const fabricCanvas = new fabric.Canvas('canvas', {
@@ -586,6 +638,43 @@
     selection:true
   });
 
+// Templates – πολύ basic layout 2 φωτογραφιών
+const addTemplateBtn = document.getElementById('addTemplateBtn');
+addTemplateBtn.addEventListener('click', () => {
+  const pw = canvas.width;
+  const ph = canvas.height;
+
+  // δύο γκρι “πλαίσια φωτογραφίας”
+  const frame1 = new fabric.Rect({
+    left: pw * 0.1,
+    top: ph * 0.2,
+    width: pw * 0.35,
+    height: ph * 0.5,
+    fill: '#0f172a',
+    stroke: '#38bdf8',
+    strokeDashArray: [5, 5],
+    rx: 12,
+    ry: 12
+  });
+
+  const frame2 = new fabric.Rect({
+    left: pw * 0.55,
+    top: ph * 0.2,
+    width: pw * 0.35,
+    height: ph * 0.5,
+    fill: '#0f172a',
+    stroke: '#38bdf8',
+    strokeDashArray: [5, 5],
+    rx: 12,
+    ry: 12
+  });
+
+  fabricCanvas.add(frame1, frame2);
+  fabricCanvas.renderAll();
+  if (typeof saveState === 'function') saveState();
+});
+
+  
   // Undo / Redo history
   let undoStack = [];
   let redoStack = [];
@@ -889,6 +978,22 @@
     });
   }
 
+// Stickers – πολύ απλά, για αρχή
+const addStickerBtn = document.getElementById('addStickerBtn');
+addStickerBtn.addEventListener('click', () => {
+  // Μπορούμε να το κάνουμε με emoji-sticker για αρχή
+  const sticker = new fabric.Text('❤️', {
+    left: canvas.width / 2 - 40,
+    top: canvas.height / 2 - 40,
+    fontSize: 80
+  });
+  fabricCanvas.add(sticker);
+  fabricCanvas.setActiveObject(sticker);
+  fabricCanvas.renderAll();
+  if (typeof saveState === 'function') saveState();
+});
+
+  
   // Stickers
   const stickerList = document.getElementById('stickerList');
   const stickerUrlInput = document.getElementById('stickerUrl');
@@ -1135,16 +1240,29 @@
     };
   }
 
-  window.addEventListener('DOMContentLoaded',()=>{
-    initUserAuth();
-    applyPageSizeFromInputs();
-    updatePageInfo();
-    // αρχική κενή σελίδα
-    pages.push({image:fabricCanvas.toDataURL({format:'png',quality:0.8})});
+window.addEventListener("DOMContentLoaded", () => {
+
+  initUserAuth();               // σύνδεση χρήστη
+  applyPageSizeFromInputs();    // σελιδοποίηση (A4 κλπ)
+  updatePageInfo();             // ενημέρωση UI
+
+  // Προσπάθησε να φορτώσεις draft ΑΝ υπάρχει
+  const hasDraft = loadDraft(); // ⬅ επιστρέφω true/false
+
+  // Αν ΔΕΝ υπάρχει draft → φτιάξε καθαρή πρώτη σελίδα
+  if (!hasDraft) {
+    const blankPage = fabricCanvas.toDataURL({
+      format: "png",
+      quality: 0.8
+    });
+
+    pages = [{ image: blankPage }];
     currentPage = 0;
-    refreshThumbnails();
-    loadDraft();
-  });
+  }
+
+  refreshThumbnails();
+  loadPageToCanvas(currentPage);
+});
 </script>
 </body>
 </html>
