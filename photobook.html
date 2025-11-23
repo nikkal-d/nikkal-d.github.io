@@ -24,6 +24,62 @@ header {
     letter-spacing: 1px;
     border-bottom: 2px solid #1e293b;
 }
+
+.main-header {
+    background: #0f172a;
+    padding: 10px 20px;
+    border-bottom: 2px solid #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.main-menu {
+    display: flex;
+    gap: 20px;
+}
+
+.main-menu a {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 15px;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.main-menu a:hover,
+.main-menu a.active {
+    background: #1e293b;
+}
+
+.user-area {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn.sm {
+    padding: 4px 10px;
+    font-size: 12px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: white;
+    cursor: pointer;
+}
+
+.btn.sm:hover {
+    background: #334155;
+}
+
+    
 #editor-container {
     display: flex;
     gap: 20px;
@@ -144,7 +200,27 @@ input, select {
 
 <body>
 
-<header>📘 Photobook Editor – Nikkal Studio</header>
+<header class="main-header">
+  <div class="header-left">
+    <span class="logo">📚</span>
+    <span class="site-title">Nikkal Studio</span>
+  </div>
+
+  <nav class="main-menu">
+    <a href="index.html">Find My Duplicates</a>
+    <a href="photobook.html" class="active">Photobook Editor</a>
+    <a href="projects.html">Projects</a>
+    <a href="templates.html">Templates</a>
+    <a href="stickers.html">Stickers</a>
+    <a href="viewer.html">Viewer</a>
+  </nav>
+
+  <div class="user-area">
+    <span id="user-label">Επισκέπτης</span>
+    <button id="login-btn" class="btn sm">Σύνδεση</button>
+    <button id="logout-btn" class="btn sm" style="display:none;">Αποσύνδεση</button>
+  </div>
+</header>
 
 <div id="editor-container">
 
