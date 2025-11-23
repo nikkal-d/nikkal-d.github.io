@@ -1,211 +1,425 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nikkal Studio – Photobook Editor</title>
+  <meta charset="UTF-8">
+  <title>Photobook Editor · Nikkal Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- CSS -->
-<link rel="stylesheet" href="page-flip.css">
-<style>
-body {
-    margin: 0;
-    padding: 0;
-    background: #020617;
-    color: white;
-    font-family: Arial, sans-serif;
-}
-header {
-    background: #0f172a;
-    padding: 12px;
-    text-align: center;
-    color: white;
-    font-size: 22px;
-    letter-spacing: 1px;
-    border-bottom: 2px solid #1e293b;
-}
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#020617">
 
-.main-header {
-    background: #0f172a;
-    padding: 10px 20px;
-    border-bottom: 2px solid #1e293b;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+  <style>
+    :root{
+      --bg:#020617;
+      --bg-soft:#0f172a;
+      --border:#1f2937;
+      --accent:#38bdf8;
+      --accent-soft:rgba(56,189,248,0.5);
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --radius:14px;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      background:radial-gradient(circle at top,#020617 0,#020617 50%,#020617 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    /* HEADER */
+    .main-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0.6rem 1.2rem;
+      background:#020617;
+      border-bottom:1px solid var(--border);
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+    .header-left{
+      display:flex;
+      align-items:center;
+      gap:0.5rem;
+    }
+    .header-left .logo{
+      font-size:1.4rem;
+    }
+    .header-left .site-title{
+      font-size:1rem;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .main-menu{
+      display:flex;
+      gap:0.5rem;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .main-menu a{
+      text-decoration:none;
+      font-size:0.8rem;
+      padding:0.35rem 0.75rem;
+      border-radius:999px;
+      border:1px solid transparent;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .main-menu a:hover{
+      border-color:var(--accent-soft);
+      color:var(--text);
+      background:rgba(15,23,42,0.95);
+    }
+    .main-menu a.active{
+      border-color:var(--accent-soft);
+      color:var(--accent);
+      background:rgba(15,23,42,0.95);
+    }
+    .user-area{
+      display:flex;
+      align-items:center;
+      gap:0.4rem;
+      font-size:0.8rem;
+      color:var(--muted);
+      white-space:nowrap;
+    }
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 20px;
-    font-weight: bold;
-}
+    .btn{
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(15,23,42,0.98);
+      color:var(--text);
+      padding:0.35rem 0.8rem;
+      font-size:0.78rem;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:0.25rem;
+      transition:0.15s border-color,0.15s background,0.07s transform,0.15s box-shadow;
+      white-space:nowrap;
+    }
+    .btn.sm{padding:0.25rem 0.6rem;font-size:0.75rem;}
+    .btn.primary{
+      background:linear-gradient(135deg,#38bdf8,#6366f1);
+      border-color:transparent;
+      color:#ecfeff;
+      box-shadow:0 12px 30px rgba(56,189,248,0.4);
+    }
+    .btn:hover{
+      border-color:var(--accent-soft);
+      background:rgba(15,23,42,1);
+      transform:translateY(-1px);
+      box-shadow:0 10px 28px rgba(15,23,42,0.9);
+    }
+    .btn.primary:hover{filter:brightness(1.05);}
+    .btn:active{
+      transform:translateY(0);
+      box-shadow:0 6px 18px rgba(15,23,42,0.9);
+    }
 
-.main-menu {
-    display: flex;
-    gap: 20px;
-}
+    main{
+      flex:1;
+      display:flex;
+      min-height:0;
+      padding:0.8rem;
+      gap:0.8rem;
+    }
+    /* SIDEBAR */
+    #sidebar{
+      width:260px;
+      min-width:240px;
+      background:var(--bg-soft);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      padding:0.7rem;
+      display:flex;
+      flex-direction:column;
+      gap:0.7rem;
+      overflow-y:auto;
+      max-height:calc(100vh - 70px);
+    }
+    .sidebar-section{
+      border-radius:10px;
+      border:1px solid rgba(148,163,184,0.3);
+      padding:0.45rem 0.55rem 0.6rem;
+      background:rgba(15,23,42,0.85);
+    }
+    .sidebar-title{
+      font-size:0.78rem;
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+      color:var(--muted);
+      margin-bottom:0.2rem;
+    }
+    .sidebar-sub{
+      font-size:0.72rem;
+      color:var(--muted);
+      margin-bottom:0.35rem;
+    }
+    label{
+      font-size:0.75rem;
+      color:var(--muted);
+      display:block;
+      margin-top:0.25rem;
+      margin-bottom:0.1rem;
+    }
+    input[type="number"],
+    input[type="color"],
+    select{
+      width:100%;
+      font-size:0.78rem;
+      padding:0.25rem 0.4rem;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#020617;
+      color:var(--text);
+    }
+    input[type="file"]{display:none;}
+    .file-label{
+      border-radius:999px;
+      border:1px dashed var(--border);
+      padding:0.35rem 0.7rem;
+      font-size:0.78rem;
+      display:inline-flex;
+      align-items:center;
+      gap:0.3rem;
+      cursor:pointer;
+      color:var(--muted);
+      background:rgba(15,23,42,0.9);
+      margin-bottom:0.25rem;
+    }
+    .file-label:hover{
+      border-color:var(--accent-soft);
+      color:var(--text);
+    }
+    .photo-gallery{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:0.25rem;
+      max-height:140px;
+      overflow-y:auto;
+    }
+    .photo-thumb{
+      width:100%;
+      aspect-ratio:1/1;
+      border-radius:8px;
+      overflow:hidden;
+      border:1px solid rgba(148,163,184,0.4);
+      cursor:pointer;
+    }
+    .photo-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .photo-thumb:hover{
+      border-color:var(--accent);
+    }
 
-.main-menu a {
-    color: #cbd5e1;
-    text-decoration: none;
-    font-size: 15px;
-    padding: 6px 12px;
-    border-radius: 8px;
-}
+    .text-tools-group{
+      margin-top:0.4rem;
+      padding-top:0.35rem;
+      border-top:1px solid rgba(148,163,184,0.3);
+      font-size:0.75rem;
+    }
+    .text-style-buttons{
+      display:flex;
+      gap:0.25rem;
+      margin:0.25rem 0;
+    }
+    .text-style-buttons button{
+      flex:1;
+      padding:0.2rem 0.4rem;
+      font-size:0.7rem;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#020617;
+      color:var(--text);
+      cursor:pointer;
+    }
+    .text-style-buttons button:hover{
+      border-color:var(--accent-soft);
+    }
 
-.main-menu a:hover,
-.main-menu a.active {
-    background: #1e293b;
-}
+    .sticker-list{
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.25rem;
+      margin-top:0.25rem;
+    }
+    .sticker-item{
+      width:42px;
+      height:42px;
+      border-radius:8px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      overflow:hidden;
+      cursor:pointer;
+    }
+    .sticker-item img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+    .hint{
+      font-size:0.7rem;
+      color:var(--muted);
+      margin-top:0.2rem;
+    }
 
-.user-area {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
+    /* MAIN AREA */
+    #mainArea{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:0.6rem;
+    }
+    .canvas-wrapper{
+      flex:1;
+      min-height:260px;
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      background:radial-gradient(circle at top,#020617,#020617);
+      padding:0.5rem;
+      display:flex;
+      flex-direction:column;
+      gap:0.5rem;
+    }
+    .canvas-toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:0.4rem;
+      font-size:0.76rem;
+      color:var(--muted);
+    }
+    .canvas-toolbar-left,
+    .canvas-toolbar-right{
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.3rem;
+      align-items:center;
+    }
+    .canvas-container-outer{
+      flex:1;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      overflow:hidden;
+    }
+    #canvas{
+      background:white;
+      box-shadow:0 18px 50px rgba(15,23,42,0.9);
+      border-radius:12px;
+      max-width:100%;
+      height:auto;
+      display:block;
+    }
 
-.btn.sm {
-    padding: 4px 10px;
-    font-size: 12px;
-    background: #1e293b;
-    border: 1px solid #334155;
-    color: white;
-    cursor: pointer;
-}
+    .thumb-strip{
+      display:flex;
+      gap:0.3rem;
+      overflow-x:auto;
+      padding:0.25rem 0.1rem 0;
+    }
+    .thumb{
+      width:70px;
+      height:95px;
+      border-radius:10px;
+      border:1px solid rgba(148,163,184,0.4);
+      overflow:hidden;
+      position:relative;
+      flex-shrink:0;
+      background:#020617;
+      cursor:pointer;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .thumb.active{
+      border-color:var(--accent);
+      box-shadow:0 0 0 1px rgba(56,189,248,0.7);
+    }
+    .thumb-index{
+      position:absolute;
+      bottom:2px;
+      right:4px;
+      font-size:0.65rem;
+      background:rgba(15,23,42,0.9);
+      padding:0.05rem 0.35rem;
+      border-radius:999px;
+      color:var(--muted);
+    }
 
-.btn.sm:hover {
-    background: #334155;
-}
+    .flipbook-wrapper{
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      padding:0.5rem;
+      background:radial-gradient(circle at top left,#0f172a,#020617);
+      min-height:220px;
+      display:flex;
+      flex-direction:column;
+      gap:0.4rem;
+    }
+    #flipbook-container{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border-radius:12px;
+      background:#020617;
+    }
+    #flipbook{
+      width:100%;
+      height:100%;
+    }
 
-    
-#editor-container {
-    display: flex;
-    gap: 20px;
-    height: calc(100vh - 60px);
-    padding: 10px;
-}
-#sidebar {
-    width: 260px;
-    background: #0f172a;
-    border-right: 2px solid #1e293b;
-    padding: 12px;
-    overflow-y: auto;
-    height: calc(100vh - 60px);
-}
+    footer{
+      border-top:1px solid var(--border);
+      padding:0.7rem;
+      text-align:center;
+      font-size:0.72rem;
+      color:var(--muted);
+      background:#020617;
+    }
 
-#mainArea {
-    flex-grow: 1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-#canvas {
-    background: white;
-    width: 100%;
-    max-width: 800px;
-    height: auto;
-    aspect-ratio: 8 / 11;
-    box-shadow: 0 0 12px #0008;
-}
-.thumbnail-bar {
-    margin-top: 8px;
-    display: flex;
-    gap: 8px;
-    max-width: 95%;
-    overflow-x: auto;
-    padding: 6px;
-}
-.thumbnail {
-    width: 120px;
-    height: 160px;
-    border: 2px solid #334155;
-    cursor: pointer;
-}
-.thumbnail.active {
-    border-color: #38bdf8;
-}
-button {
-    padding: 10px;
-    margin: 5px 0;
-    width: 100%;
-    background: #1e293b;
-    color: white;
-    border: 1px solid #334155;
-    cursor: pointer;
-}
-button:hover {
-    background: #334155;
-}
-input, select {
-    width: 100%;
-    padding: 8px;
-    margin-top: 6px;
-    margin-bottom: 12px;
-    background: #1e293b;
-    border: 1px solid #334155;
-    color: white;
-}
+    @media (max-width:960px){
+      main{flex-direction:column;}
+      #sidebar{
+        max-height:none;
+        width:100%;
+        order:2;
+      }
+      #mainArea{order:1;}
+    }
+  </style>
 
-.text-tools-group {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #1e293b;
-    font-size: 12px;
-}
-
-.text-tools-group label {
-    font-size: 11px;
-    display: block;
-    margin-top: 6px;
-    margin-bottom: 2px;
-}
-
-.text-tools-group input,
-.text-tools-group select {
-    font-size: 12px;
-}
-
-.text-style-buttons {
-    display: flex;
-    gap: 4px;
-    margin-top: 4px;
-    margin-bottom: 6px;
-}
-
-.text-style-buttons button {
-    flex: 1;
-    padding: 4px 6px;
-    font-size: 11px;
-    width: auto;
-}
-
-</style>
-
-    <!-- JS LIBRARIES -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-
-<!-- PageFlip -->
-<script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
-
-
-
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
-
 <body>
-
 <header class="main-header">
   <div class="header-left">
     <span class="logo">📚</span>
     <span class="site-title">Nikkal Studio</span>
   </div>
-
   <nav class="main-menu">
     <a href="index.html">Find My Duplicates</a>
     <a href="photobook.html" class="active">Photobook Editor</a>
@@ -214,7 +428,6 @@ input, select {
     <a href="stickers.html">Stickers</a>
     <a href="viewer.html">Viewer</a>
   </nav>
-
   <div class="user-area">
     <span id="user-label">Επισκέπτης</span>
     <button id="login-btn" class="btn sm">Σύνδεση</button>
@@ -222,467 +435,716 @@ input, select {
   </div>
 </header>
 
-<div id="editor-container">
+<main>
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <!-- Σελίδα / Διαστάσεις -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Page setup</div>
+      <div class="sidebar-sub">Διαστάσεις σελίδας & αναλογία.</div>
+      <label for="pagePreset">Preset</label>
+      <select id="pagePreset">
+        <option value="a4-portrait">A4 κάθετη</option>
+        <option value="a4-landscape">A4 οριζόντια</option>
+        <option value="square">Τετράγωνο (1:1)</option>
+        <option value="3-4">3:4</option>
+        <option value="9-16">9:16</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label>Custom (px)</label>
+      <div style="display:flex;gap:0.25rem;">
+        <input type="number" id="pageWidth" min="300" max="2000" value="800">
+        <input type="number" id="pageHeight" min="300" max="2000" value="1100">
+      </div>
+      <button id="applyPageSize" class="btn sm" style="margin-top:0.35rem;">Εφαρμογή διαστάσεων</button>
+      <p class="hint">Οι διαστάσεις επηρεάζουν τον καμβά & το export PDF.</p>
+    </div>
 
-<div id="sidebar">
+    <!-- Φωτογραφίες -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Photos</div>
+      <div class="sidebar-sub">Ανέβασε και διάλεξε ποιες θα μπουν στη σελίδα.</div>
+      <label for="imageUpload" class="file-label">🖼️ Upload images</label>
+      <input type="file" id="imageUpload" accept="image/*" multiple>
+      <label for="pdfUpload" class="file-label">📄 Import PDF (π.χ. από Canva)</label>
+      <input type="file" id="pdfUpload" accept="application/pdf">
+      <p class="hint">Τα PDF pages γίνονται σελίδες photobook, χωρίς παραμόρφωση (letterbox).</p>
+      <div class="photo-gallery" id="photoGallery"></div>
+    </div>
 
-<h3>📤 Μεταφόρτωση</h3>
+    <!-- Text -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Text</div>
+      <button id="addTextBtn" class="btn sm">➕ Προσθήκη κειμένου</button>
+      <div class="text-tools-group">
+        <label for="textFont">Font</label>
+        <select id="textFont">
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+        <label for="textSize">Μέγεθος</label>
+        <input type="number" id="textSize" value="36" min="8" max="200">
+        <label for="textColor">Χρώμα</label>
+        <input type="color" id="textColor" value="#000000">
+        <label for="textAlign">Στοίχιση</label>
+        <select id="textAlign">
+          <option value="left">Αριστερά</option>
+          <option value="center">Κέντρο</option>
+          <option value="right">Δεξιά</option>
+        </select>
+        <div class="text-style-buttons">
+          <button type="button" id="textBoldBtn"><b>B</b></button>
+          <button type="button" id="textItalicBtn"><i>I</i></button>
+          <button type="button" id="textUnderlineBtn"><u>U</u></button>
+        </div>
+        <button type="button" id="textDeleteBtn" class="btn sm" style="width:100%;">🗑️ Διαγραφή κειμένου</button>
+      </div>
+    </div>
 
-<label>Εικόνες (PNG/JPG):</label>
-<input type="file" id="imageUpload" accept="image/*" multiple>
+    <!-- Stickers -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Stickers</div>
+      <div class="sidebar-sub">Διάλεξε sticker ή βάλε URL.</div>
+      <div class="sticker-list" id="stickerList"></div>
+      <label for="stickerUrl">Ή URL sticker</label>
+      <input type="text" id="stickerUrl" placeholder="https://...png" style="width:100%;font-size:0.75rem;padding:0.25rem 0.4rem;border-radius:999px;border:1px solid var(--border);background:#020617;color:var(--text);">
+      <button id="addStickerUrlBtn" class="btn sm" style="margin-top:0.25rem;">➕ Προσθήκη sticker</button>
+    </div>
 
-<label>PDF (από Canva, αρχεία):</label>
-<input type="file" id="pdfUpload" accept="application/pdf">
+    <!-- Pages / Export -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Pages & Export</div>
+      <div style="display:flex;gap:0.25rem;margin-bottom:0.3rem;">
+        <button id="addPageBtn" class="btn sm" style="flex:1;">➕ Νέα σελίδα</button>
+        <button id="deletePageBtn" class="btn sm" style="flex:1;">🗑️ Διαγραφή</button>
+      </div>
+      <div style="display:flex;gap:0.25rem;margin-bottom:0.3rem;">
+        <button id="undoBtn" class="btn sm" style="flex:1;">↶ Undo</button>
+        <button id="redoBtn" class="btn sm" style="flex:1;">↷ Redo</button>
+      </div>
+      <button id="applyToPageBtn" class="btn sm primary" style="width:100%;margin-bottom:0.3rem;">✅ Εφαρμογή στη σελίδα</button>
+      <button id="exportPdfBtn" class="btn sm" style="width:100%;margin-bottom:0.25rem;">📄 Export PDF</button>
+      <button id="exportZipBtn" class="btn sm" style="width:100%;margin-bottom:0.25rem;">📦 Export ZIP</button>
+      <button id="uploadCloudBtn" class="btn sm" style="width:100%;margin-bottom:0.25rem;">☁️ Upload στο Cloud</button>
+      <p class="hint">Το έργο αποθηκεύεται αυτόματα στον browser ανά χρήστη.</p>
+    </div>
+  </aside>
 
-<hr>
+  <!-- MAIN AREA -->
+  <section id="mainArea">
+    <div class="canvas-wrapper">
+      <div class="canvas-toolbar">
+        <div class="canvas-toolbar-left">
+          <span style="font-size:0.78rem;color:var(--muted);">Canvas editor</span>
+          <span id="pageStatus" style="font-size:0.75rem;color:var(--muted);"></span>
+        </div>
+        <div class="canvas-toolbar-right">
+          <span style="font-size:0.75rem;">Σελίδα: <span id="pageInfo">0 / 0</span></span>
+        </div>
+      </div>
+      <div class="canvas-container-outer">
+        <canvas id="canvas" width="800" height="1100"></canvas>
+      </div>
+      <div class="thumb-strip" id="thumbStrip"></div>
+    </div>
 
-<h3>✏️ Εργαλεία</h3>
-<button id="addTextBtn">Προσθήκη Κειμένου</button>
-<button id="addStickerBtn">Προσθήκη Sticker</button>
-<button id="addTemplateBtn">Προσθήκη Template</button>
-<button id="undoBtn">↶ Undo</button>
-<button id="redoBtn">↷ Redo</button>
+    <div class="flipbook-wrapper">
+      <div class="canvas-toolbar">
+        <div class="canvas-toolbar-left">
+          <span style="font-size:0.78rem;color:var(--muted);">Flipbook preview</span>
+        </div>
+        <div class="canvas-toolbar-right">
+          <button id="fbPrev" class="btn sm">⬅️ Πίσω</button>
+          <button id="fbNext" class="btn sm">➡️ Μπροστά</button>
+        </div>
+      </div>
+      <div id="flipbook-container">
+        <div id="flipbook">
+          <p style="color:var(--muted);font-size:0.8rem;">Πρόσθεσε σελίδες & πάτησε "Εφαρμογή στη σελίδα" για να δεις εδώ το βιβλίο.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
 
-<div class="text-tools-group">
-  <strong style="font-size:12px;">Ρυθμίσεις κειμένου</strong>
+<footer>
+  © 2025 Nikkal Studio · Photobook Editor
+</footer>
 
-  <label for="textFont">Γραμματοσειρά</label>
-  <select id="textFont">
-    <option value="Arial">Arial</option>
-    <option value="Times New Roman">Times New Roman</option>
-    <option value="Georgia">Georgia</option>
-    <option value="Courier New">Courier New</option>
-  </select>
-
-  <label for="textSize">Μέγεθος</label>
-  <input type="number" id="textSize" value="40" min="8" max="150">
-
-  <label for="textColor">Χρώμα</label>
-  <input type="color" id="textColor" value="#000000">
-
-  <div class="text-style-buttons">
-    <button type="button" id="textBoldBtn"><b>B</b></button>
-    <button type="button" id="textItalicBtn"><i>I</i></button>
-    <button type="button" id="textUnderlineBtn"><u>U</u></button>
-  </div>
-
-  <label for="textAlign">Στοίχιση</label>
-  <select id="textAlign">
-    <option value="left">Αριστερά</option>
-    <option value="center">Κέντρο</option>
-    <option value="right">Δεξιά</option>
-  </select>
-
-  <button type="button" id="textDeleteBtn">🗑️ Διαγραφή κειμένου</button>
-</div>
-
-<hr>
-
-
-<hr>
-
-<h3>📚 Σελίδες</h3>
-<button id="addPageBtn">➕ Νέα Σελίδα</button>
-<button id="deletePageBtn">🗑️ Διαγραφή Σελίδας</button>
-
-<hr>
-
-<h3>📤 Εξαγωγή</h3>
-<button id="exportPdfBtn">📄 Αποθήκευση σαν PDF</button>
-<button id="exportZipBtn">📦 Κατέβασμα ZIP</button>
-
-<h3>☁️ Cloud</h3>
-<button id="uploadCloudBtn">☁️ Upload στο Cloud</button>
-<button id="shareBtn">🔗 Κοινοποίηση Link</button>
-
-</div>
-
-<div id="mainArea">
-<canvas id="canvas"></canvas>
-
-<div class="thumbnail-bar" id="thumbnailBar"></div>
-
-</div>
-
-</div>
-<div id="viewerContainer" style="margin-top:20px; width:100%; height:500px; background:#020617; position:relative; overflow:hidden;">
-    <!-- Flipbook θα προκύψει εδώ -->
-</div>
-
-<!-- Ήχος για γύρισμα σελίδας -->
 <audio id="pageSound" preload="auto">
   <source src="flip.mp3" type="audio/mpeg">
 </audio>
 
 <script type="module">
-// -- Modules Εισαγωγές --
-import { uploadPhotobook } from "./saveToFirebase.js";
-import { loadPhotobook } from "./loadFromFirebase.js";
+  import { uploadPhotobook } from "./saveToFirebase.js";
 
-
-const canvas = document.getElementById('canvas');
-const fabricCanvas = new fabric.Canvas(canvas, {
-  backgroundColor: '#ffffff',
-  selection: true
-});
-let pages = [];
-let currentPage = 0;
-
-// Εισαγωγή εικόνων
-const imageUpload = document.getElementById('imageUpload');
-imageUpload.addEventListener('change', (e) => {
-  const files = [...e.target.files];
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      pages.push(evt.target.result);
-      refreshThumbnails();
-      renderFlipbook();
-    };
-    reader.readAsDataURL(file);
+  const canvasEl = document.getElementById('canvas');
+  const fabricCanvas = new fabric.Canvas('canvas', {
+    preserveObjectStacking:true,
+    selection:true
   });
-  e.target.value = '';
-});
 
-// Εισαγωγή PDF
-const pdfUpload = document.getElementById('pdfUpload');
-pdfUpload.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const pdfjsLib = window['pdfjsLib'];
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js';
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
-  for (let p = 1; p <= pdf.numPages; p++) {
-    const page = await pdf.getPage(p);
-    const viewport = page.getViewport({scale: 2});
-    const tmpCanvas = document.createElement('canvas');
-    const ctx = tmpCanvas.getContext('2d');
-    tmpCanvas.width = viewport.width;
-    tmpCanvas.height = viewport.height;
-    await page.render({canvasContext: ctx, viewport}).promise;
-    pages.push(tmpCanvas.toDataURL());
+  // Undo / Redo history
+  let undoStack = [];
+  let redoStack = [];
+
+  function saveState(){
+    const json = fabricCanvas.toJSON();
+    undoStack.push(json);
+    if(undoStack.length>80) undoStack.shift();
+    redoStack = [];
   }
-  refreshThumbnails();
-  renderFlipbook();
-  e.target.value = '';
-});
+  saveState();
+  fabricCanvas.on('object:added', saveState);
+  fabricCanvas.on('object:modified', saveState);
+  fabricCanvas.on('object:removed', saveState);
 
-// Refresh thumbnails
-function refreshThumbnails() {
-  const bar = document.getElementById('thumbnailBar');
-  bar.innerHTML = '';
-  pages.forEach((p, i) => {
-    const img = document.createElement('img');
-    img.src = p;
-    img.className = 'thumbnail';
-    if (i === currentPage) img.classList.add('active');
-    img.onclick = () => {
-      currentPage = i;
-      loadPageToCanvas();
-      refreshThumbnails();
-    };
-    bar.appendChild(img);
-  });
-}
-
-// Load page into canvas
-function loadPageToCanvas() {
-  fabricCanvas.clear();
-  const img = new Image();
-  img.onload = () => {
-    const fabricImg = new fabric.Image(img);
-    fabricImg.scaleToWidth(canvas.width);
-    fabricCanvas.add(fabricImg);
-    fabricCanvas.renderAll();
-
-    // 🔥 ΑΠΟΛΥΤΩΣ ΑΠΑΡΑΙΤΗΤΟ ΓΙΑ UNDO REDO
-    saveState();
+  document.getElementById('undoBtn').onclick = () => {
+    if(undoStack.length<2) return;
+    const current = undoStack.pop();
+    redoStack.push(current);
+    const prev = undoStack[undoStack.length-1];
+    fabricCanvas.loadFromJSON(prev, () => fabricCanvas.renderAll());
   };
-  img.src = pages[currentPage];
-}
+  document.getElementById('redoBtn').onclick = () => {
+    if(!redoStack.length) return;
+    const next = redoStack.pop();
+    undoStack.push(next);
+    fabricCanvas.loadFromJSON(next, () => fabricCanvas.renderAll());
+  };
 
+  // Page data
+  let pages = [];        // κάθε σελίδα = { image: dataURL }
+  let currentPage = 0;
 
-// Add new blank page
-document.getElementById('addPageBtn').onclick = () => {
-  pages.push(canvas.toDataURL());
-  currentPage = pages.length - 1;
-  loadPageToCanvas();
-  refreshThumbnails();
-  saveState(); // 🔥 σημαντικό
-};
-
-
-// Delete current page
-document.getElementById('deletePageBtn').onclick = () => {
-  if (pages.length <= 1) return alert('Δεν μπορείτε να διαγράψετε όλες τις σελίδες.');
-  pages.splice(currentPage, 1);
-  currentPage = 0;
-  loadPageToCanvas();
-  refreshThumbnails();
-  saveState(); // 🔥 must have
-};
-
-
-// Add text
-// Add text
-const addTextBtn = document.getElementById('addTextBtn');
-const textFontEl = document.getElementById('textFont');
-const textSizeEl = document.getElementById('textSize');
-const textColorEl = document.getElementById('textColor');
-const textAlignEl = document.getElementById('textAlign');
-const textBoldBtn = document.getElementById('textBoldBtn');
-const textItalicBtn = document.getElementById('textItalicBtn');
-const textUnderlineBtn = document.getElementById('textUnderlineBtn');
-const textDeleteBtn = document.getElementById('textDeleteBtn');
-
-function getActiveText() {
-  const active = fabricCanvas.getActiveObject();
-  if (!active) return null;
-  if (active.type === 'i-text' || active.type === 'text' || active.type === 'textbox') {
-    return active;
+  function updatePageInfo(){
+    const info = document.getElementById('pageInfo');
+    info.textContent = pages.length ? (currentPage+1)+' / '+pages.length : '0 / 0';
   }
-  return null;
-}
 
-function updateTextControls() {
-  const t = getActiveText();
-  if (!t) return;
-  if (textFontEl) textFontEl.value = t.fontFamily || 'Arial';
-  if (textSizeEl) textSizeEl.value = t.fontSize || 40;
-  if (textColorEl && typeof t.fill === 'string') textColorEl.value = t.fill;
-  if (textAlignEl && t.textAlign) textAlignEl.value = t.textAlign;
-}
-
-addTextBtn.onclick = () => {
-  const text = new fabric.IText('Κείμενο', {
-    left: 100,
-    top: 100,
-    fontSize: Number(textSizeEl?.value) || 40,
-    fill: textColorEl?.value || '#000000',
-    fontFamily: textFontEl?.value || 'Arial'
-  });
-  fabricCanvas.add(text);
-  fabricCanvas.setActiveObject(text);
-  fabricCanvas.renderAll();
-  if (typeof saveState === 'function') saveState();
-  updateTextControls();
-};
-
-// ενημέρωση controls όταν επιλέγεις αντικείμενο
-fabricCanvas.on('selection:created', updateTextControls);
-fabricCanvas.on('selection:updated', updateTextControls);
-
-// αλλαγές από controls προς το κείμενο
-if (textFontEl) {
-  textFontEl.addEventListener('change', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set('fontFamily', textFontEl.value);
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-if (textSizeEl) {
-  textSizeEl.addEventListener('change', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set('fontSize', Number(textSizeEl.value) || 40);
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-if (textColorEl) {
-  textColorEl.addEventListener('change', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set('fill', textColorEl.value);
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-if (textAlignEl) {
-  textAlignEl.addEventListener('change', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set('textAlign', textAlignEl.value);
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-if (textBoldBtn) {
-  textBoldBtn.addEventListener('click', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set('fontWeight', t.fontWeight === 'bold' ? 'normal' : 'bold');
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-if (textItalicBtn) {
-  textItalicBtn.addEventListener('click', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set('fontStyle', t.fontStyle === 'italic' ? 'normal' : 'italic');
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-if (textUnderlineBtn) {
-  textUnderlineBtn.addEventListener('click', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set('underline', !t.underline);
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-if (textDeleteBtn) {
-  textDeleteBtn.addEventListener('click', () => {
-    const t = getActiveText();
-    if (!t) return;
-    fabricCanvas.remove(t);
-    fabricCanvas.discardActiveObject();
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-
-// Undo/Redo
-// Undo / Redo – σωστή στοίβα ιστορικού
-let undoStack = [];
-let redoStack = [];
-
-// αποθηκεύουμε ΠΑΝΤΑ το τρέχον state
-function saveState() {
-  const json = fabricCanvas.toJSON();
-  undoStack.push(json);
-  if (undoStack.length > 50) {
-    // κρατάμε max 50 βήματα ιστορικού
-    undoStack.shift();
+  function refreshThumbnails(){
+    const strip = document.getElementById('thumbStrip');
+    strip.innerHTML = '';
+    pages.forEach((p,idx)=>{
+      const d = document.createElement('div');
+      d.className = 'thumb';
+      if(idx === currentPage) d.classList.add('active');
+      const img = document.createElement('img');
+      img.src = p.image;
+      d.appendChild(img);
+      const badge = document.createElement('div');
+      badge.className = 'thumb-index';
+      badge.textContent = idx+1;
+      d.appendChild(badge);
+      d.onclick = () => {
+        currentPage = idx;
+        loadPageToCanvas();
+        refreshThumbnails();
+      };
+      strip.appendChild(d);
+    });
+    updatePageInfo();
   }
-  // κάθε φορά που κάνουμε καινούρια ενέργεια, καθαρίζουμε το redo
-  redoStack = [];
-}
 
-// αρχικό state (άδειος καμβάς)
-saveState();
-
-// κουμπί Undo
-document.getElementById('undoBtn').onclick = () => {
-  if (undoStack.length < 2) return; // δεν υπάρχει προηγούμενο
-  // το τελευταίο είναι το τρέχον state — το σπρώχνουμε στο redo
-  const current = undoStack.pop();
-  redoStack.push(current);
-
-  // το αμέσως προηγούμενο είναι αυτό που θέλουμε να φορτώσουμε
-  const prev = undoStack[undoStack.length - 1];
-  fabricCanvas.loadFromJSON(prev, () => fabricCanvas.renderAll());
-};
-
-// κουμπί Redo
-document.getElementById('redoBtn').onclick = () => {
-  if (!redoStack.length) return;
-  const next = redoStack.pop();
-  undoStack.push(next);
-  fabricCanvas.loadFromJSON(next, () => fabricCanvas.renderAll());
-};
-
-
-// Render Flipbook
-function renderFlipbook() {
-  const viewer = document.getElementById('viewerContainer');
-  viewer.innerHTML = '';
-  const book = document.createElement('div');
-  book.id = 'flipbook';
-  book.style.width = '100%';
-  book.style.height = '100%';
-  viewer.appendChild(book);
-
-  pages.forEach(p => {
-    const page = document.createElement('div');
-    page.className = 'page';
-    const img = document.createElement('img');
-    img.src = p;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    page.appendChild(img);
-    book.appendChild(page);
-  });
-
-  const flipBook = new St.PageFlip(book, {
-    width: 500,
-    height: 700,
-    maxShadowOpacity: 0,
-    showCover: false
-  });
-}
-
-// Export PDF
-document.getElementById('exportPdfBtn').onclick = async () => {
-  const pdf = new jspdf.jsPDF('p', 'px', [800, 1100]);
-  for (let i = 0; i < pages.length; i++) {
-    if (i > 0) pdf.addPage();
-    const img = pages[i];
-    pdf.addImage(img, 'PNG', 0, 0, 800, 1100);
+  function loadPageToCanvas(){
+    fabricCanvas.clear();
+    if(!pages[currentPage]) return;
+    const imgObj = new Image();
+    imgObj.onload = () => {
+      const pw = canvasEl.width;
+      const ph = canvasEl.height;
+      const ratio = Math.min(pw/imgObj.width, ph/imgObj.height);
+      const fImg = new fabric.Image(imgObj,{
+        left:(pw-imgObj.width*ratio)/2,
+        top:(ph-imgObj.height*ratio)/2,
+        selectable:false,
+        evented:false
+      });
+      fImg.scale(ratio);
+      fabricCanvas.add(fImg);
+      fabricCanvas.sendToBack(fImg);
+      fabricCanvas.renderAll();
+      saveState();
+    };
+    imgObj.src = pages[currentPage].image;
   }
-  pdf.save('photobook.pdf');
-};
 
-// Export ZIP
-document.getElementById('exportZipBtn').onclick = async () => {
-  const zip = new JSZip();
-  pages.forEach((p, i) => {
-    zip.file(`page-${i + 1}.png`, p.split(',')[1], { base64: true });
-  });
-  const blob = await zip.generateAsync({ type: 'blob' });
-  const link = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = link;
-  a.download = 'photobook.zip';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-};
-
-// Save to Cloud
-document.getElementById('uploadCloudBtn').onclick = async () => {
-  if (!pages.length) return alert('Δεν υπάρχουν σελίδες');
-  const title = prompt('Τίτλος βιβλίου:');
-  const pwd = prompt('Password (προαιρετικό):');
-  try {
-    const id = await uploadPhotobook(pages, title, pwd);
-    alert('Το βιβλίο ανέβηκε! ID: ' + id);
-  } catch (err) {
-    alert('Σφάλμα κατά την αποστολή.');
+  // page size
+  function applyPageSizeFromInputs(){
+    const w = Number(document.getElementById('pageWidth').value)||800;
+    const h = Number(document.getElementById('pageHeight').value)||1100;
+    canvasEl.width = w;
+    canvasEl.height = h;
+    fabricCanvas.setWidth(w);
+    fabricCanvas.setHeight(h);
+    fabricCanvas.renderAll();
+    document.getElementById('pageStatus').textContent = `Canvas: ${w} × ${h}px`;
   }
-};
+  document.getElementById('applyPageSize').onclick = () => {
+    const preset = document.getElementById('pagePreset').value;
+    const wInput = document.getElementById('pageWidth');
+    const hInput = document.getElementById('pageHeight');
+    if(preset==='a4-portrait'){wInput.value=800;hInput.value=1131;}
+    else if(preset==='a4-landscape'){wInput.value=1131;hInput.value=800;}
+    else if(preset==='square'){wInput.value=900;hInput.value=900;}
+    else if(preset==='3-4'){wInput.value=900;hInput.value=1200;}
+    else if(preset==='9-16'){wInput.value=900;hInput.value=1600;}
+    applyPageSizeFromInputs();
+  };
+  applyPageSizeFromInputs();
 
-// Share Link
-document.getElementById('shareBtn').onclick = async () => {
-  const bookID = prompt('ID βιβλίου που ανέβηκε:');
-  if (!bookID) return;
-  const link = `${location.origin}/viewer.html?id=${bookID}`;
-  await navigator.clipboard.writeText(link);
-  alert('Το link αντιγράφηκε: ' + link);
-};
+  // Photos gallery
+  const photoGallery = document.getElementById('photoGallery');
+  const uploadedPhotos = []; // array από dataURLs
 
-// Initial setup
-pages.push(canvas.toDataURL());
-refreshThumbnails();
-renderFlipbook();
+  document.getElementById('imageUpload').addEventListener('change', e=>{
+    const files = [...e.target.files];
+    files.forEach(file=>{
+      const reader = new FileReader();
+      reader.onload = evt=>{
+        uploadedPhotos.push(evt.target.result);
+        renderPhotoGallery();
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  });
 
+  function renderPhotoGallery(){
+    photoGallery.innerHTML = '';
+    uploadedPhotos.forEach(src=>{
+      const div = document.createElement('div');
+      div.className = 'photo-thumb';
+      const img = document.createElement('img');
+      img.src = src;
+      div.appendChild(img);
+      div.onclick = () => addPhotoToCanvas(src);
+      photoGallery.appendChild(div);
+    });
+  }
+
+  function addPhotoToCanvas(src){
+    fabric.Image.fromURL(src, img=>{
+      const pw = canvasEl.width;
+      const ph = canvasEl.height;
+      img.scaleToWidth(pw*0.6);
+      img.set({
+        left:pw*0.2,
+        top:ph*0.15
+      });
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.renderAll();
+      saveState();
+    });
+  }
+
+  // PDF import
+  document.getElementById('pdfUpload').addEventListener('change', async e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const buffer = await file.arrayBuffer();
+    const pdfjsLib = window['pdfjsLib'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({data:buffer}).promise;
+    const newPages = [];
+    for(let p=1;p<=pdf.numPages;p++){
+      const page = await pdf.getPage(p);
+      const viewport = page.getViewport({scale:2});
+      const c = document.createElement('canvas');
+      const ctx = c.getContext('2d');
+      c.width = viewport.width;
+      c.height = viewport.height;
+      await page.render({canvasContext:ctx,viewport}).promise;
+      const dataUrl = c.toDataURL('image/png');
+      newPages.push({image:dataUrl});
+    }
+    pages = pages.concat(newPages);
+    if(pages.length && currentPage===0){
+      currentPage = 0;
+      loadPageToCanvas();
+    }
+    refreshThumbnails();
+    saveDraft();
+    e.target.value = '';
+  });
+
+  // Text tools
+  const addTextBtn = document.getElementById('addTextBtn');
+  const textFontEl = document.getElementById('textFont');
+  const textSizeEl = document.getElementById('textSize');
+  const textColorEl = document.getElementById('textColor');
+  const textAlignEl = document.getElementById('textAlign');
+  const textBoldBtn = document.getElementById('textBoldBtn');
+  const textItalicBtn = document.getElementById('textItalicBtn');
+  const textUnderlineBtn = document.getElementById('textUnderlineBtn');
+  const textDeleteBtn = document.getElementById('textDeleteBtn');
+
+  function getActiveText(){
+    const active = fabricCanvas.getActiveObject();
+    if(!active) return null;
+    if(active.type==='i-text' || active.type==='text' || active.type==='textbox') return active;
+    return null;
+  }
+  function updateTextControls(){
+    const t = getActiveText();
+    if(!t) return;
+    if(textFontEl) textFontEl.value = t.fontFamily || 'Arial';
+    if(textSizeEl) textSizeEl.value = t.fontSize || 36;
+    if(textColorEl && typeof t.fill==='string') textColorEl.value = t.fill;
+    if(textAlignEl && t.textAlign) textAlignEl.value = t.textAlign;
+  }
+
+  addTextBtn.onclick = () => {
+    const text = new fabric.IText('Κείμενο', {
+      left:100,
+      top:100,
+      fontSize:Number(textSizeEl?.value)||36,
+      fill:textColorEl?.value||'#000000',
+      fontFamily:textFontEl?.value||'Arial'
+    });
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.renderAll();
+    saveState();
+    updateTextControls();
+  };
+
+  fabricCanvas.on('selection:created', updateTextControls);
+  fabricCanvas.on('selection:updated', updateTextControls);
+
+  if(textFontEl){
+    textFontEl.addEventListener('change',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      t.set('fontFamily', textFontEl.value);
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+  if(textSizeEl){
+    textSizeEl.addEventListener('change',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      t.set('fontSize', Number(textSizeEl.value)||36);
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+  if(textColorEl){
+    textColorEl.addEventListener('change',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      t.set('fill', textColorEl.value);
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+  if(textAlignEl){
+    textAlignEl.addEventListener('change',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      t.set('textAlign', textAlignEl.value);
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+  if(textBoldBtn){
+    textBoldBtn.addEventListener('click',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      t.set('fontWeight', t.fontWeight==='bold'?'normal':'bold');
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+  if(textItalicBtn){
+    textItalicBtn.addEventListener('click',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      t.set('fontStyle', t.fontStyle==='italic'?'normal':'italic');
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+  if(textUnderlineBtn){
+    textUnderlineBtn.addEventListener('click',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      t.set('underline', !t.underline);
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+  if(textDeleteBtn){
+    textDeleteBtn.addEventListener('click',()=>{
+      const t = getActiveText();
+      if(!t) return;
+      fabricCanvas.remove(t);
+      fabricCanvas.discardActiveObject();
+      fabricCanvas.requestRenderAll();
+      saveState();
+    });
+  }
+
+  // Stickers
+  const stickerList = document.getElementById('stickerList');
+  const stickerUrlInput = document.getElementById('stickerUrl');
+  const addStickerUrlBtn = document.getElementById('addStickerUrlBtn');
+
+  const defaultStickers = [
+    "https://i.imgur.com/yYx4H6h.png",
+    "https://i.imgur.com/DRW9bY7.png",
+    "https://i.imgur.com/bKX6zvO.png"
+  ];
+  function renderStickers(){
+    stickerList.innerHTML = '';
+    defaultStickers.forEach(url=>{
+      const s = document.createElement('div');
+      s.className = 'sticker-item';
+      const img = document.createElement('img');
+      img.src = url;
+      s.appendChild(img);
+      s.onclick = ()=> addStickerToCanvas(url);
+      stickerList.appendChild(s);
+    });
+  }
+  function addStickerToCanvas(url){
+    fabric.Image.fromURL(url,img=>{
+      const pw = canvasEl.width;
+      img.scaleToWidth(pw*0.25);
+      img.set({left:pw*0.1, top:canvasEl.height*0.1});
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.renderAll();
+      saveState();
+    },{crossOrigin:"anonymous"});
+  }
+  addStickerUrlBtn.addEventListener('click',()=>{
+    const url = stickerUrlInput.value.trim();
+    if(!url) return;
+    addStickerToCanvas(url);
+    stickerUrlInput.value = '';
+  });
+  renderStickers();
+
+  // Apply canvas to current page
+  document.getElementById('applyToPageBtn').onclick = () => {
+    const dataUrl = fabricCanvas.toDataURL({format:'png',quality:0.92});
+    if(!pages.length){
+      pages.push({image:dataUrl});
+      currentPage = 0;
+    }else{
+      pages[currentPage] = {image:dataUrl};
+    }
+    refreshThumbnails();
+    buildFlipbook();
+    saveDraft();
+  };
+
+  // Pages add/delete
+  document.getElementById('addPageBtn').onclick = () => {
+    const blank = fabricCanvas.toDataURL({format:'png',quality:0.8});
+    pages.push({image:blank});
+    currentPage = pages.length-1;
+    refreshThumbnails();
+    loadPageToCanvas();
+    saveDraft();
+  };
+  document.getElementById('deletePageBtn').onclick = () => {
+    if(pages.length<=1){
+      alert('Δεν μπορείτε να διαγράψετε όλες τις σελίδες.');
+      return;
+    }
+    pages.splice(currentPage,1);
+    currentPage = 0;
+    refreshThumbnails();
+    loadPageToCanvas();
+    saveDraft();
+  };
+
+  // Flipbook
+  let pageFlip = null;
+  function buildFlipbook(){
+    const container = document.getElementById('flipbook');
+    container.innerHTML = '';
+    if(!pages.length){
+      container.innerHTML = '<p style="color:#9ca3af;font-size:0.8rem;">Πρόσθεσε σελίδες & πάτησε "Εφαρμογή στη σελίδα".</p>';
+      return;
+    }
+    const root = document.createElement('div');
+    container.appendChild(root);
+    const pf = new St.PageFlip(root,{
+      width:480,
+      height:320,
+      size:"stretch",
+      maxShadowOpacity:0.3,
+      mobileScrollSupport:true
+    });
+    const pageEls = pages.map(p=>{
+      const d = document.createElement('div');
+      d.className = 'page';
+      d.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#020617;"><img src="${p.image}" style="max-width:100%;max-height:100%;border-radius:12px;object-fit:contain;"></div>`;
+      return d;
+    });
+    pf.loadFromHTML(pageEls);
+    pf.on('flip', e=>{
+      currentPage = e.data;
+      refreshThumbnails();
+      const audio = document.getElementById('pageSound');
+      audio.currentTime=0;
+      audio.play().catch(()=>{});
+    });
+    pageFlip = pf;
+  }
+  document.getElementById('fbPrev').onclick = ()=>{ if(pageFlip) pageFlip.flipPrev();};
+  document.getElementById('fbNext').onclick = ()=>{ if(pageFlip) pageFlip.flipNext();};
+
+  // Export PDF & ZIP
+  document.getElementById('exportPdfBtn').onclick = async () => {
+    if(!pages.length){alert('Δεν υπάρχουν σελίδες.');return;}
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','px',[canvasEl.width,canvasEl.height]);
+    for(let i=0;i<pages.length;i++){
+      if(i>0) pdf.addPage();
+      pdf.addImage(pages[i].image,'PNG',0,0,canvasEl.width,canvasEl.height);
+    }
+    pdf.save('photobook.pdf');
+  };
+  document.getElementById('exportZipBtn').onclick = async () => {
+    if(!pages.length){alert('Δεν υπάρχουν σελίδες.');return;}
+    const zip = new JSZip();
+    pages.forEach((p,i)=>{
+      zip.file(`page-${i+1}.png`, p.image.split(',')[1], {base64:true});
+    });
+    const blob = await zip.generateAsync({type:'blob'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'photobook.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  // Cloud upload
+  document.getElementById('uploadCloudBtn').onclick = async () => {
+    if(!pages.length){alert('Δεν υπάρχουν σελίδες.');return;}
+    const title = prompt('Τίτλος βιβλίου:');
+    const pwd = prompt('Password (προαιρετικό):');
+    try{
+      const id = await uploadPhotobook(pages.map(p=>p.image), title, pwd);
+      const link = `${location.origin}/viewer.html?id=${id}`;
+      await navigator.clipboard.writeText(link).catch(()=>{});
+      alert('Το βιβλίο ανέβηκε!\nLink:\n'+link);
+    }catch(e){
+      console.error(e);
+      alert('Σφάλμα κατά την αποστολή στο cloud.');
+    }
+  };
+
+  // User / autosave per user
+  let currentUserId = null;
+  let currentUserName = null;
+
+  function getCurrentUserId(){
+    if(currentUserId) return currentUserId;
+    const storedId = localStorage.getItem('pb-user-id');
+    if(storedId){
+      currentUserId = storedId;
+      currentUserName = localStorage.getItem('pb-user-name') || 'Χρήστης';
+      return storedId;
+    }
+    return null;
+  }
+  function getDraftKey(){
+    const uid = getCurrentUserId() || 'guest';
+    return 'pb-draft-'+uid;
+  }
+  function saveDraft(){
+    if(!pages.length) return;
+    const key = getDraftKey();
+    const data = {
+      pages,
+      currentPage
+    };
+    try{
+      localStorage.setItem(key, JSON.stringify(data));
+    }catch(e){
+      console.warn('Draft too large ή αποτυχία αποθήκευσης', e);
+    }
+  }
+  function loadDraft(){
+    const key = getDraftKey();
+    const json = localStorage.getItem(key);
+    if(!json) return;
+    try{
+      const draft = JSON.parse(json);
+      if(!draft.pages || !draft.pages.length) return;
+      if(!confirm('Βρέθηκε αποθηκευμένο photobook. Να φορτώσω;')) return;
+      pages = draft.pages;
+      currentPage = draft.currentPage || 0;
+      refreshThumbnails();
+      loadPageToCanvas();
+      buildFlipbook();
+    }catch(e){
+      console.error('Σφάλμα φόρτωσης draft',e);
+    }
+  }
+  function clearDraft(){
+    const key = getDraftKey();
+    localStorage.removeItem(key);
+  }
+  function updateUserUi(){
+    const label = document.getElementById('user-label');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const uid = getCurrentUserId();
+    if(uid){
+      label.textContent = currentUserName || 'Χρήστης';
+      loginBtn.style.display='inline-flex';
+      logoutBtn.style.display='inline-flex';
+    }else{
+      label.textContent = 'Επισκέπτης';
+      loginBtn.style.display='inline-flex';
+      logoutBtn.style.display='none';
+    }
+  }
+  function initUserAuth(){
+    getCurrentUserId();
+    updateUserUi();
+    document.getElementById('login-btn').onclick = ()=>{
+      const name = prompt('Όνομα ή email:');
+      if(!name) return;
+      currentUserName = name.trim();
+      currentUserId = 'user-'+btoa(unescape(encodeURIComponent(currentUserName))).replace(/=/g,'');
+      localStorage.setItem('pb-user-id', currentUserId);
+      localStorage.setItem('pb-user-name', currentUserName);
+      updateUserUi();
+      loadDraft();
+    };
+    document.getElementById('logout-btn').onclick = ()=>{
+      if(!confirm('Αποσύνδεση;')) return;
+      currentUserId = null;
+      currentUserName = null;
+      localStorage.removeItem('pb-user-id');
+      localStorage.removeItem('pb-user-name');
+      updateUserUi();
+    };
+  }
+
+  window.addEventListener('DOMContentLoaded',()=>{
+    initUserAuth();
+    applyPageSizeFromInputs();
+    updatePageInfo();
+    // αρχική κενή σελίδα
+    pages.push({image:fabricCanvas.toDataURL({format:'png',quality:0.8})});
+    currentPage = 0;
+    refreshThumbnails();
+    loadDraft();
+  });
 </script>
-
-
 </body>
 </html>
