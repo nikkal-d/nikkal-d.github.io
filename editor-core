@@ -1,0 +1,115 @@
+// ==============================
+// EDITOR CORE – MAIN CONTROLLER
+// ==============================
+
+// Canvas
+export const canvasEl = document.getElementById("photobookCanvas");
+export const fabricCanvas = new fabric.Canvas(canvasEl, {
+  preserveObjectStacking: true,
+  selection: true
+});
+
+// Dynamic resize
+export function setCanvasSize(w, h) {
+  canvasEl.width = w;
+  canvasEl.height = h;
+  fabricCanvas.setWidth(w);
+  fabricCanvas.setHeight(h);
+  fabricCanvas.renderAll();
+}
+
+// Default size A4 landscape
+setCanvasSize(1200, 850);
+
+// Pages system
+export let pages = [];
+export let currentPage = 0;
+
+// Render selected page into canvas
+export function loadPageToCanvas() {
+  fabricCanvas.clear();
+
+  const p = pages[currentPage];
+  if (!p) return;
+
+  fabric.Image.fromURL(p.image, (img) => {
+    img.set({
+      selectable: false,
+      evented: false,
+      originX: "center",
+      originY: "center",
+      left: fabricCanvas.width / 2,
+      top: fabricCanvas.height / 2,
+      scaleX: fabricCanvas.width / img.width,
+      scaleY: fabricCanvas.height / img.height,
+    });
+    fabricCanvas.add(img);
+
+    // load objects
+    if (p.objects) {
+      fabricCanvas.loadFromJSON(p.objects, () => {
+        fabricCanvas.renderAll();
+      });
+    }
+  });
+}
+
+// Save canvas state to current page
+export function savePage() {
+  const img = fabricCanvas.toDataURL({ format: "png", quality: 0.9 });
+  pages[currentPage] = {
+    image: img,
+    objects: fabricCanvas.toJSON(),
+  };
+}
+
+// Create new page
+export function addPage() {
+  savePage();
+  pages.push({
+    image: fabricCanvas.toDataURL(),
+    objects: { objects: [] }
+  });
+  currentPage = pages.length - 1;
+  loadPageToCanvas();
+  refreshThumbnails();
+}
+
+// Page thumbnails
+export function refreshThumbnails() {
+  const container = document.getElementById("thumbnailContainer");
+  container.innerHTML = "";
+
+  pages.forEach((p, index) => {
+    const item = document.createElement("div");
+    item.className = "thumbnailItem";
+    item.style.border = index === currentPage ? "2px solid #38bdf8" : "2px solid #1e293b";
+    item.onclick = () => {
+      savePage();
+      currentPage = index;
+      loadPageToCanvas();
+      refreshThumbnails();
+    };
+    const img = document.createElement("img");
+    img.src = p.image;
+    item.appendChild(img);
+    container.appendChild(item);
+  });
+}
+
+// Initial blank page
+pages.push({
+  image: fabricCanvas.toDataURL(),
+  objects: { objects: [] }
+});
+
+// UI events
+document.getElementById("addPageBtn").onclick = addPage;
+
+// Track changes on canvas
+fabricCanvas.on('object:modified', savePage);
+fabricCanvas.on('object:added', savePage);
+fabricCanvas.on('object:removed', savePage);
+
+loadPageToCanvas();
+refreshThumbnails();
