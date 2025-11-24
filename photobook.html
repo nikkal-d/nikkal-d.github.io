@@ -7,7 +7,9 @@
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#020617">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Pacifico&family=Roboto:wght@400;700&family=Playfair+Display:wght@400;700&display=swap">
 
+  
   <style>
     :root{
       --bg:#020617;
@@ -460,6 +462,32 @@
       <p class="hint">Οι διαστάσεις επηρεάζουν τον καμβά & το export PDF.</p>
     </div>
 
+
+<div class="sidebar-section">
+  <div class="sidebar-title">Image effects</div>
+  <div class="sidebar-sub">Διάλεξε εικόνα και εφάρμοσε φίλτρα.</div>
+
+  <label for="imgBrightness">Brightness</label>
+  <input type="range" id="imgBrightness" min="-0.5" max="0.5" step="0.05" value="0">
+
+  <label for="imgContrast">Contrast</label>
+  <input type="range" id="imgContrast" min="-0.5" max="0.5" step="0.05" value="0">
+
+  <label for="imgSaturation">Saturation</label>
+  <input type="range" id="imgSaturation" min="-0.5" max="0.5" step="0.05" value="0">
+
+  <label for="imgHue">Hue</label>
+  <input type="range" id="imgHue" min="-1" max="1" step="0.1" value="0">
+
+  <div class="text-style-buttons" style="margin-top:0.4rem;">
+    <button type="button" id="imgPresetWarm">Warm</button>
+    <button type="button" id="imgPresetCool">Cool</button>
+    <button type="button" id="imgPresetRetro">Retro</button>
+  </div>
+  <button class="btn sm" id="imgResetFilters" style="margin-top:0.3rem;width:100%;">Reset filters</button>
+</div>
+
+    
     <!-- Φωτογραφίες -->
     <div class="sidebar-section">
       <div class="sidebar-title">Photos</div>
@@ -479,11 +507,16 @@
       <div class="text-tools-group">
         <label for="textFont">Font</label>
         <select id="textFont">
-          <option value="Arial">Arial</option>
-          <option value="Georgia">Georgia</option>
-          <option value="Times New Roman">Times New Roman</option>
-          <option value="Courier New">Courier New</option>
-        </select>
+  <option value="Arial">Arial</option>
+  <option value="Roboto">Roboto</option>
+  <option value="Poppins">Poppins</option>
+  <option value="Playfair Display">Playfair</option>
+  <option value="Pacifico">Pacifico (handwritten)</option>
+  <option value="Georgia">Georgia</option>
+  <option value="Times New Roman">Times New Roman</option>
+  <option value="Courier New">Courier New</option>
+</select>
+
         <label for="textSize">Μέγεθος</label>
         <input type="number" id="textSize" value="36" min="8" max="200">
         <label for="textColor">Χρώμα</label>
@@ -499,6 +532,12 @@
           <button type="button" id="textItalicBtn"><i>I</i></button>
           <button type="button" id="textUnderlineBtn"><u>U</u></button>
         </div>
+        <div class="text-style-buttons">
+  <button type="button" id="textGlowBtn">Glow</button>
+  <button type="button" id="textOutlineBtn">Outline</button>
+  <button type="button" id="textShadowBtn">Shadow</button>
+</div>
+
         <button type="button" id="textDeleteBtn" class="btn sm" style="width:100%;">🗑️ Διαγραφή κειμένου</button>
       </div>
     </div>
@@ -638,11 +677,59 @@ function initLogin() {
     selection:true
   });
 
-// Templates – πολύ basic layout 2 φωτογραφιών
+// Templates – basic layout 2 φωτογραφιών
 const addTemplateBtn = document.getElementById('addTemplateBtn');
-addTemplateBtn.addEventListener('click', () => {
-  const pw = canvas.width;
-  const ph = canvas.height;
+if (addTemplateBtn) {
+  addTemplateBtn.addEventListener('click', () => {
+    const pw = canvasEl.width;
+    const ph = canvasEl.height;
+
+    const frame1 = new fabric.Rect({
+      left: pw * 0.1,
+      top: ph * 0.2,
+      width: pw * 0.35,
+      height: ph * 0.5,
+      fill: '#0f172a',
+      stroke: '#38bdf8',
+      strokeDashArray: [5, 5],
+      rx: 12,
+      ry: 12
+    });
+
+    const frame2 = new fabric.Rect({
+      left: pw * 0.55,
+      top: ph * 0.2,
+      width: pw * 0.35,
+      height: ph * 0.5,
+      fill: '#0f172a',
+      stroke: '#38bdf8',
+      strokeDashArray: [5, 5],
+      rx: 12,
+      ry: 12
+    });
+
+    fabricCanvas.add(frame1, frame2);
+    fabricCanvas.renderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+// Stickers – basic emoji sticker + default stickers
+const addStickerBtn = document.getElementById('addStickerBtn');
+if (addStickerBtn) {
+  addStickerBtn.addEventListener('click', () => {
+    const sticker = new fabric.Text('❤️', {
+      left: canvasEl.width / 2 - 40,
+      top: canvasEl.height / 2 - 40,
+      fontSize: 80
+    });
+    fabricCanvas.add(sticker);
+    fabricCanvas.setActiveObject(sticker);
+    fabricCanvas.renderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
 
   // δύο γκρι “πλαίσια φωτογραφίας”
   const frame1 = new fabric.Rect({
@@ -870,6 +957,10 @@ addTemplateBtn.addEventListener('click', () => {
   const textItalicBtn = document.getElementById('textItalicBtn');
   const textUnderlineBtn = document.getElementById('textUnderlineBtn');
   const textDeleteBtn = document.getElementById('textDeleteBtn');
+  const textGlowBtn = document.getElementById('textGlowBtn');
+const textOutlineBtn = document.getElementById('textOutlineBtn');
+const textShadowBtn = document.getElementById('textShadowBtn');
+
 
   function getActiveText(){
     const active = fabricCanvas.getActiveObject();
@@ -966,6 +1057,58 @@ addTemplateBtn.addEventListener('click', () => {
       fabricCanvas.requestRenderAll();
       saveState();
     });
+
+if (textGlowBtn) {
+  textGlowBtn.addEventListener('click', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set({
+      shadow: {
+        color: 'rgba(56,189,248,0.9)',
+        blur: 25,
+        offsetX: 0,
+        offsetY: 0
+      },
+      stroke: '#e0f2fe',
+      strokeWidth: 0.7
+    });
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textOutlineBtn) {
+  textOutlineBtn.addEventListener('click', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set({
+      stroke: '#000000',
+      strokeWidth: 2,
+      shadow: null
+    });
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+
+if (textShadowBtn) {
+  textShadowBtn.addEventListener('click', () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set({
+      shadow: {
+        color: 'rgba(15,23,42,0.9)',
+        blur: 15,
+        offsetX: 5,
+        offsetY: 8
+      },
+      strokeWidth: 0
+    });
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  });
+}
+    
   }
   if(textDeleteBtn){
     textDeleteBtn.addEventListener('click',()=>{
@@ -977,21 +1120,6 @@ addTemplateBtn.addEventListener('click', () => {
       saveState();
     });
   }
-
-// Stickers – πολύ απλά, για αρχή
-const addStickerBtn = document.getElementById('addStickerBtn');
-addStickerBtn.addEventListener('click', () => {
-  // Μπορούμε να το κάνουμε με emoji-sticker για αρχή
-  const sticker = new fabric.Text('❤️', {
-    left: canvas.width / 2 - 40,
-    top: canvas.height / 2 - 40,
-    fontSize: 80
-  });
-  fabricCanvas.add(sticker);
-  fabricCanvas.setActiveObject(sticker);
-  fabricCanvas.renderAll();
-  if (typeof saveState === 'function') saveState();
-});
 
   
   // Stickers
@@ -1034,6 +1162,94 @@ addStickerBtn.addEventListener('click', () => {
     stickerUrlInput.value = '';
   });
   renderStickers();
+
+  function getActiveImage() {
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== 'image') return null;
+  return obj;
+}
+
+const imgBrightnessEl = document.getElementById('imgBrightness');
+const imgContrastEl = document.getElementById('imgContrast');
+const imgSaturationEl = document.getElementById('imgSaturation');
+const imgHueEl = document.getElementById('imgHue');
+const imgPresetWarm = document.getElementById('imgPresetWarm');
+const imgPresetCool = document.getElementById('imgPresetCool');
+const imgPresetRetro = document.getElementById('imgPresetRetro');
+const imgResetFilters = document.getElementById('imgResetFilters');
+
+function applyImageFiltersFromControls() {
+  const img = getActiveImage();
+  if (!img) return;
+
+  const brightness = parseFloat(imgBrightnessEl.value || '0');
+  const contrast = parseFloat(imgContrastEl.value || '0');
+  const saturation = parseFloat(imgSaturationEl.value || '0');
+  const hue = parseFloat(imgHueEl.value || '0');
+
+  const filters = [];
+
+  if (brightness !== 0) {
+    filters.push(new fabric.Image.filters.Brightness({ brightness }));
+  }
+  if (contrast !== 0) {
+    filters.push(new fabric.Image.filters.Contrast({ contrast }));
+  }
+  if (saturation !== 0) {
+    filters.push(new fabric.Image.filters.Saturation({ saturation }));
+  }
+  if (hue !== 0) {
+    filters.push(new fabric.Image.filters.HueRotation({ rotation: hue }));
+  }
+
+  img.filters = filters;
+  img.applyFilters();
+  fabricCanvas.requestRenderAll();
+  if (typeof saveState === 'function') saveState();
+}
+
+[imgBrightnessEl, imgContrastEl, imgSaturationEl, imgHueEl].forEach(input => {
+  if (!input) return;
+  input.addEventListener('input', applyImageFiltersFromControls);
+});
+
+if (imgPresetWarm) {
+  imgPresetWarm.addEventListener('click', () => {
+    imgBrightnessEl.value = "0.1";
+    imgContrastEl.value = "0.1";
+    imgSaturationEl.value = "0.2";
+    imgHueEl.value = "0.1";
+    applyImageFiltersFromControls();
+  });
+}
+if (imgPresetCool) {
+  imgPresetCool.addEventListener('click', () => {
+    imgBrightnessEl.value = "0.05";
+    imgContrastEl.value = "0.15";
+    imgSaturationEl.value = "0.1";
+    imgHueEl.value = "-0.3";
+    applyImageFiltersFromControls();
+  });
+}
+if (imgPresetRetro) {
+  imgPresetRetro.addEventListener('click', () => {
+    imgBrightnessEl.value = "0.05";
+    imgContrastEl.value = "-0.1";
+    imgSaturationEl.value = "-0.2";
+    imgHueEl.value = "0.2";
+    applyImageFiltersFromControls();
+  });
+}
+if (imgResetFilters) {
+  imgResetFilters.addEventListener('click', () => {
+    imgBrightnessEl.value = "0";
+    imgContrastEl.value = "0";
+    imgSaturationEl.value = "0";
+    imgHueEl.value = "0";
+    applyImageFiltersFromControls();
+  });
+}
+
 
   // Apply canvas to current page
   document.getElementById('applyToPageBtn').onclick = () => {
@@ -1168,19 +1384,21 @@ addStickerBtn.addEventListener('click', () => {
     const uid = getCurrentUserId() || 'guest';
     return 'pb-draft-'+uid;
   }
-  function saveDraft(){
-    if(!pages.length) return;
-    const key = getDraftKey();
-    const data = {
-      pages,
-      currentPage
-    };
-    try{
-      localStorage.setItem(key, JSON.stringify(data));
-    }catch(e){
-      console.warn('Draft too large ή αποτυχία αποθήκευσης', e);
-    }
+ function saveDraft(){
+  if(!pages.length) return;
+  const key = getDraftKey();
+  const data = {
+    pages,
+    currentPage,
+    uploadedPhotos
+  };
+  try{
+    localStorage.setItem(key, JSON.stringify(data));
+  }catch(e){
+    console.warn('Draft too large ή αποτυχία αποθήκευσης', e);
   }
+}
+
   function loadDraft(){
     const key = getDraftKey();
     const json = localStorage.getItem(key);
@@ -1190,6 +1408,11 @@ addStickerBtn.addEventListener('click', () => {
       if(!draft.pages || !draft.pages.length) return;
       if(!confirm('Βρέθηκε αποθηκευμένο photobook. Να φορτώσω;')) return;
       pages = draft.pages;
+      if (Array.isArray(draft.uploadedPhotos)) {
+  uploadedPhotos.length = 0;
+  draft.uploadedPhotos.forEach(src => uploadedPhotos.push(src));
+  renderPhotoGallery();
+}
       currentPage = draft.currentPage || 0;
       refreshThumbnails();
       loadPageToCanvas();
@@ -1239,6 +1462,35 @@ addStickerBtn.addEventListener('click', () => {
       updateUserUi();
     };
   }
+document.addEventListener('keydown', (e) => {
+  const ctrl = e.ctrlKey || e.metaKey;
+
+  // Ctrl+Z → Undo
+  if (ctrl && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    const btn = document.getElementById('undoBtn');
+    if (btn) btn.click();
+  }
+
+  // Ctrl+Y → Redo
+  if (ctrl && e.key.toLowerCase() === 'y') {
+    e.preventDefault();
+    const btn = document.getElementById('redoBtn');
+    if (btn) btn.click();
+  }
+
+  // Delete → διαγραφή επιλεγμένου αντικειμένου
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    const obj = fabricCanvas.getActiveObject();
+    if (!obj) return;
+    fabricCanvas.remove(obj);
+    fabricCanvas.discardActiveObject();
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === 'function') saveState();
+  }
+});
+
+  
 
 window.addEventListener("DOMContentLoaded", () => {
 
