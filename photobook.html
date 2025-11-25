@@ -1527,6 +1527,9 @@ function initUserAuth(){
 }
 
 
+  document.addEventListener('keydown', (e) => {
+  const ctrl = e.ctrlKey || e.metaKey;
+
   // Ctrl+Z → Undo
   if (ctrl && e.key.toLowerCase() === 'z') {
     e.preventDefault();
@@ -1551,8 +1554,6 @@ function initUserAuth(){
     if (typeof saveState === 'function') saveState();
   }
 });
-
-  
 
 window.addEventListener('DOMContentLoaded', () => {
 
