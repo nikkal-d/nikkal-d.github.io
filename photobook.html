@@ -1404,21 +1404,23 @@ if (imgResetFilters) {
   }
 }
 
-  function updateUserUi(){
-    const label = document.getElementById('user-label');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const uid = getCurrentUserId();
-    if(uid){
-      label.textContent = currentUserName || 'Χρήστης';
-      loginBtn.style.display='inline-flex';
-      logoutBtn.style.display='inline-flex';
-    }else{
-      label.textContent = 'Επισκέπτης';
-      loginBtn.style.display='inline-flex';
-      logoutBtn.style.display='none';
-    }
+ function updateUserUi(){
+  const label = document.getElementById('user-label');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const uid = getCurrentUserId();
+
+  if(uid){
+    label.textContent = currentUserName || 'Χρήστης';
+    loginBtn.style.display='none';          // ⬅ σωστό
+    logoutBtn.style.display='inline-flex';  // ⬅ σωστό
+  } else {
+    label.textContent = 'Επισκέπτης';
+    loginBtn.style.display='inline-flex'; 
+    logoutBtn.style.display='none';
   }
+}
+
   function initUserAuth(){
     getCurrentUserId();
     updateUserUi();
