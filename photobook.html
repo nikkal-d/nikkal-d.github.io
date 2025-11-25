@@ -633,18 +633,19 @@
 </audio>
 
 <script type="module">
-  import { uploadPhotobook } from "./saveToFirebase.js";
-  import { loadPhotobook } from "./loadFromFirebase.js";
-  
-  import { db } from "./firebase-init.js";
-import { collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+ import { uploadPhotobook } from "./saveToFirebase.js";
+import { loadPhotobook } from "./loadFromFirebase.js";
+import { db, auth } from "./firebase-init.js";
+
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 let currentUserEmail = null;
-
-function initLogin() {
-  const userLabel = document.getElementById('user-label');
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
 
   // διάβασμα email από localStorage
   const saved = localStorage.getItem('pb-user-email');
@@ -1367,7 +1368,11 @@ if (imgResetFilters) {
     const title = prompt('Τίτλος βιβλίου:');
     const pwd = prompt('Password (προαιρετικό):');
     try{
-      const id = await uploadPhotobook(pages.map(p=>p.image), title, pwd);
+      const id = await uploadPhotobook(pages, {
+  title,
+  password,
+  email: auth.currentUser ? auth.currentUser.email : null
+});
       const link = `${location.origin}/viewer.html?id=${id}`;
       await navigator.clipboard.writeText(link).catch(()=>{});
       alert('Το βιβλίο ανέβηκε!\nLink:\n'+link);
@@ -1378,23 +1383,7 @@ if (imgResetFilters) {
   };
 
   // User / autosave per user
-  let currentUserId = null;
-  let currentUserName = null;
-
-  function getCurrentUserId(){
-    if(currentUserId) return currentUserId;
-    const storedId = localStorage.getItem('pb-user-id');
-    if(storedId){
-      currentUserId = storedId;
-      currentUserName = localStorage.getItem('pb-user-name') || 'Χρήστης';
-      return storedId;
-    }
-    return null;
-  }
-  function getDraftKey(){
-    const uid = getCurrentUserId() || 'guest';
-    return 'pb-draft-'+uid;
-  }
+ 
  function saveDraft(){
   if(!pages.length) return;
   const key = getDraftKey();
@@ -1445,45 +1434,98 @@ if (imgResetFilters) {
   }
 }
 
+ let currentUserId = null;
+let currentUserName = null;
+
+function getCurrentUserId(){
+  const u = auth.currentUser;
+  if (!u) return null;
+  return u.uid;
+}
+
+function getDraftKey(){
+  const uid = getCurrentUserId() || 'guest';
+  return 'pb-draft-' + uid;
+}
+
   function updateUserUi(){
-    const label = document.getElementById('user-label');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const uid = getCurrentUserId();
-    if(uid){
-      label.textContent = currentUserName || 'Χρήστης';
-      loginBtn.style.display='inline-flex';
-      logoutBtn.style.display='inline-flex';
-    }else{
-      label.textContent = 'Επισκέπτης';
-      loginBtn.style.display='inline-flex';
-      logoutBtn.style.display='none';
-    }
+  const label = document.getElementById('user-label');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  const user = auth.currentUser;
+
+  if (user) {
+    currentUserId = user.uid;
+    currentUserName = user.displayName || user.email || 'Χρήστης';
+    label.textContent = currentUserName;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+  } else {
+    currentUserId = null;
+    currentUserName = null;
+    label.textContent = 'Επισκέπτης';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
   }
-  function initUserAuth(){
-    getCurrentUserId();
+}
+function initUserAuth(){
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  // Όταν αλλάζει η αυθεντικοποίηση (μπαίνει/βγαίνει χρήστης)
+  onAuthStateChanged(auth, (user) => {
     updateUserUi();
-    document.getElementById('login-btn').onclick = ()=>{
-      const name = prompt('Όνομα ή email:');
-      if(!name) return;
-      currentUserName = name.trim();
-      currentUserId = 'user-'+btoa(unescape(encodeURIComponent(currentUserName))).replace(/=/g,'');
-      localStorage.setItem('pb-user-id', currentUserId);
-      localStorage.setItem('pb-user-name', currentUserName);
-      updateUserUi();
-      loadDraft();
-    };
-    document.getElementById('logout-btn').onclick = ()=>{
-      if(!confirm('Αποσύνδεση;')) return;
-      currentUserId = null;
-      currentUserName = null;
-      localStorage.removeItem('pb-user-id');
-      localStorage.removeItem('pb-user-name');
-      updateUserUi();
-    };
-  }
-document.addEventListener('keydown', (e) => {
-  const ctrl = e.ctrlKey || e.metaKey;
+    // Κάθε φορά που αλλάζει user, μπορούμε να αλλάζουμε και draft key κλπ
+  });
+
+  // Login / Register με απλό prompt
+  loginBtn.onclick = async () => {
+    const email = prompt('Email:');
+    if (!email) return;
+    const password = prompt('Κωδικός (τουλάχιστον 6 χαρακτήρες):');
+    if (!password) return;
+
+    try {
+      // Προσπαθούμε να κάνουμε login
+      await signInWithEmailAndPassword(auth, email, password);
+      alert('Συνδέθηκες επιτυχώς!');
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        const create = confirm('Δεν βρέθηκε λογαριασμός. Θες να δημιουργηθεί νέος;');
+        if (create) {
+          try {
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(cred.user, {
+              displayName: email.split('@')[0]
+            });
+            alert('Ο λογαριασμός δημιουργήθηκε και συνδέθηκες!');
+          } catch (e) {
+            console.error(e);
+            alert('Σφάλμα κατά τη δημιουργία λογαριασμού.');
+          }
+        }
+      } else {
+        console.error(err);
+        alert('Σφάλμα στο login: ' + err.message);
+      }
+    }
+  };
+
+  logoutBtn.onclick = async () => {
+    try {
+      await signOut(auth);
+      alert('Αποσυνδέθηκες.');
+    } catch (e) {
+      console.error(e);
+      alert('Σφάλμα κατά την αποσύνδεση.');
+    }
+  };
+
+  // αρχική ενημέρωση UI (πριν προλάβει το onAuthStateChanged)
+  updateUserUi();
+}
+
 
   // Ctrl+Z → Undo
   if (ctrl && e.key.toLowerCase() === 'z') {
@@ -1531,7 +1573,7 @@ window.addEventListener('DOMContentLoaded', () => {
     pages = [{ image: blankPage }];
     currentPage = 0;
   }
-
+ 
   refreshThumbnails();
   loadPageToCanvas(currentPage);
    initTheme();
