@@ -731,37 +731,7 @@ if (addStickerBtn) {
 }
 
 
-  // δύο γκρι “πλαίσια φωτογραφίας”
-  const frame1 = new fabric.Rect({
-    left: pw * 0.1,
-    top: ph * 0.2,
-    width: pw * 0.35,
-    height: ph * 0.5,
-    fill: '#0f172a',
-    stroke: '#38bdf8',
-    strokeDashArray: [5, 5],
-    rx: 12,
-    ry: 12
-  });
-
-  const frame2 = new fabric.Rect({
-    left: pw * 0.55,
-    top: ph * 0.2,
-    width: pw * 0.35,
-    height: ph * 0.5,
-    fill: '#0f172a',
-    stroke: '#38bdf8',
-    strokeDashArray: [5, 5],
-    rx: 12,
-    ry: 12
-  });
-
-  fabricCanvas.add(frame1, frame2);
-  fabricCanvas.renderAll();
-  if (typeof saveState === 'function') saveState();
-});
-
-  
+ 
   // Undo / Redo history
   let undoStack = [];
   let redoStack = [];
