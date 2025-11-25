@@ -1369,32 +1369,41 @@ if (imgResetFilters) {
   }
 }
 
-  function loadDraft(){
-    const key = getDraftKey();
-    const json = localStorage.getItem(key);
-    if(!json) return;
-    try{
-      const draft = JSON.parse(json);
-      if(!draft.pages || !draft.pages.length) return;
-      if(!confirm('Βρέθηκε αποθηκευμένο photobook. Να φορτώσω;')) return;
-      pages = draft.pages;
-      if (Array.isArray(draft.uploadedPhotos)) {
-  uploadedPhotos.length = 0;
-  draft.uploadedPhotos.forEach(src => uploadedPhotos.push(src));
-  renderPhotoGallery();
-}
-      currentPage = draft.currentPage || 0;
-      refreshThumbnails();
-      loadPageToCanvas();
-      buildFlipbook();
-    }catch(e){
-      console.error('Σφάλμα φόρτωσης draft',e);
+  function loadDraft() {
+  const key = getDraftKey();
+  const json = localStorage.getItem(key);
+  if (!json) return false;
+
+  try {
+    const draft = JSON.parse(json);
+    if (!draft.pages || !draft.pages.length) return false;
+
+    const ok = confirm('Βρέθηκε αποθηκευμένο photobook. Να φορτώσω;');
+    if (!ok) return false;
+
+    // Φόρτωση draft
+    pages = draft.pages;
+    currentPage = draft.currentPage || 0;
+
+    // restore gallery
+    if (Array.isArray(draft.uploadedPhotos)) {
+      uploadedPhotos.length = 0;
+      draft.uploadedPhotos.forEach(src => uploadedPhotos.push(src));
+      renderPhotoGallery();
     }
+
+    refreshThumbnails();
+    loadPageToCanvas();
+    buildFlipbook();
+
+    return true;
+
+  } catch (e) {
+    console.error('Σφάλμα φόρτωσης draft', e);
+    return false;
   }
-  function clearDraft(){
-    const key = getDraftKey();
-    localStorage.removeItem(key);
-  }
+}
+
   function updateUserUi(){
     const label = document.getElementById('user-label');
     const loginBtn = document.getElementById('login-btn');
