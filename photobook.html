@@ -21,6 +21,16 @@
       --muted:#9ca3af;
       --radius:14px;
     }
+    :root[data-theme="light"]{
+  --bg:#f3f4f6;
+  --bg-soft:#ffffff;
+  --border:#d1d5db;
+  --accent:#2563eb;
+  --accent-soft:rgba(37,99,235,0.25);
+  --text:#111827;
+  --muted:#6b7280;
+}
+
     *{box-sizing:border-box;}
     body{
       margin:0;
@@ -434,6 +444,10 @@
     <span id="user-label">Επισκέπτης</span>
     <button id="login-btn" class="btn sm">Σύνδεση</button>
     <button id="logout-btn" class="btn sm" style="display:none;">Αποσύνδεση</button>
+    <button id="themeToggleBtn" class="btn sm" style="margin-left:0.5rem;">
+  🌙 / ☀️
+</button>
+
   </div>
 </header>
 
@@ -640,6 +654,33 @@ function initLogin() {
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-flex';
   }
+
+  // THEME SWITCHER (dark / light)
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+function applyTheme(theme){
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme);
+  localStorage.setItem('pb-theme', theme);
+}
+
+function initTheme(){
+  const saved = localStorage.getItem('pb-theme');
+  if(saved === 'light' || saved === 'dark'){
+    applyTheme(saved);
+  }else{
+    applyTheme('dark'); // default
+  }
+}
+
+if(themeToggleBtn){
+  themeToggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+  });
+}
+
 
   loginBtn.addEventListener('click', async () => {
     const email = prompt('Γράψε το email σου για να αποθηκεύεται το photobook σου:');
@@ -1471,7 +1512,7 @@ document.addEventListener('keydown', (e) => {
 
   
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener('DOMContentLoaded', () => {
 
   initUserAuth();               // σύνδεση χρήστη
   applyPageSizeFromInputs();    // σελιδοποίηση (A4 κλπ)
@@ -1493,6 +1534,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   refreshThumbnails();
   loadPageToCanvas(currentPage);
+   initTheme();
 });
 </script>
 </body>
