@@ -4,14 +4,15 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDElieLeqhEnwo91VdWMDmQWvPRYw75P3M",
-  authDomain: "photobook-studio.firebaseapp.com",
-  projectId: "photobook-studio",
-  storageBucket: "photobook-studio.appspot.com",
-  messagingSenderId: "179092092652",
-  appId: "1:179092092652:web:25f8602451fd4f29fbd7c9",
-  measurementId: "G-WK2E8XG98K"
+  apiKey: "AIzaSyBGt4Lsvk0ouISEtNbDbFirdY-XqmbHeSo",
+  authDomain: "photobook-studio-b1064.firebaseapp.com",
+  projectId: "photobook-studio-b1064",
+ storageBucket: "photobook-studio-b1064.appspot.com",
+  messagingSenderId: "287968637580",
+  appId: "1:287968637580:web:42311227a5df7b79ab81a9",
+  measurementId: "G-75L68JM346"
 };
+
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
