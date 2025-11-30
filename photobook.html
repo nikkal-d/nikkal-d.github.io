@@ -1396,38 +1396,26 @@ function getDraftKey(){
   return 'pb-draft-' + uid;
 }
 
-  function updateUserUi(){
-  const label = document.getElementById('user-label');
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
+ let currentUserId = null;
+let currentUserName = null;
 
-  const user = auth.currentUser;
-
-  if (user) {
-    currentUserId = user.uid;
-    currentUserName = user.displayName || user.email || 'Χρήστης';
-    label.textContent = currentUserName;
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-flex';
-  } else {
-    currentUserId = null;
-    currentUserName = null;
-    label.textContent = 'Επισκέπτης';
-    loginBtn.style.display = 'inline-flex';
-    logoutBtn.style.display = 'none';
-  }
+function getCurrentUserId(){
+  const u = auth.currentUser;
+  if (!u) return null;
+  return u.uid;
 }
+
 function initUserAuth(){
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
 
-  // Όταν αλλάζει η αυθεντικοποίηση (μπαίνει/βγαίνει χρήστης)
+  // Όταν αλλάζει η κατάσταση σύνδεσης (μπαίνει ή βγαίνει χρήστης)
   onAuthStateChanged(auth, (user) => {
     updateUserUi();
-    // Κάθε φορά που αλλάζει user, μπορούμε να αλλάζουμε και draft key κλπ
+    // εδώ μπορούμε να φορτώνουμε drafts ανά χρήστη κτλ
   });
 
-  // Login / Register με απλό prompt
+  // Login / Register με prompts (απλό αλλά λειτουργεί)
   loginBtn.onclick = async () => {
     const email = prompt('Email:');
     if (!email) return;
@@ -1435,12 +1423,12 @@ function initUserAuth(){
     if (!password) return;
 
     try {
-      // Προσπαθούμε να κάνουμε login
+      // Προσπαθούμε login
       await signInWithEmailAndPassword(auth, email, password);
       alert('Συνδέθηκες επιτυχώς!');
     } catch (err) {
       if (err.code === 'auth/user-not-found') {
-        const create = confirm('Δεν βρέθηκε λογαριασμός. Θες να δημιουργηθεί νέος;');
+        const create = confirm('Δεν βρέθηκε λογαριασμός. Να δημιουργηθεί νέος;');
         if (create) {
           try {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -1450,7 +1438,7 @@ function initUserAuth(){
             alert('Ο λογαριασμός δημιουργήθηκε και συνδέθηκες!');
           } catch (e) {
             console.error(e);
-            alert('Σφάλμα κατά τη δημιουργία λογαριασμού.');
+            alert('Σφάλμα κατά τη δημιουργία λογαριασμού: ' + e.message);
           }
         }
       } else {
@@ -1460,19 +1448,42 @@ function initUserAuth(){
     }
   };
 
+  // Logout
   logoutBtn.onclick = async () => {
     try {
       await signOut(auth);
       alert('Αποσυνδέθηκες.');
     } catch (e) {
       console.error(e);
-      alert('Σφάλμα κατά την αποσύνδεση.');
+      alert('Σφάλμα κατά την αποσύνδεση: ' + e.message);
     }
   };
 
-  // αρχική ενημέρωση UI (πριν προλάβει το onAuthStateChanged)
+  // Αρχικό UI refresh
   updateUserUi();
 }
+
+  function applyTheme(theme){
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme);
+  localStorage.setItem('pb-theme', theme);
+}
+
+function initTheme(){
+  const saved = localStorage.getItem('pb-theme') || 'dark';
+  applyTheme(saved);
+
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+    });
+  }
+}
+
+
 
 
   document.addEventListener('keydown', (e) => {
