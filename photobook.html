@@ -1395,16 +1395,6 @@ function getDraftKey(){
   const uid = getCurrentUserId() || 'guest';
   return 'pb-draft-' + uid;
 }
-
- let currentUserId = null;
-let currentUserName = null;
-
-function getCurrentUserId(){
-  const u = auth.currentUser;
-  if (!u) return null;
-  return u.uid;
-}
-
 function initUserAuth(){
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
