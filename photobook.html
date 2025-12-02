@@ -712,20 +712,6 @@ if (addStickerBtn) {
   });
 }
 
-  function initTheme(){
-  const themeBtn = document.getElementById('themeToggleBtn');
-  const saved = localStorage.getItem('pb-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
-
-  themeBtn.onclick = () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('pb-theme', next);
-  };
-}
-
-
  
   // Undo / Redo history
   let undoStack = [];
