@@ -1375,7 +1375,7 @@ if (imgResetFilters) {
   }
 }
 
- let currentUserId = null;
+  let currentUserId = null;
 let currentUserName = null;
 
 function getCurrentUserId(){
@@ -1383,6 +1383,29 @@ function getCurrentUserId(){
   if (!u) return null;
   return u.uid;
 }
+
+function updateUserUi(){
+  const label = document.getElementById('user-label');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  const user = auth.currentUser;
+
+  if (user) {
+    currentUserId = user.uid;
+    currentUserName = user.displayName || user.email || 'Χρήστης';
+    label.textContent = currentUserName;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+  } else {
+    currentUserId = null;
+    currentUserName = null;
+    label.textContent = 'Επισκέπτης';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+  }
+}
+
 
 function getDraftKey(){
   const uid = getCurrentUserId() || 'guest';
