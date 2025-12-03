@@ -538,6 +538,8 @@
   <option value="Courier New">Courier New</option>
 </select>
 
+        
+
         <label for="textSize">Μέγεθος</label>
         <input type="number" id="textSize" value="36" min="8" max="200">
         <label for="textColor">Χρώμα</label>
@@ -562,6 +564,46 @@
         <button type="button" id="textDeleteBtn" class="btn sm" style="width:100%;">🗑️ Διαγραφή κειμένου</button>
       </div>
     </div>
+
+    <div class="panel">
+  <h3>Image Controls</h3>
+
+  <label>Brightness</label>
+  <input type="range" min="-1" max="1" step="0.05"
+         oninput="setImageFilter('brightness', parseFloat(this.value))">
+
+  <label>Contrast</label>
+  <input type="range" min="-1" max="1" step="0.05"
+         oninput="setImageFilter('contrast', parseFloat(this.value))">
+
+  <label>Saturation</label>
+  <input type="range" min="-1" max="1" step="0.05"
+         oninput="setImageFilter('saturation', parseFloat(this.value))">
+
+  <label>Vibrance</label>
+  <input type="range" min="-1" max="1" step="0.05"
+         oninput="setImageFilter('vibrance', parseFloat(this.value))">
+
+  <label>Noise</label>
+  <input type="range" min="0" max="200" step="10"
+         oninput="setImageFilter('noise', parseInt(this.value))">
+
+  <label>Pixelate</label>
+  <input type="range" min="2" max="30" step="1"
+         oninput="setImageFilter('pixelate', parseInt(this.value))">
+
+  <label>Blur</label>
+  <input type="range" min="0" max="1" step="0.05"
+         oninput="setImageFilter('blur', parseFloat(this.value))">
+
+  <button onclick="setImageFilter('sepia')">Sepia</button>
+  <button onclick="setImageFilter('bw')">B&W</button>
+  <button onclick="setImageFilter('sharpen')">Sharpen</button>
+
+  <button onclick="autoEnhance()">Auto Enhance</button>
+  <button onclick="setImageFilter('reset')">Reset</button>
+</div>
+
 
     <!-- Stickers -->
     <div class="sidebar-section">
