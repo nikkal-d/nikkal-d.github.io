@@ -1087,6 +1087,106 @@ async function exportToCloud(){
     e.target.value = '';
   });
 
+  /* -------------------------- IMAGE EDITOR TOOLS ---------------------------- */
+
+function getActiveImage(){
+    const obj = fabricCanvas.getActiveObject();
+    if (!obj || obj.type !== "image") return null;
+    return obj;
+}
+
+function applyFilter(obj){
+    obj.applyFilters();
+    fabricCanvas.requestRenderAll();
+}
+
+function setImageFilter(filterName, value){
+    const img = getActiveImage();
+    if (!img) return;
+
+    switch(filterName){
+
+        case "brightness":
+            img.brightnessFilter = new fabric.Image.filters.Brightness({ brightness: value });
+            break;
+
+        case "contrast":
+            img.contrastFilter = new fabric.Image.filters.Contrast({ contrast: value });
+            break;
+
+        case "saturation":
+            img.saturationFilter = new fabric.Image.filters.Saturation({ saturation: value });
+            break;
+
+        case "vibrance":
+            img.vibranceFilter = new fabric.Image.filters.Vibrance({ vibrance: value });
+            break;
+
+        case "noise":
+            img.noiseFilter = new fabric.Image.filters.Noise({ noise: value });
+            break;
+
+        case "pixelate":
+            img.pixelFilter = new fabric.Image.filters.Pixelate({ blocksize: value });
+            break;
+
+        case "blur":
+            img.blurFilter = new fabric.Image.filters.Blur({ blur: value });
+            break;
+
+        case "sepia":
+            img.sepiaFilter = new fabric.Image.filters.Sepia();
+            break;
+
+        case "bw":
+            img.bwFilter = new fabric.Image.filters.Grayscale();
+            break;
+
+        case "sharpen":
+            img.sharpFilter = new fabric.Image.filters.Convolute({
+                matrix: [
+                    0, -1,  0,
+                    -1, 5, -1,
+                    0, -1,  0
+                ]
+            });
+            break;
+
+        case "reset":
+            img.filters = [];
+            break;
+    }
+
+    // Rebuild filter array from individual filters
+    img.filters = [
+        img.brightnessFilter,
+        img.contrastFilter,
+        img.saturationFilter,
+        img.vibranceFilter,
+        img.noiseFilter,
+        img.pixelFilter,
+        img.blurFilter,
+        img.sepiaFilter,
+        img.bwFilter,
+        img.sharpFilter
+    ].filter(f => f);
+
+    applyFilter(img);
+}
+
+function autoEnhance(){
+    const img = getActiveImage();
+    if (!img) return;
+    
+    img.filters = [
+        new fabric.Image.filters.Contrast({ contrast: 0.15 }),
+        new fabric.Image.filters.Saturation({ saturation: 0.18 })
+    ];
+
+    applyFilter(img);
+}
+
+
   // Text tools
   const addTextBtn = document.getElementById('addTextBtn');
   const textFontEl = document.getElementById('textFont');
