@@ -870,6 +870,151 @@ if (addStickerBtn) {
     });
   }
 
+  /* ----------------------------- USER + THEME SYSTEM ----------------------------- */
+
+let currentUserId = null;
+let currentUserName = null;
+
+function getCurrentUserId(){
+  const u = auth.currentUser;
+  return u ? u.uid : null;
+}
+
+function updateUserUi(){
+  const label = document.getElementById("user-label");
+  const loginBtn = document.getElementById("login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  const user = auth.currentUser;
+
+  if (user) {
+    currentUserId = user.uid;
+    currentUserName = user.displayName || user.email;
+    label.textContent = currentUserName;
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-flex";
+  } else {
+    currentUserId = null;
+    currentUserName = null;
+    label.textContent = "Επισκέπτης";
+    loginBtn.style.display = "inline-flex";
+    logoutBtn.style.display = "none";
+  }
+}
+
+function applyTheme(theme){
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("pb-theme", theme);
+}
+
+function initTheme(){
+  const saved = localStorage.getItem("pb-theme") || "dark";
+  applyTheme(saved);
+
+  const toggle = document.getElementById("themeToggleBtn");
+  if (toggle){
+    toggle.onclick = () => {
+      const current = document.documentElement.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      applyTheme(next);
+    };
+  }
+}
+
+function initUserAuth(){
+  const loginBtn = document.getElementById("login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  onAuthStateChanged(auth, (user) => {
+    updateUserUi();
+  });
+
+  loginBtn.onclick = async () => {
+    const email = prompt("Email:");
+    if (!email) return;
+
+    const password = prompt("Κωδικός:");
+    if (!password) return;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      if (err.code === "auth/user-not-found"){
+        const create = confirm("Δεν υπάρχει λογαριασμός. Να δημιουργηθεί;");
+        if (create){
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(cred.user, { displayName: email.split("@")[0] });
+        }
+      } else {
+        alert("Σφάλμα: " + err.message);
+      }
+    }
+  };
+
+  logoutBtn.onclick = async () => {
+    await signOut(auth);
+  };
+
+  updateUserUi();
+}
+
+/* ----------------------------- EXPORT TO CLOUD ----------------------------- */
+
+async function exportToCloud(){
+  try {
+    const user = auth.currentUser;
+    if (!user){
+      alert("Πρέπει να συνδεθείς πρώτα.");
+      return;
+    }
+
+    const title = prompt("Τίτλος photobook:", "Το photobook μου");
+    if (title === null) return;
+
+    const password = prompt("Κωδικός (προαιρετικό):") || null;
+
+    const pagesData = [];
+    for (let i = 0; i < pages.length; i++){
+      const p = pages[i];
+
+      if (p.image){
+        pagesData.push(p.image);
+      } else {
+        const json = p.json;
+        await new Promise(res => {
+          fabricCanvas.loadFromJSON(json, () => {
+            pagesData.push(fabricCanvas.toDataURL({ format: "png", quality: 0.9 }));
+            res();
+          });
+        });
+      }
+    }
+
+    const status = document.getElementById("share-status");
+    if (status) status.textContent = "Ανέβασμα στο cloud...";
+
+    const docId = await uploadPhotobook(pagesData, { title, password });
+
+    const link = `${location.origin}/viewer.html?id=${docId}`;
+    navigator.clipboard.writeText(link);
+
+    alert("Το link αντιγράφηκε:\n" + link);
+
+    if (status) status.textContent = "Ολοκληρώθηκε!";
+
+    const qrBox = document.getElementById("qr-container");
+    if (qrBox){
+      qrBox.innerHTML = "";
+      new QRCode(qrBox, { text: link, width: 120, height: 120 });
+    }
+
+  } catch (err){
+    console.error(err);
+    alert("Σφάλμα cloud export: " + err.message);
+  }
+}
+
+
   // PDF import
   document.getElementById('pdfUpload').addEventListener('change', async e=>{
     const file = e.target.files[0];
