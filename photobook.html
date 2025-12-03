@@ -1415,13 +1415,10 @@ function initUserAuth(){
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
 
-  // Όταν αλλάζει η κατάσταση σύνδεσης (μπαίνει ή βγαίνει χρήστης)
   onAuthStateChanged(auth, (user) => {
     updateUserUi();
-    // εδώ μπορούμε να φορτώνουμε drafts ανά χρήστη κτλ
   });
 
-  // Login / Register με prompts (απλό αλλά λειτουργεί)
   loginBtn.onclick = async () => {
     const email = prompt('Email:');
     if (!email) return;
@@ -1429,7 +1426,6 @@ function initUserAuth(){
     if (!password) return;
 
     try {
-      // Προσπαθούμε login
       await signInWithEmailAndPassword(auth, email, password);
       alert('Συνδέθηκες επιτυχώς!');
     } catch (err) {
@@ -1454,7 +1450,6 @@ function initUserAuth(){
     }
   };
 
-  // Logout
   logoutBtn.onclick = async () => {
     try {
       await signOut(auth);
@@ -1465,9 +1460,9 @@ function initUserAuth(){
     }
   };
 
-  // Αρχικό UI refresh
   updateUserUi();
 }
+
 
   function applyTheme(theme){
   const root = document.documentElement;
