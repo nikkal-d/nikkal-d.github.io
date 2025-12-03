@@ -1,10 +1,9 @@
-// SAVE TO FIREBASE — FINAL FIXED VERSION
+import { db, storage, auth } from "./firebase-init.js";
 
-import { db, storage } from "./firebase-init.js";
 import {
   collection,
   addDoc,
-  Timestamp
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import {
@@ -14,43 +13,58 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 /**
- * Upload Photobook to Firebase Storage + save metadata to Firestore
+ * pages: array από dataURL (canvas.toDataURL)
+ * options: { title, password }
  *
- * @param {Array} pages - Array of dataURL strings (PNG pages)
- * @param {Object} options - { title, email, password }
+ * επιστρέφει το ID του photobook (για share link)
  */
 export async function uploadPhotobook(pages, options = {}) {
-  try {
-    const id = crypto.randomUUID();
-    const folderRef = ref(storage, `photobooks/${id}`);
-
-    const uploadedPages = [];
-
-    // Upload κάθε σελίδα
-    for (let i = 0; i < pages.length; i++) {
-      const pageData = pages[i];
-
-      const pageRef = ref(folderRef, `page-${i + 1}.png`);
-      await uploadString(pageRef, pageData, "data_url");
-
-      const url = await getDownloadURL(pageRef);
-      uploadedPages.push(url);
-    }
-
-    // Save meta στο Firestore
-    const docRef = await addDoc(collection(db, "photobooks"), {
-      id,
-      pages: uploadedPages,
-      title: options.title || "Untitled Photobook",
-      password: options.password || null,
-      ownerEmail: options.email || null,   // 👈 κρατάμε email
-      createdAt: Timestamp.now()
-    });
-
-    return id;
-
-  } catch (err) {
-    console.error("🔥 ERROR uploading photobook:", err);
-    throw err;
+  if (!Array.isArray(pages) || !pages.length) {
+    throw new Error("Δεν υπάρχουν σελίδες για ανέβασμα.");
   }
+
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Πρέπει να είσαι συνδεδεμένος για να αποθηκεύσεις στο cloud.");
+  }
+
+  const ownerUid = user.uid;
+  const ownerEmail = user.email || null;
+
+  const title = options.title || "Untitled Photobook";
+  const password = options.password || null;
+
+  // Δημιουργούμε τυχαίο id για το folder στο Storage
+  const bookId = crypto.randomUUID();
+  const folderRef = ref(storage, `photobooks/${ownerUid}/${bookId}`);
+
+  const uploadedPages = [];
+
+  // Ανεβάζουμε όλες τις σελίδες
+  for (let i = 0; i < pages.length; i++) {
+    const dataUrl = pages[i];
+    const pageRef = ref(folderRef, `page-${i}.png`);
+    const result = await uploadString(pageRef, dataUrl, "data_url");
+    const url = await getDownloadURL(result.ref);
+    uploadedPages.push(url);
+  }
+
+  // Thumbnail = πρώτη σελίδα
+  const thumbUrl = uploadedPages[0];
+
+  // Μεταδεδομένα στο Firestore
+  const docRef = await addDoc(collection(db, "photobooks"), {
+    ownerUid,
+    ownerEmail,
+    bookId,
+    title,
+    password: password || null,
+    pages: uploadedPages,
+    pageCount: uploadedPages.length,
+    thumbUrl,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  return docRef.id; // Firestore doc id (για viewer.html?id=...)
 }
