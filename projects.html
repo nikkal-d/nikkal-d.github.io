@@ -1,233 +1,121 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <title>My Photobooks</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="page-flip.css">
-  <link rel="icon" href="favicon.ico">
-  <style>
-    body{
-      margin:0;
-      background:#020617;
-      color:#e5e7eb;
-      font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:0.75rem 1.5rem;
-      border-bottom:1px solid #1f2937;
-      background:#020617dd;
-      backdrop-filter:blur(10px);
-      position:sticky;
-      top:0;
-      z-index:10;
-    }
-    .projects-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-      gap:1rem;
-      padding:1rem 1.5rem 2rem;
-    }
-    .card{
-      background:#020617;
-      border:1px solid #1f2937;
-      border-radius:14px;
-      padding:0.75rem;
-      display:flex;
-      flex-direction:column;
-      gap:0.5rem;
-    }
-    .thumb{
-      width:100%;
-      border-radius:10px;
-      background:#0b1120;
-      aspect-ratio:4/3;
-      object-fit:cover;
-    }
-    .card-title{
-      font-weight:600;
-      font-size:0.95rem;
-    }
-    .card-meta{
-      font-size:0.8rem;
-      color:#9ca3af;
-    }
-    .card-actions{
-      display:flex;
-      justify-content:flex-end;
-      gap:0.5rem;
-      margin-top:0.5rem;
-    }
-    .btn{
-      border-radius:999px;
-      border:1px solid #1f2937;
-      background:#020617;
-      color:#e5e7eb;
-      padding:0.25rem 0.7rem;
-      font-size:0.8rem;
-      cursor:pointer;
-    }
-    .btn.primary{
-      background:#38bdf8;
-      border-color:#0ea5e9;
-      color:#020617;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Τα Photobooks μου</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Poppins", sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+header {
+  background: #1e293b;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334155;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+#user-info {
+  font-size: 1rem;
+}
+
+button {
+  background: #3b82f6;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2563eb;
+}
+
+#gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.2rem;
+  padding: 1.5rem;
+}
+
+.card {
+  background: #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 0.9rem;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  margin: 0 0 0.3rem 0;
+}
+
+.card-date {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.card-actions {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.action-btn {
+  background: #475569;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+}
+
+.action-btn:hover {
+  background: #64748b;
+}
+</style>
 </head>
+
 <body>
+
 <header>
-  <div>📚 Τα photobook μου</div>
-  <div>
-    <span id="user-label">Επισκέπτης</span>
-    <button id="login-btn" class="btn">Σύνδεση</button>
-    <button id="logout-btn" class="btn" style="display:none;">Αποσύνδεση</button>
+  <h1>📚 Τα Photobooks μου</h1>
+  <div id="user-info">
+    <span id="user-label">Φόρτωση...</span>
+    <button id="logout-btn" style="display:none;">Αποσύνδεση</button>
   </div>
 </header>
 
-<main>
-  <div id="projects-list" class="projects-grid"></div>
-</main>
+<section id="gallery">
+  <!-- Dynamically filled -->
+</section>
 
-<script type="module">
-import { db, auth } from "./firebase-init.js";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<!-- Firebase -->
+<script type="module" src="firebase-init.js"></script>
 
-let currentUserId = null;
-let currentUserName = null;
+<!-- Gallery logic -->
+<script type="module" src="js/projects.js"></script>
 
-function updateUserUi(){
-  const label = document.getElementById('user-label');
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const user = auth.currentUser;
-  if (user) {
-    currentUserId = user.uid;
-    currentUserName = user.displayName || user.email || 'Χρήστης';
-    label.textContent = currentUserName;
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-flex';
-  } else {
-    currentUserId = null;
-    currentUserName = null;
-    label.textContent = 'Επισκέπτης';
-    loginBtn.style.display = 'inline-flex';
-    logoutBtn.style.display = 'none';
-  }
-}
-
-async function loadProjects(){
-  const listEl = document.getElementById('projects-list');
-  listEl.innerHTML = '';
-
-  const user = auth.currentUser;
-  if (!user) {
-    listEl.innerHTML = '<p>Συνδέσου για να δεις τα photobook σου.</p>';
-    return;
-  }
-
-  const q = query(
-    collection(db, "photobooks"),
-    where("ownerUid", "==", user.uid),
-    orderBy("createdAt", "desc")
-  );
-
-  const snap = await getDocs(q);
-  if (snap.empty) {
-    listEl.innerHTML = '<p>Δεν έχεις ακόμα photobook στο cloud.</p>';
-    return;
-  }
-
-  snap.forEach(docSnap => {
-    const d = docSnap.data();
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    const img = document.createElement('img');
-    img.className = 'thumb';
-    img.src = d.thumbUrl || 'logo.png';
-    card.appendChild(img);
-
-    const title = document.createElement('div');
-    title.className = 'card-title';
-    title.textContent = d.title || 'Untitled';
-    card.appendChild(title);
-
-    const meta = document.createElement('div');
-    meta.className = 'card-meta';
-    meta.textContent = `Σελίδες: ${d.pageCount || d.pages?.length || 0}`;
-    card.appendChild(meta);
-
-    const actions = document.createElement('div');
-    actions.className = 'card-actions';
-
-    const openBtn = document.createElement('button');
-    openBtn.className = 'btn primary';
-    openBtn.textContent = 'Άνοιγμα';
-    openBtn.onclick = () => {
-      const link = `${location.origin}/viewer.html?id=${docSnap.id}`;
-      window.location.href = link;
-    };
-
-    actions.appendChild(openBtn);
-    card.appendChild(actions);
-
-    listEl.appendChild(card);
-  });
-}
-
-function initUserAuth(){
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-
-  onAuthStateChanged(auth, async (user) => {
-    updateUserUi();
-    await loadProjects();
-  });
-
-  loginBtn.onclick = async () => {
-    const email = prompt('Email:');
-    if (!email) return;
-    const password = prompt('Κωδικός:');
-    if (!password) return;
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      if (err.code === 'auth/user-not-found') {
-        const create = confirm('Δεν υπάρχει λογαριασμός. Να δημιουργηθεί;');
-        if (create) {
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(cred.user, { displayName: email.split('@')[0] });
-        }
-      } else {
-        alert('Σφάλμα: ' + err.message);
-      }
-    }
-  };
-
-  logoutBtn.onclick = async () => {
-    await signOut(auth);
-  };
-
-  updateUserUi();
-}
-
-initUserAuth();
-</script>
 </body>
 </html>
