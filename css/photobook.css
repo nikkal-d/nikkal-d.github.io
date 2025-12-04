@@ -1,0 +1,269 @@
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
+:root {
+  --bg: #f5f7fa;
+  --bg-dark: #0f172a;
+  --fg: #111827;
+  --fg-dark: #e5e7eb;
+  --accent: #4f46e5;
+  --accent-hover: #6366f1;
+
+  --panel: #ffffff;
+  --panel-dark: #1e293b;
+
+  --border: #d1d5db;
+  --border-dark: #334155;
+
+  --radius: 10px;
+  --transition: 0.2s ease;
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --fg: #e5e7eb;
+  --panel: #1e293b;
+  --border: #334155;
+}
+
+/* Reset */
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+#topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+#topbar .logo {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+#topbar button {
+  margin-left: 0.4rem;
+}
+
+/* ============================================================
+   WORKSPACE LAYOUT
+   ============================================================ */
+
+#workspace {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* LEFT SIDEBAR */
+
+#sidebar {
+  width: 280px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 0.7rem;
+  overflow-y: auto;
+}
+
+#sidebar h3 {
+  margin-top: 0;
+}
+
+.tab-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tab-btns button {
+  flex: 1;
+  padding: 0.4rem;
+  border-radius: var(--radius);
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tab-btns button:hover {
+  background: var(--accent);
+  color: white;
+}
+
+#tab-content .tab {
+  display: none;
+  margin-top: 1rem;
+}
+
+#tab-content .tab.active {
+  display: block;
+}
+
+/* MEDIA LIBRARY */
+
+#media-library {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 6px;
+}
+
+.media-item {
+  position: relative;
+}
+
+.media-item img {
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.media-item button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  color: white;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ============================================================
+   CANVAS AREA
+   ============================================================ */
+
+#canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+#canvas-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+canvas {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* Page controls */
+
+#page-controls {
+  padding: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+
+#page-controls button {
+  padding: 0.3rem 0.7rem;
+}
+
+/* ============================================================
+   THUMBNAILS PANEL
+   ============================================================ */
+
+#thumbs {
+  width: 200px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  padding: 0.7rem;
+  overflow-y: auto;
+}
+
+#thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 0.5rem;
+}
+
+.thumb {
+  border: 2px solid transparent;
+  padding: 4px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  background: #f1f5f9;
+}
+
+.thumb img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.thumb.active {
+  border-color: var(--accent);
+}
+
+/* ============================================================
+   BUTTON STYLES
+   ============================================================ */
+
+button {
+  padding: 0.35rem 0.6rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+button:hover {
+  background: var(--accent-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inputs */
+
+input[type="range"],
+input[type="number"],
+select {
+  width: 100%;
+  margin-bottom: 0.4rem;
+}
+
+/* Tabs tidy */
+
+#tab-text button,
+#tab-filters button,
+#tab-stickers button,
+#tab-templates button,
+#tab-export button {
+  width: 100%;
+  margin-top: 0.3rem;
+}
