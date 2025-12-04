@@ -483,6 +483,17 @@
       <p class="hint">Οι διαστάσεις επηρεάζουν τον καμβά & το export PDF.</p>
     </div>
 
+    <div class="panel">
+  <h3>Templates</h3>
+
+  <button onclick="applyTemplate('minimal-1')">Minimal</button>
+  <button onclick="applyTemplate('magazine-1')">Magazine</button>
+  <button onclick="applyTemplate('scrapbook-1')">Scrapbook</button>
+  <button onclick="applyTemplate('grid-2')">Grid (2)</button>
+  <button onclick="applyTemplate('grid-4')">Grid (4)</button>
+  <button onclick="applyTemplate('full-bleed')">Full Bleed</button>
+</div>
+
 
 <div class="sidebar-section">
   <div class="sidebar-title">Image effects</div>
@@ -1187,6 +1198,85 @@ function autoEnhance(){
     applyFilter(img);
 }
 
+  /* --------------------------- TEMPLATE SYSTEM --------------------------- */
+
+const PB_TEMPLATES = {
+
+  // 1. Minimal
+  "minimal-1": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Textbox("Minimal Title", { 
+      left: 50, top: 40, width: 500, fontSize: 48, fontFamily: "Playfair Display" 
+    }));
+    canvas.add(new fabric.Rect({ 
+      left: 80, top: 140, width: 400, height: 500, fill: "#eee"
+    }));
+  },
+
+  // 2. Magazine
+  "magazine-1": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Textbox("Magazine Headline", { 
+      left: 40, top: 40, width: 600, fontSize: 60, fontWeight: "bold" 
+    }));
+    canvas.add(new fabric.Rect({ 
+      left: 50, top: 150, width: 300, height: 400, fill: "#ddd"
+    }));
+    canvas.add(new fabric.Rect({ 
+      left: 370, top: 150, width: 300, height: 400, fill: "#ccc"
+    }));
+  },
+
+  // 3. Scrapbook
+  "scrapbook-1": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Rect({
+      left: 40, top: 40, width: 600, height: 500, fill: "#ffe6e6", rx: 20, ry:20
+    }));
+    canvas.add(new fabric.Text("My Memories ♥", { 
+      left: 60, top: 60, fontSize: 40, fill: "#d14" 
+    }));
+  },
+
+  // 4. Photo Grids
+  "grid-2": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Rect({ left: 40, top: 80, width: 280, height: 350, fill: "#eee" }));
+    canvas.add(new fabric.Rect({ left: 340, top: 80, width: 280, height: 350, fill: "#eee" }));
+  },
+
+  "grid-4": (canvas) => {
+    canvas.clear();
+    const w = 260, h = 260;
+    let x = 40, y = 80;
+    for (let i = 0; i < 4; i++){
+      canvas.add(new fabric.Rect({ left: x, top: y, width: w, height: h, fill: "#eee" }));
+      x += 280;
+      if (i === 1){ x = 40; y += 280; }
+    }
+  },
+
+  // 5. Full-bleed image
+  "full-bleed": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Rect({
+      left: 0, top: 0, width: canvas.width, height: canvas.height, fill: "#ddd"
+    }));
+  }
+};
+function applyTemplate(templateName){
+  if (!PB_TEMPLATES[templateName]){
+    alert("Το template δεν υπάρχει!");
+    return;
+  }
+
+  // save history
+  if (typeof saveState === "function") saveState();
+
+  PB_TEMPLATES[templateName](fabricCanvas);
+  fabricCanvas.renderAll();
+}
+
 
   // Text tools
   const addTextBtn = document.getElementById('addTextBtn');
@@ -1202,6 +1292,7 @@ function autoEnhance(){
 const textOutlineBtn = document.getElementById('textOutlineBtn');
 const textShadowBtn = document.getElementById('textShadowBtn');
 
+  
 
   function getActiveText(){
     const active = fabricCanvas.getActiveObject();
