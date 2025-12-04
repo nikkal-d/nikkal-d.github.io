@@ -1065,10 +1065,6 @@ fabricCanvas.on("selection:cleared", () => {
     fabricCanvas.loadFromJSON(next, () => fabricCanvas.renderAll());
   };
 
-  // Page data
-  let fabricCanvas;
-  let pages = [];        // κάθε σελίδα = { image: dataURL }
-  let currentPage = 0;
 
   function updatePageInfo(){
     const info = document.getElementById('pageInfo');
@@ -2089,24 +2085,31 @@ if (imgResetFilters) {
     }
   };
 
-  // User / autosave per user
- 
- function saveDraft(){
+ /* ---------------- USER SYSTEM + AUTOSAVE (FINAL FIXED VERSION) ---------------- */
+
+function getDraftKey(){
+  const uid = auth.currentUser ? auth.currentUser.uid : "guest";
+  return "pb-draft-" + uid;
+}
+
+function saveDraft(){
   if(!pages.length) return;
+
   const key = getDraftKey();
   const data = {
     pages,
     currentPage,
     uploadedPhotos
   };
-  try{
+
+  try {
     localStorage.setItem(key, JSON.stringify(data));
-  }catch(e){
-    console.warn('Draft too large ή αποτυχία αποθήκευσης', e);
+  } catch (e){
+    console.warn("Draft too large / storage fail", e);
   }
 }
 
-  function loadDraft() {
+function loadDraft(){
   const key = getDraftKey();
   const json = localStorage.getItem(key);
   if (!json) return false;
@@ -2115,16 +2118,15 @@ if (imgResetFilters) {
     const draft = JSON.parse(json);
     if (!draft.pages || !draft.pages.length) return false;
 
-    const ok = confirm('Βρέθηκε αποθηκευμένο photobook. Να φορτώσω;');
+    const ok = confirm("Βρέθηκε αποθηκευμένο photobook. Να φορτωθεί;");
     if (!ok) return false;
 
-    // Φόρτωση draft
     pages = draft.pages;
     currentPage = draft.currentPage || 0;
 
-    // restore gallery
+    // Restore gallery
+    uploadedPhotos.length = 0;
     if (Array.isArray(draft.uploadedPhotos)) {
-      uploadedPhotos.length = 0;
       draft.uploadedPhotos.forEach(src => uploadedPhotos.push(src));
       renderPhotoGallery();
     }
@@ -2135,99 +2137,76 @@ if (imgResetFilters) {
 
     return true;
 
-  } catch (e) {
-    console.error('Σφάλμα φόρτωσης draft', e);
+  } catch (e){
+    console.error("Draft load error", e);
     return false;
   }
 }
 
-  let currentUserId = null;
-let currentUserName = null;
-
-function getCurrentUserId(){
-  const u = auth.currentUser;
-  if (!u) return null;
-  return u.uid;
-}
+/* -------------------------- AUTH SYSTEM -------------------------- */
 
 function updateUserUi(){
-  const label = document.getElementById('user-label');
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
+  const label = document.getElementById("user-label");
+  const loginBtn = document.getElementById("login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
 
   const user = auth.currentUser;
 
-  if (user) {
-    currentUserId = user.uid;
-    currentUserName = user.displayName || user.email || 'Χρήστης';
-    label.textContent = currentUserName;
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-flex';
+  if (user){
+    label.textContent = user.displayName || user.email || "User";
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-flex";
   } else {
-    currentUserId = null;
-    currentUserName = null;
-    label.textContent = 'Επισκέπτης';
-    loginBtn.style.display = 'inline-flex';
-    logoutBtn.style.display = 'none';
+    label.textContent = "Επισκέπτης";
+    loginBtn.style.display = "inline-flex";
+    logoutBtn.style.display = "none";
   }
 }
 
-
-function getDraftKey(){
-  const uid = getCurrentUserId() || 'guest';
-  return 'pb-draft-' + uid;
-}
 function initUserAuth(){
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
+  const loginBtn = document.getElementById("login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
 
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, () => {
     updateUserUi();
+    loadDraft();
   });
 
   loginBtn.onclick = async () => {
-    const email = prompt('Email:');
+    const email = prompt("Email:");
     if (!email) return;
-    const password = prompt('Κωδικός (τουλάχιστον 6 χαρακτήρες):');
+
+    const password = prompt("Κωδικός:");
     if (!password) return;
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      alert('Συνδέθηκες επιτυχώς!');
-    } catch (err) {
-      if (err.code === 'auth/user-not-found') {
-        const create = confirm('Δεν βρέθηκε λογαριασμός. Να δημιουργηθεί νέος;');
-        if (create) {
-          try {
-            const cred = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(cred.user, {
-              displayName: email.split('@')[0]
-            });
-            alert('Ο λογαριασμός δημιουργήθηκε και συνδέθηκες!');
-          } catch (e) {
-            console.error(e);
-            alert('Σφάλμα κατά τη δημιουργία λογαριασμού: ' + e.message);
-          }
+    } catch (err){
+      if (err.code === "auth/user-not-found"){
+        const ok = confirm("Δεν υπάρχει λογαριασμός. Να δημιουργηθεί;");
+        if (ok){
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(cred.user, { displayName: email.split("@")[0] });
         }
       } else {
-        console.error(err);
-        alert('Σφάλμα στο login: ' + err.message);
+        alert("Σφάλμα: " + err.message);
       }
     }
   };
 
   logoutBtn.onclick = async () => {
-    try {
-      await signOut(auth);
-      alert('Αποσυνδέθηκες.');
-    } catch (e) {
-      console.error(e);
-      alert('Σφάλμα κατά την αποσύνδεση: ' + e.message);
-    }
+    await signOut(auth);
+    pages = [];
+    uploadedPhotos.length = 0;
+    refreshThumbnails();
+    fabricCanvas.clear();
   };
-
-  updateUserUi();
 }
+
+/* ---------------- INIT ---------------- */
+initUserAuth();
+initTheme();
+loadDraft();
 
 
   function applyTheme(theme){
