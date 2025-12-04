@@ -502,6 +502,12 @@
   <button onclick="colorizeSticker()">Colorize</button>
 </div>
 
+      <div class="panel">
+  <h3>Align</h3>
+  <button onclick="alignCenterH()">Center Horizontal</button>
+  <button onclick="alignCenterV()">Center Vertical</button>
+</div>
+
   <h3>Templates</h3>
 
   <button onclick="applyTemplate('minimal-1')">Minimal</button>
@@ -645,6 +651,8 @@
     </div>
     
      <button id="addTemplateBtn">📐 Template</button>
+
+    
 
     <!-- Pages / Export -->
     <div class="sidebar-section">
@@ -860,6 +868,139 @@ if (addStickerBtn) {
     if (typeof saveState === 'function') saveState();
   });
 }
+
+  /* --------------------------- KEYBOARD SHORTCUTS --------------------------- */
+
+document.addEventListener("keydown", (e) => {
+  const obj = fabricCanvas.getActiveObject();
+
+  // Duplicate (Ctrl + D)
+  if (e.ctrlKey && e.key.toLowerCase() === "d") {
+    e.preventDefault();
+    if (obj) {
+      const clone = fabric.util.object.clone(obj);
+      clone.set({ left: obj.left + 20, top: obj.top + 20 });
+      fabricCanvas.add(clone);
+      fabricCanvas.setActiveObject(clone);
+      fabricCanvas.requestRenderAll();
+      if (typeof saveState === "function") saveState();
+    }
+  }
+
+  // Delete
+  if (e.key === "Delete" || e.key === "Backspace") {
+    if (obj) {
+      fabricCanvas.remove(obj);
+      fabricCanvas.discardActiveObject();
+      fabricCanvas.requestRenderAll();
+      if (typeof saveState === "function") saveState();
+    }
+  }
+
+  // Move object: Shift + arrows = 10px
+  if (obj && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    let delta = e.shiftKey ? 10 : 1;
+
+    if (e.key === "ArrowUp") obj.top -= delta;
+    if (e.key === "ArrowDown") obj.top += delta;
+    if (e.key === "ArrowLeft") obj.left -= delta;
+    if (e.key === "ArrowRight") obj.left += delta;
+
+    obj.setCoords();
+    fabricCanvas.requestRenderAll();
+    if (typeof saveState === "function") saveState();
+  }
+
+  // Zoom in (Ctrl + +)
+  if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
+    e.preventDefault();
+    fabricCanvas.setZoom(fabricCanvas.getZoom() + 0.1);
+    fabricCanvas.requestRenderAll();
+  }
+
+  // Zoom out (Ctrl + -)
+  if (e.ctrlKey && e.key === "-") {
+    e.preventDefault();
+    fabricCanvas.setZoom(fabricCanvas.getZoom() - 0.1);
+    fabricCanvas.requestRenderAll();
+  }
+
+  // Save Draft (Ctrl + S)
+  if (e.ctrlKey && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    if (typeof saveDraft === "function") saveDraft();
+  }
+
+  // Export (Ctrl + E)
+  if (e.ctrlKey && e.key.toLowerCase() === "e") {
+    e.preventDefault();
+    document.getElementById("exportPdfBtn")?.click();
+  }
+
+  // Rotate (Ctrl + Arrow keys)
+  if (obj && e.ctrlKey && ["ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault();
+    const step = e.shiftKey ? 15 : 5;
+    obj.angle += (e.key === "ArrowLeft" ? -step : step);
+    obj.setCoords();
+    fabricCanvas.requestRenderAll();
+  }
+
+  // Group (Ctrl + G)
+  if (e.ctrlKey && e.key.toLowerCase() === "g" && fabricCanvas._activeObjects?.length > 1) {
+    e.preventDefault();
+    let group = new fabric.Group(fabricCanvas._activeObjects);
+    fabricCanvas.discardActiveObject();
+    fabricCanvas.add(group);
+    fabricCanvas.setActiveObject(group);
+    fabricCanvas.requestRenderAll();
+  }
+
+  // Ungroup (Ctrl + Shift + G)
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
+    e.preventDefault();
+    if (obj && obj.type === "group") {
+      let items = obj._objects;
+      fabricCanvas.remove(obj);
+      items.forEach(x => fabricCanvas.add(x));
+      fabricCanvas.requestRenderAll();
+    }
+  }
+});
+function alignCenterH(){
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj) return;
+  obj.left = (fabricCanvas.width - obj.width * obj.scaleX) / 2;
+  obj.setCoords();
+  fabricCanvas.requestRenderAll();
+}
+
+function alignCenterV(){
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj) return;
+  obj.top = (fabricCanvas.height - obj.height * obj.scaleY) / 2;
+  obj.setCoords();
+  fabricCanvas.requestRenderAll();
+}
+fabricCanvas.on("selection:created", (e) => {
+  const obj = e.target;
+  obj.set("shadow", {
+    color: "rgba(0,150,255,0.4)",
+    blur: 20,
+    offsetX: 0,
+    offsetY: 0
+  });
+  fabricCanvas.requestRenderAll();
+});
+
+fabricCanvas.on("selection:cleared", () => {
+  fabricCanvas.getObjects().forEach(o => {
+    if (o.shadow && o.shadow.color.includes("0,150,255"))
+      o.shadow = null;
+  });
+  fabricCanvas.requestRenderAll();
+});
+
 
  
   // Undo / Redo history
