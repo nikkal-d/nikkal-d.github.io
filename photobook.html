@@ -484,6 +484,24 @@
     </div>
 
     <div class="panel">
+
+      <div class="panel">
+  <h3>Stickers</h3>
+
+  <select id="sticker-category" onchange="loadStickerCategory()">
+    <option value="emoji">Emoji</option>
+    <option value="shapes">Shapes</option>
+    <option value="doodles">Doodles</option>
+    <option value="frames">Frames</option>
+  </select>
+
+  <div id="stickers-box" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+
+  <button onclick="addStickerOutline()">Outline</button>
+  <button onclick="addStickerShadow()">Shadow</button>
+  <button onclick="colorizeSticker()">Colorize</button>
+</div>
+
   <h3>Templates</h3>
 
   <button onclick="applyTemplate('minimal-1')">Minimal</button>
@@ -751,6 +769,82 @@ if (addTemplateBtn) {
   });
 }
 
+/* --------------------------- STICKER SYSTEM --------------------------- */
+
+// Οργανωμένη λίστα sticker packs
+const STICKERS = {
+  "emoji": [
+    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg",
+    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f602.svg",
+    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f60d.svg"
+  ],
+  "shapes": [
+    "https://cdn-icons-png.flaticon.com/512/785/785822.png",
+    "https://cdn-icons-png.flaticon.com/512/32/32339.png"
+  ],
+  "doodles": [
+    "https://cdn-icons-png.flaticon.com/512/879/879757.png",
+    "https://cdn-icons-png.flaticon.com/512/879/879780.png"
+  ],
+  "frames": [
+    "https://cdn-icons-png.flaticon.com/512/921/921347.png"
+  ]
+};
+
+  function addSticker(url){
+  fabric.Image.fromURL(url, function(img){
+    img.set({
+      left: 200,
+      top: 200,
+      scaleX: 0.4,
+      scaleY: 0.4,
+      cornerStyle: "circle",
+      transparentCorners: false
+    });
+
+    // Save for undo
+    if (typeof saveState === "function") saveState();
+
+    fabricCanvas.add(img);
+    fabricCanvas.setActiveObject(img);
+  }, { crossOrigin: "anonymous" });
+}
+function addStickerOutline(){
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== "image") return;
+
+  obj.set("stroke", "white");
+  obj.set("strokeWidth", 12);
+  fabricCanvas.requestRenderAll();
+}
+function addStickerShadow(){
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== "image") return;
+
+  obj.set("shadow", {
+    color: "rgba(0,0,0,0.35)",
+    blur: 12,
+    offsetX: 6,
+    offsetY: 6
+  });
+
+  fabricCanvas.requestRenderAll();
+}
+function colorizeSticker(color = "#ff66aa"){
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== "image") return;
+
+  obj.filters.push(new fabric.Image.filters.BlendColor({
+    color: color,
+    mode: "tint",
+    alpha: 0.6
+  }));
+
+  obj.applyFilters();
+  fabricCanvas.requestRenderAll();
+}
+
+  
 // Stickers – basic emoji sticker + default stickers
 const addStickerBtn = document.getElementById('addStickerBtn');
 if (addStickerBtn) {
@@ -1893,6 +1987,26 @@ function initTheme(){
     if (typeof saveState === 'function') saveState();
   }
 });
+
+  function loadStickerCategory(){
+  const cat = document.getElementById("sticker-category").value;
+  const box = document.getElementById("stickers-box");
+
+  box.innerHTML = "";
+
+  STICKERS[cat].forEach(url => {
+    const img = document.createElement("img");
+    img.src = url;
+    img.style.width = "60px";
+    img.style.cursor = "pointer";
+    img.onclick = () => addSticker(url);
+    box.appendChild(img);
+  });
+}
+
+// Load default pack
+window.addEventListener("DOMContentLoaded", loadStickerCategory);
+
 
 window.addEventListener('DOMContentLoaded', () => {
 
