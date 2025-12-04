@@ -107,6 +107,28 @@ button:hover {
   </div>
 </header>
 
+
+<div class="card-actions">
+  <a class="action-btn" href="viewer.html?id=${docSnap.id}">
+    Προβολή
+  </a>
+
+  <button class="action-btn" onclick="renamePhotobook('${docSnap.id}')">
+    ✏️ Μετονομασία
+  </button>
+
+  <button class="action-btn" onclick="duplicatePhotobook('${docSnap.id}', '${book.bookId}', '${book.userId}')">
+    📄 Αντιγραφή
+  </button>
+
+  <button class="action-btn" onclick="deletePhotobook('${docSnap.id}', '${book.bookId}', '${book.userId}')">
+    🗑 Διαγραφή
+  </button>
+</div>
+
+
+
+  
 <section id="gallery">
   <!-- Dynamically filled -->
 </section>
