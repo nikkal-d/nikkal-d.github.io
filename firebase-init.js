@@ -1,12 +1,25 @@
 // firebase-init.js
-// Χρησιμοποιούμε ES modules από το CDN της Firebase v10
+// ES Modules Firebase v10 — fully compatible with GitHub Pages
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { 
+  getAuth, 
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// ΒΑΛΕ ΕΔΩ ΤΟ ΔΙΚΟ ΣΟΥ CONFIG από το Firebase Console
+import { 
+  getFirestore
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import { 
+  getStorage
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+// Your Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBGt4Lsvk0ouISEtNbDbFirdY-XqmbHeSo",
   authDomain: "photobook-studio-b1064.firebaseapp.com",
@@ -17,10 +30,21 @@ const firebaseConfig = {
   measurementId: "G-75L68JM346"
 };
 
-// Init
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-export { app, auth, db, storage };
+// Export για όλα τα modules
+export {
+  app,
+  auth,
+  db,
+  storage,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile
+};
