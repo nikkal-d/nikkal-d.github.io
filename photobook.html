@@ -1,1204 +1,633 @@
 <!DOCTYPE html>
-<html lang="el">
+<html lang="el" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <title>Photobook Editor · Nikkal Studio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#020617">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Pacifico&family=Roboto:wght@400;700&family=Playfair+Display:wght@400;700&display=swap">
+  <meta charset="UTF-8" />
+  <title>Photobook Studio – Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Favicons -->
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-<link rel="shortcut icon" href="/favicon.ico">
-  <link rel="icon" href="https://nikkal-d.github.io/favicon.ico">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Montserrat:wght@400;700&family=Playfair+Display:wght@400;700&family=Pacifico&family=Lobster&display=swap" rel="stylesheet">
 
+  <!-- Favicon -->
+  <link rel="icon" href="favicon.ico">
 
-  
-  <style>
-    :root{
-      --bg:#020617;
-      --bg-soft:#0f172a;
-      --border:#1f2937;
-      --accent:#38bdf8;
-      --accent-soft:rgba(56,189,248,0.5);
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --radius:14px;
-    }
-    :root[data-theme="light"]{
-  --bg:#f3f4f6;
-  --bg-soft:#ffffff;
-  --border:#d1d5db;
-  --accent:#2563eb;
-  --accent-soft:rgba(37,99,235,0.25);
-  --text:#111827;
-  --muted:#6b7280;
-}
-
-    *{box-sizing:border-box;}
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-      background:radial-gradient(circle at top,#020617 0,#020617 50%,#020617 100%);
-      color:var(--text);
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    }
-    /* HEADER */
-    .main-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:0.6rem 1.2rem;
-      background:#020617;
-      border-bottom:1px solid var(--border);
-      position:sticky;
-      top:0;
-      z-index:20;
-    }
-    .header-left{
-      display:flex;
-      align-items:center;
-      gap:0.5rem;
-    }
-    .header-left .logo{
-      font-size:1.4rem;
-    }
-    .header-left .site-title{
-      font-size:1rem;
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-    .main-menu{
-      display:flex;
-      gap:0.5rem;
-      flex-wrap:wrap;
-      justify-content:center;
-    }
-    .main-menu a{
-      text-decoration:none;
-      font-size:0.8rem;
-      padding:0.35rem 0.75rem;
-      border-radius:999px;
-      border:1px solid transparent;
-      color:var(--muted);
-      white-space:nowrap;
-    }
-    .main-menu a:hover{
-      border-color:var(--accent-soft);
-      color:var(--text);
-      background:rgba(15,23,42,0.95);
-    }
-    .main-menu a.active{
-      border-color:var(--accent-soft);
-      color:var(--accent);
-      background:rgba(15,23,42,0.95);
-    }
-    .user-area{
-      display:flex;
-      align-items:center;
-      gap:0.4rem;
-      font-size:0.8rem;
-      color:var(--muted);
-      white-space:nowrap;
-    }
-
-    .btn{
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(15,23,42,0.98);
-      color:var(--text);
-      padding:0.35rem 0.8rem;
-      font-size:0.78rem;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      gap:0.25rem;
-      transition:0.15s border-color,0.15s background,0.07s transform,0.15s box-shadow;
-      white-space:nowrap;
-    }
-    .btn.sm{padding:0.25rem 0.6rem;font-size:0.75rem;}
-    .btn.primary{
-      background:linear-gradient(135deg,#38bdf8,#6366f1);
-      border-color:transparent;
-      color:#ecfeff;
-      box-shadow:0 12px 30px rgba(56,189,248,0.4);
-    }
-    .btn:hover{
-      border-color:var(--accent-soft);
-      background:rgba(15,23,42,1);
-      transform:translateY(-1px);
-      box-shadow:0 10px 28px rgba(15,23,42,0.9);
-    }
-    .btn.primary:hover{filter:brightness(1.05);}
-    .btn:active{
-      transform:translateY(0);
-      box-shadow:0 6px 18px rgba(15,23,42,0.9);
-    }
-
-    main{
-      flex:1;
-      display:flex;
-      min-height:0;
-      padding:0.8rem;
-      gap:0.8rem;
-    }
-    /* SIDEBAR */
-    #sidebar{
-      width:260px;
-      min-width:240px;
-      background:var(--bg-soft);
-      border-radius:var(--radius);
-      border:1px solid var(--border);
-      padding:0.7rem;
-      display:flex;
-      flex-direction:column;
-      gap:0.7rem;
-      overflow-y:auto;
-      max-height:calc(100vh - 70px);
-    }
-    .sidebar-section{
-      border-radius:10px;
-      border:1px solid rgba(148,163,184,0.3);
-      padding:0.45rem 0.55rem 0.6rem;
-      background:rgba(15,23,42,0.85);
-    }
-    .sidebar-title{
-      font-size:0.78rem;
-      text-transform:uppercase;
-      letter-spacing:0.12em;
-      color:var(--muted);
-      margin-bottom:0.2rem;
-    }
-    .sidebar-sub{
-      font-size:0.72rem;
-      color:var(--muted);
-      margin-bottom:0.35rem;
-    }
-    label{
-      font-size:0.75rem;
-      color:var(--muted);
-      display:block;
-      margin-top:0.25rem;
-      margin-bottom:0.1rem;
-    }
-    input[type="number"],
-    input[type="color"],
-    select{
-      width:100%;
-      font-size:0.78rem;
-      padding:0.25rem 0.4rem;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:#020617;
-      color:var(--text);
-    }
-    input[type="file"]{display:none;}
-    .file-label{
-      border-radius:999px;
-      border:1px dashed var(--border);
-      padding:0.35rem 0.7rem;
-      font-size:0.78rem;
-      display:inline-flex;
-      align-items:center;
-      gap:0.3rem;
-      cursor:pointer;
-      color:var(--muted);
-      background:rgba(15,23,42,0.9);
-      margin-bottom:0.25rem;
-    }
-    .file-label:hover{
-      border-color:var(--accent-soft);
-      color:var(--text);
-    }
-    .photo-gallery{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:0.25rem;
-      max-height:140px;
-      overflow-y:auto;
-    }
-    .photo-thumb{
-      width:100%;
-      aspect-ratio:1/1;
-      border-radius:8px;
-      overflow:hidden;
-      border:1px solid rgba(148,163,184,0.4);
-      cursor:pointer;
-    }
-    .photo-thumb img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .photo-thumb:hover{
-      border-color:var(--accent);
-    }
-
-    .text-tools-group{
-      margin-top:0.4rem;
-      padding-top:0.35rem;
-      border-top:1px solid rgba(148,163,184,0.3);
-      font-size:0.75rem;
-    }
-    .text-style-buttons{
-      display:flex;
-      gap:0.25rem;
-      margin:0.25rem 0;
-    }
-    .text-style-buttons button{
-      flex:1;
-      padding:0.2rem 0.4rem;
-      font-size:0.7rem;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:#020617;
-      color:var(--text);
-      cursor:pointer;
-    }
-    .text-style-buttons button:hover{
-      border-color:var(--accent-soft);
-    }
-
-    .sticker-list{
-      display:flex;
-      flex-wrap:wrap;
-      gap:0.25rem;
-      margin-top:0.25rem;
-    }
-    .sticker-item{
-      width:42px;
-      height:42px;
-      border-radius:8px;
-      border:1px solid rgba(148,163,184,0.4);
-      background:#020617;
-      overflow:hidden;
-      cursor:pointer;
-    }
-    .sticker-item img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-    .hint{
-      font-size:0.7rem;
-      color:var(--muted);
-      margin-top:0.2rem;
-    }
-
-    /* MAIN AREA */
-    #mainArea{
-      flex:1;
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:0.6rem;
-    }
-    .canvas-wrapper{
-      flex:1;
-      min-height:260px;
-      border-radius:var(--radius);
-      border:1px solid var(--border);
-      background:radial-gradient(circle at top,#020617,#020617);
-      padding:0.5rem;
-      display:flex;
-      flex-direction:column;
-      gap:0.5rem;
-    }
-    .canvas-toolbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:0.4rem;
-      font-size:0.76rem;
-      color:var(--muted);
-    }
-    .canvas-toolbar-left,
-    .canvas-toolbar-right{
-      display:flex;
-      flex-wrap:wrap;
-      gap:0.3rem;
-      align-items:center;
-    }
-    .canvas-container-outer{
-      flex:1;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      overflow:hidden;
-    }
-    #canvas{
-      background:white;
-      box-shadow:0 18px 50px rgba(15,23,42,0.9);
-      border-radius:12px;
-      max-width:100%;
-      height:auto;
-      display:block;
-    }
-
-    .thumb-strip{
-      display:flex;
-      gap:0.3rem;
-      overflow-x:auto;
-      padding:0.25rem 0.1rem 0;
-    }
-    .thumb{
-      width:70px;
-      height:95px;
-      border-radius:10px;
-      border:1px solid rgba(148,163,184,0.4);
-      overflow:hidden;
-      position:relative;
-      flex-shrink:0;
-      background:#020617;
-      cursor:pointer;
-    }
-    .thumb img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .thumb.active{
-      border-color:var(--accent);
-      box-shadow:0 0 0 1px rgba(56,189,248,0.7);
-    }
-    .thumb-index{
-      position:absolute;
-      bottom:2px;
-      right:4px;
-      font-size:0.65rem;
-      background:rgba(15,23,42,0.9);
-      padding:0.05rem 0.35rem;
-      border-radius:999px;
-      color:var(--muted);
-    }
-
-    .flipbook-wrapper{
-      border-radius:var(--radius);
-      border:1px solid var(--border);
-      padding:0.5rem;
-      background:radial-gradient(circle at top left,#0f172a,#020617);
-      min-height:220px;
-      display:flex;
-      flex-direction:column;
-      gap:0.4rem;
-    }
-    #flipbook-container{
-      flex:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      border-radius:12px;
-      background:#020617;
-    }
-    #flipbook{
-      width:100%;
-      height:100%;
-    }
-
-    footer{
-      border-top:1px solid var(--border);
-      padding:0.7rem;
-      text-align:center;
-      font-size:0.72rem;
-      color:var(--muted);
-      background:#020617;
-    }
-
-    @media (max-width:960px){
-      main{flex-direction:column;}
-      #sidebar{
-        max-height:none;
-        width:100%;
-        order:2;
-      }
-      #mainArea{order:1;}
-    }
-.media-item {
-  position: relative;
-}
-
-.media-item img {
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.media-item button {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: red;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-    
-  </style>
-
-  <!-- libs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
+  <!-- FabricJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <!-- QRCode for share -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- jsPDF for PDF export (αν το θες) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #020617;
+      --bg-dark-elevated: #02091f;
+      --bg-light: #f3f4f6;
+      --bg-light-elevated: #ffffff;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --border-dark: #1f2937;
+      --border-light: #d1d5db;
+      --text-dark: #e5e7eb;
+      --text-light: #111827;
+      --panel-radius: 16px;
+    }
+
+    [data-theme="dark"] {
+      --bg-main: var(--bg-dark);
+      --bg-panel: var(--bg-dark-elevated);
+      --border-color: var(--border-dark);
+      --text-main: var(--text-dark);
+    }
+
+    [data-theme="light"] {
+      --bg-main: var(--bg-light);
+      --bg-panel: var(--bg-light-elevated);
+      --border-color: var(--border-light);
+      --text-main: var(--text-light);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Poppins", sans-serif;
+      background: radial-gradient(circle at top left, #0f172a, #020617);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1.5rem;
+      backdrop-filter: blur(18px);
+      background: rgba(2,6,23,0.85);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    header .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    header .logo-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: radial-gradient(circle at 30% 20%, #e0f2fe, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: #020617;
+      font-weight: 700;
+    }
+
+    nav a {
+      margin: 0 0.5rem;
+      text-decoration: none;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+
+    nav a:hover {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .chip {
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: rgba(15,23,42,0.7);
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      background: rgba(15,23,42,0.9);
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      border-color: transparent;
+      color: #020617;
+      font-weight: 600;
+    }
+
+    .btn.icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .btn:hover {
+      filter: brightness(1.08);
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px minmax(0,1fr) 260px;
+      gap: 0.75rem;
+      padding: 0.75rem 0.75rem 1rem;
+    }
+
+    .panel {
+      background: linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.75));
+      border-radius: var(--panel-radius);
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 20px 45px rgba(15,23,42,0.75);
+      padding: 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .panel h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #9ca3af;
+    }
+
+    .toolbar-section {
+      border-top: 1px solid rgba(148,163,184,0.35);
+      padding-top: 0.6rem;
+      margin-top: 0.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+
+    .toolbar-row .btn {
+      flex: 1 1 48%;
+      justify-content: center;
+    }
+
+    label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    select, input[type="color"], input[type="range"], input[type="number"] {
+      width: 100%;
+      background: rgba(15,23,42,0.8);
+      color: var(--text-main);
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.4);
+      padding: 0.2rem 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    input[type="range"] {
+      padding: 0;
+    }
+
+    .canvas-panel {
+      background: radial-gradient(circle at top, #0b1120, #020617);
+      border-radius: var(--panel-radius);
+      border: 1px solid rgba(148,163,184,0.35);
+      box-shadow: 0 20px 45px rgba(15,23,42,0.85);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #canvas-wrapper {
+      flex: 1;
+      padding: 0.4rem;
+    }
+
+    #canvas {
+      border-radius: 12px;
+      background: #f9fafb;
+    }
+
+    .page-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.3rem 0.6rem;
+      border-top: 1px solid rgba(148,163,184,0.25);
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.22), rgba(15,23,42,0.95));
+    }
+
+    .page-strip .pages-thumbs {
+      display: flex;
+      gap: 0.25rem;
+      overflow-x: auto;
+      padding-bottom: 0.15rem;
+    }
+
+    .thumb {
+      width: 48px;
+      height: 64px;
+      border-radius: 6px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: #020617;
+      overflow: hidden;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .thumb.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56,189,248,0.6);
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .page-strip-buttons {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    #media-library {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+
+    .media-item {
+      position: relative;
+    }
+
+    .media-item img {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 1px solid rgba(148,163,184,0.5);
+    }
+
+    .media-item button {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: #ef4444;
+      color: white;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    #qr-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+    }
+
+    footer {
+      padding: 0.35rem 1rem;
+      font-size: 0.75rem;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid rgba(15,23,42,0.8);
+      background: radial-gradient(circle at bottom, #020617, #020617);
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: minmax(0,1fr);
+        grid-template-rows: auto auto auto;
+      }
+    }
+  </style>
 </head>
 <body>
-<header class="main-header">
-  <div class="header-left">
-    <span class="logo">📚</span>
-    <span class="site-title">Nikkal Studio</span>
-  </div>
-  <nav class="main-menu">
-    <a href="index.html">Find My Duplicates</a>
-    <a href="photobook.html" class="active">Photobook Editor</a>
-    <a href="projects.html">Projects</a>
-    <a href="templates.html">Templates</a>
-    <a href="stickers.html">Stickers</a>
-    <a href="viewer.html">Viewer</a>
-  </nav>
-  <div class="user-area">
-    <span id="user-label">Επισκέπτης</span>
-    <button id="login-btn" class="btn sm">Σύνδεση</button>
-    <button id="logout-btn" class="btn sm" style="display:none;">Αποσύνδεση</button>
-    <button id="themeToggleBtn" class="btn sm" style="margin-left:0.5rem;">
-  🌙 / ☀️
-</button>
+  <header>
+    <div class="logo">
+      <div class="logo-badge">PB</div>
+      <span>Photobook Studio</span>
+    </div>
+    <nav>
+      <a href="index.html">Αρχική</a>
+      <a href="photobook.html">Photobook Editor</a>
+      <a href="duplicates.html">Find Duplications</a>
+      <a href="projects.html">Τα έργα μου</a>
+    </nav>
+    <div class="header-right">
+      <span class="chip" id="user-label">Επισκέπτης</span>
+      <button class="btn" id="login-btn">Σύνδεση</button>
+      <button class="btn" id="logout-btn" style="display:none;">Αποσύνδεση</button>
+      <button class="btn icon" id="themeToggleBtn">☾</button>
+    </div>
+  </header>
 
-  </div>
-</header>
+  <main>
+    <!-- LEFT TOOLBAR -->
+    <aside class="panel">
+      <h3>Εργαλεία</h3>
 
-<main>
-  <!-- SIDEBAR -->
-  <aside id="sidebar">
-    <!-- Σελίδα / Διαστάσεις -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Page setup</div>
-      <div class="sidebar-sub">Διαστάσεις σελίδας & αναλογία.</div>
-      <label for="pagePreset">Preset</label>
-      <select id="pagePreset">
-        <option value="a4-portrait">A4 κάθετη</option>
-        <option value="a4-landscape">A4 οριζόντια</option>
-        <option value="square">Τετράγωνο (1:1)</option>
-        <option value="3-4">3:4</option>
-        <option value="9-16">9:16</option>
-        <option value="custom">Custom</option>
-      </select>
-      <label>Custom (px)</label>
-      <div style="display:flex;gap:0.25rem;">
-        <input type="number" id="pageWidth" min="300" max="2000" value="800">
-        <input type="number" id="pageHeight" min="300" max="2000" value="1100">
+      <!-- ΕΙΚΟΝΕΣ ΠΡΩΤΕΣ ΟΠΩΣ ΖΗΤΗΣΕΣ -->
+      <div class="toolbar-section">
+        <label>Εικόνες & PDF</label>
+        <div class="toolbar-row">
+          <button class="btn primary" id="uploadImageBtn">+ Εικόνες</button>
+          <button class="btn" id="uploadPdfBtn">+ PDF</button>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
+        <input type="file" id="pdfInput" accept="application/pdf" style="display:none;">
       </div>
-      <button id="applyPageSize" class="btn sm" style="margin-top:0.35rem;">Εφαρμογή διαστάσεων</button>
-      <p class="hint">Οι διαστάσεις επηρεάζουν τον καμβά & το export PDF.</p>
-    </div>
 
-    <div class="panel">
-
-      <div class="panel">
-  <h3>Your Uploads</h3>
-  <div id="media-library" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-  <button onclick="clearAllMedia()">Clear All</button>
-</div>
-
-
-      <div class="panel">
-  <h3>Stickers</h3>
-
-  <select id="sticker-category" onchange="loadStickerCategory()">
-    <option value="emoji">Emoji</option>
-    <option value="shapes">Shapes</option>
-    <option value="doodles">Doodles</option>
-    <option value="frames">Frames</option>
-  </select>
-
-  <div id="stickers-box" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
-
-  <button onclick="addStickerOutline()">Outline</button>
-  <button onclick="addStickerShadow()">Shadow</button>
-  <button onclick="colorizeSticker()">Colorize</button>
-</div>
-
-      <div class="panel">
-  <h3>Align</h3>
-  <button onclick="alignCenterH()">Center Horizontal</button>
-  <button onclick="alignCenterV()">Center Vertical</button>
-</div>
-
-  <h3>Templates</h3>
-
-  <button onclick="applyTemplate('minimal-1')">Minimal</button>
-  <button onclick="applyTemplate('magazine-1')">Magazine</button>
-  <button onclick="applyTemplate('scrapbook-1')">Scrapbook</button>
-  <button onclick="applyTemplate('grid-2')">Grid (2)</button>
-  <button onclick="applyTemplate('grid-4')">Grid (4)</button>
-  <button onclick="applyTemplate('full-bleed')">Full Bleed</button>
-</div>
-
-
-<div class="sidebar-section">
-  <div class="sidebar-title">Image effects</div>
-  <div class="sidebar-sub">Διάλεξε εικόνα και εφάρμοσε φίλτρα.</div>
-
-  <label for="imgBrightness">Brightness</label>
-  <input type="range" id="imgBrightness" min="-0.5" max="0.5" step="0.05" value="0">
-
-  <label for="imgContrast">Contrast</label>
-  <input type="range" id="imgContrast" min="-0.5" max="0.5" step="0.05" value="0">
-
-  <label for="imgSaturation">Saturation</label>
-  <input type="range" id="imgSaturation" min="-0.5" max="0.5" step="0.05" value="0">
-
-  <label for="imgHue">Hue</label>
-  <input type="range" id="imgHue" min="-1" max="1" step="0.1" value="0">
-
-  <div class="text-style-buttons" style="margin-top:0.4rem;">
-    <button type="button" id="imgPresetWarm">Warm</button>
-    <button type="button" id="imgPresetCool">Cool</button>
-    <button type="button" id="imgPresetRetro">Retro</button>
-  </div>
-  <button class="btn sm" id="imgResetFilters" style="margin-top:0.3rem;width:100%;">Reset filters</button>
-</div>
-
-    
-    <!-- Φωτογραφίες -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Photos</div>
-      <div class="sidebar-sub">Ανέβασε και διάλεξε ποιες θα μπουν στη σελίδα.</div>
-      <label for="imageUpload" class="file-label">🖼️ Upload images</label>
-      <input type="file" id="imageUpload" accept="image/*" multiple>
-      <label for="pdfUpload" class="file-label">📄 Import PDF (π.χ. από Canva)</label>
-      <input type="file" id="pdfUpload" accept="application/pdf">
-      <p class="hint">Τα PDF pages γίνονται σελίδες photobook, χωρίς παραμόρφωση (letterbox).</p>
-      <div class="photo-gallery" id="photoGallery"></div>
-    </div>
-
-    <!-- Text -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Text</div>
-      <button id="addTextBtn" class="btn sm">➕ Προσθήκη κειμένου</button>
-      <div class="text-tools-group">
-        <label for="textFont">Font</label>
+      <div class="toolbar-section">
+        <label>Κείμενο</label>
+        <div class="toolbar-row">
+          <button class="btn" id="addTextBtn">+ Κείμενο</button>
+          <button class="btn" id="addCurvedTextBtn">+ Καμπύλο</button>
+        </div>
+        <label for="textFont">Γραμματοσειρά</label>
         <select id="textFont">
-  <option value="Arial">Arial</option>
-  <option value="Roboto">Roboto</option>
-  <option value="Poppins">Poppins</option>
-  <option value="Playfair Display">Playfair</option>
-  <option value="Pacifico">Pacifico (handwritten)</option>
-  <option value="Georgia">Georgia</option>
-  <option value="Times New Roman">Times New Roman</option>
-  <option value="Courier New">Courier New</option>
-</select>
-
-        
+          <option value="Arial">Arial</option>
+          <option value="Roboto">Roboto</option>
+          <option value="Poppins">Poppins</option>
+          <option value="Montserrat">Montserrat</option>
+          <option value="Playfair Display">Playfair Display</option>
+          <option value="Pacifico">Pacifico</option>
+          <option value="Lobster">Lobster</option>
+        </select>
 
         <label for="textSize">Μέγεθος</label>
-        <input type="number" id="textSize" value="36" min="8" max="200">
+        <input type="number" id="textSize" min="8" max="120" value="40">
+
         <label for="textColor">Χρώμα</label>
         <input type="color" id="textColor" value="#000000">
-        <label for="textAlign">Στοίχιση</label>
-        <select id="textAlign">
-          <option value="left">Αριστερά</option>
-          <option value="center">Κέντρο</option>
-          <option value="right">Δεξιά</option>
+
+        <div class="toolbar-row">
+          <button class="btn" id="textBoldBtn">B</button>
+          <button class="btn" id="textItalicBtn">I</button>
+          <button class="btn" id="textUnderlineBtn">U</button>
+        </div>
+        <div class="toolbar-row">
+          <button class="btn" id="gradientTextBtn">Gradient</button>
+          <button class="btn" id="highlightTextBtn">Highlight</button>
+          <button class="btn" id="shadowTextBtn">Shadow</button>
+          <button class="btn" id="clearShadowTextBtn">No Shadow</button>
+        </div>
+        <button class="btn" id="deleteTextBtn">Διαγραφή κειμένου</button>
+      </div>
+
+      <div class="toolbar-section">
+        <label>Templates</label>
+        <div class="toolbar-row">
+          <button class="btn" id="tplMinimalBtn">Minimal</button>
+          <button class="btn" id="tplMagazineBtn">Magazine</button>
+          <button class="btn" id="tplScrapbookBtn">Scrapbook</button>
+        </div>
+        <div class="toolbar-row">
+          <button class="btn" id="tplGrid2Btn">Grid 2</button>
+          <button class="btn" id="tplGrid4Btn">Grid 4</button>
+          <button class="btn" id="tplFullBleedBtn">Full Bleed</button>
+        </div>
+      </div>
+
+      <div class="toolbar-section">
+        <label>Stickers</label>
+        <select id="sticker-category">
+          <option value="emoji">Emoji</option>
+          <option value="shapes">Shapes</option>
+          <option value="doodles">Doodles</option>
+          <option value="frames">Frames</option>
         </select>
-        <div class="text-style-buttons">
-          <button type="button" id="textBoldBtn"><b>B</b></button>
-          <button type="button" id="textItalicBtn"><i>I</i></button>
-          <button type="button" id="textUnderlineBtn"><u>U</u></button>
-        </div>
-        <div class="text-style-buttons">
-  <button type="button" id="textGlowBtn">Glow</button>
-  <button type="button" id="textOutlineBtn">Outline</button>
-  <button type="button" id="textShadowBtn">Shadow</button>
-</div>
-
-        <button type="button" id="textDeleteBtn" class="btn sm" style="width:100%;">🗑️ Διαγραφή κειμένου</button>
-      </div>
-    </div>
-
-    <div class="panel">
-  <h3>Image Controls</h3>
-
-  <label>Brightness</label>
-  <input type="range" min="-1" max="1" step="0.05"
-         oninput="setImageFilter('brightness', parseFloat(this.value))">
-
-  <label>Contrast</label>
-  <input type="range" min="-1" max="1" step="0.05"
-         oninput="setImageFilter('contrast', parseFloat(this.value))">
-
-  <label>Saturation</label>
-  <input type="range" min="-1" max="1" step="0.05"
-         oninput="setImageFilter('saturation', parseFloat(this.value))">
-
-  <label>Vibrance</label>
-  <input type="range" min="-1" max="1" step="0.05"
-         oninput="setImageFilter('vibrance', parseFloat(this.value))">
-
-  <label>Noise</label>
-  <input type="range" min="0" max="200" step="10"
-         oninput="setImageFilter('noise', parseInt(this.value))">
-
-  <label>Pixelate</label>
-  <input type="range" min="2" max="30" step="1"
-         oninput="setImageFilter('pixelate', parseInt(this.value))">
-
-  <label>Blur</label>
-  <input type="range" min="0" max="1" step="0.05"
-         oninput="setImageFilter('blur', parseFloat(this.value))">
-
-  <button onclick="setImageFilter('sepia')">Sepia</button>
-  <button onclick="setImageFilter('bw')">B&W</button>
-  <button onclick="setImageFilter('sharpen')">Sharpen</button>
-
-  <button onclick="autoEnhance()">Auto Enhance</button>
-  <button onclick="setImageFilter('reset')">Reset</button>
-</div>
-
-
-    <!-- Stickers -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Stickers</div>
-      <div class="sidebar-sub">Διάλεξε sticker ή βάλε URL.</div>
-      <div class="sticker-list" id="stickerList"></div>
-      <label for="stickerUrl">Ή URL sticker</label>
-      <input type="text" id="stickerUrl" placeholder="https://...png" style="width:100%;font-size:0.75rem;padding:0.25rem 0.4rem;border-radius:999px;border:1px solid var(--border);background:#020617;color:var(--text);">
-      <button id="addStickerUrlBtn" class="btn sm" style="margin-top:0.25rem;">➕ Προσθήκη sticker</button>
-    </div>
-    
-     <button id="addTemplateBtn">📐 Template</button>
-
-    
-
-    <!-- Pages / Export -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Pages & Export</div>
-      <div style="display:flex;gap:0.25rem;margin-bottom:0.3rem;">
-        <button id="addPageBtn" class="btn sm" style="flex:1;">➕ Νέα σελίδα</button>
-        <button id="deletePageBtn" class="btn sm" style="flex:1;">🗑️ Διαγραφή</button>
-      </div>
-      <div style="display:flex;gap:0.25rem;margin-bottom:0.3rem;">
-        <button id="undoBtn" class="btn sm" style="flex:1;">↶ Undo</button>
-        <button id="redoBtn" class="btn sm" style="flex:1;">↷ Redo</button>
-      </div>
-      <button id="applyToPageBtn" class="btn sm primary" style="width:100%;margin-bottom:0.3rem;">✅ Εφαρμογή στη σελίδα</button>
-      <button id="exportPdfBtn" class="btn sm" style="width:100%;margin-bottom:0.25rem;">📄 Export PDF</button>
-      <button id="exportZipBtn" class="btn sm" style="width:100%;margin-bottom:0.25rem;">📦 Export ZIP</button>
-      <button id="uploadCloudBtn" class="btn sm" style="width:100%;margin-bottom:0.25rem;">☁️ Upload στο Cloud</button>
-      <p class="hint">Το έργο αποθηκεύεται αυτόματα στον browser ανά χρήστη.</p>
-    </div>
-  </aside>
-
-  <!-- MAIN AREA -->
-  <section id="mainArea">
-    <div class="canvas-wrapper">
-      <div class="canvas-toolbar">
-        <div class="canvas-toolbar-left">
-          <span style="font-size:0.78rem;color:var(--muted);">Canvas editor</span>
-          <span id="pageStatus" style="font-size:0.75rem;color:var(--muted);"></span>
-        </div>
-        <div class="canvas-toolbar-right">
-          <span style="font-size:0.75rem;">Σελίδα: <span id="pageInfo">0 / 0</span></span>
+        <div id="stickers-box" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <div class="toolbar-row">
+          <button class="btn" id="stickerOutlineBtn">Outline</button>
+          <button class="btn" id="stickerShadowBtn">Shadow</button>
+          <button class="btn" id="stickerColorizeBtn">Colorize</button>
         </div>
       </div>
-      <div class="canvas-container-outer">
-        <canvas id="canvas" width="800" height="1100"></canvas>
-      </div>
-      <div class="thumb-strip" id="thumbStrip"></div>
-    </div>
 
-    <div class="flipbook-wrapper">
-      <div class="canvas-toolbar">
-        <div class="canvas-toolbar-left">
-          <span style="font-size:0.78rem;color:var(--muted);">Flipbook preview</span>
+      <div class="toolbar-section">
+        <label>Εικόνα – Επεξεργασία</label>
+        <label>Brightness</label>
+        <input type="range" id="imgBrightness" min="-1" max="1" step="0.05">
+        <label>Contrast</label>
+        <input type="range" id="imgContrast" min="-1" max="1" step="0.05">
+        <label>Saturation</label>
+        <input type="range" id="imgSaturation" min="-1" max="1" step="0.05">
+        <label>Blur</label>
+        <input type="range" id="imgBlur" min="0" max="1" step="0.05">
+
+        <div class="toolbar-row">
+          <button class="btn" id="imgSepiaBtn">Sepia</button>
+          <button class="btn" id="imgBwBtn">B&W</button>
+          <button class="btn" id="imgSharpenBtn">Sharpen</button>
         </div>
-        <div class="canvas-toolbar-right">
-          <button id="fbPrev" class="btn sm">⬅️ Πίσω</button>
-          <button id="fbNext" class="btn sm">➡️ Μπροστά</button>
+        <div class="toolbar-row">
+          <button class="btn" id="imgAutoEnhanceBtn">Auto Enhance</button>
+          <button class="btn" id="imgResetBtn">Reset</button>
         </div>
       </div>
-      <div id="flipbook-container">
-        <div id="flipbook">
-          <p style="color:var(--muted);font-size:0.8rem;">Πρόσθεσε σελίδες & πάτησε "Εφαρμογή στη σελίδα" για να δεις εδώ το βιβλίο.</p>
+
+      <div class="toolbar-section">
+        <label>Ιστορικό</label>
+        <div class="toolbar-row">
+          <button class="btn" id="undoBtn">Undo</button>
+          <button class="btn" id="redoBtn">Redo</button>
         </div>
       </div>
-    </div>
-  </section>
-</main>
+    </aside>
 
-<footer>
-  © 2025 Nikkal Studio · Photobook Editor
-</footer>
+    <!-- CENTER CANVAS -->
+    <section class="canvas-panel">
+      <div id="canvas-wrapper">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="page-strip">
+        <div class="pages-thumbs" id="thumbnails"></div>
+        <div class="page-strip-buttons">
+          <button class="btn icon" id="prevPageBtn">‹</button>
+          <span id="pageInfo" style="font-size:0.8rem;color:#cbd5f5;">1 / 1</span>
+          <button class="btn icon" id="nextPageBtn">›</button>
+          <button class="btn" id="addPageBtn">+ Σελίδα</button>
+          <button class="btn" id="deletePageBtn">– Σελίδα</button>
+        </div>
+      </div>
+    </section>
 
-<audio id="pageSound" preload="auto">
-  <source src="flip.mp3" type="audio/mpeg">
-</audio>
+    <!-- RIGHT PANEL -->
+    <aside class="right-panel">
+      <div class="panel">
+        <h3>Πρόσφατες Εικόνες</h3>
+        <div id="media-library"></div>
+        <button class="btn" id="clearMediaBtn" style="margin-top:0.4rem;">Καθαρισμός βιβλιοθήκης</button>
+      </div>
 
-<script type="module">
- import { db, storage, auth } from "./firebase-init.js";
-import { uploadPhotobook } from "./saveToFirebase.js";
-import { loadPhotobook } from "./loadFromFirebase.js";
+      <div class="panel">
+        <h3>Εξαγωγή</h3>
+        <div class="toolbar-section">
+          <div class="toolbar-row">
+            <button class="btn primary" id="exportPdfBtn">Export PDF</button>
+            <button class="btn" id="exportFlipbookBtn">Export Flipbook</button>
+          </div>
+          <button class="btn" id="exportCloudBtn">Ανέβασμα στο Cloud</button>
+          <div id="share-status" style="font-size:0.8rem;color:#9ca3af;margin-top:0.35rem;"></div>
+          <div id="qr-container"></div>
+        </div>
+      </div>
 
+      <div class="panel">
+        <h3>Συντομεύσεις</h3>
+        <div style="font-size:0.78rem;color:#9ca3af;line-height:1.4;">
+          <div>Ctrl + D → Duplicate</div>
+          <div>Delete → Διαγραφή</div>
+          <div>Shift + Arrows → Μετακίνηση 10px</div>
+          <div>Ctrl + S → Save draft</div>
+          <div>Ctrl + E → Export PDF</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>Photobook Studio – Nikkal</span>
+    <span>Dark / Light theme πλήρως υποστηριζόμενο</span>
+  </footer>
+
+
+
+
+
+
+
+
+
+
+
+  <script type="module">
+
+/* ============================================================
+   IMPORTS – Firebase Init
+   ============================================================ */
+import { auth } from "./firebase-init.js";
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   signOut,
-  onAuthStateChanged,
-  updateProfile
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 
+/* ============================================================
+   GLOBALS
+   ============================================================ */
+let fabricCanvas = null;
+let pages = [];
+let currentPage = 0;
+let uploadedPhotos = [];     // persistent local gallery
+let undoStack = [];
+let redoStack = [];
+let autosaveTimer = null;
 
 
-  const canvasEl = document.getElementById('canvas');
-  const fabricCanvas = new fabric.Canvas('canvas', {
-    preserveObjectStacking:true,
-    selection:true
+/* ============================================================
+   INITIALIZE CANVAS & RESIZE
+   ============================================================ */
+window.addEventListener("DOMContentLoaded", () => {
+
+  fabricCanvas = new fabric.Canvas("canvas", {
+    preserveObjectStacking: true,
+    selection: true,
+    backgroundColor: "#ffffff"
   });
 
-// Templates – basic layout 2 φωτογραφιών
-const addTemplateBtn = document.getElementById('addTemplateBtn');
-if (addTemplateBtn) {
-  addTemplateBtn.addEventListener('click', () => {
-    const pw = canvasEl.width;
-    const ph = canvasEl.height;
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
 
-    const frame1 = new fabric.Rect({
-      left: pw * 0.1,
-      top: ph * 0.2,
-      width: pw * 0.35,
-      height: ph * 0.5,
-      fill: '#0f172a',
-      stroke: '#38bdf8',
-      strokeDashArray: [5, 5],
-      rx: 12,
-      ry: 12
-    });
+  initTheme();
+  initUserAuth();
+  initToolbarButtons();
+  initPageSystem();
 
-    const frame2 = new fabric.Rect({
-      left: pw * 0.55,
-      top: ph * 0.2,
-      width: pw * 0.35,
-      height: ph * 0.5,
-      fill: '#0f172a',
-      stroke: '#38bdf8',
-      strokeDashArray: [5, 5],
-      rx: 12,
-      ry: 12
-    });
-
-    fabricCanvas.add(frame1, frame2);
-    fabricCanvas.renderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-/* --------------------------- STICKER SYSTEM --------------------------- */
-
-// Οργανωμένη λίστα sticker packs
-const STICKERS = {
-  "emoji": [
-    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg",
-    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f602.svg",
-    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f60d.svg"
-  ],
-  "shapes": [
-    "https://cdn-icons-png.flaticon.com/512/785/785822.png",
-    "https://cdn-icons-png.flaticon.com/512/32/32339.png"
-  ],
-  "doodles": [
-    "https://cdn-icons-png.flaticon.com/512/879/879757.png",
-    "https://cdn-icons-png.flaticon.com/512/879/879780.png"
-  ],
-  "frames": [
-    "https://cdn-icons-png.flaticon.com/512/921/921347.png"
-  ]
-};
-
-  function addSticker(url){
-  fabric.Image.fromURL(url, function(img){
-    img.set({
-      left: 200,
-      top: 200,
-      scaleX: 0.4,
-      scaleY: 0.4,
-      cornerStyle: "circle",
-      transparentCorners: false
-    });
-
-    // Save for undo
-    if (typeof saveState === "function") saveState();
-
-    fabricCanvas.add(img);
-    fabricCanvas.setActiveObject(img);
-  }, { crossOrigin: "anonymous" });
-}
-function addStickerOutline(){
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj || obj.type !== "image") return;
-
-  obj.set("stroke", "white");
-  obj.set("strokeWidth", 12);
-  fabricCanvas.requestRenderAll();
-}
-function addStickerShadow(){
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj || obj.type !== "image") return;
-
-  obj.set("shadow", {
-    color: "rgba(0,0,0,0.35)",
-    blur: 12,
-    offsetX: 6,
-    offsetY: 6
-  });
-
-  fabricCanvas.requestRenderAll();
-}
-function colorizeSticker(color = "#ff66aa"){
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj || obj.type !== "image") return;
-
-  obj.filters.push(new fabric.Image.filters.BlendColor({
-    color: color,
-    mode: "tint",
-    alpha: 0.6
-  }));
-
-  obj.applyFilters();
-  fabricCanvas.requestRenderAll();
-}
-
-  
-// Stickers – basic emoji sticker + default stickers
-const addStickerBtn = document.getElementById('addStickerBtn');
-if (addStickerBtn) {
-  addStickerBtn.addEventListener('click', () => {
-    const sticker = new fabric.Text('❤️', {
-      left: canvasEl.width / 2 - 40,
-      top: canvasEl.height / 2 - 40,
-      fontSize: 80
-    });
-    fabricCanvas.add(sticker);
-    fabricCanvas.setActiveObject(sticker);
-    fabricCanvas.renderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-
-  /* --------------------------- KEYBOARD SHORTCUTS --------------------------- */
-
-document.addEventListener("keydown", (e) => {
-  const obj = fabricCanvas.getActiveObject();
-
-  // Duplicate (Ctrl + D)
-  if (e.ctrlKey && e.key.toLowerCase() === "d") {
-    e.preventDefault();
-    if (obj) {
-      const clone = fabric.util.object.clone(obj);
-      clone.set({ left: obj.left + 20, top: obj.top + 20 });
-      fabricCanvas.add(clone);
-      fabricCanvas.setActiveObject(clone);
-      fabricCanvas.requestRenderAll();
-      if (typeof saveState === "function") saveState();
-    }
-  }
-
-  // Delete
-  if (e.key === "Delete" || e.key === "Backspace") {
-    if (obj) {
-      fabricCanvas.remove(obj);
-      fabricCanvas.discardActiveObject();
-      fabricCanvas.requestRenderAll();
-      if (typeof saveState === "function") saveState();
-    }
-  }
-
-  // Move object: Shift + arrows = 10px
-  if (obj && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-    let delta = e.shiftKey ? 10 : 1;
-
-    if (e.key === "ArrowUp") obj.top -= delta;
-    if (e.key === "ArrowDown") obj.top += delta;
-    if (e.key === "ArrowLeft") obj.left -= delta;
-    if (e.key === "ArrowRight") obj.left += delta;
-
-    obj.setCoords();
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === "function") saveState();
-  }
-
-  // Zoom in (Ctrl + +)
-  if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
-    e.preventDefault();
-    fabricCanvas.setZoom(fabricCanvas.getZoom() + 0.1);
-    fabricCanvas.requestRenderAll();
-  }
-
-  // Zoom out (Ctrl + -)
-  if (e.ctrlKey && e.key === "-") {
-    e.preventDefault();
-    fabricCanvas.setZoom(fabricCanvas.getZoom() - 0.1);
-    fabricCanvas.requestRenderAll();
-  }
-
-  // Save Draft (Ctrl + S)
-  if (e.ctrlKey && e.key.toLowerCase() === "s") {
-    e.preventDefault();
-    if (typeof saveDraft === "function") saveDraft();
-  }
-
-  // Export (Ctrl + E)
-  if (e.ctrlKey && e.key.toLowerCase() === "e") {
-    e.preventDefault();
-    document.getElementById("exportPdfBtn")?.click();
-  }
-
-  // Rotate (Ctrl + Arrow keys)
-  if (obj && e.ctrlKey && ["ArrowLeft", "ArrowRight"].includes(e.key)) {
-    e.preventDefault();
-    const step = e.shiftKey ? 15 : 5;
-    obj.angle += (e.key === "ArrowLeft" ? -step : step);
-    obj.setCoords();
-    fabricCanvas.requestRenderAll();
-  }
-
-  // Group (Ctrl + G)
-  if (e.ctrlKey && e.key.toLowerCase() === "g" && fabricCanvas._activeObjects?.length > 1) {
-    e.preventDefault();
-    let group = new fabric.Group(fabricCanvas._activeObjects);
-    fabricCanvas.discardActiveObject();
-    fabricCanvas.add(group);
-    fabricCanvas.setActiveObject(group);
-    fabricCanvas.requestRenderAll();
-  }
-
-  // Ungroup (Ctrl + Shift + G)
-  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
-    e.preventDefault();
-    if (obj && obj.type === "group") {
-      let items = obj._objects;
-      fabricCanvas.remove(obj);
-      items.forEach(x => fabricCanvas.add(x));
-      fabricCanvas.requestRenderAll();
-    }
-  }
-});
-function alignCenterH(){
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj) return;
-  obj.left = (fabricCanvas.width - obj.width * obj.scaleX) / 2;
-  obj.setCoords();
-  fabricCanvas.requestRenderAll();
-}
-
-function alignCenterV(){
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj) return;
-  obj.top = (fabricCanvas.height - obj.height * obj.scaleY) / 2;
-  obj.setCoords();
-  fabricCanvas.requestRenderAll();
-}
-fabricCanvas.on("selection:created", (e) => {
-  const obj = e.target;
-  obj.set("shadow", {
-    color: "rgba(0,150,255,0.4)",
-    blur: 20,
-    offsetX: 0,
-    offsetY: 0
-  });
-  fabricCanvas.requestRenderAll();
+  initMediaDB().then(() => renderMediaLibrary());
 });
 
-fabricCanvas.on("selection:cleared", () => {
-  fabricCanvas.getObjects().forEach(o => {
-    if (o.shadow && o.shadow.color.includes("0,150,255"))
-      o.shadow = null;
-  });
+function resizeCanvas() {
+  const wr = document.getElementById("canvas-wrapper");
+  if (!wr) return;
+  fabricCanvas.setWidth(wr.clientWidth);
+  fabricCanvas.setHeight(wr.clientHeight);
   fabricCanvas.requestRenderAll();
-});
-
-
- 
-  // Undo / Redo history
-  let undoStack = [];
-  let redoStack = [];
-
-  function saveState(){
-    const json = fabricCanvas.toJSON();
-    undoStack.push(json);
-    if(undoStack.length>80) undoStack.shift();
-    redoStack = [];
-  }
-  saveState();
-  fabricCanvas.on('object:added', saveState);
-  fabricCanvas.on('object:modified', saveState);
-  fabricCanvas.on('object:removed', saveState);
-
-  document.getElementById('undoBtn').onclick = () => {
-    if(undoStack.length<2) return;
-    const current = undoStack.pop();
-    redoStack.push(current);
-    const prev = undoStack[undoStack.length-1];
-    fabricCanvas.loadFromJSON(prev, () => fabricCanvas.renderAll());
-  };
-  document.getElementById('redoBtn').onclick = () => {
-    if(!redoStack.length) return;
-    const next = redoStack.pop();
-    undoStack.push(next);
-    fabricCanvas.loadFromJSON(next, () => fabricCanvas.renderAll());
-  };
-
-
-  function updatePageInfo(){
-    const info = document.getElementById('pageInfo');
-    info.textContent = pages.length ? (currentPage+1)+' / '+pages.length : '0 / 0';
-  }
-
-  function refreshThumbnails(){
-    const strip = document.getElementById('thumbStrip');
-    strip.innerHTML = '';
-    pages.forEach((p,idx)=>{
-      const d = document.createElement('div');
-      d.className = 'thumb';
-      if(idx === currentPage) d.classList.add('active');
-      const img = document.createElement('img');
-      img.src = p.image;
-      d.appendChild(img);
-      const badge = document.createElement('div');
-      badge.className = 'thumb-index';
-      badge.textContent = idx+1;
-      d.appendChild(badge);
-      d.onclick = () => {
-        currentPage = idx;
-        loadPageToCanvas();
-        refreshThumbnails();
-      };
-      strip.appendChild(d);
-    });
-    updatePageInfo();
-  }
-
-  function loadPageToCanvas(){
-    fabricCanvas.clear();
-    if(!pages[currentPage]) return;
-    const imgObj = new Image();
-    imgObj.onload = () => {
-      const pw = canvasEl.width;
-      const ph = canvasEl.height;
-      const ratio = Math.min(pw/imgObj.width, ph/imgObj.height);
-      const fImg = new fabric.Image(imgObj,{
-        left:(pw-imgObj.width*ratio)/2,
-        top:(ph-imgObj.height*ratio)/2,
-        selectable:false,
-        evented:false
-      });
-      fImg.scale(ratio);
-      fabricCanvas.add(fImg);
-      fabricCanvas.sendToBack(fImg);
-      fabricCanvas.renderAll();
-      saveState();
-    };
-    imgObj.src = pages[currentPage].image;
-  }
-
-  // page size
-  function applyPageSizeFromInputs(){
-    const w = Number(document.getElementById('pageWidth').value)||800;
-    const h = Number(document.getElementById('pageHeight').value)||1100;
-    canvasEl.width = w;
-    canvasEl.height = h;
-    fabricCanvas.setWidth(w);
-    fabricCanvas.setHeight(h);
-    fabricCanvas.renderAll();
-    document.getElementById('pageStatus').textContent = `Canvas: ${w} × ${h}px`;
-  }
-  document.getElementById('applyPageSize').onclick = () => {
-    const preset = document.getElementById('pagePreset').value;
-    const wInput = document.getElementById('pageWidth');
-    const hInput = document.getElementById('pageHeight');
-    if(preset==='a4-portrait'){wInput.value=800;hInput.value=1131;}
-    else if(preset==='a4-landscape'){wInput.value=1131;hInput.value=800;}
-    else if(preset==='square'){wInput.value=900;hInput.value=900;}
-    else if(preset==='3-4'){wInput.value=900;hInput.value=1200;}
-    else if(preset==='9-16'){wInput.value=900;hInput.value=1600;}
-    applyPageSizeFromInputs();
-  };
-  applyPageSizeFromInputs();
-
-  // Photos gallery
-  const photoGallery = document.getElementById('photoGallery');
-  const uploadedPhotos = []; // array από dataURLs
-
-  document.getElementById('imageUpload').addEventListener('change', e=>{
-    const files = [...e.target.files];
-    files.forEach(file=>{
-      const reader = new FileReader();
-      reader.onload = evt=>{
-        uploadedPhotos.push(evt.target.result);
-        renderPhotoGallery();
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = '';
-  });
-
-  function renderPhotoGallery(){
-    photoGallery.innerHTML = '';
-    uploadedPhotos.forEach(src=>{
-      const div = document.createElement('div');
-      div.className = 'photo-thumb';
-      const img = document.createElement('img');
-      img.src = src;
-      div.appendChild(img);
-      div.onclick = () => addPhotoToCanvas(src);
-      photoGallery.appendChild(div);
-    });
-  }
-
-  function addPhotoToCanvas(src){
-    fabric.Image.fromURL(src, img=>{
-      const pw = canvasEl.width;
-      const ph = canvasEl.height;
-      img.scaleToWidth(pw*0.6);
-      img.set({
-        left:pw*0.2,
-        top:ph*0.15
-      });
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.renderAll();
-      saveState();
-    });
-  }
-
-  /* ----------------------------- USER + THEME SYSTEM ----------------------------- */
-
-let currentUserId = null;
-let currentUserName = null;
-
-function getCurrentUserId(){
-  const u = auth.currentUser;
-  return u ? u.uid : null;
 }
 
-function updateUserUi(){
+
+/* ============================================================
+   THEME SYSTEM
+   ============================================================ */
+function initTheme() {
+  const btn = document.getElementById("themeToggleBtn");
+  let curTheme = localStorage.getItem("theme") || "dark";
+  document.documentElement.setAttribute("data-theme", curTheme);
+  btn.textContent = curTheme === "dark" ? "☾" : "☀";
+
+  btn.onclick = () => {
+    curTheme = curTheme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", curTheme);
+    btn.textContent = curTheme === "dark" ? "☾" : "☀";
+    localStorage.setItem("theme", curTheme);
+  };
+}
+
+
+/* ============================================================
+   USER AUTH SYSTEM
+   ============================================================ */
+function updateUserUi() {
   const label = document.getElementById("user-label");
   const loginBtn = document.getElementById("login-btn");
   const logoutBtn = document.getElementById("logout-btn");
@@ -1206,61 +635,39 @@ function updateUserUi(){
   const user = auth.currentUser;
 
   if (user) {
-    currentUserId = user.uid;
-    currentUserName = user.displayName || user.email;
-    label.textContent = currentUserName;
+    label.textContent = user.displayName || user.email;
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-flex";
   } else {
-    currentUserId = null;
-    currentUserName = null;
     label.textContent = "Επισκέπτης";
     loginBtn.style.display = "inline-flex";
     logoutBtn.style.display = "none";
   }
 }
 
-function applyTheme(theme){
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("pb-theme", theme);
-}
-
-function initTheme(){
-  const saved = localStorage.getItem("pb-theme") || "dark";
-  applyTheme(saved);
-
-  const toggle = document.getElementById("themeToggleBtn");
-  if (toggle){
-    toggle.onclick = () => {
-      const current = document.documentElement.getAttribute("data-theme");
-      const next = current === "dark" ? "light" : "dark";
-      applyTheme(next);
-    };
-  }
-}
-
-function initUserAuth(){
+function initUserAuth() {
   const loginBtn = document.getElementById("login-btn");
   const logoutBtn = document.getElementById("logout-btn");
 
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, () => {
     updateUserUi();
+    loadDraft();   // φορτώνει διαφορετικό draft για κάθε user
   });
 
   loginBtn.onclick = async () => {
     const email = prompt("Email:");
     if (!email) return;
 
-    const password = prompt("Κωδικός:");
-    if (!password) return;
+    const pass = prompt("Κωδικός:");
+    if (!pass) return;
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, pass);
     } catch (err) {
-      if (err.code === "auth/user-not-found"){
-        const create = confirm("Δεν υπάρχει λογαριασμός. Να δημιουργηθεί;");
-        if (create){
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
+      if (err.code === "auth/user-not-found") {
+        const ok = confirm("Δεν υπάρχει λογαριασμός. Θέλεις να φτιάξω έναν;");
+        if (ok) {
+          const cred = await createUserWithEmailAndPassword(auth, email, pass);
           await updateProfile(cred.user, { displayName: email.split("@")[0] });
         }
       } else {
@@ -1271,287 +678,118 @@ function initUserAuth(){
 
   logoutBtn.onclick = async () => {
     await signOut(auth);
-  };
-
-  updateUserUi();
-}
-
-/* ----------------------------- EXPORT TO CLOUD ----------------------------- */
-
-async function exportToCloud(){
-  try {
-    const user = auth.currentUser;
-    if (!user){
-      alert("Πρέπει να συνδεθείς πρώτα.");
-      return;
-    }
-
-    const title = prompt("Τίτλος photobook:", "Το photobook μου");
-    if (title === null) return;
-
-    const password = prompt("Κωδικός (προαιρετικό):") || null;
-
-    const pagesData = [];
-    for (let i = 0; i < pages.length; i++){
-      const p = pages[i];
-
-      if (p.image){
-        pagesData.push(p.image);
-      } else {
-        const json = p.json;
-        await new Promise(res => {
-          fabricCanvas.loadFromJSON(json, () => {
-            pagesData.push(fabricCanvas.toDataURL({ format: "png", quality: 0.9 }));
-            res();
-          });
-        });
-      }
-    }
-
-    const status = document.getElementById("share-status");
-    if (status) status.textContent = "Ανέβασμα στο cloud...";
-
-    const docId = await uploadPhotobook(pagesData, { title, password });
-
-    const link = `${location.origin}/viewer.html?id=${docId}`;
-    navigator.clipboard.writeText(link);
-
-    alert("Το link αντιγράφηκε:\n" + link);
-
-    if (status) status.textContent = "Ολοκληρώθηκε!";
-
-    const qrBox = document.getElementById("qr-container");
-    if (qrBox){
-      qrBox.innerHTML = "";
-      new QRCode(qrBox, { text: link, width: 120, height: 120 });
-    }
-
-  } catch (err){
-    console.error(err);
-    alert("Σφάλμα cloud export: " + err.message);
-  }
-}
-
-
-  // PDF import
-  document.getElementById('pdfUpload').addEventListener('change', async e=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    const buffer = await file.arrayBuffer();
-    const pdfjsLib = window['pdfjsLib'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js';
-    const pdf = await pdfjsLib.getDocument({data:buffer}).promise;
-    const newPages = [];
-    for(let p=1;p<=pdf.numPages;p++){
-      const page = await pdf.getPage(p);
-      const viewport = page.getViewport({scale:2});
-      const c = document.createElement('canvas');
-      const ctx = c.getContext('2d');
-      c.width = viewport.width;
-      c.height = viewport.height;
-      await page.render({canvasContext:ctx,viewport}).promise;
-      const dataUrl = c.toDataURL('image/png');
-      newPages.push({image:dataUrl});
-    }
-    pages = pages.concat(newPages);
-    if(pages.length && currentPage===0){
-      currentPage = 0;
-      loadPageToCanvas();
-    }
+    pages = [];
+    uploadedPhotos = [];
     refreshThumbnails();
-    saveDraft();
-    e.target.value = '';
-  });
-
-  /* -------------------------- IMAGE EDITOR TOOLS ---------------------------- */
-
-function getActiveImage(){
-    const obj = fabricCanvas.getActiveObject();
-    if (!obj || obj.type !== "image") return null;
-    return obj;
+    fabricCanvas.clear();
+  };
 }
 
-function applyFilter(obj){
-    obj.applyFilters();
-    fabricCanvas.requestRenderAll();
+
+/* ============================================================
+   PAGE SYSTEM – ADD / REMOVE / SAVE / LOAD
+   ============================================================ */
+
+function initPageSystem() {
+  document.getElementById("addPageBtn").onclick = addPage;
+  document.getElementById("deletePageBtn").onclick = deletePage;
+  document.getElementById("prevPageBtn").onclick = () => switchPage(currentPage - 1);
+  document.getElementById("nextPageBtn").onclick = () => switchPage(currentPage + 1);
+
+  // Δημιουργούμε πρώτη σελίδα
+  addPage(true);
 }
 
-function setImageFilter(filterName, value){
-    const img = getActiveImage();
-    if (!img) return;
+function addPage(initial = false) {
+  const pageObj = {
+    image: null,
+    json: null
+  };
+  pages.push(pageObj);
 
-    switch(filterName){
+  if (!initial) currentPage = pages.length - 1;
 
-        case "brightness":
-            img.brightnessFilter = new fabric.Image.filters.Brightness({ brightness: value });
-            break;
-
-        case "contrast":
-            img.contrastFilter = new fabric.Image.filters.Contrast({ contrast: value });
-            break;
-
-        case "saturation":
-            img.saturationFilter = new fabric.Image.filters.Saturation({ saturation: value });
-            break;
-
-        case "vibrance":
-            img.vibranceFilter = new fabric.Image.filters.Vibrance({ vibrance: value });
-            break;
-
-        case "noise":
-            img.noiseFilter = new fabric.Image.filters.Noise({ noise: value });
-            break;
-
-        case "pixelate":
-            img.pixelFilter = new fabric.Image.filters.Pixelate({ blocksize: value });
-            break;
-
-        case "blur":
-            img.blurFilter = new fabric.Image.filters.Blur({ blur: value });
-            break;
-
-        case "sepia":
-            img.sepiaFilter = new fabric.Image.filters.Sepia();
-            break;
-
-        case "bw":
-            img.bwFilter = new fabric.Image.filters.Grayscale();
-            break;
-
-        case "sharpen":
-            img.sharpFilter = new fabric.Image.filters.Convolute({
-                matrix: [
-                    0, -1,  0,
-                    -1, 5, -1,
-                    0, -1,  0
-                ]
-            });
-            break;
-
-        case "reset":
-            img.filters = [];
-            break;
-    }
-
-    // Rebuild filter array from individual filters
-    img.filters = [
-        img.brightnessFilter,
-        img.contrastFilter,
-        img.saturationFilter,
-        img.vibranceFilter,
-        img.noiseFilter,
-        img.pixelFilter,
-        img.blurFilter,
-        img.sepiaFilter,
-        img.bwFilter,
-        img.sharpFilter
-    ].filter(f => f);
-
-    applyFilter(img);
+  saveCurrentPage();
+  refreshThumbnails();
+  loadPageToCanvas();
 }
 
-function autoEnhance(){
-    const img = getActiveImage();
-    if (!img) return;
-    
-    img.filters = [
-        new fabric.Image.filters.Contrast({ contrast: 0.15 }),
-        new fabric.Image.filters.Saturation({ saturation: 0.18 })
-    ];
-
-    applyFilter(img);
-}
-
-  /* --------------------------- TEMPLATE SYSTEM --------------------------- */
-
-const PB_TEMPLATES = {
-
-  // 1. Minimal
-  "minimal-1": (canvas) => {
-    canvas.clear();
-    canvas.add(new fabric.Textbox("Minimal Title", { 
-      left: 50, top: 40, width: 500, fontSize: 48, fontFamily: "Playfair Display" 
-    }));
-    canvas.add(new fabric.Rect({ 
-      left: 80, top: 140, width: 400, height: 500, fill: "#eee"
-    }));
-  },
-
-  // 2. Magazine
-  "magazine-1": (canvas) => {
-    canvas.clear();
-    canvas.add(new fabric.Textbox("Magazine Headline", { 
-      left: 40, top: 40, width: 600, fontSize: 60, fontWeight: "bold" 
-    }));
-    canvas.add(new fabric.Rect({ 
-      left: 50, top: 150, width: 300, height: 400, fill: "#ddd"
-    }));
-    canvas.add(new fabric.Rect({ 
-      left: 370, top: 150, width: 300, height: 400, fill: "#ccc"
-    }));
-  },
-
-  // 3. Scrapbook
-  "scrapbook-1": (canvas) => {
-    canvas.clear();
-    canvas.add(new fabric.Rect({
-      left: 40, top: 40, width: 600, height: 500, fill: "#ffe6e6", rx: 20, ry:20
-    }));
-    canvas.add(new fabric.Text("My Memories ♥", { 
-      left: 60, top: 60, fontSize: 40, fill: "#d14" 
-    }));
-  },
-
-  // 4. Photo Grids
-  "grid-2": (canvas) => {
-    canvas.clear();
-    canvas.add(new fabric.Rect({ left: 40, top: 80, width: 280, height: 350, fill: "#eee" }));
-    canvas.add(new fabric.Rect({ left: 340, top: 80, width: 280, height: 350, fill: "#eee" }));
-  },
-
-  "grid-4": (canvas) => {
-    canvas.clear();
-    const w = 260, h = 260;
-    let x = 40, y = 80;
-    for (let i = 0; i < 4; i++){
-      canvas.add(new fabric.Rect({ left: x, top: y, width: w, height: h, fill: "#eee" }));
-      x += 280;
-      if (i === 1){ x = 40; y += 280; }
-    }
-  },
-
-  // 5. Full-bleed image
-  "full-bleed": (canvas) => {
-    canvas.clear();
-    canvas.add(new fabric.Rect({
-      left: 0, top: 0, width: canvas.width, height: canvas.height, fill: "#ddd"
-    }));
-  }
-};
-function applyTemplate(templateName){
-  if (!PB_TEMPLATES[templateName]){
-    alert("Το template δεν υπάρχει!");
+function deletePage() {
+  if (pages.length <= 1) {
+    alert("Πρέπει να υπάρχει τουλάχιστον 1 σελίδα.");
     return;
   }
-
-  // save history
-  if (typeof saveState === "function") saveState();
-
-  PB_TEMPLATES[templateName](fabricCanvas);
-  fabricCanvas.renderAll();
+  pages.splice(currentPage, 1);
+  currentPage = Math.max(0, currentPage - 1);
+  refreshThumbnails();
+  loadPageToCanvas();
 }
 
-  /* --------------------------- MEDIA LIBRARY (IndexedDB) --------------------------- */
+function switchPage(n) {
+  if (n < 0 || n >= pages.length) return;
+  saveCurrentPage();
+  currentPage = n;
+  refreshThumbnails();
+  loadPageToCanvas();
+}
 
-let dbMedia;
+function saveCurrentPage() {
+  const json = fabricCanvas.toJSON();
+  const img = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
 
-function initMediaDB(){
+  pages[currentPage].json = json;
+  pages[currentPage].image = img;
+
+  saveDraft();
+}
+
+function loadPageToCanvas() {
+  const p = pages[currentPage];
+  if (!p || !p.json) {
+    fabricCanvas.clear();
+    return;
+  }
+  fabricCanvas.loadFromJSON(p.json, () => fabricCanvas.renderAll());
+}
+
+
+/* ============================================================
+   THUMBNAILS RENDERING
+   ============================================================ */
+function refreshThumbnails() {
+  const box = document.getElementById("thumbnails");
+  box.innerHTML = "";
+
+  pages.forEach((pg, index) => {
+    const div = document.createElement("div");
+    div.className = "thumb" + (index === currentPage ? " active" : "");
+
+    const img = document.createElement("img");
+    img.src = pg.image || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAQAAABLbSncAAAAF0lEQVR42mNkwAIYBaNgFIwWAwMAAP//AQBlCAMNAAAAAElFTkSuQmCC";
+
+    div.appendChild(img);
+    div.onclick = () => switchPage(index);
+    box.appendChild(div);
+  });
+
+  document.getElementById("pageInfo").textContent =
+    `${currentPage + 1} / ${pages.length}`;
+}
+
+
+    /* ============================================================
+   MEDIA LIBRARY – IndexedDB
+   ============================================================ */
+
+let dbMedia = null;
+
+function initMediaDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open("photobook-media", 1);
 
     req.onupgradeneeded = (e) => {
       dbMedia = e.target.result;
-      if (!dbMedia.objectStoreNames.contains("files")){
+      if (!dbMedia.objectStoreNames.contains("files")) {
         dbMedia.createObjectStore("files", { keyPath: "id" });
       }
     };
@@ -1565,34 +803,25 @@ function initMediaDB(){
   });
 }
 
-async function saveMediaToDB(id, dataURL, type){
+function saveMediaToDB(id, dataURL, type) {
   return new Promise((resolve, reject) => {
     const tx = dbMedia.transaction("files", "readwrite");
     const store = tx.objectStore("files");
-
-    store.put({
-      id,
-      dataURL,
-      type,
-      created: Date.now()
-    });
-
+    store.put({ id, dataURL, type, created: Date.now() });
     tx.oncomplete = resolve;
     tx.onerror = reject;
   });
 }
 
-function loadMediaFromDB(){
+function loadMediaFromDB() {
   return new Promise((resolve) => {
     const tx = dbMedia.transaction("files", "readonly");
     const store = tx.objectStore("files");
-
     const items = [];
     const cursor = store.openCursor();
-
     cursor.onsuccess = (e) => {
       const cur = e.target.result;
-      if (cur){
+      if (cur) {
         items.push(cur.value);
         cur.continue();
       } else {
@@ -1602,20 +831,25 @@ function loadMediaFromDB(){
   });
 }
 
-async function deleteMedia(id){
+function deleteMedia(id) {
   const tx = dbMedia.transaction("files", "readwrite");
   tx.objectStore("files").delete(id);
-  return tx.complete;
+  return new Promise((resolve) => {
+    tx.oncomplete = resolve;
+  });
 }
 
-async function clearAllMedia(){
+function clearAllMedia() {
   const tx = dbMedia.transaction("files", "readwrite");
   tx.objectStore("files").clear();
-  return tx.complete;
+  return new Promise((resolve) => {
+    tx.oncomplete = resolve;
+  });
 }
-async function renderMediaLibrary(){
+
+async function renderMediaLibrary() {
   const box = document.getElementById("media-library");
-  if (!box) return;
+  if (!box || !dbMedia) return;
 
   const files = await loadMediaFromDB();
   box.innerHTML = "";
@@ -1630,9 +864,10 @@ async function renderMediaLibrary(){
 
     const del = document.createElement("button");
     del.textContent = "✕";
-    del.onclick = async () => {
+    del.onclick = async (e) => {
+      e.stopPropagation();
       await deleteMedia(file.id);
-      renderMediaLibrary();
+      await renderMediaLibrary();
     };
 
     wrapper.appendChild(img);
@@ -1641,460 +876,672 @@ async function renderMediaLibrary(){
   });
 }
 
-function addImageFromLibrary(url){
-  fabric.Image.fromURL(url, function(img){
-    img.set({ left: 150, top: 150 });
+function addImageFromLibrary(url) {
+  fabric.Image.fromURL(url, (img) => {
+    img.set({
+      left: 150,
+      top: 150
+    });
     img.scaleToWidth(300);
     fabricCanvas.add(img);
     fabricCanvas.setActiveObject(img);
     fabricCanvas.requestRenderAll();
-
+    saveCurrentPage();
     if (typeof saveState === "function") saveState();
-  });
+  }, { crossOrigin: "anonymous" });
 }
 
-// Load media on startup
-window.addEventListener("DOMContentLoaded", async () => {
-  await initMediaDB();
-  await renderMediaLibrary();
-});
+/* ============================================================
+   UPLOAD HANDLERS (Images + PDF)
+   ============================================================ */
 
+function initToolbarButtons() {
+  // IMAGE UPLOAD
+  const uploadImageBtn = document.getElementById("uploadImageBtn");
+  const imageInput = document.getElementById("imageInput");
 
+  uploadImageBtn.onclick = () => imageInput.click();
 
-  // Text tools
-  const addTextBtn = document.getElementById('addTextBtn');
-  const textFontEl = document.getElementById('textFont');
-  const textSizeEl = document.getElementById('textSize');
-  const textColorEl = document.getElementById('textColor');
-  const textAlignEl = document.getElementById('textAlign');
-  const textBoldBtn = document.getElementById('textBoldBtn');
-  const textItalicBtn = document.getElementById('textItalicBtn');
-  const textUnderlineBtn = document.getElementById('textUnderlineBtn');
-  const textDeleteBtn = document.getElementById('textDeleteBtn');
-  const textGlowBtn = document.getElementById('textGlowBtn');
-const textOutlineBtn = document.getElementById('textOutlineBtn');
-const textShadowBtn = document.getElementById('textShadowBtn');
+  imageInput.onchange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const dataURL = ev.target.result;
+        uploadedPhotos.push(dataURL);
+        await addImageFromLibrary(dataURL);
 
-  
-
-  function getActiveText(){
-    const active = fabricCanvas.getActiveObject();
-    if(!active) return null;
-    if(active.type==='i-text' || active.type==='text' || active.type==='textbox') return active;
-    return null;
-  }
-  function updateTextControls(){
-    const t = getActiveText();
-    if(!t) return;
-    if(textFontEl) textFontEl.value = t.fontFamily || 'Arial';
-    if(textSizeEl) textSizeEl.value = t.fontSize || 36;
-    if(textColorEl && typeof t.fill==='string') textColorEl.value = t.fill;
-    if(textAlignEl && t.textAlign) textAlignEl.value = t.textAlign;
-  }
-
-  addTextBtn.onclick = () => {
-    const text = new fabric.IText('Κείμενο', {
-      left:100,
-      top:100,
-      fontSize:Number(textSizeEl?.value)||36,
-      fill:textColorEl?.value||'#000000',
-      fontFamily:textFontEl?.value||'Arial'
-    });
-    fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
-    fabricCanvas.renderAll();
-    saveState();
-    updateTextControls();
+        const id = "img-" + crypto.randomUUID();
+        await saveMediaToDB(id, dataURL, "image");
+        renderMediaLibrary();
+      };
+      reader.readAsDataURL(file);
+    }
+    imageInput.value = "";
   };
 
-  fabricCanvas.on('selection:created', updateTextControls);
-  fabricCanvas.on('selection:updated', updateTextControls);
+  // PDF UPLOAD (απλή εισαγωγή ως εικόνα πρώτης σελίδας)
+  const uploadPdfBtn = document.getElementById("uploadPdfBtn");
+  const pdfInput = document.getElementById("pdfInput");
 
-  if(textFontEl){
-    textFontEl.addEventListener('change',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      t.set('fontFamily', textFontEl.value);
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
-  }
-  if(textSizeEl){
-    textSizeEl.addEventListener('change',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      t.set('fontSize', Number(textSizeEl.value)||36);
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
-  }
-  if(textColorEl){
-    textColorEl.addEventListener('change',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      t.set('fill', textColorEl.value);
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
-  }
-  if(textAlignEl){
-    textAlignEl.addEventListener('change',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      t.set('textAlign', textAlignEl.value);
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
-  }
-  if(textBoldBtn){
-    textBoldBtn.addEventListener('click',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      t.set('fontWeight', t.fontWeight==='bold'?'normal':'bold');
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
-  }
-  if(textItalicBtn){
-    textItalicBtn.addEventListener('click',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      t.set('fontStyle', t.fontStyle==='italic'?'normal':'italic');
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
-  }
-  if(textUnderlineBtn){
-    textUnderlineBtn.addEventListener('click',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      t.set('underline', !t.underline);
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
+  uploadPdfBtn.onclick = () => pdfInput.click();
 
-if (textGlowBtn) {
-  textGlowBtn.addEventListener('click', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set({
-      shadow: {
-        color: 'rgba(56,189,248,0.9)',
-        blur: 25,
-        offsetX: 0,
-        offsetY: 0
-      },
-      stroke: '#e0f2fe',
-      strokeWidth: 0.7
-    });
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
+  pdfInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    // προς το παρόν δεν κάνουμε full PDF render, απλώς το αποθηκεύουμε ως "media"
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataURL = ev.target.result; // δεν είναι εικόνα αλλά το κρατάμε ως reference
+      const id = "pdf-" + crypto.randomUUID();
+      await saveMediaToDB(id, dataURL, "pdf");
+      renderMediaLibrary();
+      alert("Το PDF αποθηκεύτηκε στη βιβλιοθήκη (ως αρχείο). Στο μέλλον μπορούμε να κάνουμε σελίδες.");
+    };
+    reader.readAsDataURL(file);
+    pdfInput.value = "";
+  };
+
+  // Clear media
+  const clearMediaBtn = document.getElementById("clearMediaBtn");
+  clearMediaBtn.onclick = async () => {
+    const ok = confirm("Σίγουρα θες να διαγράψεις όλα τα media;");
+    if (!ok) return;
+    await clearAllMedia();
+    uploadedPhotos = [];
+    renderMediaLibrary();
+  };
+
+  // Text buttons κλπ θα μπουν παρακάτω
 }
 
-if (textOutlineBtn) {
-  textOutlineBtn.addEventListener('click', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set({
-      stroke: '#000000',
-      strokeWidth: 2,
-      shadow: null
-    });
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
+/* ============================================================
+   IMAGE FILTERS
+   ============================================================ */
 
-if (textShadowBtn) {
-  textShadowBtn.addEventListener('click', () => {
-    const t = getActiveText();
-    if (!t) return;
-    t.set({
-      shadow: {
-        color: 'rgba(15,23,42,0.9)',
-        blur: 15,
-        offsetX: 5,
-        offsetY: 8
-      },
-      strokeWidth: 0
-    });
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  });
-}
-    
-  }
-  if(textDeleteBtn){
-    textDeleteBtn.addEventListener('click',()=>{
-      const t = getActiveText();
-      if(!t) return;
-      fabricCanvas.remove(t);
-      fabricCanvas.discardActiveObject();
-      fabricCanvas.requestRenderAll();
-      saveState();
-    });
-  }
-
-  
-  // Stickers
-  const stickerList = document.getElementById('stickerList');
-  const stickerUrlInput = document.getElementById('stickerUrl');
-  const addStickerUrlBtn = document.getElementById('addStickerUrlBtn');
-
-  const defaultStickers = [
-    "https://i.imgur.com/yYx4H6h.png",
-    "https://i.imgur.com/DRW9bY7.png",
-    "https://i.imgur.com/bKX6zvO.png"
-  ];
-  function renderStickers(){
-    stickerList.innerHTML = '';
-    defaultStickers.forEach(url=>{
-      const s = document.createElement('div');
-      s.className = 'sticker-item';
-      const img = document.createElement('img');
-      img.src = url;
-      s.appendChild(img);
-      s.onclick = ()=> addStickerToCanvas(url);
-      stickerList.appendChild(s);
-    });
-  }
-  function addStickerToCanvas(url){
-    fabric.Image.fromURL(url,img=>{
-      const pw = canvasEl.width;
-      img.scaleToWidth(pw*0.25);
-      img.set({left:pw*0.1, top:canvasEl.height*0.1});
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.renderAll();
-      saveState();
-    },{crossOrigin:"anonymous"});
-  }
-  addStickerUrlBtn.addEventListener('click',()=>{
-    const url = stickerUrlInput.value.trim();
-    if(!url) return;
-    addStickerToCanvas(url);
-    stickerUrlInput.value = '';
-  });
-  renderStickers();
-
-  function getActiveImage() {
+function getActiveImage() {
   const obj = fabricCanvas.getActiveObject();
-  if (!obj || obj.type !== 'image') return null;
+  if (!obj || obj.type !== "image") return null;
   return obj;
 }
 
-const imgBrightnessEl = document.getElementById('imgBrightness');
-const imgContrastEl = document.getElementById('imgContrast');
-const imgSaturationEl = document.getElementById('imgSaturation');
-const imgHueEl = document.getElementById('imgHue');
-const imgPresetWarm = document.getElementById('imgPresetWarm');
-const imgPresetCool = document.getElementById('imgPresetCool');
-const imgPresetRetro = document.getElementById('imgPresetRetro');
-const imgResetFilters = document.getElementById('imgResetFilters');
-
-function applyImageFiltersFromControls() {
-  const img = getActiveImage();
-  if (!img) return;
-
-  const brightness = parseFloat(imgBrightnessEl.value || '0');
-  const contrast = parseFloat(imgContrastEl.value || '0');
-  const saturation = parseFloat(imgSaturationEl.value || '0');
-  const hue = parseFloat(imgHueEl.value || '0');
-
-  const filters = [];
-
-  if (brightness !== 0) {
-    filters.push(new fabric.Image.filters.Brightness({ brightness }));
-  }
-  if (contrast !== 0) {
-    filters.push(new fabric.Image.filters.Contrast({ contrast }));
-  }
-  if (saturation !== 0) {
-    filters.push(new fabric.Image.filters.Saturation({ saturation }));
-  }
-  if (hue !== 0) {
-    filters.push(new fabric.Image.filters.HueRotation({ rotation: hue }));
-  }
-
-  img.filters = filters;
+function rebuildImageFilters(img) {
+  img.filters = [
+    img._brightnessFilter,
+    img._contrastFilter,
+    img._saturationFilter,
+    img._blurFilter,
+    img._sepiaFilter,
+    img._bwFilter,
+    img._sharpenFilter
+  ].filter(f => f);
   img.applyFilters();
   fabricCanvas.requestRenderAll();
-  if (typeof saveState === 'function') saveState();
+  saveCurrentPage();
 }
 
-[imgBrightnessEl, imgContrastEl, imgSaturationEl, imgHueEl].forEach(input => {
-  if (!input) return;
-  input.addEventListener('input', applyImageFiltersFromControls);
-});
+function attachImageFilterControls() {
+  const br = document.getElementById("imgBrightness");
+  const ct = document.getElementById("imgContrast");
+  const st = document.getElementById("imgSaturation");
+  const bl = document.getElementById("imgBlur");
 
-if (imgPresetWarm) {
-  imgPresetWarm.addEventListener('click', () => {
-    imgBrightnessEl.value = "0.1";
-    imgContrastEl.value = "0.1";
-    imgSaturationEl.value = "0.2";
-    imgHueEl.value = "0.1";
-    applyImageFiltersFromControls();
-  });
-}
-if (imgPresetCool) {
-  imgPresetCool.addEventListener('click', () => {
-    imgBrightnessEl.value = "0.05";
-    imgContrastEl.value = "0.15";
-    imgSaturationEl.value = "0.1";
-    imgHueEl.value = "-0.3";
-    applyImageFiltersFromControls();
-  });
-}
-if (imgPresetRetro) {
-  imgPresetRetro.addEventListener('click', () => {
-    imgBrightnessEl.value = "0.05";
-    imgContrastEl.value = "-0.1";
-    imgSaturationEl.value = "-0.2";
-    imgHueEl.value = "0.2";
-    applyImageFiltersFromControls();
-  });
-}
-if (imgResetFilters) {
-  imgResetFilters.addEventListener('click', () => {
-    imgBrightnessEl.value = "0";
-    imgContrastEl.value = "0";
-    imgSaturationEl.value = "0";
-    imgHueEl.value = "0";
-    applyImageFiltersFromControls();
-  });
-}
-
-
-  // Apply canvas to current page
-  document.getElementById('applyToPageBtn').onclick = () => {
-    const dataUrl = fabricCanvas.toDataURL({format:'png',quality:0.92});
-    if(!pages.length){
-      pages.push({image:dataUrl});
-      currentPage = 0;
-    }else{
-      pages[currentPage] = {image:dataUrl};
-    }
-    refreshThumbnails();
-    buildFlipbook();
-    saveDraft();
+  if (br) br.oninput = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._brightnessFilter = new fabric.Image.filters.Brightness({ brightness: parseFloat(br.value) });
+    rebuildImageFilters(img);
   };
 
-  // Pages add/delete
-  document.getElementById('addPageBtn').onclick = () => {
-    const blank = fabricCanvas.toDataURL({format:'png',quality:0.8});
-    pages.push({image:blank});
-    currentPage = pages.length-1;
-    refreshThumbnails();
-    loadPageToCanvas();
-    saveDraft();
-  };
-  document.getElementById('deletePageBtn').onclick = () => {
-    if(pages.length<=1){
-      alert('Δεν μπορείτε να διαγράψετε όλες τις σελίδες.');
-      return;
-    }
-    pages.splice(currentPage,1);
-    currentPage = 0;
-    refreshThumbnails();
-    loadPageToCanvas();
-    saveDraft();
+  if (ct) ct.oninput = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._contrastFilter = new fabric.Image.filters.Contrast({ contrast: parseFloat(ct.value) });
+    rebuildImageFilters(img);
   };
 
-  // Flipbook
-  let pageFlip = null;
-  function buildFlipbook(){
-    const container = document.getElementById('flipbook');
-    container.innerHTML = '';
-    if(!pages.length){
-      container.innerHTML = '<p style="color:#9ca3af;font-size:0.8rem;">Πρόσθεσε σελίδες & πάτησε "Εφαρμογή στη σελίδα".</p>';
-      return;
-    }
-    const root = document.createElement('div');
-    container.appendChild(root);
-    const pf = new St.PageFlip(root,{
-      width:480,
-      height:320,
-      size:"stretch",
-      maxShadowOpacity:0.3,
-      mobileScrollSupport:true
+  if (st) st.oninput = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._saturationFilter = new fabric.Image.filters.Saturation({ saturation: parseFloat(st.value) });
+    rebuildImageFilters(img);
+  };
+
+  if (bl) bl.oninput = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._blurFilter = new fabric.Image.filters.Blur({ blur: parseFloat(bl.value) });
+    rebuildImageFilters(img);
+  };
+
+  document.getElementById("imgSepiaBtn").onclick = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._sepiaFilter = new fabric.Image.filters.Sepia();
+    rebuildImageFilters(img);
+  };
+
+  document.getElementById("imgBwBtn").onclick = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._bwFilter = new fabric.Image.filters.Grayscale();
+    rebuildImageFilters(img);
+  };
+
+  document.getElementById("imgSharpenBtn").onclick = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._sharpenFilter = new fabric.Image.filters.Convolute({
+      matrix: [
+        0, -1, 0,
+        -1, 5, -1,
+        0, -1, 0
+      ]
     });
-    const pageEls = pages.map(p=>{
-      const d = document.createElement('div');
-      d.className = 'page';
-      d.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#020617;"><img src="${p.image}" style="max-width:100%;max-height:100%;border-radius:12px;object-fit:contain;"></div>`;
-      return d;
-    });
-    pf.loadFromHTML(pageEls);
-    pf.on('flip', e=>{
-      currentPage = e.data;
-      refreshThumbnails();
-      const audio = document.getElementById('pageSound');
-      audio.currentTime=0;
-      audio.play().catch(()=>{});
-    });
-    pageFlip = pf;
+    rebuildImageFilters(img);
+  };
+
+  document.getElementById("imgAutoEnhanceBtn").onclick = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._contrastFilter = new fabric.Image.filters.Contrast({ contrast: 0.18 });
+    img._saturationFilter = new fabric.Image.filters.Saturation({ saturation: 0.2 });
+    rebuildImageFilters(img);
+  };
+
+  document.getElementById("imgResetBtn").onclick = () => {
+    const img = getActiveImage();
+    if (!img) return;
+    img._brightnessFilter = null;
+    img._contrastFilter = null;
+    img._saturationFilter = null;
+    img._blurFilter = null;
+    img._sepiaFilter = null;
+    img._bwFilter = null;
+    img._sharpenFilter = null;
+    img.filters = [];
+    img.applyFilters();
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  };
+}
+
+/* ============================================================
+   TEXT TOOLS
+   ============================================================ */
+
+const textFontEl = document.getElementById("textFont");
+const textSizeEl = document.getElementById("textSize");
+const textColorEl = document.getElementById("textColor");
+
+function getActiveText() {
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj) return null;
+  if (obj.type === "textbox" || obj.type === "i-text" || obj.type === "text") {
+    return obj;
   }
-  document.getElementById('fbPrev').onclick = ()=>{ if(pageFlip) pageFlip.flipPrev();};
-  document.getElementById('fbNext').onclick = ()=>{ if(pageFlip) pageFlip.flipNext();};
+  return null;
+}
 
-  // Export PDF & ZIP
-  document.getElementById('exportPdfBtn').onclick = async () => {
-    if(!pages.length){alert('Δεν υπάρχουν σελίδες.');return;}
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p','px',[canvasEl.width,canvasEl.height]);
-    for(let i=0;i<pages.length;i++){
-      if(i>0) pdf.addPage();
-      pdf.addImage(pages[i].image,'PNG',0,0,canvasEl.width,canvasEl.height);
-    }
-    pdf.save('photobook.pdf');
-  };
-  document.getElementById('exportZipBtn').onclick = async () => {
-    if(!pages.length){alert('Δεν υπάρχουν σελίδες.');return;}
-    const zip = new JSZip();
-    pages.forEach((p,i)=>{
-      zip.file(`page-${i+1}.png`, p.image.split(',')[1], {base64:true});
+function addText() {
+  const t = new fabric.IText("Κείμενο", {
+    left: 150,
+    top: 150,
+    fontSize: parseInt(textSizeEl.value) || 40,
+    fill: textColorEl.value || "#000000",
+    fontFamily: textFontEl.value || "Arial"
+  });
+  fabricCanvas.add(t);
+  fabricCanvas.setActiveObject(t);
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+  if (typeof saveState === "function") saveState();
+}
+
+function applyGradientToText() {
+  const t = getActiveText();
+  if (!t) return;
+
+  const gradient = new fabric.Gradient({
+    type: "linear",
+    gradientUnits: "percentage",
+    coords: { x1: 0, y1: 0, x2: 1, y2: 0 },
+    colorStops: [
+      { offset: 0, color: "#f97316" },
+      { offset: 1, color: "#22d3ee" }
+    ]
+  });
+
+  t.set("fill", gradient);
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+function applyTextHighlight(color = "#fff59d") {
+  const t = getActiveText();
+  if (!t) return;
+  t.set("backgroundColor", color);
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+function setTextShadow() {
+  const t = getActiveText();
+  if (!t) return;
+  t.set("shadow", "2px 2px 6px rgba(0,0,0,0.35)");
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+function clearTextShadow() {
+  const t = getActiveText();
+  if (!t) return;
+  t.set("shadow", null);
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+// Πολύ απλό "curved" text: group από γράμματα σε τόξο
+function addCurvedText() {
+  const text = "Καμπύλο κείμενο";
+  const radius = 160;
+  const letters = text.split("");
+  const angleStep = (Math.PI / (letters.length + 1));
+  const startAngle = -angleStep * (letters.length / 2);
+  const groupItems = [];
+
+  letters.forEach((ch, i) => {
+    const angle = startAngle + angleStep * i;
+    const x = radius * Math.cos(angle);
+    const y = radius * Math.sin(angle);
+    const letter = new fabric.Text(ch, {
+      left: 0 + x,
+      top: 0 + y,
+      fontSize: 40,
+      fill: textColorEl.value || "#000",
+      fontFamily: textFontEl.value || "Arial",
+      originX: "center",
+      originY: "center"
     });
-    const blob = await zip.generateAsync({type:'blob'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'photobook.zip';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    groupItems.push(letter);
+  });
+
+  const group = new fabric.Group(groupItems, {
+    left: 250,
+    top: 220
+  });
+
+  fabricCanvas.add(group);
+  fabricCanvas.setActiveObject(group);
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+/* attach text control events */
+function attachTextControls() {
+  document.getElementById("addTextBtn").onclick = addText;
+  document.getElementById("addCurvedTextBtn").onclick = addCurvedText;
+
+  textFontEl.onchange = () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set("fontFamily", textFontEl.value);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
   };
 
-  // Cloud upload
-  document.getElementById('uploadCloudBtn').onclick = async () => {
-    if(!pages.length){alert('Δεν υπάρχουν σελίδες.');return;}
-    const title = prompt('Τίτλος βιβλίου:');
-    const pwd = prompt('Password (προαιρετικό):');
-    try{
-      const id = await uploadPhotobook(pages, {
-  title,
-  password,
-  email: auth.currentUser ? auth.currentUser.email : null
-});
-      const link = `${location.origin}/viewer.html?id=${id}`;
-      await navigator.clipboard.writeText(link).catch(()=>{});
-      alert('Το βιβλίο ανέβηκε!\nLink:\n'+link);
-    }catch(e){
-      console.error(e);
-      alert('Σφάλμα κατά την αποστολή στο cloud.');
+  textSizeEl.onchange = () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set("fontSize", parseInt(textSizeEl.value) || 40);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  };
+
+  textColorEl.onchange = () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set("fill", textColorEl.value);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  };
+
+  document.getElementById("textBoldBtn").onclick = () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set("fontWeight", t.fontWeight === "bold" ? "normal" : "bold");
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  };
+
+  document.getElementById("textItalicBtn").onclick = () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set("fontStyle", t.fontStyle === "italic" ? "normal" : "italic");
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  };
+
+  document.getElementById("textUnderlineBtn").onclick = () => {
+    const t = getActiveText();
+    if (!t) return;
+    t.set("underline", !t.underline);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  };
+
+  document.getElementById("gradientTextBtn").onclick = applyGradientToText;
+  document.getElementById("highlightTextBtn").onclick = () => applyTextHighlight();
+  document.getElementById("shadowTextBtn").onclick = setTextShadow;
+  document.getElementById("clearShadowTextBtn").onclick = clearTextShadow;
+
+  document.getElementById("deleteTextBtn").onclick = () => {
+    const t = getActiveText();
+    if (!t) return;
+    fabricCanvas.remove(t);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  };
+}
+
+/* ============================================================
+   STICKERS
+   ============================================================ */
+
+const STICKERS = {
+  emoji: [
+    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg",
+    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f602.svg",
+    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f60d.svg"
+  ],
+  shapes: [
+    "https://cdn-icons-png.flaticon.com/512/32/32339.png",
+    "https://cdn-icons-png.flaticon.com/512/32/32341.png"
+  ],
+  doodles: [
+    "https://cdn-icons-png.flaticon.com/512/879/879757.png",
+    "https://cdn-icons-png.flaticon.com/512/879/879780.png"
+  ],
+  frames: [
+    "https://cdn-icons-png.flaticon.com/512/921/921347.png"
+  ]
+};
+
+function addSticker(url) {
+  fabric.Image.fromURL(url, (img) => {
+    img.set({
+      left: 200,
+      top: 200,
+      scaleX: 0.4,
+      scaleY: 0.4,
+      cornerStyle: "circle",
+      transparentCorners: false
+    });
+    fabricCanvas.add(img);
+    fabricCanvas.setActiveObject(img);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+    if (typeof saveState === "function") saveState();
+  }, { crossOrigin: "anonymous" });
+}
+
+function loadStickerCategory() {
+  const cat = document.getElementById("sticker-category").value;
+  const box = document.getElementById("stickers-box");
+  box.innerHTML = "";
+
+  (STICKERS[cat] || []).forEach(url => {
+    const img = document.createElement("img");
+    img.src = url;
+    img.style.width = "48px";
+    img.style.cursor = "pointer";
+    img.style.borderRadius = "8px";
+    img.onclick = () => addSticker(url);
+    box.appendChild(img);
+  });
+}
+
+function stickerOutline() {
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== "image") return;
+  obj.set("stroke", "white");
+  obj.set("strokeWidth", 10);
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+function stickerShadow() {
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== "image") return;
+  obj.set("shadow", {
+    color: "rgba(0,0,0,0.35)",
+    blur: 18,
+    offsetX: 6,
+    offsetY: 6
+  });
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+function stickerColorize() {
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== "image") return;
+  obj.filters.push(new fabric.Image.filters.BlendColor({
+    color: "#fb7185",
+    mode: "tint",
+    alpha: 0.6
+  }));
+  obj.applyFilters();
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
+
+function attachStickerControls() {
+  document.getElementById("sticker-category").onchange = loadStickerCategory;
+  document.getElementById("stickerOutlineBtn").onclick = stickerOutline;
+  document.getElementById("stickerShadowBtn").onclick = stickerShadow;
+  document.getElementById("stickerColorizeBtn").onclick = stickerColorize;
+  loadStickerCategory();
+}
+
+/* ============================================================
+   TEMPLATES
+   ============================================================ */
+
+const PB_TEMPLATES = {
+  "minimal-1": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Textbox("Minimal Title", {
+      left: 60,
+      top: 40,
+      width: 400,
+      fontSize: 48,
+      fontFamily: "Playfair Display"
+    }));
+    canvas.add(new fabric.Rect({
+      left: 80,
+      top: 120,
+      width: 420,
+      height: 460,
+      fill: "#e5e7eb",
+      rx: 18,
+      ry: 18
+    }));
+  },
+  "magazine-1": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Textbox("Magazine Headline", {
+      left: 40,
+      top: 40,
+      width: 520,
+      fontSize: 52,
+      fontWeight: "bold"
+    }));
+    canvas.add(new fabric.Rect({
+      left: 50,
+      top: 130,
+      width: 260,
+      height: 380,
+      fill: "#e5e7eb"
+    }));
+    canvas.add(new fabric.Rect({
+      left: 340,
+      top: 130,
+      width: 260,
+      height: 180,
+      fill: "#e5e7eb"
+    }));
+    canvas.add(new fabric.Textbox("Subheadline / κείμενο", {
+      left: 340,
+      top: 328,
+      width: 260,
+      fontSize: 16
+    }));
+  },
+  "scrapbook-1": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Rect({
+      left: 30,
+      top: 40,
+      width: 560,
+      height: 420,
+      fill: "#fef3c7",
+      rx: 24,
+      ry: 24
+    }));
+    canvas.add(new fabric.Text("My Memories ♥", {
+      left: 60,
+      top: 60,
+      fontSize: 40,
+      fill: "#b91c1c",
+      fontFamily: "Pacifico"
+    }));
+    canvas.add(new fabric.Rect({
+      left: 80,
+      top: 130,
+      width: 230,
+      height: 260,
+      fill: "#f9fafb",
+      rx: 14,
+      ry: 14
+    }));
+    canvas.add(new fabric.Rect({
+      left: 330,
+      top: 150,
+      width: 230,
+      height: 220,
+      fill: "#fee2e2",
+      rx: 18,
+      ry: 18
+    }));
+  },
+  "grid-2": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Rect({
+      left: 40, top: 80, width: 260, height: 360, fill: "#e5e7eb"
+    }));
+    canvas.add(new fabric.Rect({
+      left: 340, top: 80, width: 260, height: 360, fill: "#e5e7eb"
+    }));
+  },
+  "grid-4": (canvas) => {
+    canvas.clear();
+    const w = 240, h = 200;
+    let x = 40, y = 80;
+    for (let i = 0; i < 4; i++) {
+      canvas.add(new fabric.Rect({ left: x, top: y, width: w, height: h, fill: "#e5e7eb" }));
+      x += 260;
+      if (i === 1) { x = 40; y += 220; }
     }
-  };
+  },
+  "full-bleed": (canvas) => {
+    canvas.clear();
+    canvas.add(new fabric.Rect({
+      left: 0, top: 0, width: canvas.width, height: canvas.height, fill: "#d1d5db"
+    }));
+  }
+};
 
- /* ---------------- USER SYSTEM + AUTOSAVE (FINAL FIXED VERSION) ---------------- */
+function applyTemplate(name) {
+  if (!PB_TEMPLATES[name]) return;
+  if (typeof saveState === "function") saveState();
+  PB_TEMPLATES[name](fabricCanvas);
+  fabricCanvas.requestRenderAll();
+  saveCurrentPage();
+}
 
-function getDraftKey(){
-  const uid = auth.currentUser ? auth.currentUser.uid : "guest";
+function attachTemplateButtons() {
+  document.getElementById("tplMinimalBtn").onclick = () => applyTemplate("minimal-1");
+  document.getElementById("tplMagazineBtn").onclick = () => applyTemplate("magazine-1");
+  document.getElementById("tplScrapbookBtn").onclick = () => applyTemplate("scrapbook-1");
+  document.getElementById("tplGrid2Btn").onclick = () => applyTemplate("grid-2");
+  document.getElementById("tplGrid4Btn").onclick = () => applyTemplate("grid-4");
+  document.getElementById("tplFullBleedBtn").onclick = () => applyTemplate("full-bleed");
+}
+
+/* attach control groups after DOMContentLoaded */
+window.addEventListener("DOMContentLoaded", () => {
+  attachImageFilterControls();
+  attachTextControls();
+  attachStickerControls();
+  attachTemplateButtons();
+});
+
+
+    /* ============================================================
+   UNDO / REDO HISTORY
+   ============================================================ */
+
+function saveState() {
+  if (!fabricCanvas) return;
+  const json = fabricCanvas.toJSON();
+  undoStack.push(json);
+  if (undoStack.length > 50) undoStack.shift();
+  redoStack = [];
+}
+
+function attachHistoryButtons() {
+  const undoBtn = document.getElementById("undoBtn");
+  const redoBtn = document.getElementById("redoBtn");
+
+  if (undoBtn) {
+    undoBtn.onclick = () => {
+      if (undoStack.length < 2) return;
+      const current = undoStack.pop();
+      redoStack.push(current);
+      const prev = undoStack[undoStack.length - 1];
+      fabricCanvas.loadFromJSON(prev, () => {
+        fabricCanvas.renderAll();
+        saveCurrentPage();
+      });
+    };
+  }
+
+  if (redoBtn) {
+    redoBtn.onclick = () => {
+      if (!redoStack.length) return;
+      const next = redoStack.pop();
+      undoStack.push(next);
+      fabricCanvas.loadFromJSON(next, () => {
+        fabricCanvas.renderAll();
+        saveCurrentPage();
+      });
+    };
+  }
+}
+
+/* ============================================================
+   DRAFT SAVE / LOAD PER USER
+   ============================================================ */
+
+function getDraftKey() {
+  const u = auth.currentUser;
+  const uid = u ? u.uid : "guest";
   return "pb-draft-" + uid;
 }
 
-function saveDraft(){
-  if(!pages.length) return;
-
+function saveDraft() {
+  if (!pages || !pages.length) return;
   const key = getDraftKey();
   const data = {
     pages,
@@ -2104,18 +1551,18 @@ function saveDraft(){
 
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch (e){
-    console.warn("Draft too large / storage fail", e);
+  } catch (e) {
+    console.warn("Cannot save draft:", e);
   }
 }
 
-function loadDraft(){
+function loadDraft() {
   const key = getDraftKey();
-  const json = localStorage.getItem(key);
-  if (!json) return false;
+  const raw = localStorage.getItem(key);
+  if (!raw) return false;
 
   try {
-    const draft = JSON.parse(json);
+    const draft = JSON.parse(raw);
     if (!draft.pages || !draft.pages.length) return false;
 
     const ok = confirm("Βρέθηκε αποθηκευμένο photobook. Να φορτωθεί;");
@@ -2123,187 +1570,328 @@ function loadDraft(){
 
     pages = draft.pages;
     currentPage = draft.currentPage || 0;
-
-    // Restore gallery
-    uploadedPhotos.length = 0;
-    if (Array.isArray(draft.uploadedPhotos)) {
-      draft.uploadedPhotos.forEach(src => uploadedPhotos.push(src));
-      renderPhotoGallery();
-    }
+    uploadedPhotos = Array.isArray(draft.uploadedPhotos) ? draft.uploadedPhotos : [];
 
     refreshThumbnails();
     loadPageToCanvas();
-    buildFlipbook();
+    renderMediaLibrary();
 
     return true;
-
-  } catch (e){
-    console.error("Draft load error", e);
+  } catch (e) {
+    console.error("Draft load error:", e);
     return false;
   }
 }
 
-/* -------------------------- AUTH SYSTEM -------------------------- */
+/* ============================================================
+   KEYBOARD SHORTCUTS
+   ============================================================ */
 
-function updateUserUi(){
-  const label = document.getElementById("user-label");
-  const loginBtn = document.getElementById("login-btn");
-  const logoutBtn = document.getElementById("logout-btn");
+function attachKeyboardShortcuts() {
+  document.addEventListener("keydown", (e) => {
+    if (!fabricCanvas) return;
+    const obj = fabricCanvas.getActiveObject();
 
-  const user = auth.currentUser;
-
-  if (user){
-    label.textContent = user.displayName || user.email || "User";
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-flex";
-  } else {
-    label.textContent = "Επισκέπτης";
-    loginBtn.style.display = "inline-flex";
-    logoutBtn.style.display = "none";
-  }
-}
-
-function initUserAuth(){
-  const loginBtn = document.getElementById("login-btn");
-  const logoutBtn = document.getElementById("logout-btn");
-
-  onAuthStateChanged(auth, () => {
-    updateUserUi();
-    loadDraft();
-  });
-
-  loginBtn.onclick = async () => {
-    const email = prompt("Email:");
-    if (!email) return;
-
-    const password = prompt("Κωδικός:");
-    if (!password) return;
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err){
-      if (err.code === "auth/user-not-found"){
-        const ok = confirm("Δεν υπάρχει λογαριασμός. Να δημιουργηθεί;");
-        if (ok){
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(cred.user, { displayName: email.split("@")[0] });
-        }
-      } else {
-        alert("Σφάλμα: " + err.message);
+    // Duplicate: Ctrl + D
+    if (e.ctrlKey && e.key.toLowerCase() === "d") {
+      e.preventDefault();
+      if (obj) {
+        const clone = fabric.util.object.clone(obj);
+        clone.set({ left: obj.left + 20, top: obj.top + 20 });
+        fabricCanvas.add(clone);
+        fabricCanvas.setActiveObject(clone);
+        fabricCanvas.requestRenderAll();
+        saveCurrentPage();
+        saveState();
       }
     }
-  };
 
-  logoutBtn.onclick = async () => {
-    await signOut(auth);
-    pages = [];
-    uploadedPhotos.length = 0;
-    refreshThumbnails();
-    fabricCanvas.clear();
-  };
-}
+    // Delete
+    if (e.key === "Delete" || e.key === "Backspace") {
+      if (obj) {
+        fabricCanvas.remove(obj);
+        fabricCanvas.discardActiveObject();
+        fabricCanvas.requestRenderAll();
+        saveCurrentPage();
+        saveState();
+      }
+    }
 
-/* ---------------- INIT ---------------- */
-initUserAuth();
-initTheme();
-loadDraft();
+    // Move with arrows (Shift = 10px)
+    if (obj && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+      const step = e.shiftKey ? 10 : 1;
+      if (e.key === "ArrowUp") obj.top -= step;
+      if (e.key === "ArrowDown") obj.top += step;
+      if (e.key === "ArrowLeft") obj.left -= step;
+      if (e.key === "ArrowRight") obj.left += step;
+      obj.setCoords();
+      fabricCanvas.requestRenderAll();
+      saveCurrentPage();
+    }
 
+    // Zoom in: Ctrl + +
+    if (e.ctrlKey && (e.key === "+" || e.key === "=")) {
+      e.preventDefault();
+      fabricCanvas.setZoom(fabricCanvas.getZoom() + 0.1);
+      fabricCanvas.requestRenderAll();
+    }
 
-  function applyTheme(theme){
-  const root = document.documentElement;
-  root.setAttribute('data-theme', theme);
-  localStorage.setItem('pb-theme', theme);
-}
+    // Zoom out: Ctrl + -
+    if (e.ctrlKey && e.key === "-") {
+      e.preventDefault();
+      fabricCanvas.setZoom(fabricCanvas.getZoom() - 0.1);
+      fabricCanvas.requestRenderAll();
+    }
 
-function initTheme(){
-  const saved = localStorage.getItem('pb-theme') || 'dark';
-  applyTheme(saved);
+    // Save draft: Ctrl + S
+    if (e.ctrlKey && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      saveCurrentPage();
+      saveDraft();
+      alert("Το πρόχειρο αποθηκεύτηκε.");
+    }
 
-  const themeToggleBtn = document.getElementById('themeToggleBtn');
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') || 'dark';
-      const next = current === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-    });
-  }
-}
-
-
-
-
-  document.addEventListener('keydown', (e) => {
-  const ctrl = e.ctrlKey || e.metaKey;
-
-  // Ctrl+Z → Undo
-  if (ctrl && e.key.toLowerCase() === 'z') {
-    e.preventDefault();
-    const btn = document.getElementById('undoBtn');
-    if (btn) btn.click();
-  }
-
-  // Ctrl+Y → Redo
-  if (ctrl && e.key.toLowerCase() === 'y') {
-    e.preventDefault();
-    const btn = document.getElementById('redoBtn');
-    if (btn) btn.click();
-  }
-
-  // Delete → διαγραφή επιλεγμένου αντικειμένου
-  if (e.key === 'Delete' || e.key === 'Backspace') {
-    const obj = fabricCanvas.getActiveObject();
-    if (!obj) return;
-    fabricCanvas.remove(obj);
-    fabricCanvas.discardActiveObject();
-    fabricCanvas.requestRenderAll();
-    if (typeof saveState === 'function') saveState();
-  }
-});
-
-  function loadStickerCategory(){
-  const cat = document.getElementById("sticker-category").value;
-  const box = document.getElementById("stickers-box");
-
-  box.innerHTML = "";
-
-  STICKERS[cat].forEach(url => {
-    const img = document.createElement("img");
-    img.src = url;
-    img.style.width = "60px";
-    img.style.cursor = "pointer";
-    img.onclick = () => addSticker(url);
-    box.appendChild(img);
+    // Export PDF: Ctrl + E
+    if (e.ctrlKey && e.key.toLowerCase() === "e") {
+      e.preventDefault();
+      document.getElementById("exportPdfBtn")?.click();
+    }
   });
 }
 
-// Load default pack
-window.addEventListener("DOMContentLoaded", loadStickerCategory);
+/* ============================================================
+   EXPORT PDF
+   ============================================================ */
 
-
-window.addEventListener('DOMContentLoaded', () => {
-
-  initUserAuth();               // σύνδεση χρήστη
-  applyPageSizeFromInputs();    // σελιδοποίηση (A4 κλπ)
-  updatePageInfo();             // ενημέρωση UI
-
-  // Προσπάθησε να φορτώσεις draft ΑΝ υπάρχει
-  const hasDraft = loadDraft(); // ⬅ επιστρέφω true/false
-
-  // Αν ΔΕΝ υπάρχει draft → φτιάξε καθαρή πρώτη σελίδα
-  if (!hasDraft) {
-    const blankPage = fabricCanvas.toDataURL({
-      format: "png",
-      quality: 0.8
-    });
-
-    pages = [{ image: blankPage }];
-    currentPage = 0;
+async function exportPdf() {
+  if (!pages.length) {
+    alert("Δεν υπάρχουν σελίδες.");
+    return;
   }
- 
-  refreshThumbnails();
-  loadPageToCanvas(currentPage);
-   initTheme();
-  
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "pt", "a4");
+
+  for (let i = 0; i < pages.length; i++) {
+    const pg = pages[i];
+
+    if (i > 0) pdf.addPage();
+
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+        const w = img.width * ratio;
+        const h = img.height * ratio;
+        const x = (pageWidth - w) / 2;
+        const y = (pageHeight - h) / 2;
+        pdf.addImage(pg.image, "PNG", x, y, w, h);
+        resolve();
+      };
+      img.src = pg.image;
+    });
+  }
+
+  pdf.save("photobook.pdf");
+}
+
+/* ============================================================
+   EXPORT FLIPBOOK (Standalone HTML file)
+   ============================================================ */
+
+function exportFlipbook() {
+  if (!pages.length) {
+    alert("Δεν υπάρχουν σελίδες.");
+    return;
+  }
+
+  let pagesHtml = "";
+  pages.forEach((pg, idx) => {
+    const safeSrc = pg.image || "";
+    pagesHtml += `
+      <div class="fb-page${idx === 0 ? " fb-page-active" : ""}">
+        <img src="${safeSrc}" alt="Page ${idx + 1}">
+      </div>`;
+  });
+
+  const flipbookHtml = `
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>Photobook Flipbook</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Poppins", sans-serif;
+    color: #e5e7eb;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15,23,42,0.9);
+    border-bottom: 1px solid #1f2937;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fb-container {
+    width: 90vw;
+    max-width: 900px;
+    height: 80vh;
+    background: #020617;
+    border-radius: 16px;
+    border: 1px solid #1f2937;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 22px 45px rgba(0,0,0,0.7);
+  }
+  .fb-page {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform-origin: left center;
+    transform: rotateY(90deg);
+    transition: transform 0.6s ease, opacity 0.6s ease;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #020617;
+  }
+  .fb-page img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.65);
+  }
+  .fb-page-active {
+    opacity: 1;
+    transform: rotateY(0deg);
+  }
+  .fb-controls {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    pointer-events: none;
+  }
+  .fb-btn {
+    pointer-events: auto;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    background: rgba(15,23,42,0.9);
+    color: #e5e7eb;
+    padding: 0.25rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .fb-btn:hover {
+    background: #1d283a;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>📖 Photobook Flipbook</div>
+  <div id="fb-page-indicator">1 / ${pages.length}</div>
+</header>
+<main>
+  <div class="fb-container">
+    ${pagesHtml}
+    <div class="fb-controls">
+      <button class="fb-btn" id="fb-prev">‹ Προηγούμενη</button>
+      <button class="fb-btn" id="fb-next">Επόμενη ›</button>
+    </div>
+  </div>
+</main>
+<script>
+  const pages = Array.from(document.querySelectorAll(".fb-page"));
+  let index = 0;
+  const indicator = document.getElementById("fb-page-indicator");
+
+  function showPage(i) {
+    if (i < 0 || i >= pages.length) return;
+    pages[index].classList.remove("fb-page-active");
+    index = i;
+    pages[index].classList.add("fb-page-active");
+    indicator.textContent = (index + 1) + " / " + pages.length;
+  }
+
+  document.getElementById("fb-prev").onclick = () => showPage(index - 1);
+  document.getElementById("fb-next").onclick = () => showPage(index + 1);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") showPage(index - 1);
+    if (e.key === "ArrowRight") showPage(index + 1);
+  });
+</script>
+</body>
+</html>
+`;
+
+  const blob = new Blob([flipbookHtml], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "photobook-flipbook.html";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   EXPORT CLOUD – placeholder (για να μην σπάει)
+   ============================================================ */
+
+function exportCloud() {
+  alert("Cloud export: θα συνδέσουμε Firebase Storage / Firestore σε επόμενο βήμα.\nΠρος το παρόν χρησιμοποίησε PDF ή Flipbook export.");
+}
+
+/* ============================================================
+   BIND EXPORT BUTTONS
+   ============================================================ */
+
+function attachExportButtons() {
+  const pdfBtn = document.getElementById("exportPdfBtn");
+  const fbBtn = document.getElementById("exportFlipbookBtn");
+  const cloudBtn = document.getElementById("exportCloudBtn");
+
+  if (pdfBtn) pdfBtn.onclick = () => {
+    saveCurrentPage();
+    exportPdf();
+  };
+  if (fbBtn) fbBtn.onclick = () => {
+    saveCurrentPage();
+    exportFlipbook();
+  };
+  if (cloudBtn) cloudBtn.onclick = exportCloud;
+}
+
+/* ============================================================
+   FINAL DOMContentLoaded HOOKS
+   ============================================================ */
+window.addEventListener("DOMContentLoaded", () => {
+  attachHistoryButtons();
+  attachKeyboardShortcuts();
+  attachExportButtons();
+  saveState(); // αρχικό state για undo
 });
 </script>
 </body>
