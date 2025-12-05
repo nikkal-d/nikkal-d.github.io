@@ -251,4 +251,4 @@ window.deletePhotobook = async (docId, bookId, uid) => {
     console.error(err);
     alert("❌ Σφάλμα διαγραφής: " + err.message);
   }
-};
+};v
