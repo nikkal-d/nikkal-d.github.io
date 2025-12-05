@@ -251,4 +251,104 @@ window.deletePhotobook = async (docId, bookId, uid) => {
     console.error(err);
     alert("❌ Σφάλμα διαγραφής: " + err.message);
   }
-};v
+};
+
+/* ============================================================
+   PUBLIC / PRIVATE — SHARE LINK + QR CODE
+   ============================================================ */
+
+// Καλείται από το κουμπί "🌐 Κοινή χρήση"
+window.togglePublic = async function (docId) {
+  const refDoc = doc(db, "photobooks", docId);
+  const snap = await getDoc(refDoc);
+
+  if (!snap.exists()) {
+    alert("Το photobook δεν βρέθηκε.");
+    return;
+  }
+
+  const book = snap.data();
+  const isNowPublic = !book.isPublic;
+
+  // 1. Update Firestore
+  await updateDoc(refDoc, {
+    isPublic: isNowPublic
+  });
+
+  // 2. Update badge in UI
+  updatePublicBadge(docId, isNowPublic);
+
+  // 3. Show/hide share panel
+  const panel = document.getElementById(`share-${docId}`);
+  if (isNowPublic) {
+    panel.style.display = "block";
+    generateShareBlock(docId, book.shareId);
+  } else {
+    panel.style.display = "none";
+  }
+
+  alert(isNowPublic ? "Το photobook είναι πλέον Δημόσιο!" :
+                      "Το photobook έγινε Ιδιωτικό.");
+};
+
+
+/* ============================================================
+   UPDATE BADGE ON CARD
+   ============================================================ */
+function updatePublicBadge(docId, isPublic) {
+  let card = document.getElementById(`card-${docId}`);
+  if (!card) return;
+
+  let badge = card.querySelector(".public-badge");
+
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.className = "public-badge";
+    card.prepend(badge);
+  }
+
+  if (isPublic) {
+    badge.textContent = "🌐 PUBLIC";
+    badge.style.background = "#10b981";
+  } else {
+    badge.textContent = "🔒 PRIVATE";
+    badge.style.background = "#ef4444";
+  }
+}
+
+
+/* ============================================================
+   GENERATE SHARE LINK + QR CODE
+   ============================================================ */
+function generateShareBlock(docId, shareId) {
+  const input = document.getElementById(`share-input-${docId}`);
+  const qrBox = document.getElementById(`qr-${docId}`);
+
+  const link = `${location.origin}/viewer.html?share=${shareId}`;
+
+  input.value = link;
+
+  // QR
+  qrBox.innerHTML = "";
+  new QRCode(qrBox, {
+    text: link,
+    width: 120,
+    height: 120
+  });
+}
+
+
+/* ============================================================
+   COPY LINK BUTTON
+   ============================================================ */
+window.copyShareLink = async function (docId) {
+  const input = document.getElementById(`share-input-${docId}`);
+
+  try {
+    await navigator.clipboard.writeText(input.value);
+    alert("Το link αντιγράφηκε!");
+  } catch (err) {
+    console.error(err);
+  }
+};
+
