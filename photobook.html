@@ -19,14 +19,27 @@
 
   <!-- HEADER -->
   <header id="topbar">
-      <div class="logo">📘 Photobook Studio</div>
-      <div class="top-controls">
-          <span id="user-label">Επισκέπτης</span>
-          <button id="login-btn">Σύνδεση</button>
-          <button id="logout-btn" style="display:none;">Αποσύνδεση</button>
-          <button id="themeToggleBtn">☾</button>
-      </div>
-  </header>
+  <div class="logo">
+    <a href="index.html" style="text-decoration:none; color:inherit;">
+      📘 Photobook Studio
+    </a>
+  </div>
+
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="photobook.html" class="active">Photobook</a>
+    <a href="duplicates.html">Find My Duplication</a>
+    <a href="projects.html">My Photobooks</a>
+  </nav>
+
+  <div class="top-controls">
+    <span id="user-label">Επισκέπτης</span>
+    <button id="login-btn">Σύνδεση</button>
+    <button id="logout-btn" style="display:none;">Αποσύνδεση</button>
+    <button id="themeToggleBtn">☾</button>
+  </div>
+</header>
+
 
   <!-- MAIN WRAPPER -->
   <div id="workspace">
