@@ -211,6 +211,10 @@ window.duplicatePhotobook = async (docId, oldBookId, uid) => {
   }
 };
 
+isPublic: false,
+shareId: null,
+
+
 /* Utility: blob → base64 */
 function blobToBase64(blob) {
   return new Promise((resolve) => {
