@@ -2,129 +2,134 @@
 <html lang="el">
 <head>
 <meta charset="UTF-8">
-<title>Photobook Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photobook Viewer</title>
 
-<style>
-body {
-  margin: 0;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  color: #e5e7eb;
-  font-family: Poppins, system-ui, sans-serif;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-header {
-  padding: 0.6rem 1rem;
-  background: rgba(15,23,42,0.9);
-  border-bottom: 1px solid #334155;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#title {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-main {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-#flipbook-container {
-  width: 90vw;
-  max-width: 960px;
-  height: 82vh;
-  background: #0f172a;
-  border-radius: 16px;
-  border: 1px solid #1f2937;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 25px 45px rgba(0,0,0,0.7);
-}
-
-.page {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transform-origin: left center;
-  transform: rotateY(90deg);
-  transition: transform .6s ease, opacity .6s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #0f172a;
-}
-
-.page img {
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 12px;
-  object-fit: contain;
-}
-
-.page.active {
-  opacity: 1;
-  transform: rotateY(0deg);
-}
-
-#controls {
-  position: absolute;
-  bottom: 1rem;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.btn {
-  background: rgba(30,41,59,0.8);
-  border: 1px solid #475569;
-  padding: 0.35rem 0.7rem;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #e2e8f0;
-  font-size: 0.9rem;
-}
-.btn:hover {
-  background: rgba(51,65,85,0.9);
-}
-
-</style>
-</head>
-
-<body>
-
-<header>
-  <div id="title">Φόρτωση...</div>
-  <button id="fullscreenBtn" class="btn">⛶ Πλήρης Οθόνη</button>
-</header>
-
-<main>
-  <div id="flipbook-container">
-    <div id="flipbook-pages"></div>
-
-    <div id="controls">
-      <button class="btn" id="prevBtn">‹ Προηγούμενη</button>
-      <button class="btn" id="nextBtn">Επόμενη ›</button>
-    </div>
-  </div>
-</main>
+<!-- QR LIB -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
 
 <!-- Firebase -->
 <script type="module" src="firebase-init.js"></script>
 
-<!-- Viewer Logic -->
-<script type="module" src="js/viewer.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --fg: #e2e8f0;
+  --accent: #3b82f6;
+  --card-bg: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.12);
+}
 
-</body>
-</html>
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Inter", sans-serif;
+}
+
+/* ---------- TOP NAV ---------- */
+#topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo a {
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.main-nav {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.main-nav a {
+  color: var(--fg);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+}
+
+.main-nav a.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.main-nav a:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.top-controls button {
+  margin-left: 8px;
+  padding: 5px 12px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ---------- LOGIN MODAL ---------- */
+
+#loginModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.login-card {
+  width: 340px;
+  background: rgba(255,255,255,0.08);
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: 0 0 24px rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.login-card h2 {
+  margin: 0 0 12px;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 12px;
+  background: rgba(255,255,255,0.18);
+  color: white;
+}
+
+.login-card button {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.login-card small {
+  display: block;
+  opacity: 0.7;
+  margin-top: 10px;
+}
+</style>
+</head>
