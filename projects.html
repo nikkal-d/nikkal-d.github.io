@@ -5,6 +5,9 @@
 <title>Τα Photobooks μου</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
+
+  
 <style>
 body {
   margin: 0;
@@ -124,6 +127,11 @@ button:hover {
   <button class="action-btn" onclick="deletePhotobook('${docSnap.id}', '${book.bookId}', '${book.userId}')">
     🗑 Διαγραφή
   </button>
+<button class="action-btn" onclick="togglePublic('${docSnap.id}')">
+  🌐 Κοινή χρήση
+</button>
+
+  
 </div>
 
 
