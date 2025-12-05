@@ -33,47 +33,61 @@ window.addEventListener("DOMContentLoaded", () => {
    PDF EXPORT
    ============================================================ */
 
-async function handleExportPdf() {
+async function handleExportCloud() {
   if (!pages || !pages.length) {
-    alert("Δεν υπάρχουν σελίδες για εξαγωγή.");
+    alert("Δεν υπάρχουν σελίδες.");
     return;
   }
 
-  saveCurrentPage(); // αποθηκεύουμε την τρέχουσα σελίδα πρώτα
-
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("p", "pt", "a4");
-
-  for (let i = 0; i < pages.length; i++) {
-    const pg = pages[i];
-    if (!pg.image) continue;
-
-    if (i > 0) pdf.addPage();
-
-    await new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-
-        const ratio = Math.min(
-          pageWidth / img.width,
-          pageHeight / img.height
-        );
-
-        const w = img.width * ratio;
-        const h = img.height * ratio;
-        const x = (pageWidth - w) / 2;
-        const y = (pageHeight - h) / 2;
-
-        pdf.addImage(pg.image, "PNG", x, y, w, h);
-        resolve();
-      };
-      img.src = pg.image;
-    });
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Πρέπει πρώτα να συνδεθείς (πάνω δεξιά).");
+    return;
   }
 
-  pdf.save("photobook.pdf");
+  saveCurrentPage();
+
+  const title = prompt("Τίτλος Photobook:", "Το Photobook μου") || "Untitled";
+  const bookId = crypto.randomUUID();
+  const shareId = crypto.randomUUID();  // <— για public share links
+
+  try {
+    const folderRef = ref(storage, `photobooks/${user.uid}/${bookId}`);
+    const uploadedPageURLs = [];
+
+    // Upload pages
+    for (let i = 0; i < pages.length; i++) {
+      const pg = pages[i];
+      if (!pg.image) continue;
+
+      const fileRef = ref(folderRef, `page-${i + 1}.png`);
+      const snap = await uploadString(fileRef, pg.image, "data_url");
+      const url = await getDownloadURL(snap.ref);
+      uploadedPageURLs.push(url);
+    }
+
+    // Add document to Firestore — ΝΕΟ SCHEMA
+    const docRef = await addDoc(collection(db, "photobooks"), {
+      userId: user.uid,
+      bookId,
+      title,
+      pages: uploadedPageURLs,
+      createdAt: serverTimestamp(),
+      
+      // NEW FIELDS
+      isPublic: false,     // αρχικά ιδιωτικό
+      shareId: shareId     // unique public link id (αλλά private μέχρι να το ενεργοποιήσεις)
+    });
+
+    alert(
+      "Το Photobook ανέβηκε επιτυχώς στο cloud.\n" +
+      "Βρες το στο My Photobooks."
+    );
+
+  } catch (err) {
+    console.error(err);
+    alert("Σφάλμα στο ανέβασμα: " + err.message);
+  }
 }
 
 /* ============================================================
