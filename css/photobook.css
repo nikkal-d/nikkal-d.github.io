@@ -61,6 +61,35 @@ body {
   margin-left: 0.4rem;
 }
 
+.main-nav {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0 1rem;
+}
+
+.main-nav a {
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: var(--transition);
+}
+
+.main-nav a:hover {
+  border-color: var(--border);
+  background: rgba(148,163,184,0.1);
+}
+
+.main-nav a.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+
 /* ============================================================
    WORKSPACE LAYOUT
    ============================================================ */
