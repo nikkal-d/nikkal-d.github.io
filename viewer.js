@@ -199,3 +199,69 @@ async function loadPhotobook(user) {
     notFoundMessage.style.display = "block";
   }
 }
+
+/* ============================================================
+   INITIALIZE VIEWER AFTER ACCESS APPROVAL
+   ============================================================ */
+
+async function initViewer() {
+  // hide messages
+  notFoundMessage.style.display = "none";
+  privateMessage.style.display = "none";
+
+  viewerContainer.style.display = "block";
+
+  // load pages
+  PAGES = BOOK_DATA.pages || [];
+
+  if (!PAGES.length) {
+    notFoundMessage.style.display = "block";
+    return;
+  }
+
+  renderPage(0); // start from page 0
+
+  // Button events
+  prevPageBtn.onclick = () => changePage(-1);
+  nextPageBtn.onclick = () => changePage(1);
+}
+
+/* ============================================================
+   RENDER SPECIFIC PAGE
+   ============================================================ */
+
+function renderPage(index) {
+  if (index < 0 || index >= PAGES.length) return;
+
+  CURRENT_INDEX = index;
+
+  flipbookEl.innerHTML = `
+    <img src="${PAGES[index]}" 
+         style="max-width:90%; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.4);">
+    <div style="margin-top:10px; opacity:0.7;">
+      Σελίδα ${index + 1} από ${PAGES.length}
+    </div>
+  `;
+}
+
+/* ============================================================
+   CHANGE PAGE
+   ============================================================ */
+function changePage(direction) {
+  const newIndex = CURRENT_INDEX + direction;
+
+  if (newIndex < 0 || newIndex >= PAGES.length) return;
+
+  renderPage(newIndex);
+}
+
+/* ============================================================
+   PRELOAD IMAGES (optional performance trick)
+   ============================================================ */
+function preloadImages() {
+  PAGES.forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+}
+
