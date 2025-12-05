@@ -133,3 +133,109 @@ body {
 }
 </style>
 </head>
+
+  <body>
+
+<!-- ============================
+        TOP NAVIGATION
+============================= -->
+<header id="topbar">
+  <div class="logo">
+    <a href="index.html">📘 Photobook Studio</a>
+  </div>
+
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="photobook.html">Photobook</a>
+    <a href="duplicates.html">Find My Duplication</a>
+    <a href="projects.html">My Photobooks</a>
+    <a href="viewer.html" class="active">Viewer</a>
+  </nav>
+
+  <div class="top-controls">
+    <span id="viewer-user-label">Guest</span>
+    <button id="viewer-login-btn">Σύνδεση</button>
+    <button id="viewer-logout-btn" style="display:none;">Αποσύνδεση</button>
+  </div>
+</header>
+
+
+
+<!-- ============================
+        ERROR / STATUS MESSAGES
+============================= -->
+<div id="privateMessage" style="
+  display:none;
+  text-align:center;
+  padding: 40px;
+  font-size: 1.2rem;
+">
+  🔒 Αυτό το photobook είναι ιδιωτικό.
+  <br><br>
+  <button onclick="openLoginModal()" style="
+      padding:10px 20px;
+      border:none;
+      border-radius:8px;
+      background:#3b82f6;
+      color:white;
+      cursor:pointer;
+  ">Σύνδεση</button>
+</div>
+
+<div id="notFoundMessage" style="
+  display:none;
+  text-align:center;
+  padding:40px;
+  font-size:1.2rem;
+">
+  ❌ Το photobook δεν βρέθηκε ή έχει διαγραφεί.
+</div>
+
+
+
+<!-- ============================
+        MAIN VIEWER AREA
+============================= -->
+<div id="viewerContainer" style="display:none; text-align:center; margin-top:40px;">
+  <div id="flipbook" style="display:inline-block;">
+    <!-- Οι σελίδες φορτώνονται μέσω JS -->
+  </div>
+
+  <br><br>
+
+  <button id="prevPageBtn" style="padding:10px 20px;">⬅ Προηγούμενη</button>
+  <button id="nextPageBtn" style="padding:10px 20px;">Επόμενη ➡</button>
+</div>
+
+
+
+<!-- ============================
+        LOGIN MODAL
+============================= -->
+<div id="loginModal">
+  <div class="login-card">
+    <h2>Σύνδεση</h2>
+
+    <input id="loginEmail" type="email" placeholder="Email">
+    <input id="loginPassword" type="password" placeholder="Κωδικός">
+
+    <button id="loginSubmitBtn">Σύνδεση</button>
+
+    <small>Δεν έχεις λογαριασμό; Θα προστεθεί Sign Up.</small>
+
+    <button onclick="closeLoginModal()" style="
+      margin-top:16px; background:#ef4444;
+    ">Κλείσιμο</button>
+  </div>
+</div>
+
+
+
+<!-- ============================
+        VIEWER JS
+============================= -->
+<script type="module" src="viewer.js"></script>
+
+</body>
+</html>
+
