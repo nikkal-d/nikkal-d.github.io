@@ -103,7 +103,21 @@ button:hover {
 <body>
 
 <header>
-  <h1>📚 Τα Photobooks μου</h1>
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <div class="logo">
+      <a href="index.html" style="text-decoration:none; color:inherit;">
+        📚 Photobook Studio
+      </a>
+    </div>
+
+    <nav class="main-nav">
+      <a href="index.html">Home</a>
+      <a href="photobook.html">Photobook</a>
+      <a href="duplicates.html">Find My Duplication</a>
+      <a href="projects.html" class="active">My Photobooks</a>
+    </nav>
+  </div>
+
   <div id="user-info">
     <span id="user-label">Φόρτωση...</span>
     <button id="logout-btn" style="display:none;">Αποσύνδεση</button>
