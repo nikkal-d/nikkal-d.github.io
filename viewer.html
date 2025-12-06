@@ -145,6 +145,31 @@ body {
   border-radius: 12px;
   overflow: hidden;
 }
+/* LIGHT THEME */
+.light {
+  --bg: #f3f4f6;
+  --fg: #1e293b;
+  --card-bg: rgba(255,255,255,0.7);
+  --border: rgba(0,0,0,0.15);
+  --accent: #2563eb;
+}
+
+/* DARK THEME (default) */
+.dark {
+  --bg: #0f172a;
+  --fg: #e2e8f0;
+  --card-bg: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.12);
+  --accent: #3b82f6;
+}
+
+body {
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+#flipbook {
+  transition: box-shadow 0.4s ease, background 0.4s ease;
+}
 
 
   
@@ -173,6 +198,8 @@ body {
     <span id="viewer-user-label">Guest</span>
     <button id="viewer-login-btn">Σύνδεση</button>
     <button id="viewer-logout-btn" style="display:none;">Αποσύνδεση</button>
+    <button id="themeToggleBtn">🌙</button>
+
   </div>
 </header>
 
