@@ -1,11 +1,10 @@
 /* ============================================================
-   PHOTObOOK VIEWER — PUBLIC / PRIVATE ACCESS SYSTEM
+   PHOTObook Viewer — Public / Private / Share
    ============================================================ */
 
 import {
   auth,
   db,
-  storage,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut
@@ -14,24 +13,46 @@ import {
 import {
   doc,
   getDoc,
-  query,
   collection,
+  query,
   where,
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-  ref,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-
-/* ============================================================
-   THEME SYSTEM (Light / Dark)
-   ============================================================ */
-
+/* ---------- DOM ---------- */
+const viewerUserLabel = document.getElementById("viewer-user-label");
+const loginBtn = document.getElementById("viewer-login-btn");
+const logoutBtn = document.getElementById("viewer-logout-btn");
 const themeToggleBtn = document.getElementById("themeToggleBtn");
 
+const loginModal = document.getElementById("loginModal");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+const loginCloseBtn = document.getElementById("loginCloseBtn");
+
+const viewerContainer = document.getElementById("viewerContainer");
+const flipbookEl = document.getElementById("flipbook");
+const pageIndicator = document.getElementById("pageIndicator");
+
+const privateMessage = document.getElementById("privateMessage");
+const notFoundMessage = document.getElementById("notFoundMessage");
+
+const prevPageBtn = document.getElementById("prevPageBtn");
+const nextPageBtn = document.getElementById("nextPageBtn");
+const downloadFlipbookBtn = document.getElementById("downloadFlipbookBtn");
+
+/* ---------- STATE ---------- */
+let MODE = "id";     // "id" or "share"
+let DOC_ID = null;
+let SHARE_ID = null;
+let BOOK_DATA = null;
+let PAGES = [];
+let CURRENT_INDEX = 0;
+
+/* ============================================================
+   THEME
+   ============================================================ */
 function applyTheme(theme) {
   document.body.classList.remove("light", "dark");
   document.body.classList.add(theme);
@@ -39,9 +60,7 @@ function applyTheme(theme) {
   themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
 }
 
-// Auto detect system theme if no preference saved
 const savedTheme = localStorage.getItem("viewer-theme");
-
 if (savedTheme) {
   applyTheme(savedTheme);
 } else {
@@ -54,72 +73,33 @@ themeToggleBtn.onclick = () => {
   applyTheme(newTheme);
 };
 
-
-/* -----------------------------
-   DOM ELEMENTS
------------------------------- */
-const viewerUserLabel = document.getElementById("viewer-user-label");
-const loginBtn = document.getElementById("viewer-login-btn");
-const logoutBtn = document.getElementById("viewer-logout-btn");
-
-const loginModal = document.getElementById("loginModal");
-const loginEmail = document.getElementById("loginEmail");
-const loginPassword = document.getElementById("loginPassword");
-const loginSubmitBtn = document.getElementById("loginSubmitBtn");
-
-const viewerContainer = document.getElementById("viewerContainer");
-const flipbookEl = document.getElementById("flipbook");
-
-const privateMessage = document.getElementById("privateMessage");
-const notFoundMessage = document.getElementById("notFoundMessage");
-
-const prevPageBtn = document.getElementById("prevPageBtn");
-const nextPageBtn = document.getElementById("nextPageBtn");
-
-/* -----------------------------
-   STATE
------------------------------- */
-
-let MODE = "id";        // "id" = owner mode, "share" = public mode
-let DOC_ID = null;      // Firestore doc id
-let SHARE_ID = null;    // share link id
-let BOOK_DATA = null;   // Firestore book data
-let PAGES = [];         // array of image URLs
-let CURRENT_INDEX = 0;  // flipbook pointer
-
-/* -----------------------------
-   PARSE URL PARAMETERS
------------------------------- */
+/* ============================================================
+   URL PARAMS
+   ============================================================ */
 const params = new URLSearchParams(location.search);
 
 if (params.has("id")) {
   MODE = "id";
   DOC_ID = params.get("id");
-} 
-else if (params.has("share")) {
+} else if (params.has("share")) {
   MODE = "share";
   SHARE_ID = params.get("share");
-} 
-else {
+} else {
   notFoundMessage.style.display = "block";
 }
 
-/* -----------------------------
-   LOGIN MODAL HANDLERS
------------------------------- */
-
-export function openLoginModal() {
+/* ============================================================
+   LOGIN MODAL
+   ============================================================ */
+function openLoginModal() {
   loginModal.style.display = "flex";
 }
-
-export function closeLoginModal() {
+function closeLoginModal() {
   loginModal.style.display = "none";
 }
 
-/* -----------------------------
-   LOGIN BUTTON
------------------------------- */
 loginBtn.onclick = () => openLoginModal();
+loginCloseBtn.onclick = () => closeLoginModal();
 
 logoutBtn.onclick = async () => {
   await signOut(auth);
@@ -128,20 +108,16 @@ logoutBtn.onclick = async () => {
 
 loginSubmitBtn.onclick = async () => {
   try {
-    await signInWithEmailAndPassword(
-      auth,
-      loginEmail.value,
-      loginPassword.value
-    );
+    await signInWithEmailAndPassword(auth, loginEmail.value, loginPassword.value);
     closeLoginModal();
   } catch (err) {
     alert("Σφάλμα σύνδεσης: " + err.message);
   }
 };
-/* ============================================================
-   FIRESTORE LOAD + ACCESS VALIDATION
-   ============================================================ */
 
+/* ============================================================
+   AUTH + LOAD BOOK
+   ============================================================ */
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     viewerUserLabel.textContent = user.email;
@@ -149,45 +125,33 @@ onAuthStateChanged(auth, async (user) => {
     logoutBtn.style.display = "inline-block";
   } else {
     viewerUserLabel.textContent = "Guest";
-    logoutBtn.style.display = "none";
     loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
   }
 
-  // Τώρα που ξέρουμε αν είναι συνδεδεμένος, συνεχίζουμε
-  loadPhotobook(user);
+  await loadPhotobook(user);
 });
-
 
 async function loadPhotobook(user) {
   try {
     let snap;
 
-    /* ----------------------------------------
-       1) SHARE MODE  —  viewer.html?share=xxxx
-       ---------------------------------------- */
     if (MODE === "share") {
       const q = query(
         collection(db, "photobooks"),
         where("shareId", "==", SHARE_ID)
       );
-
       const results = await getDocs(q);
-
       if (results.empty) {
         notFoundMessage.style.display = "block";
         return;
       }
-
       snap = results.docs[0];
-      DOC_ID = snap.id; // save docId internally
+      DOC_ID = snap.id;
     }
 
-    /* ----------------------------------------
-       2) OWNER MODE  —  viewer.html?id=xxxx
-       ---------------------------------------- */
     if (MODE === "id") {
       snap = await getDoc(doc(db, "photobooks", DOC_ID));
-
       if (!snap.exists()) {
         notFoundMessage.style.display = "block";
         return;
@@ -195,33 +159,28 @@ async function loadPhotobook(user) {
     }
 
     BOOK_DATA = snap.data();
-
-    /* ----------------------------------------
-       ACCESS CONTROL
-       ---------------------------------------- */
-
     const isPublic = BOOK_DATA.isPublic;
     const ownerId = BOOK_DATA.userId;
 
-    // share mode bypasses everything
+    // share mode → πάντα επιτρέπουμε
     if (MODE === "share") {
       initViewer();
       return;
     }
 
-    // If the photobook is public → always allow
+    // public book → επιτρέπεται σε όλους
     if (isPublic) {
       initViewer();
       return;
     }
 
-    // If private: only owner may enter
+    // private → μόνο owner
     if (user && user.uid === ownerId) {
       initViewer();
       return;
     }
 
-    // Otherwise: DENY
+    // αλλιώς → ιδιωτικό
     privateMessage.style.display = "block";
 
   } catch (err) {
@@ -231,183 +190,143 @@ async function loadPhotobook(user) {
 }
 
 /* ============================================================
-   INITIALIZE VIEWER AFTER ACCESS APPROVAL
+   VIEWER INIT
    ============================================================ */
-
-async function initViewer() {
-  // hide messages
+function initViewer() {
   notFoundMessage.style.display = "none";
   privateMessage.style.display = "none";
 
-  viewerContainer.style.display = "block";
-
-  // load pages
   PAGES = BOOK_DATA.pages || [];
-
   if (!PAGES.length) {
     notFoundMessage.style.display = "block";
     return;
   }
 
-  initFlipbook();
+  viewerContainer.style.display = "block";
+  renderPage(0);
 
-  // Button events
-prevPageBtn.onclick = () => $("#flipbook").turn("previous");
-nextPageBtn.onclick = () => $("#flipbook").turn("next");
+  prevPageBtn.onclick = () => changePage(-1);
+  nextPageBtn.onclick = () => changePage(1);
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") changePage(-1);
+    if (e.key === "ArrowRight") changePage(1);
+  });
+
+  downloadFlipbookBtn.onclick = downloadOfflineFlipbook;
 }
 
 /* ============================================================
-   RENDER SPECIFIC PAGE
+   PAGE RENDERING
    ============================================================ */
-
 function renderPage(index) {
   if (index < 0 || index >= PAGES.length) return;
-
   CURRENT_INDEX = index;
 
-  flipbookEl.innerHTML = `
-    <img src="${PAGES[index]}" 
-         style="max-width:90%; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.4);">
-    <div style="margin-top:10px; opacity:0.7;">
-      Σελίδα ${index + 1} από ${PAGES.length}
-    </div>
-  `;
+  flipbookEl.innerHTML = `<img src="${PAGES[index]}">`;
+  pageIndicator.textContent = `Σελίδα ${index + 1} από ${PAGES.length}`;
+}
+
+function changePage(delta) {
+  const nextIndex = CURRENT_INDEX + delta;
+  if (nextIndex < 0 || nextIndex >= PAGES.length) return;
+  renderPage(nextIndex);
 }
 
 /* ============================================================
-   TURN.JS FLIPBOOK INITIALIZATION
+   DOWNLOAD OFFLINE FLIPBOOK (.html)
    ============================================================ */
+function downloadOfflineFlipbook() {
+  const base64Pages = [...PAGES];
 
-function initFlipbook() {
-  flipbookEl.innerHTML = "";
-
-  // Add all pages
-  PAGES.forEach(url => {
-    const page = document.createElement("div");
-    page.className = "flip-page";
-    page.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;">`;
-    flipbookEl.appendChild(page);
-  });
-
-  // Initialize turn.js
-  $("#flipbook").turn({
-    width: 900,
-    height: 600,
-    autoCenter: true,
-    elevation: 50,
-    gradients: true,
-    duration: 800
-  });
-}
-
-
-/* ============================================================
-   CHANGE PAGE
-   ============================================================ */
-function changePage(direction) {
-  const newIndex = CURRENT_INDEX + direction;
-
-  if (newIndex < 0 || newIndex >= PAGES.length) return;
-
-  renderPage(newIndex);
-}
-
-/* ============================================================
-   PRELOAD IMAGES (optional performance trick)
-   ============================================================ */
-function preloadImages() {
-  PAGES.forEach(url => {
-    const img = new Image();
-    img.src = url;
-  });
-}
-
-/* ============================================================
-   DOWNLOAD OFFLINE FLIPBOOK (.HTML FILE)
-   ============================================================ */
-
-document.getElementById("downloadFlipbookBtn").onclick = async () => {
-  const base64Pages = [...PAGES]; // already base64 URLs (data URLs)
-
-  const flipHTML = `
+  const html = `
 <!DOCTYPE html>
-<html>
+<html lang="el">
 <head>
 <meta charset="UTF-8">
 <title>My Photobook</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {
   margin:0;
   background:#0f172a;
+  color:#e5e7eb;
+  font-family:system-ui,sans-serif;
   display:flex;
-  justify-content:center;
-  padding-top:40px;
-  color:white;
-  font-family:sans-serif;
+  flex-direction:column;
+  align-items:center;
+  padding-top:30px;
 }
-
-#flipbook {
-  width:900px;
-  height:600px;
-  box-shadow:0 0 30px rgba(0,0,0,0.5);
-  border-radius:12px;
+#page {
+  max-width:900px;
+  max-height:600px;
+  box-shadow:0 0 24px rgba(0,0,0,0.6);
+  border-radius:16px;
+  overflow:hidden;
 }
-
-.flip-page img {
+#page img {
   width:100%;
   height:100%;
-  object-fit:cover;
-  border-radius:12px;
+  object-fit:contain;
+}
+.controls {
+  margin-top:12px;
+  display:flex;
+  gap:8px;
+}
+button {
+  padding:8px 16px;
+  border-radius:999px;
+  border:none;
+  cursor:pointer;
+  background:#1f2937;
+  color:#e5e7eb;
+}
+button:hover { background:#374151; }
+#indicator {
+  margin-top:8px;
+  opacity:0.8;
 }
 </style>
 </head>
-
 <body>
-
-<div id="flipbook"></div>
-
+<h2>Photobook (Offline)</h2>
+<div id="page"></div>
+<div id="indicator"></div>
+<div class="controls">
+  <button onclick="prevPage()">⬅ Προηγούμενη</button>
+  <button onclick="nextPage()">Επόμενη ➡</button>
+</div>
 <script>
 const pages = ${JSON.stringify(base64Pages)};
-
-function initFlip() {
-  const fb = document.getElementById("flipbook");
-
-  pages.forEach(url => {
-    const div = document.createElement("div");
-    div.className = "flip-page";
-    div.innerHTML = '<img src="' + url + '">';
-    fb.appendChild(div);
-  });
-
-  $("#flipbook").turn({
-    width:900,
-    height:600,
-    autoCenter:true,
-    elevation:50,
-    gradients:true,
-    duration:800
-  });
+let index = 0;
+function render(){
+  const box = document.getElementById("page");
+  const ind = document.getElementById("indicator");
+  box.innerHTML = '<img src="'+pages[index]+'">';
+  ind.textContent = "Σελίδα " + (index+1) + " από " + pages.length;
 }
-
-window.onload = initFlip;
+function prevPage(){ if(index>0){index--;render();} }
+function nextPage(){ if(index<pages.length-1){index++;render();} }
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowLeft") prevPage();
+  if(e.key==="ArrowRight") nextPage();
+});
+window.onload = render;
 </script>
 </body>
 </html>
 `;
 
-  // Create file:
-  const blob = new Blob([flipHTML], { type: "text/html" });
+  const blob = new Blob([html], { type: "text/html" });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = "photobook-flipbook.html";
+  a.download = "photobook-offline.html";
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 
   URL.revokeObjectURL(url);
-};
-
+}
