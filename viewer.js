@@ -25,6 +25,36 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+
+/* ============================================================
+   THEME SYSTEM (Light / Dark)
+   ============================================================ */
+
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+
+function applyTheme(theme) {
+  document.body.classList.remove("light", "dark");
+  document.body.classList.add(theme);
+  localStorage.setItem("viewer-theme", theme);
+  themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
+}
+
+// Auto detect system theme if no preference saved
+const savedTheme = localStorage.getItem("viewer-theme");
+
+if (savedTheme) {
+  applyTheme(savedTheme);
+} else {
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  applyTheme(prefersDark ? "dark" : "light");
+}
+
+themeToggleBtn.onclick = () => {
+  const newTheme = document.body.classList.contains("dark") ? "light" : "dark";
+  applyTheme(newTheme);
+};
+
+
 /* -----------------------------
    DOM ELEMENTS
 ------------------------------ */
