@@ -30,7 +30,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============================================================
-   PDF EXPORT
+   CLOUD EXPORT (Firebase Storage + Firestore)
    ============================================================ */
 
 async function handleExportCloud() {
