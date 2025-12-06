@@ -1,87 +1,67 @@
-/* ============================================================
-   PHOTObook Studio — AUTH MODULE
-   Firebase Login / Logout / Auto-load Draft
-   ============================================================ */
+// js/auth.js
+// Απλό auth για το βασικό header (photobook, projects κλπ)
 
 import {
   auth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  signOut
-} from "./firebase-init.js";
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile
+} from "../firebase-init.js";
 
-import { loadDraft, saveDraft } from "./core.js";
-
-/* ------------------------------------------------------------
-   INIT AUTH LISTENERS
-   ------------------------------------------------------------ */
 window.addEventListener("DOMContentLoaded", () => {
+  const userLabel = document.getElementById("user-label");
   const loginBtn = document.getElementById("login-btn");
   const logoutBtn = document.getElementById("logout-btn");
 
-  loginBtn.onclick = promptLogin;
-  logoutBtn.onclick = executeLogout;
+  if (!userLabel) {
+    // Δεν είμαστε σε σελίδα με αυτό το header, απλά αγνόησε
+    return;
+  }
 
   onAuthStateChanged(auth, (user) => {
-    updateUserUi(user);
-    setTimeout(loadDraft, 500); // load correct draft per user
-  });
-});
-
-/* ------------------------------------------------------------
-   LOGIN / REGISTER PROMPTS
-   ------------------------------------------------------------ */
-async function promptLogin() {
-  const email = prompt("Email:");
-  if (!email) return;
-
-  const pass = prompt("Κωδικός:");
-  if (!pass) return;
-
-  try {
-    await signInWithEmailAndPassword(auth, email, pass);
-  } catch (err) {
-    if (err.code === "auth/user-not-found") {
-      const ok = confirm("Ο χρήστης δεν υπάρχει. Θέλεις να δημιουργήσω νέο λογαριασμό;");
-      if (ok) {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(cred.user, {
-          displayName: email.split("@")[0]
-        });
-        alert("Ο λογαριασμός δημιουργήθηκε.");
-      }
+    if (user) {
+      userLabel.textContent = user.displayName || user.email;
+      if (loginBtn) loginBtn.style.display = "none";
+      if (logoutBtn) logoutBtn.style.display = "inline-flex";
     } else {
-      alert("Σφάλμα: " + err.message);
+      userLabel.textContent = "Επισκέπτης";
+      if (loginBtn) loginBtn.style.display = "inline-flex";
+      if (logoutBtn) logoutBtn.style.display = "none";
     }
+  });
+
+  if (loginBtn) {
+    loginBtn.onclick = async () => {
+      const email = prompt("Email:");
+      if (!email) return;
+      const pass = prompt("Κωδικός:");
+      if (!pass) return;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        if (err.code === "auth/user-not-found") {
+          const ok = confirm("Ο χρήστης δεν υπάρχει. Να δημιουργηθεί λογαριασμός;");
+          if (ok) {
+            const cred = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(cred.user, {
+              displayName: email.split("@")[0]
+            });
+            alert("Ο λογαριασμός δημιουργήθηκε.");
+          }
+        } else {
+          alert("Σφάλμα: " + err.message);
+        }
+      }
+    };
   }
-}
 
-/* ------------------------------------------------------------
-   LOGOUT
-   ------------------------------------------------------------ */
-async function executeLogout() {
-  await signOut(auth);
-  saveDraft();
-  alert("Έγινε αποσύνδεση.");
-}
-
-/* ------------------------------------------------------------
-   UPDATE UI LABELS
-   ------------------------------------------------------------ */
-function updateUserUi(user) {
-  const label = document.getElementById("user-label");
-  const loginBtn = document.getElementById("login-btn");
-  const logoutBtn = document.getElementById("logout-btn");
-
-  if (user) {
-    label.textContent = user.displayName || user.email;
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-flex";
-  } else {
-    label.textContent = "Επισκέπτης";
-    loginBtn.style.display = "inline-flex";
-    logoutBtn.style.display = "none";
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await signOut(auth);
+      alert("Αποσυνδέθηκες.");
+    };
   }
-}
-
-export { updateUserUi };
+});
