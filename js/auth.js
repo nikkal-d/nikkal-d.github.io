@@ -3,7 +3,13 @@
    Firebase Login / Logout / Auto-load Draft
    ============================================================ */
 
-import { auth } from "../firebase-init.js";
+import {
+  auth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut
+} from "./firebase-init.js";
+
 import { loadDraft, saveDraft } from "./core.js";
 
 /* ------------------------------------------------------------
