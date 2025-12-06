@@ -1,7 +1,7 @@
 // --- SERVICE WORKER FOR GITHUB PAGES ---
 // Lightweight cache for fast loading (no interference with JS modules)
 
-const CACHE_NAME = "photobook-cache-v1";
+const CACHE_NAME = "photobook-cache-v2";
 
 const ASSETS = [
   "index.html",
@@ -30,3 +30,14 @@ self.addEventListener("fetch", (event) => {
     fetch(request).catch(() => caches.match(request))
   );
 });
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((key) => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
+    )
+  );
+});
+
