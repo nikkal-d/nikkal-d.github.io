@@ -1,9 +1,9 @@
 // firebase-init.js
-// ES Modules Firebase v10 — fully compatible with GitHub Pages
+// Firebase v10 ES Modules config – root file
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-  getAuth, 
+import {
+  getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -11,15 +11,11 @@ import {
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-import { 
-  getFirestore
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { 
-  getStorage
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// Your Firebase configuration
+// 🔑 ΔΙΚΟ ΣΟΥ CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBGt4Lsvk0ouISEtNbDbFirdY-XqmbHeSo",
   authDomain: "photobook-studio-b1064.firebaseapp.com",
@@ -30,13 +26,11 @@ const firebaseConfig = {
   measurementId: "G-75L68JM346"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Export για όλα τα modules
 export {
   app,
   auth,
