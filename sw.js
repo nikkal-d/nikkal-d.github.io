@@ -1,43 +1,41 @@
-// --- SERVICE WORKER FOR GITHUB PAGES ---
-// Lightweight cache for fast loading (no interference with JS modules)
+// --- CLEAN & SAFE SERVICE WORKER FOR GITHUB PAGES ---
+// No JS/HTML caching (prevents stale code problems)
+// Only cache static assets like images/fonts/icons
 
-const CACHE_NAME = "photobook-cache-v2";
+const CACHE_NAME = "photobook-static-v1";
 
-const ASSETS = [
-  "index.html",
-  "photobook.html",
-  "projects.html",
-  "templates.html",
-  "stickers.html",
-  "viewer.html",
-  "duplicates.html",
-  "firebase-init.js",
-  "saveToFirebase.js",
-  "loadFromFirebase.js",
+const STATIC_ASSETS = [
+  "favicon.ico",
+  "icon-192.png",
+  "icon-512.png",
+  "logo.png"
 ];
 
-self.addEventListener("install", (event) => {
+// Install
+self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).catch(() => {})
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
-// Network-first → fallback to cache
-self.addEventListener("fetch", (event) => {
-  const request = event.request;
+// Fetch: network-first for everything
+self.addEventListener("fetch", event => {
   event.respondWith(
-    fetch(request).catch(() => caches.match(request))
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
 
-self.addEventListener("activate", (event) => {
+// Activate: delete old caches
+self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((key) => {
-        if (key !== CACHE_NAME) return caches.delete(key);
-      }))
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      )
     )
   );
+  self.clients.claim();
 });
-
