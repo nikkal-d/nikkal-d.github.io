@@ -293,3 +293,91 @@ function preloadImages() {
   });
 }
 
+/* ============================================================
+   DOWNLOAD OFFLINE FLIPBOOK (.HTML FILE)
+   ============================================================ */
+
+document.getElementById("downloadFlipbookBtn").onclick = async () => {
+  const base64Pages = [...PAGES]; // already base64 URLs (data URLs)
+
+  const flipHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>My Photobook</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
+
+<style>
+body {
+  margin:0;
+  background:#0f172a;
+  display:flex;
+  justify-content:center;
+  padding-top:40px;
+  color:white;
+  font-family:sans-serif;
+}
+
+#flipbook {
+  width:900px;
+  height:600px;
+  box-shadow:0 0 30px rgba(0,0,0,0.5);
+  border-radius:12px;
+}
+
+.flip-page img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="flipbook"></div>
+
+<script>
+const pages = ${JSON.stringify(base64Pages)};
+
+function initFlip() {
+  const fb = document.getElementById("flipbook");
+
+  pages.forEach(url => {
+    const div = document.createElement("div");
+    div.className = "flip-page";
+    div.innerHTML = '<img src="' + url + '">';
+    fb.appendChild(div);
+  });
+
+  $("#flipbook").turn({
+    width:900,
+    height:600,
+    autoCenter:true,
+    elevation:50,
+    gradients:true,
+    duration:800
+  });
+}
+
+window.onload = initFlip;
+</script>
+</body>
+</html>
+`;
+
+  // Create file:
+  const blob = new Blob([flipHTML], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "photobook-flipbook.html";
+  a.click();
+
+  URL.revokeObjectURL(url);
+};
+
