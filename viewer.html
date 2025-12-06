@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Photobook Viewer</title>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
+
 <!-- QR LIB -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
 
@@ -197,7 +199,7 @@ body {
         MAIN VIEWER AREA
 ============================= -->
 <div id="viewerContainer" style="display:none; text-align:center; margin-top:40px;">
-  <div id="flipbook" style="display:inline-block;">
+  <div id="flipbook" style="width:900px; height:600px; margin:auto;">
     <!-- Οι σελίδες φορτώνονται μέσω JS -->
   </div>
 
