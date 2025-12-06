@@ -219,11 +219,12 @@ async function initViewer() {
     return;
   }
 
-  renderPage(0); // start from page 0
+  initFlipbook();
 
   // Button events
-  prevPageBtn.onclick = () => changePage(-1);
-  nextPageBtn.onclick = () => changePage(1);
+prevPageBtn.onclick = () => $("#flipbook").turn("previous");
+nextPageBtn.onclick = () => $("#flipbook").turn("next");
+
 }
 
 /* ============================================================
@@ -243,6 +244,33 @@ function renderPage(index) {
     </div>
   `;
 }
+
+/* ============================================================
+   TURN.JS FLIPBOOK INITIALIZATION
+   ============================================================ */
+
+function initFlipbook() {
+  flipbookEl.innerHTML = "";
+
+  // Add all pages
+  PAGES.forEach(url => {
+    const page = document.createElement("div");
+    page.className = "flip-page";
+    page.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;">`;
+    flipbookEl.appendChild(page);
+  });
+
+  // Initialize turn.js
+  $("#flipbook").turn({
+    width: 900,
+    height: 600,
+    autoCenter: true,
+    elevation: 50,
+    gradients: true,
+    duration: 800
+  });
+}
+
 
 /* ============================================================
    CHANGE PAGE
