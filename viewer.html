@@ -2,170 +2,27 @@
 <html lang="el">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Photobook Viewer</title>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
-
-<!-- QR LIB -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
-
-<!-- Firebase -->
-<script type="module" src="firebase-init.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 :root {
   --bg: #0f172a;
   --fg: #e2e8f0;
-  --accent: #3b82f6;
   --card-bg: rgba(255,255,255,0.06);
   --border: rgba(255,255,255,0.12);
+  --accent: #3b82f6;
 }
 
-  #flipbook {
-  background: var(--bg);
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
-}
-
-.flip-page {
-  background: var(--bg);
-}
-
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: "Inter", sans-serif;
-}
-
-/* ---------- TOP NAV ---------- */
-#topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 18px;
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-}
-
-.logo a {
-  color: var(--fg);
-  text-decoration: none;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.main-nav {
-  display: flex;
-  gap: 0.8rem;
-}
-
-.main-nav a {
-  color: var(--fg);
-  text-decoration: none;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid transparent;
-}
-
-.main-nav a.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: white;
-}
-
-.main-nav a:hover {
-  background: rgba(255,255,255,0.08);
-}
-
-.top-controls button {
-  margin-left: 8px;
-  padding: 5px 12px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* ---------- LOGIN MODAL ---------- */
-
-#loginModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(4px);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.login-card {
-  width: 340px;
-  background: rgba(255,255,255,0.08);
-  padding: 22px;
-  border-radius: 16px;
-  box-shadow: 0 0 24px rgba(0,0,0,0.4);
-  border: 1px solid var(--border);
-  text-align: center;
-}
-
-.login-card h2 {
-  margin: 0 0 12px;
-}
-
-.login-card input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  margin-bottom: 12px;
-  background: rgba(255,255,255,0.18);
-  color: white;
-}
-
-.login-card button {
-  width: 100%;
-  padding: 10px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 6px;
-}
-
-.login-card small {
-  display: block;
-  opacity: 0.7;
-  margin-top: 10px;
-}
-
-#flipbook {
-  box-shadow: 0 0 30px rgba(0,0,0,0.5);
-  border-radius: 12px;
-  background: #111827;
-}
-
-.flip-page {
-  background: #111827;
-  border-radius: 12px;
-  overflow: hidden;
-}
-/* LIGHT THEME */
-.light {
+/* Light / Dark classes */
+body.light {
   --bg: #f3f4f6;
   --fg: #1e293b;
-  --card-bg: rgba(255,255,255,0.7);
-  --border: rgba(0,0,0,0.15);
+  --card-bg: rgba(255,255,255,0.9);
+  --border: rgba(0,0,0,0.12);
   --accent: #2563eb;
 }
-
-/* DARK THEME (default) */
-.dark {
+body.dark {
   --bg: #0f172a;
   --fg: #e2e8f0;
   --card-bg: rgba(255,255,255,0.06);
@@ -174,28 +31,188 @@ body {
 }
 
 body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Poppins", sans-serif;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-#flipbook {
-  transition: box-shadow 0.4s ease, background 0.4s ease;
+/* Topbar */
+#topbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 16px;
+  background:rgba(15,23,42,0.9);
+  border-bottom:1px solid var(--border);
 }
 
+.logo a {
+  color:var(--fg);
+  text-decoration:none;
+  font-weight:600;
+}
 
-  
+.main-nav {
+  display:flex;
+  gap:0.6rem;
+}
+
+.main-nav a {
+  color:var(--fg);
+  text-decoration:none;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid transparent;
+  font-size:0.9rem;
+}
+
+.main-nav a.active {
+  background:var(--accent);
+  border-color:var(--accent);
+  color:white;
+}
+
+.main-nav a:hover {
+  background:rgba(148,163,184,0.2);
+}
+
+.top-controls {
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+}
+.top-controls button {
+  padding:4px 10px;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+  background:var(--accent);
+  color:white;
+}
+#themeToggleBtn {
+  background:transparent;
+  border:1px solid var(--border);
+}
+
+/* Alerts */
+.viewer-alert {
+  max-width:900px;
+  margin:20px auto;
+  padding:16px;
+  border-radius:12px;
+  text-align:center;
+  font-size:1rem;
+}
+#privateMessage {
+  display:none;
+  background:#fee2e2;
+  color:#b91c1c;
+}
+#notFoundMessage {
+  display:none;
+  background:#fef3c7;
+  color:#92400e;
+}
+
+/* Viewer container */
+#viewerContainer {
+  display:none;
+  text-align:center;
+  margin-top:30px;
+}
+#flipbook {
+  max-width:900px;
+  max-height:600px;
+  margin:0 auto;
+  box-shadow:0 0 24px rgba(0,0,0,0.6);
+  border-radius:16px;
+  overflow:hidden;
+  background:var(--card-bg);
+}
+#flipbook img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+#pageIndicator {
+  margin-top:10px;
+  opacity:0.8;
+}
+
+/* Controls */
+.viewer-controls {
+  margin-top:14px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+}
+.viewer-controls button {
+  padding:8px 14px;
+  border-radius:999px;
+  border:none;
+  cursor:pointer;
+  background:#1f2937;
+  color:#e5e7eb;
+}
+.viewer-controls button:hover { background:#374151; }
+
+/* Login Modal */
+#loginModal {
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(6px);
+  z-index:1000;
+}
+.login-card {
+  width:320px;
+  padding:20px;
+  border-radius:16px;
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  text-align:center;
+}
+.login-card h2 {
+  margin-top:0;
+  margin-bottom:12px;
+}
+.login-card input {
+  width:100%;
+  margin-bottom:10px;
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  background:rgba(148,163,184,0.25);
+  color:var(--fg);
+}
+.login-card button {
+  width:100%;
+  padding:9px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  background:var(--accent);
+  color:white;
+  margin-top:4px;
+}
+.login-card small {
+  display:block;
+  margin-top:10px;
+  opacity:0.8;
+}
 </style>
 </head>
+<body class="dark">
 
-  <body>
-
-<!-- ============================
-        TOP NAVIGATION
-============================= -->
 <header id="topbar">
   <div class="logo">
     <a href="index.html">📘 Photobook Studio</a>
   </div>
-
   <nav class="main-nav">
     <a href="index.html">Home</a>
     <a href="photobook.html">Photobook</a>
@@ -203,100 +220,45 @@ body {
     <a href="projects.html">My Photobooks</a>
     <a href="viewer.html" class="active">Viewer</a>
   </nav>
-
   <div class="top-controls">
     <span id="viewer-user-label">Guest</span>
     <button id="viewer-login-btn">Σύνδεση</button>
     <button id="viewer-logout-btn" style="display:none;">Αποσύνδεση</button>
     <button id="themeToggleBtn">🌙</button>
-
   </div>
 </header>
 
-
-
-<!-- ============================
-        ERROR / STATUS MESSAGES
-============================= -->
-<div id="privateMessage" style="
-  display:none;
-  text-align:center;
-  padding: 40px;
-  font-size: 1.2rem;
-">
-  🔒 Αυτό το photobook είναι ιδιωτικό.
-  <br><br>
-  <button onclick="openLoginModal()" style="
-      padding:10px 20px;
-      border:none;
-      border-radius:8px;
-      background:#3b82f6;
-      color:white;
-      cursor:pointer;
-  ">Σύνδεση</button>
+<div id="privateMessage" class="viewer-alert">
+  🔒 Αυτό το photobook είναι ιδιωτικό. Πρέπει να είσαι ο ιδιοκτήτης για να το δεις.
 </div>
 
-<div id="notFoundMessage" style="
-  display:none;
-  text-align:center;
-  padding:40px;
-  font-size:1.2rem;
-">
+<div id="notFoundMessage" class="viewer-alert">
   ❌ Το photobook δεν βρέθηκε ή έχει διαγραφεί.
 </div>
 
+<div id="viewerContainer">
+  <div id="flipbook"></div>
+  <div id="pageIndicator"></div>
 
-
-<!-- ============================
-        MAIN VIEWER AREA
-============================= -->
-<div id="viewerContainer" style="display:none; text-align:center; margin-top:40px;">
-  <div id="flipbook" style="width:900px; height:600px; margin:auto;">
-    <!-- Οι σελίδες φορτώνονται μέσω JS -->
+  <div class="viewer-controls">
+    <button id="prevPageBtn">⬅ Προηγούμενη</button>
+    <button id="nextPageBtn">Επόμενη ➡</button>
+    <button id="downloadFlipbookBtn">⬇️ Download Flipbook (HTML)</button>
   </div>
-
-  <br><br>
-
-  <button id="prevPageBtn" style="padding:10px 20px;">⬅ Προηγούμενη</button>
-  <button id="nextPageBtn" style="padding:10px 20px;">Επόμενη ➡</button>
-  <button id="downloadFlipbookBtn" style="padding:10px 20px; margin-top:20px;">
-  ⬇️ Download Flipbook (HTML)
-</button>
-
 </div>
 
-
-
-<!-- ============================
-        LOGIN MODAL
-============================= -->
+<!-- Login Modal -->
 <div id="loginModal">
   <div class="login-card">
     <h2>Σύνδεση</h2>
-
     <input id="loginEmail" type="email" placeholder="Email">
     <input id="loginPassword" type="password" placeholder="Κωδικός">
-
     <button id="loginSubmitBtn">Σύνδεση</button>
-
-    <small>Δεν έχεις λογαριασμό; Θα προστεθεί Sign Up.</small>
-
-    <button onclick="closeLoginModal()" style="
-      margin-top:16px; background:#ef4444;
-    ">Κλείσιμο</button>
+    <small>Δεν έχεις λογαριασμό; Μπορείς να κάνεις register μέσα από το editor.</small>
+    <button id="loginCloseBtn" style="margin-top:10px; background:#ef4444;">Κλείσιμο</button>
   </div>
 </div>
 
-
-
-<!-- ============================
-        VIEWER JS
-============================= -->
-<script type="module" src="firebase-init.js"></script>
-<script type="module" src="auth.js"></script>
 <script type="module" src="viewer.js"></script>
-
-
 </body>
 </html>
-
