@@ -1,12 +1,9 @@
 // js/projects.js
-// Διαχείριση λίστας Photobooks (My Photobooks)
+// ---------------------------------------------
+// Λίστα Photobooks του χρήστη (Projects Page)
+// ---------------------------------------------
 
-import {
-  auth,
-  db,
-  onAuthStateChanged
-} from "../firebase-init.js";
-
+import { auth, db } from "../firebase-init.js";
 import {
   collection,
   query,
@@ -22,9 +19,7 @@ import {
 const gridEl = document.getElementById("projects-grid");
 const emptyStateEl = document.getElementById("projects-empty");
 
-// ----------------------------------------------
-// Helper: format ημερομηνίας
-// ----------------------------------------------
+// Βοηθητικό: format ημερομηνίας
 function formatDate(ts) {
   if (!ts) return "";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -35,14 +30,16 @@ function formatDate(ts) {
   });
 }
 
-// ----------------------------------------------
-// Φόρτωση βιβλίων χρήστη
-// ----------------------------------------------
+// ---------------------------------------------
+// Φόρτωση βιβλίων για συνδεδεμένο χρήστη
+// ---------------------------------------------
 async function loadUserBooks(user) {
   if (!gridEl) return;
 
   gridEl.innerHTML = "";
-  if (emptyStateEl) emptyStateEl.style.display = "none";
+  if (emptyStateEl) {
+    emptyStateEl.style.display = "none";
+  }
 
   if (!user) {
     if (emptyStateEl) {
@@ -72,6 +69,7 @@ async function loadUserBooks(user) {
       const data = docSnap.data();
       addBookCard(docSnap.id, data);
     });
+
   } catch (err) {
     console.error("Σφάλμα φόρτωσης βιβλίων:", err);
     if (emptyStateEl) {
@@ -81,9 +79,9 @@ async function loadUserBooks(user) {
   }
 }
 
-// ----------------------------------------------
-// Δημιουργία κάρτας Photobook
-// ----------------------------------------------
+// ---------------------------------------------
+// Δημιουργία κάρτας ενός Photobook
+// ---------------------------------------------
 function addBookCard(docId, book) {
   const card = document.createElement("div");
   card.className = "project-card";
@@ -112,9 +110,9 @@ function addBookCard(docId, book) {
         <button class="action-btn view-btn">👁 Προβολή</button>
         <button class="action-btn rename-btn">✏️ Μετονομασία</button>
         <button class="action-btn duplicate-btn">📄 Αντιγραφή</button>
-        <button class="action-btn toggle-btn">${
-          isPublic ? "🔒 Κάντο ιδιωτικό" : "🌐 Κάντο δημόσιο"
-        }</button>
+        <button class="action-btn toggle-btn">
+          ${isPublic ? "🔒 Κάντο ιδιωτικό" : "🌐 Κάντο δημόσιο"}
+        </button>
         <button class="action-btn share-btn">🔗 Αντιγραφή link</button>
         <button class="action-btn delete-btn">🗑 Διαγραφή</button>
       </div>
@@ -160,9 +158,9 @@ function addBookCard(docId, book) {
   gridEl.appendChild(card);
 }
 
-// ----------------------------------------------
-// Μετονομασία
-// ----------------------------------------------
+// ---------------------------------------------
+// Μετονομασία βιβλίου
+// ---------------------------------------------
 async function renamePhotobook(docId, book) {
   const newTitle = prompt("Νέος τίτλος:", book.title || "");
   if (newTitle === null) return;
@@ -179,9 +177,9 @@ async function renamePhotobook(docId, book) {
   }
 }
 
-// ----------------------------------------------
-// Αντιγραφή (duplicate) — απλό αντίγραφο Firestore
-// ----------------------------------------------
+// ---------------------------------------------
+// Αντιγραφή βιβλίου (Firestore-level copy)
+// ---------------------------------------------
 async function duplicatePhotobook(docId, book) {
   const ok = confirm("Θέλεις σίγουρα να δημιουργηθεί αντίγραφο αυτού του Photobook;");
   if (!ok) return;
@@ -205,20 +203,15 @@ async function duplicatePhotobook(docId, book) {
   }
 }
 
-// ----------------------------------------------
+// ---------------------------------------------
 // Δημόσιο / Ιδιωτικό
-// ----------------------------------------------
+// ---------------------------------------------
 async function togglePublic(docId, book, toggleBtn) {
   const newPublicState = !book.isPublic;
   let newShareId = book.shareId || "";
 
   if (newPublicState && !newShareId) {
-    // αν γίνεται δημόσιο και δεν έχει shareId → φτιάχνουμε ένα
     newShareId = crypto.randomUUID();
-  }
-  if (!newPublicState) {
-    // αν γίνεται ιδιωτικό → προαιρετικά μπορούμε να σβήσουμε το shareId
-    // αλλά το κρατάμε για μελλοντική χρήση.
   }
 
   try {
@@ -236,20 +229,23 @@ async function togglePublic(docId, book, toggleBtn) {
         : "🌐 Κάντο δημόσιο";
     }
 
-    alert(newPublicState ? "Το Photobook είναι πλέον δημόσιο." : "Το Photobook είναι πλέον ιδιωτικό.");
+    alert(
+      newPublicState
+        ? "Το Photobook είναι πλέον δημόσιο."
+        : "Το Photobook είναι πλέον ιδιωτικό."
+    );
   } catch (err) {
     console.error(err);
     alert("Αποτυχία ενημέρωσης κατάστασης δημοσίευσης.");
   }
 }
 
-// ----------------------------------------------
+// ---------------------------------------------
 // Αντιγραφή link κοινοποίησης
-// ----------------------------------------------
+// ---------------------------------------------
 async function sharePhotobook(docId, book) {
   let shareId = book.shareId;
 
-  // αν δεν υπάρχει shareId, τον δημιουργούμε (και κρατάμε public)
   if (!shareId) {
     shareId = crypto.randomUUID();
     try {
@@ -271,14 +267,14 @@ async function sharePhotobook(docId, book) {
   try {
     await navigator.clipboard.writeText(link);
     alert("Το link αντιγράφηκε στο clipboard:\n" + link);
-  } catch {
+  } catch (e) {
     prompt("Αντέγραψε το link:", link);
   }
 }
 
-// ----------------------------------------------
-// Διαγραφή
-// ----------------------------------------------
+// ---------------------------------------------
+// Διαγραφή βιβλίου
+// ---------------------------------------------
 async function deletePhotobook(docId, cardEl) {
   const ok = confirm("Οριστική διαγραφή αυτού του Photobook;");
   if (!ok) return;
@@ -295,9 +291,9 @@ async function deletePhotobook(docId, cardEl) {
   }
 }
 
-// ----------------------------------------------
-// Αρχικοποίηση (ακροατής auth)
-// ----------------------------------------------
+// ---------------------------------------------
+// Αρχικοποίηση: ακροατής auth
+// ---------------------------------------------
 onAuthStateChanged(auth, (user) => {
   loadUserBooks(user);
 });
