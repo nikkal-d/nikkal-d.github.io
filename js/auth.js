@@ -1,67 +1,99 @@
-// js/auth.js
-// Απλό auth για το βασικό header (photobook, projects κλπ)
-
+// ---------------------------------------------
+// AUTH SYSTEM (Firebase Modular v10)
+// ---------------------------------------------
+import { auth } from "../firebase-init.js";
 import {
-  auth,
-  onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  updateProfile
-} from "../firebase-init.js";
+  onAuthStateChanged,
+  updateProfile,
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-window.addEventListener("DOMContentLoaded", () => {
-  const userLabel = document.getElementById("user-label");
-  const loginBtn = document.getElementById("login-btn");
-  const logoutBtn = document.getElementById("logout-btn");
+// DOM Elements
+const loginModal = document.getElementById("loginModal");
+const registerModal = document.getElementById("registerModal");
+const openLoginBtn = document.getElementById("openLoginBtn");
+const openRegisterBtn = document.getElementById("openRegisterBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const userInfo = document.getElementById("userInfo");
 
-  if (!userLabel) {
-    // Δεν είμαστε σε σελίδα με αυτό το header, απλά αγνόησε
-    return;
+// ---------------------
+// Open / Close Modals
+// ---------------------
+function showModal(modal) {
+  modal.classList.add("visible");
+}
+function hideModal(modal) {
+  modal.classList.remove("visible");
+}
+
+document.querySelectorAll(".close-modal").forEach(btn =>
+  btn.addEventListener("click", () => {
+    hideModal(loginModal);
+    hideModal(registerModal);
+  })
+);
+
+// ---------------------
+// LOGIN
+// ---------------------
+document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = e.target.email.value.trim();
+  const password = e.target.password.value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    hideModal(loginModal);
+  } catch (err) {
+    alert("Σφάλμα σύνδεσης: " + err.message);
   }
+});
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      userLabel.textContent = user.displayName || user.email;
-      if (loginBtn) loginBtn.style.display = "none";
-      if (logoutBtn) logoutBtn.style.display = "inline-flex";
-    } else {
-      userLabel.textContent = "Επισκέπτης";
-      if (loginBtn) loginBtn.style.display = "inline-flex";
-      if (logoutBtn) logoutBtn.style.display = "none";
-    }
-  });
+// ---------------------
+// REGISTER
+// ---------------------
+document.getElementById("registerForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = e.target.email.value.trim();
+  const password = e.target.password.value;
+  const name = e.target.name.value.trim();
 
-  if (loginBtn) {
-    loginBtn.onclick = async () => {
-      const email = prompt("Email:");
-      if (!email) return;
-      const pass = prompt("Κωδικός:");
-      if (!pass) return;
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName: name });
 
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-      } catch (err) {
-        if (err.code === "auth/user-not-found") {
-          const ok = confirm("Ο χρήστης δεν υπάρχει. Να δημιουργηθεί λογαριασμός;");
-          if (ok) {
-            const cred = await createUserWithEmailAndPassword(auth, email, pass);
-            await updateProfile(cred.user, {
-              displayName: email.split("@")[0]
-            });
-            alert("Ο λογαριασμός δημιουργήθηκε.");
-          }
-        } else {
-          alert("Σφάλμα: " + err.message);
-        }
-      }
-    };
+    hideModal(registerModal);
+  } catch (err) {
+    alert("Σφάλμα εγγραφής: " + err.message);
   }
+});
 
-  if (logoutBtn) {
-    logoutBtn.onclick = async () => {
-      await signOut(auth);
-      alert("Αποσυνδέθηκες.");
-    };
+// ---------------------
+// LOGOUT
+// ---------------------
+logoutBtn?.addEventListener("click", async () => {
+  await signOut(auth);
+});
+
+// ---------------------
+// AUTH STATE CHANGES
+// ---------------------
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // Logged in
+    userInfo.innerHTML = `
+      <div class="user-badge">
+        <span>${user.displayName || user.email}</span>
+      </div>
+    `;
+    logoutBtn.style.display = "inline-flex";
+    openLoginBtn.style.display = "none";
+  } else {
+    // Logged out
+    userInfo.innerHTML = "";
+    logoutBtn.style.display = "none";
+    openLoginBtn.style.display = "inline-flex";
   }
 });
