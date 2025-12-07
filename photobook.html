@@ -145,20 +145,19 @@
 </div>
 
         <!-- STICKERS -->
-        <div class="tab" id="tab-stickers">
-          <select id="sticker-category">
-            <option value="emoji">Emoji</option>
-            <option value="shapes">Shapes</option>
-            <option value="doodles">Doodles</option>
-            <option value="frames">Frames</option>
-          </select>
+        <div id="stickersPanel" class="panel hidden">
+  <h3>✨ Stickers</h3>
 
-          <div id="stickers-box"></div>
+  <select id="stickerCategory">
+    <option value="emojis">Emojis</option>
+    <option value="shapes">Shapes</option>
+    <option value="frames">Frames</option>
+    <option value="fun">Fun</option>
+  </select>
 
-          <button id="stickerOutlineBtn">Outline</button>
-          <button id="stickerShadowBtn">Shadow</button>
-          <button id="stickerColorizeBtn">Colorize</button>
-        </div>
+  <div id="stickerGrid" class="sticker-grid"></div>
+</div>
+
 
         <!-- TEMPLATES -->
         <div class="tab" id="tab-templates">
