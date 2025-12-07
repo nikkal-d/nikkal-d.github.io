@@ -177,3 +177,59 @@ function showCropButtons(show) {
   ok.style.display = show ? "inline-block" : "none";
   cancel.style.display = show ? "inline-block" : "none";
 }
+
+// ---------------------------------------------
+// STICKERS SYSTEM
+// ---------------------------------------------
+
+let stickersCache = {};
+
+export function loadStickers(category) {
+  const grid = document.getElementById("stickerGrid");
+  grid.innerHTML = "Φόρτωση...";
+
+  // cache
+  if (stickersCache[category]) {
+    showStickers(stickersCache[category]);
+    return;
+  }
+
+  fetch(`./assets/stickers/${category}/list.json`)
+    .then(res => res.json())
+    .then(files => {
+      stickersCache[category] = files;
+      showStickers(files);
+    })
+    .catch(err => {
+      console.error("Sticker loading error:", err);
+      grid.innerHTML = "Σφάλμα.";
+    });
+}
+
+function showStickers(files) {
+  const grid = document.getElementById("stickerGrid");
+  grid.innerHTML = "";
+
+  files.forEach(file => {
+    const img = document.createElement("img");
+    img.src = `./assets/stickers/${file}`;
+    img.onclick = () => addSticker(img.src);
+    grid.appendChild(img);
+  });
+}
+
+export function addSticker(url) {
+  fabric.Image.fromURL(url, (img) => {
+    img.scaleToWidth(200);
+    img.set({
+      left: fabricCanvas.width / 2 - 100,
+      top: fabricCanvas.height / 2 - 100,
+      selectable: true
+    });
+
+    fabricCanvas.add(img);
+    fabricCanvas.setActiveObject(img);
+    fabricCanvas.requestRenderAll();
+  });
+}
+
