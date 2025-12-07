@@ -264,5 +264,69 @@
     grid.appendChild(card);
   });
 </script>
+
+  <!-- LOGIN MODAL -->
+<div id="loginModal" class="modal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Σύνδεση</h2>
+      <button class="close-modal" type="button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="loginForm" class="auth-form">
+        <label>
+          Email
+          <input type="email" name="email" required>
+        </label>
+        <label>
+          Κωδικός
+          <input type="password" name="password" required>
+        </label>
+        <button type="submit" class="btn btn-primary">Σύνδεση</button>
+      </form>
+      <p class="auth-switch">
+        Δεν έχεις λογαριασμό;
+        <button type="button" class="link-btn" id="switchToRegister">
+          Εγγραφή
+        </button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div id="registerModal" class="modal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Εγγραφή</h2>
+      <button class="close-modal" type="button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="registerForm" class="auth-form">
+        <label>
+          Όνομα (προαιρετικό)
+          <input type="text" name="name">
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" required>
+        </label>
+        <label>
+          Κωδικός
+          <input type="password" name="password" required minlength="6">
+        </label>
+        <button type="submit" class="btn btn-primary">Εγγραφή</button>
+      </form>
+      <p class="auth-switch">
+        Έχεις ήδη λογαριασμό;
+        <button type="button" class="link-btn" id="switchToLogin">
+          Σύνδεση
+        </button>
+      </p>
+    </div>
+  </div>
+</div>
+
+  
 </body>
 </html>
