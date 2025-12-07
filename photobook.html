@@ -419,7 +419,19 @@ import { undo, redo } from "./js/core.js";
 document.getElementById("undoBtn").onclick = () => undo();
 document.getElementById("redoBtn").onclick = () => redo();
 
-    
+    import { enableAutoSave, tryRestoreProject } from "./js/core.js";
+
+// 1️⃣ Προσπαθούμε να επαναφέρουμε παλιό project
+const restored = tryRestoreProject();
+
+// 2️⃣ Αν δεν υπάρχει τίποτα, ξεκινάμε νέο project
+if (!restored) {
+  console.log("🆕 Starting empty project");
+}
+
+// 3️⃣ Ενεργοποιούμε auto-save
+enableAutoSave();
+
     
 </script>
   
