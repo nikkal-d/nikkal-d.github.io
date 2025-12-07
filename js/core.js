@@ -283,3 +283,54 @@ export function redo() {
   });
 }
 
+// ------------------------------
+// AUTO-SAVE SYSTEM
+// ------------------------------
+
+let autoSaveTimer = null;
+let currentProjectName = "autosave-photobook";
+
+// σώζει το state στον browser
+function autoSave() {
+  if (!fabricCanvas) return;
+
+  const json = fabricCanvas.toJSON();
+  const data = {
+    time: Date.now(),
+    json
+  };
+
+  localStorage.setItem(currentProjectName, JSON.stringify(data));
+  console.log("💾 Auto-saved");
+}
+
+// ενεργοποιεί το auto-save
+export function enableAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+
+  autoSaveTimer = setInterval(() => {
+    autoSave();
+  }, 1000); // κάθε 1 δευτερόλεπτο
+}
+
+// επαναφορά
+export function tryRestoreProject() {
+  const raw = localStorage.getItem(currentProjectName);
+  if (!raw) return false;
+
+  try {
+    const saved = JSON.parse(raw);
+    if (!saved.json) return false;
+
+    fabricCanvas.loadFromJSON(saved.json, () => {
+      fabricCanvas.renderAll();
+      console.log("🔄 Project restored from auto-save");
+    });
+
+    return true;
+  } catch (e) {
+    console.error("Restore failed:", e);
+    return false;
+  }
+}
+
