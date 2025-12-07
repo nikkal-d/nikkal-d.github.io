@@ -9,7 +9,7 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-s
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
 // ---------------------------------------------------
-// Your Firebase config (from your real project)
+// Your Firebase config
 // ---------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyBGt4Lsvk0ouISEtNbDbFirdY-XqmbHeSo",
@@ -25,16 +25,13 @@ const firebaseConfig = {
 // Initialize Firebase Services
 // ---------------------------------------------------
 export const app = initializeApp(firebaseConfig);
-
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// analytics (optional)
-let analytics = null;
+// analytics optional
 try {
-  analytics = getAnalytics(app);
+  getAnalytics(app);
 } catch (e) {
-  console.warn("Analytics not supported in this environment.");
+  console.warn("Analytics not supported here");
 }
-
