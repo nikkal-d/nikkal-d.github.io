@@ -436,6 +436,19 @@ if (!restored) {
 // 3️⃣ Ενεργοποιούμε auto-save
 enableAutoSave();
 
+
+    import { saveProjectAs, loadProject } from "./js/core.js";
+
+document.getElementById("saveProjectBtn").onclick = () => {
+  const name = prompt("Όνομα project:");
+  if (name) saveProjectAs(name);
+};
+
+document.getElementById("loadProjectBtn").onclick = () => {
+  const name = prompt("Ποιο project να φορτώσω;");
+  if (name) loadProject(name);
+};
+
     
 </script>
   
