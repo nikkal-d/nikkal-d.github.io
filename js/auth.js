@@ -1,3 +1,4 @@
+// js/auth.js
 // ---------------------------------------------
 // AUTH SYSTEM (Firebase Modular v10)
 // ---------------------------------------------
@@ -13,6 +14,7 @@ import {
 // DOM Elements
 const loginModal = document.getElementById("loginModal");
 const registerModal = document.getElementById("registerModal");
+
 const openLoginBtn = document.getElementById("openLoginBtn");
 const openRegisterBtn = document.getElementById("openRegisterBtn");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -22,18 +24,33 @@ const userInfo = document.getElementById("userInfo");
 // Open / Close Modals
 // ---------------------
 function showModal(modal) {
+  if (!modal) return;
   modal.classList.add("visible");
 }
 function hideModal(modal) {
+  if (!modal) return;
   modal.classList.remove("visible");
 }
 
+// κλείσιμο με τα Χ κουμπιά
 document.querySelectorAll(".close-modal").forEach(btn =>
   btn.addEventListener("click", () => {
     hideModal(loginModal);
     hideModal(registerModal);
   })
 );
+
+// άνοιγμα login modal
+openLoginBtn?.addEventListener("click", () => {
+  hideModal(registerModal);
+  showModal(loginModal);
+});
+
+// αν έχεις ξεχωριστό κουμπί "Εγγραφή"
+openRegisterBtn?.addEventListener("click", () => {
+  hideModal(loginModal);
+  showModal(registerModal);
+});
 
 // ---------------------
 // LOGIN
@@ -47,6 +64,7 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
     await signInWithEmailAndPassword(auth, email, password);
     hideModal(loginModal);
   } catch (err) {
+    console.error(err);
     alert("Σφάλμα σύνδεσης: " + err.message);
   }
 });
@@ -62,10 +80,13 @@ document.getElementById("registerForm")?.addEventListener("submit", async (e) =>
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName: name });
-
+    if (name) {
+      await updateProfile(userCredential.user, { displayName: name });
+    }
     hideModal(registerModal);
+    alert("Εγγραφήκακες επιτυχώς! Μπορείς να συνδεθείς.");
   } catch (err) {
+    console.error(err);
     alert("Σφάλμα εγγραφής: " + err.message);
   }
 });
@@ -74,13 +95,20 @@ document.getElementById("registerForm")?.addEventListener("submit", async (e) =>
 // LOGOUT
 // ---------------------
 logoutBtn?.addEventListener("click", async () => {
-  await signOut(auth);
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error(err);
+    alert("Σφάλμα αποσύνδεσης: " + err.message);
+  }
 });
 
 // ---------------------
 // AUTH STATE CHANGES
 // ---------------------
 onAuthStateChanged(auth, (user) => {
+  if (!userInfo || !openLoginBtn || !logoutBtn) return;
+
   if (user) {
     // Logged in
     userInfo.innerHTML = `
