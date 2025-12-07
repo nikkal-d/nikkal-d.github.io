@@ -287,6 +287,31 @@ button:hover {
   </div>
 </div>
 
+  <script type="module">
+  import "./firebase-init.js";
+  import "./js/auth.js";
+
+  const loginModal = document.getElementById("loginModal");
+  const registerModal = document.getElementById("registerModal");
+
+  const switchToRegister = document.getElementById("switchToRegister");
+  const switchToLogin = document.getElementById("switchToLogin");
+
+  function showModal(el) { el?.classList.add("visible"); }
+  function hideModal(el) { el?.classList.remove("visible"); }
+
+  switchToRegister?.addEventListener("click", () => {
+    hideModal(loginModal);
+    showModal(registerModal);
+  });
+
+  switchToLogin?.addEventListener("click", () => {
+    hideModal(registerModal);
+    showModal(loginModal);
+  });
+</script>
+
+
   
 </body>
 </html>
