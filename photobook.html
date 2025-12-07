@@ -111,7 +111,14 @@
     <button class="tb-btn" id="themeToggle">🌓 Theme</button>
   </div>
 
+  <button id="cropBtn">✂️ Περικοπή</button>
+<button id="cropOK" style="display:none; background:#28a745; color:#fff;">✔ Crop</button>
+<button id="cropCancel" style="display:none; background:#c62828; color:#fff;">✖ Cancel</button>
+
+
 </div>
+
+    
 <!-- ======= END TOOLBAR ======= -->
 
    
@@ -347,6 +354,14 @@ document.getElementById("fltBlur").oninput = (e) =>
 document.getElementById("fltGray").onclick = () => applyFilter("grayscale");
 document.getElementById("fltVintage").onclick = () => applyFilter("vintage");
 document.getElementById("fltRemove").onclick = () => applyFilter("remove");
+
+
+
+    import { startCrop, applyCrop, cancelCrop } from "./js/tools.js";
+
+document.getElementById("cropBtn").onclick = () => startCrop();
+document.getElementById("cropOK").onclick = () => applyCrop();
+document.getElementById("cropCancel").onclick = () => cancelCrop();
 
     
 </script>
