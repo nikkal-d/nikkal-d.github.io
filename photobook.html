@@ -362,6 +362,18 @@ document.getElementById("cropBtn").onclick = () => startCrop();
 document.getElementById("cropOK").onclick = () => applyCrop();
 document.getElementById("cropCancel").onclick = () => cancelCrop();
 
+
+    import { loadStickers } from "./js/tools.js";
+
+document.getElementById("btnStickers").onclick = () => {
+  document.getElementById("stickersPanel").classList.toggle("hidden");
+  loadStickers(document.getElementById("stickerCategory").value);
+};
+
+document.getElementById("stickerCategory").onchange = (e) => {
+  loadStickers(e.target.value);
+};
+
     
 </script>
   
