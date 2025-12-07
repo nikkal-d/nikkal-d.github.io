@@ -379,6 +379,19 @@ document.getElementById("stickerCategory").onchange = (e) => {
   loadStickers(e.target.value);
 };
 
+
+    import { loadTemplates } from "./js/tools.js";
+
+document.getElementById("btnTemplates").onclick = () => {
+  document.getElementById("templatesPanel").classList.toggle("hidden");
+  loadTemplates(document.getElementById("templateCategory").value);
+};
+
+document.getElementById("templateCategory").onchange = (e) => {
+  loadTemplates(e.target.value);
+};
+
+
     
 </script>
   
