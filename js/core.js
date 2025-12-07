@@ -216,3 +216,70 @@ export function loadDraft() {
     console.error("Draft load error:", err);
   }
 }
+
+// ΠΑΡΑΔΕΙΓΜΑ:
+// const fabricCanvas = new fabric.Canvas('editorCanvas');
+export let fabricCanvas; // αν δεν το έχεις ήδη export
+
+// ΙΣΤΟΡΙΚΟ
+let undoStack = [];
+let redoStack = [];
+let isRestoring = false;
+
+// κάλεσέ το ΜΟΝΟ όταν έχεις ήδη fabricCanvas
+export function initHistory(canvas) {
+  fabricCanvas = canvas;
+
+  saveState("init");
+
+  // κάθε φορά που αλλάζει κάτι στον καμβά, αποθηκεύουμε
+  const events = ["object:added", "object:modified", "object:removed"];
+  events.forEach(ev => {
+    fabricCanvas.on(ev, () => {
+      if (!isRestoring) {
+        saveState(ev);
+      }
+    });
+  });
+}
+
+function saveState(source = "manual") {
+  const json = fabricCanvas.toJSON();
+  undoStack.push(json);
+  // για να μην ξεφύγει
+  if (undoStack.length > 80) {
+    undoStack.shift();
+  }
+  // κάθε νέο state μηδενίζει το redo
+  redoStack = [];
+}
+
+// δημόσιες συναρτήσεις
+export function undo() {
+  if (undoStack.length < 2) return;
+
+  const current = undoStack.pop();
+  redoStack.push(current);
+
+  const prev = undoStack[undoStack.length - 1];
+
+  isRestoring = true;
+  fabricCanvas.loadFromJSON(prev, () => {
+    fabricCanvas.renderAll();
+    isRestoring = false;
+  });
+}
+
+export function redo() {
+  if (!redoStack.length) return;
+
+  const next = redoStack.pop();
+  undoStack.push(next);
+
+  isRestoring = true;
+  fabricCanvas.loadFromJSON(next, () => {
+    fabricCanvas.renderAll();
+    isRestoring = false;
+  });
+}
+
