@@ -117,26 +117,25 @@
    
         </div>
 
-        <!-- FILTERS -->
-        <div class="tab" id="tab-filters">
-          <label>Φωτεινότητα</label>
-          <input type="range" id="imgBrightness" min="-1" max="1" step="0.01" value="0">
+       <div id="filtersPanel" class="panel hidden">
+  <h3>🎨 Φίλτρα</h3>
 
-          <label>Αντίθεση</label>
-          <input type="range" id="imgContrast" min="-1" max="1" step="0.01" value="0">
+  Φωτεινότητα
+  <input type="range" id="fltBrightness" min="-1" max="1" step="0.05">
 
-          <label>Κορεσμός</label>
-          <input type="range" id="imgSaturation" min="-1" max="1" step="0.01" value="0">
+  Αντίθεση
+  <input type="range" id="fltContrast" min="-1" max="1" step="0.05">
 
-          <label>Blur</label>
-          <input type="range" id="imgBlur" min="0" max="1" step="0.01" value="0">
+  Κορεσμός
+  <input type="range" id="fltSaturation" min="-1" max="1" step="0.05">
 
-          <button id="imgSepiaBtn">Sepia</button>
-          <button id="imgBwBtn">B&W</button>
-          <button id="imgSharpenBtn">Sharpen</button>
-          <button id="imgAutoEnhanceBtn">Auto Enhance</button>
-          <button id="imgResetBtn">Reset</button>
-        </div>
+  Blur
+  <input type="range" id="fltBlur" min="0" max="1" step="0.02">
+
+  <button id="fltGray">Grayscale</button>
+  <button id="fltVintage">Vintage</button>
+  <button id="fltRemove">Αφαίρεση φίλτρων</button>
+</div>
 
         <!-- STICKERS -->
         <div class="tab" id="tab-stickers">
@@ -173,6 +172,8 @@
 
       </div>
     </aside>
+
+  
 
     <!-- CANVAS AREA -->
     <main id="canvas-area">
@@ -227,6 +228,7 @@ document.getElementById("exportFlipbookBtn").onclick = () => {
 };
 </script>
 
+  
 
   <!-- JS Modules -->
   <script type="module" src="firebase-init.js"></script>
@@ -322,7 +324,33 @@ document.getElementById("exportFlipbookBtn").onclick = () => {
     hideModal(registerModal);
     showModal(loginModal);
   });
+
+
+import { applyFilter } from "./js/tools.js";
+
+document.getElementById("filtersBtn").onclick = () => {
+  document.getElementById("filtersPanel").classList.toggle("hidden");
+};
+
+document.getElementById("fltBrightness").oninput = (e) =>
+  applyFilter("brightness", parseFloat(e.target.value));
+
+document.getElementById("fltContrast").oninput = (e) =>
+  applyFilter("contrast", parseFloat(e.target.value));
+
+document.getElementById("fltSaturation").oninput = (e) =>
+  applyFilter("saturation", parseFloat(e.target.value));
+
+document.getElementById("fltBlur").oninput = (e) =>
+  applyFilter("blur", parseFloat(e.target.value));
+
+document.getElementById("fltGray").onclick = () => applyFilter("grayscale");
+document.getElementById("fltVintage").onclick = () => applyFilter("vintage");
+document.getElementById("fltRemove").onclick = () => applyFilter("remove");
+
+    
 </script>
+  
 
   
 
