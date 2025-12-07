@@ -48,3 +48,132 @@ export function applyFilter(type, value = 0) {
   obj.applyFilters();
   fabricCanvas.requestRenderAll();
 }
+
+// ---------------------------------------------
+// REAL CROP TOOL SYSTEM
+// ---------------------------------------------
+
+let cropping = false;
+let cropRect = null;
+let cropTarget = null;
+
+export function startCrop() {
+  const obj = fabricCanvas.getActiveObject();
+  if (!obj || obj.type !== "image") {
+    alert("Επίλεξε πρώτα μια εικόνα.");
+    return;
+  }
+
+  cropping = true;
+  cropTarget = obj;
+
+  // Disable object movement while cropping
+  cropTarget.selectable = false;
+
+  // Create crop rectangle
+  cropRect = new fabric.Rect({
+    left: obj.left + 40,
+    top: obj.top + 40,
+    width: obj.width * obj.scaleX - 80,
+    height: obj.height * obj.scaleY - 80,
+    fill: "rgba(0,0,0,0.2)",
+    stroke: "yellow",
+    strokeWidth: 2,
+    hasControls: true,
+    hasRotatingPoint: false,
+    lockRotation: true
+  });
+
+  fabricCanvas.add(cropRect);
+  fabricCanvas.setActiveObject(cropRect);
+  fabricCanvas.requestRenderAll();
+
+  showCropButtons(true);
+}
+
+
+// ---------------------------------------------
+// APPLY CROP
+// ---------------------------------------------
+export function applyCrop() {
+  if (!cropping || !cropRect || !cropTarget) return;
+
+  const left = cropRect.left - cropTarget.left;
+  const top = cropRect.top - cropTarget.top;
+  const width = cropRect.width * cropRect.scaleX;
+  const height = cropRect.height * cropRect.scaleY;
+
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+
+  const ctx = tempCanvas.getContext("2d");
+
+  // Create an image to crop
+  const img = new Image();
+  img.src = cropTarget._originalElement.src;
+
+  img.onload = () => {
+    ctx.drawImage(
+      img,
+      left,
+      top,
+      width,
+      height,
+      0,
+      0,
+      width,
+      height
+    );
+
+    const croppedData = tempCanvas.toDataURL("image/png");
+
+    fabric.Image.fromURL(croppedData, (croppedImg) => {
+      croppedImg.left = cropRect.left;
+      croppedImg.top = cropRect.top;
+      croppedImg.scaleX = 1;
+      croppedImg.scaleY = 1;
+
+      fabricCanvas.remove(cropTarget);
+      fabricCanvas.remove(cropRect);
+
+      fabricCanvas.add(croppedImg);
+      fabricCanvas.setActiveObject(croppedImg);
+
+      resetCropState();
+      fabricCanvas.requestRenderAll();
+    });
+  };
+}
+
+
+// ---------------------------------------------
+// CANCEL CROP
+// ---------------------------------------------
+export function cancelCrop() {
+  if (!cropping) return;
+
+  fabricCanvas.remove(cropRect);
+  resetCropState();
+  fabricCanvas.requestRenderAll();
+}
+
+
+// ---------------------------------------------
+// INTERNAL RESET
+// ---------------------------------------------
+function resetCropState() {
+  cropping = false;
+  cropRect = null;
+  cropTarget = null;
+  showCropButtons(false);
+}
+
+function showCropButtons(show) {
+  const ok = document.getElementById("cropOK");
+  const cancel = document.getElementById("cropCancel");
+  if (!ok || !cancel) return;
+
+  ok.style.display = show ? "inline-block" : "none";
+  cancel.style.display = show ? "inline-block" : "none";
+}
