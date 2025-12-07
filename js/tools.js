@@ -309,3 +309,57 @@ function canvasScaleFactor() {
 }
 
 
+// ---------------------------------------------
+// PDF IMPORT SYSTEM
+// ---------------------------------------------
+
+export function importPDF(file) {
+  const reader = new FileReader();
+
+  reader.onload = async function () {
+    const typedArray = new Uint8Array(this.result);
+
+    try {
+      const pdf = await pdfjsLib.getDocument(typedArray).promise;
+      console.log("PDF loaded, pages:", pdf.numPages);
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+
+        // viewport scale
+        const viewport = page.getViewport({ scale: 2 });
+
+        // canvas
+        const c = document.createElement("canvas");
+        c.width = viewport.width;
+        c.height = viewport.height;
+
+        const ctx = c.getContext("2d");
+
+        // render
+        await page.render({
+          canvasContext: ctx,
+          viewport: viewport
+        }).promise;
+
+        // convert to image
+        const imgData = c.toDataURL("image/png");
+
+        fabric.Image.fromURL(imgData, (img) => {
+          img.scaleToWidth(fabricCanvas.width);
+
+          fabricCanvas.add(img);
+          fabricCanvas.setActiveObject(img);
+          fabricCanvas.renderAll();
+        });
+      }
+    } catch (err) {
+      console.error("PDF import error:", err);
+      alert("Σφάλμα στην εισαγωγή PDF.");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+
