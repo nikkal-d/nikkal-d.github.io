@@ -233,3 +233,79 @@ export function addSticker(url) {
   });
 }
 
+// ---------------------------------------------
+// TEMPLATES SYSTEM
+// ---------------------------------------------
+
+let templatesCache = {};
+
+export function loadTemplates(category) {
+  const grid = document.getElementById("templateGrid");
+  grid.innerHTML = "Φόρτωση…";
+
+  if (templatesCache[category]) {
+    showTemplates(templatesCache[category], category);
+    return;
+  }
+
+  fetch(`./assets/templates/${category}/list.json`)
+    .then(r => r.json())
+    .then(files => {
+      templatesCache[category] = files;
+      showTemplates(files, category);
+    })
+    .catch(err => {
+      console.error("Template loading error:", err);
+      grid.innerHTML = "Σφάλμα.";
+    });
+}
+
+function showTemplates(files, category) {
+  const grid = document.getElementById("templateGrid");
+  grid.innerHTML = "";
+
+  files.forEach(file => {
+    const box = document.createElement("div");
+    box.className = "template-thumb";
+
+    const img = document.createElement("img");
+    img.src = `./assets/templates/${category}/${file.replace(".json", ".jpg")}`;
+
+    box.appendChild(img);
+
+    box.onclick = () => applyTemplate(category, file);
+    grid.appendChild(box);
+  });
+}
+
+export function applyTemplate(category, templateJson) {
+  fetch(`./assets/templates/${category}/${templateJson}`)
+    .then(res => res.json())
+    .then(data => {
+      // καθαρίζουμε τον καμβά
+      fabricCanvas.clear();
+
+      // φορτώνουμε το JSON
+      fabricCanvas.loadFromJSON(data, () => {
+        // κάνουμε αυτόματα fit στο canvas
+        fabricCanvas.getObjects().forEach((obj) => {
+          obj.scaleX *= canvasScaleFactor();
+          obj.scaleY *= canvasScaleFactor();
+          obj.left *= canvasScaleFactor();
+          obj.top *= canvasScaleFactor();
+          obj.setCoords();
+        });
+
+        fabricCanvas.renderAll();
+      });
+    })
+    .catch(err => {
+      console.error("Template apply error:", err);
+    });
+}
+
+function canvasScaleFactor() {
+  return fabricCanvas.width / 1000; // assuming template base width = 1000
+}
+
+
