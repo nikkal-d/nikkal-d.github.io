@@ -160,14 +160,19 @@
 
 
         <!-- TEMPLATES -->
-        <div class="tab" id="tab-templates">
-          <button id="tplMinimalBtn">Minimal</button>
-          <button id="tplMagazineBtn">Magazine</button>
-          <button id="tplScrapbookBtn">Scrapbook</button>
-          <button id="tplGrid2Btn">Grid-2</button>
-          <button id="tplGrid4Btn">Grid-4</button>
-          <button id="tplFullBleedBtn">Full Bleed</button>
-        </div>
+        <div id="templatesPanel" class="panel hidden">
+  <h3>📚 Templates</h3>
+
+  <select id="templateCategory">
+    <option value="minimal">Minimal</option>
+    <option value="wedding">Wedding</option>
+    <option value="travel">Travel</option>
+    <option value="kids">Kids</option>
+  </select>
+
+  <div id="templateGrid" class="template-grid"></div>
+</div>
+
 
         <!-- EXPORT -->
         <div class="tab" id="tab-export">
