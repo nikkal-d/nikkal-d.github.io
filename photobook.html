@@ -75,6 +75,11 @@
         <button data-tab="stickers">Stickers</button>
         <button data-tab="templates">Templates</button>
         <button data-tab="export">Εξαγωγή</button>
+        <button id="exportCloudBtn">Cloud Upload</button>
+<button id="exportPDFBtn">PDF</button>
+<button id="exportImagesBtn">Images ZIP</button>
+<button id="exportFlipbookBtn">Flipbook HTML</button>
+
       </div>
 
       <!-- Tab Content -->
@@ -203,6 +208,36 @@
     </aside>
 
   </div>
+  <script type="module">
+import { exportToCloud, exportAsPDF, exportAsZip, exportAsFlipbook } from "./js/export.js";
+
+// Μάζεμα σελίδων από canvas:
+function collectPages() {
+  return pages.map(p => p.image);
+}
+
+document.getElementById("exportCloudBtn").onclick = async () => {
+  const pagesData = collectPages();
+  const title = prompt("Τίτλος βιβλίου:");
+  const pass = prompt("Κωδικός (προαιρετικός):");
+
+  const id = await exportToCloud(pagesData, title, pass);
+  if (id) alert("Το βιβλίο ανέβηκε!");
+};
+
+document.getElementById("exportPDFBtn").onclick = () => {
+  exportAsPDF(collectPages());
+};
+
+document.getElementById("exportImagesBtn").onclick = () => {
+  exportAsZip(collectPages());
+};
+
+document.getElementById("exportFlipbookBtn").onclick = () => {
+  exportAsFlipbook(collectPages());
+};
+</script>
+
 
   <!-- JS Modules -->
   <script type="module" src="firebase-init.js"></script>
