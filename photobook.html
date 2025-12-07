@@ -184,6 +184,8 @@
       </div>
     </aside>
 
+  <input type="file" id="pdfInput" accept="application/pdf" style="display:none;">
+
   
 
     <!-- CANVAS AREA -->
@@ -391,7 +393,19 @@ document.getElementById("templateCategory").onchange = (e) => {
   loadTemplates(e.target.value);
 };
 
+import { importPDF } from "./js/tools.js";
 
+document.getElementById("btnUploadPDF").onclick = () => {
+  document.getElementById("pdfInput").click();
+};
+
+document.getElementById("pdfInput").onchange = (e) => {
+  if (e.target.files.length > 0) {
+    importPDF(e.target.files[0]);
+  }
+};
+
+    
     
 </script>
   
