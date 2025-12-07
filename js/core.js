@@ -334,3 +334,25 @@ export function tryRestoreProject() {
   }
 }
 
+// αποθηκεύει project με όνομα
+export function saveProjectAs(name) {
+  const json = fabricCanvas.toJSON();
+  localStorage.setItem("project-" + name, JSON.stringify(json));
+  alert("Το project αποθηκεύτηκε ως: " + name);
+}
+
+// φορτώνει project με όνομα
+export function loadProject(name) {
+  const raw = localStorage.getItem("project-" + name);
+  if (!raw) {
+    alert("Δεν βρέθηκε project με αυτό το όνομα.");
+    return;
+  }
+
+  const json = JSON.parse(raw);
+  fabricCanvas.loadFromJSON(json, () => {
+    fabricCanvas.renderAll();
+  });
+}
+
+
