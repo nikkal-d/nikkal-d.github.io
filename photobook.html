@@ -62,70 +62,59 @@
 
   <!-- MAIN WRAPPER -->
   <div id="workspace">
+<!-- ======= PHOTBOOK TOOLBAR ======= -->
+<div id="editorToolbar" class="toolbar">
 
-    <!-- LEFT PANEL -->
-    <aside id="sidebar">
-      <h3>Εργαλεία</h3>
+  <!-- FILE -->
+  <div class="toolbar-group">
+    <button class="tb-btn" id="btnNewPage">➕ Σελίδα</button>
+    <button class="tb-btn" id="btnDeletePage">🗑️ Διαγραφή</button>
 
-      <!-- Tabs -->
-      <div class="tab-btns">
-        <button data-tab="photos">Φωτογραφίες</button>
-        <button data-tab="text">Κείμενο</button>
-        <button data-tab="filters">Φίλτρα</button>
-        <button data-tab="stickers">Stickers</button>
-        <button data-tab="templates">Templates</button>
-        <button data-tab="export">Εξαγωγή</button>
-        <button id="exportCloudBtn">Cloud Upload</button>
-<button id="exportPDFBtn">PDF</button>
-<button id="exportImagesBtn">Images ZIP</button>
-<button id="exportFlipbookBtn">Flipbook HTML</button>
+    <div class="divider"></div>
 
-      </div>
+    <button class="tb-btn primary" id="exportCloudBtn">☁️ Cloud</button>
+    <button class="tb-btn" id="exportPDFBtn">📄 PDF</button>
+    <button class="tb-btn" id="exportImagesBtn">🖼 ZIP</button>
+    <button class="tb-btn" id="exportFlipbookBtn">📘 Flipbook</button>
+  </div>
 
-      <!-- Tab Content -->
-      <div id="tab-content">
+  <!-- INSERT -->
+  <div class="toolbar-group">
+    <button class="tb-btn" id="btnUploadImage">🖼 Εικόνα</button>
+    <button class="tb-btn" id="btnAddText">🔤 Κείμενο</button>
+    <button class="tb-btn" id="btnAddShape">⬛ Σχήμα</button>
+    <button class="tb-btn" id="btnStickers">✨ Stickers</button>
+    <button class="tb-btn" id="btnTemplates">📚 Templates</button>
+    <button class="tb-btn" id="btnUploadPDF">📑 PDF → Σελίδες</button>
+  </div>
 
-        <!-- PHOTOS -->
-        <div class="tab" id="tab-photos">
-          <button id="uploadImageBtn">+ Εικόνες</button>
-          <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
-          <button id="uploadPdfBtn">+ PDF</button>
-          <input type="file" id="pdfInput" accept="application/pdf" style="display:none;">
-          <button id="clearMediaBtn">Καθαρισμός βιβλιοθήκης</button>
+  <!-- EDITING -->
+  <div class="toolbar-group">
+    <button class="tb-btn" id="undoBtn">↶ Undo</button>
+    <button class="tb-btn" id="redoBtn">↷ Redo</button>
 
-          <h4>Βιβλιοθήκη</h4>
-          <div id="media-library"></div>
-        </div>
+    <div class="divider"></div>
 
-        <!-- TEXT -->
-        <div class="tab" id="tab-text">
-          <label>Γραμματοσειρά:</label>
-          <select id="textFont">
-            <option>Arial</option>
-            <option>Poppins</option>
-            <option>Playfair Display</option>
-            <option>Pacifico</option>
-          </select>
+    <button class="tb-btn" id="shadowBtn">🌗 Σκιά</button>
+    <button class="tb-btn" id="filtersBtn">🎨 Φίλτρα</button>
+    <button class="tb-btn" id="cropBtn">✂️ Περικοπή</button>
+  </div>
 
-          <label>Μέγεθος:</label>
-          <input type="number" id="textSize" value="40">
+  <!-- VIEW -->
+  <div class="toolbar-group">
+    <select id="pageSizeSelect" class="tb-select">
+      <option value="A4">A4</option>
+      <option value="Square">Square</option>
+      <option value="Landscape">Landscape</option>
+    </select>
 
-          <label>Χρώμα:</label>
-          <input type="color" id="textColor" value="#000000">
+    <button class="tb-btn" id="themeToggle">🌓 Theme</button>
+  </div>
 
-          <button id="addTextBtn">Προσθήκη Κειμένου</button>
-          <button id="addCurvedTextBtn">Καμπύλο Κείμενο</button>
+</div>
+<!-- ======= END TOOLBAR ======= -->
 
-          <button id="textBoldBtn">Bold</button>
-          <button id="textItalicBtn">Italic</button>
-          <button id="textUnderlineBtn">Underline</button>
-
-          <button id="gradientTextBtn">Gradient</button>
-          <button id="highlightTextBtn">Highlight</button>
-          <button id="shadowTextBtn">Σκιά</button>
-          <button id="clearShadowTextBtn">Αφαίρεση Σκιάς</button>
-
-          <button id="deleteTextBtn">Διαγραφή</button>
+   
         </div>
 
         <!-- FILTERS -->
