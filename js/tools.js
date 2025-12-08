@@ -3,6 +3,56 @@
 // IMAGE FILTERS SYSTEM
 // ---------------------------------------------
 
+export async function loadStickersFromList() {
+  const container = document.getElementById("stickerGrid");
+  if (!container) return;
+
+  container.innerHTML = "Φόρτωση...";
+
+  try {
+    const res = await fetch("./assets/stickers/emojis/list.json");
+    const emojis = await res.json();
+
+    container.innerHTML = "";
+
+    emojis.forEach(emoji => {
+      const img = document.createElement("img");
+      img.className = "sticker-thumb";
+      img.src = getTwemojiPngUrl(emoji);
+      img.title = emoji;
+
+      img.onclick = () => addStickerToCanvas(img.src);
+
+      container.appendChild(img);
+    });
+  } catch (err) {
+    container.innerHTML = "Σφάλμα φόρτωσης stickers";
+    console.error(err);
+  }
+}
+
+export function addStickerToCanvas(url) {
+  if (!fabricCanvas) {
+    alert("Ο καμβάς δεν είναι έτοιμος!");
+    return;
+  }
+
+  fabric.Image.fromURL(url, img => {
+    img.set({
+      left: fabricCanvas.width / 2 - 80,
+      top: fabricCanvas.height / 2 - 80,
+      scaleX: 0.7,
+      scaleY: 0.7
+    });
+
+    fabricCanvas.add(img);
+    fabricCanvas.setActiveObject(img);
+    fabricCanvas.renderAll();
+  }, { crossOrigin: "anonymous" });
+}
+
+
+
 function emojiToCodePoints(emoji) {
   const codepoints = [];
   for (const char of Array.from(emoji)) {
