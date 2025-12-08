@@ -530,4 +530,17 @@ select {
 .sticker-thumb { width:64px; height:64px; object-fit:contain; cursor:pointer; border-radius:8px; transition:transform .12s; }
 .sticker-thumb:hover { transform:scale(1.08); }
 
+.sticker-thumb {
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  margin: 6px;
+  transition: transform .12s;
+}
+
+.sticker-thumb:hover {
+  transform: scale(1.1);
+}
+
+
 
