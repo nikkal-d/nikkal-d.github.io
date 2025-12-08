@@ -36,9 +36,10 @@ export function applyFilter(type, value = 0) {
       obj.filters[4] = new fabric.Image.filters.Grayscale();
       break;
 
-    case "vintage":
-      obj.filters[5] = new fabric.Image.filters.SePIA();
-      break;
+   case "vintage":
+  obj.filters[5] = new fabric.Image.filters.Sepia();
+  break;
+
 
     case "remove":
       obj.filters = [];
@@ -205,6 +206,21 @@ export function loadStickers(category) {
       grid.innerHTML = "Σφάλμα.";
     });
 }
+
+function showStickers(files) {
+  const grid = document.getElementById("stickerGrid");
+  grid.innerHTML = "";
+
+  const cat = document.getElementById("stickerCategory").value;
+
+  files.forEach(file => {
+    const img = document.createElement("img");
+    img.src = `./assets/stickers/${cat}/${file}`;
+    img.onclick = () => addSticker(img.src);
+    grid.appendChild(img);
+  });
+}
+
 
 function showStickers(files) {
   const grid = document.getElementById("stickerGrid");
