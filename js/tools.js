@@ -183,71 +183,55 @@ function showCropButtons(show) {
 // STICKERS SYSTEM
 // ---------------------------------------------
 
-let stickersCache = {};
-
-export function loadStickers(category) {
+// assumes fabricCanvas is global / exported from core.js
+export async function loadStickersFromList() {
   const grid = document.getElementById("stickerGrid");
-  grid.innerHTML = "Φόρτωση...";
+  if (!grid) return;
+  grid.innerHTML = 'Φόρτωση…';
 
-  // cache
-  if (stickersCache[category]) {
-    showStickers(stickersCache[category]);
+  try {
+    const res = await fetch('./assets/stickers/emojis/list.json');
+    const emojis = await res.json();
+
+    grid.innerHTML = '';
+    emojis.forEach(emoji => {
+      const img = document.createElement('img');
+      img.alt = emoji;
+      img.src = getTwemojiPngUrl(emoji, 72); // 72px thumbnails
+      img.className = 'sticker-thumb';
+      img.onclick = () => addStickerToCanvas(img.src);
+      grid.appendChild(img);
+    });
+  } catch (err) {
+    console.error('Sticker list load error', err);
+    grid.innerHTML = 'Σφάλμα φόρτωσης stickers';
+  }
+}
+
+export function addStickerToCanvas(url) {
+  if (!fabricCanvas) {
+    alert('Ο καμβάς δεν είναι έτοιμος');
     return;
   }
 
-  fetch(`./assets/stickers/${category}/list.json`)
-    .then(res => res.json())
-    .then(files => {
-      stickersCache[category] = files;
-      showStickers(files);
-    })
-    .catch(err => {
-      console.error("Sticker loading error:", err);
-      grid.innerHTML = "Σφάλμα.";
-    });
-}
-
-function showStickers(files) {
-  const grid = document.getElementById("stickerGrid");
-  grid.innerHTML = "";
-
-  const cat = document.getElementById("stickerCategory").value;
-
-  files.forEach(file => {
-    const img = document.createElement("img");
-    img.src = `./assets/stickers/${cat}/${file}`;
-    img.onclick = () => addSticker(img.src);
-    grid.appendChild(img);
-  });
-}
-
-
-function showStickers(files) {
-  const grid = document.getElementById("stickerGrid");
-  grid.innerHTML = "";
-
-  files.forEach(file => {
-    const img = document.createElement("img");
-    img.src = `./assets/stickers/${file}`;
-    img.onclick = () => addSticker(img.src);
-    grid.appendChild(img);
-  });
-}
-
-export function addSticker(url) {
-  fabric.Image.fromURL(url, (img) => {
-    img.scaleToWidth(200);
+  fabric.Image.fromURL(url, img => {
     img.set({
       left: fabricCanvas.width / 2 - 100,
       top: fabricCanvas.height / 2 - 100,
-      selectable: true
+      scaleX: 0.8,
+      scaleY: 0.8,
+      selectable: true,
+      hasControls: true
     });
-
     fabricCanvas.add(img);
     fabricCanvas.setActiveObject(img);
     fabricCanvas.requestRenderAll();
-  });
+
+    // αποθήκευση history (αν έχεις initHistory)
+    // saveHistoryState();  // εάν η saveHistoryState είναι public
+  }, { crossOrigin: 'Anonymous' });
 }
+
 
 // ---------------------------------------------
 // TEMPLATES SYSTEM
@@ -376,6 +360,22 @@ export function importPDF(file) {
   };
 
   reader.readAsArrayBuffer(file);
+}
+
+// Μετατρέπει emoji string σε codepoint hex (υποστηρίζει multi-codepoint emoji)
+function emojiToCodePoints(emoji) {
+  const codePoints = [];
+  for (const char of Array.from(emoji)) {
+    codePoints.push(char.codePointAt(0).toString(16));
+  }
+  // Για πολυ-κώδικες συνένωση με '-' (όπως έχει το twemoji για σύνθετα emoji)
+  return codePoints.join('-');
+}
+
+function getTwemojiPngUrl(emoji, size = 72) {
+  const cp = emojiToCodePoints(emoji);
+  // ex: https://twemoji.maxcdn.com/v/latest/72x72/1f600.png
+  return `https://twemoji.maxcdn.com/v/latest/${size}x${size}/${cp}.png`;
 }
 
 
