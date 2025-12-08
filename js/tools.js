@@ -3,6 +3,20 @@
 // IMAGE FILTERS SYSTEM
 // ---------------------------------------------
 
+function emojiToCodePoints(emoji) {
+  const codepoints = [];
+  for (const char of Array.from(emoji)) {
+    codepoints.push(char.codePointAt(0).toString(16));
+  }
+  return codepoints.join('-');
+}
+
+function getTwemojiPngUrl(emoji, size = 72) {
+  const cp = emojiToCodePoints(emoji);
+  return `https://twemoji.maxcdn.com/v/latest/${size}x${size}/${cp}.png`;
+}
+
+
 import { fabricCanvas } from "./core.js";
 
 // ---------------------------------------------
