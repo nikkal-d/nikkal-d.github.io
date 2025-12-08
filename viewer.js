@@ -2,6 +2,10 @@
 // ---------------------------------------------
 // VIEWER: Load Photobook (Private / Public / Shared)
 // ---------------------------------------------
+// locate near top of file (module scope)
+var snap = null; // shared snapshot/flag for viewer — keep a single declaration
+
+
 
 import { db } from "../firebase-init.js";
 import {
