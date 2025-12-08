@@ -3,6 +3,62 @@
 // IMAGE FILTERS SYSTEM
 // ---------------------------------------------
 
+// ---------- tools.js fixes (insert at top) ----------
+'use strict';
+
+/*
+ * Safe declarations & helpers to avoid ReferenceError at runtime.
+ * These are conservative fixes — δεν αλλάζουν λογική, απλώς αποτρέπουν crashes.
+ */
+
+// ensure fabricCanvas declared
+if (typeof fabricCanvas === 'undefined') {
+  var fabricCanvas = null; // χρησιμοποιούμε var εδώ για να αποφύγουμε block-scope conflicts
+}
+
+// helper to safely get or init the fabric canvas
+function getFabricCanvas() {
+  if (fabricCanvas) return fabricCanvas;
+  var el = document.querySelector('canvas#photobook-canvas') || document.querySelector('canvas');
+  if (!el) {
+    console.warn('getFabricCanvas: no canvas element found (id=#photobook-canvas assumed).');
+    return null;
+  }
+  if (typeof fabric === 'undefined' || !fabric.Canvas) {
+    console.warn('fabric.js not loaded. Install/initialize fabric.js before using editor features.');
+    return null;
+  }
+  fabricCanvas = new fabric.Canvas(el);
+  return fabricCanvas;
+}
+
+// Safe DOM getter + listener helper (used across files)
+function __ensureEl(idOrEl) {
+  if (!idOrEl) return null;
+  var el = (typeof idOrEl === 'string') ? document.getElementById(idOrEl) : idOrEl;
+  if (!el) console.warn('Element not found:', idOrEl);
+  return el;
+}
+function __safeOn(idOrEl, evt, handler) {
+  var el = __ensureEl(idOrEl);
+  if (!el) return function(){}; // noop; prevents runtime error
+  el.addEventListener(evt, handler);
+  return function(){ el.removeEventListener(evt, handler); };
+}
+
+// pdfjs runtime check
+if (typeof pdfjsLib === 'undefined') {
+  // don't throw — only warn; PDF features will gracefully degrade
+  console.warn('pdfjsLib not found. PDF import/export features will be disabled until pdf.js is loaded.');
+}
+// ---------- end of tools.js fixes ----------
+// ΠΡΟΣΟΧΗ: προτιμώ αυτό
+const canvas = getFabricCanvas();
+if (canvas) {
+  canvas.add(...);
+}
+
+
 export async function loadStickersFromList() {
   const container = document.getElementById("stickerGrid");
   if (!container) return;
