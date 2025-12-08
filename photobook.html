@@ -449,8 +449,21 @@ document.getElementById("loadProjectBtn").onclick = () => {
   if (name) loadProject(name);
 };
 
+
+    import { loadStickersFromList } from './js/tools.js';
+
+document.getElementById('btnStickers').addEventListener('click', () => {
+  const panel = document.getElementById('stickersPanel');
+  panel.classList.toggle('hidden');
+  if (!panel.classList.contains('hidden')) {
+    loadStickersFromList();
+  }
+});
+
     
 </script>
+
+  
   
 
   
