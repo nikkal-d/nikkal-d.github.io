@@ -1,6 +1,6 @@
 /* ============================================================
-   PHOTObook Studio — CORE MODULE
-   Canvas, Pages, Thumbnails, Draft Save/Load
+   Photobook Studio — CORE MODULE
+   Canvas, Pages, Thumbnails, Draft Save/Load, History
    ============================================================ */
 
 import { auth } from "../firebase-init.js";
@@ -10,6 +10,12 @@ export let fabricCanvas = null;
 export let pages = [];
 export let currentPage = 0;
 
+// history
+let undoStack = [];
+let redoStack = [];
+let isRestoring = false;
+
+// draft autosave
 let autosaveTimer = null;
 
 /* ============================================================
@@ -22,13 +28,16 @@ window.addEventListener("DOMContentLoaded", () => {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  // Load user draft once auth is ready
-  setTimeout(loadDraft, 800);
+  initHistory();
+
+  // φόρτωμα draft (guest ή user)
+  loadDraft();
 });
 
 /* ------------------------------------------------------------ */
 
 function initCanvas() {
+  // ΠΡΟΣΟΧΗ: το canvas στο HTML πρέπει να έχει id="canvas"
   fabricCanvas = new fabric.Canvas("canvas", {
     preserveObjectStacking: true,
     selection: true,
@@ -40,7 +49,7 @@ function initCanvas() {
 
 function resizeCanvas() {
   const wrap = document.getElementById("canvas-wrapper");
-  if (!wrap) return;
+  if (!wrap || !fabricCanvas) return;
 
   fabricCanvas.setWidth(wrap.clientWidth);
   fabricCanvas.setHeight(wrap.clientHeight);
@@ -49,17 +58,79 @@ function resizeCanvas() {
 
 
 /* ============================================================
+   HISTORY SYSTEM (GLOBAL)
+   ============================================================ */
+
+function initHistory() {
+  if (!fabricCanvas) return;
+
+  saveHistoryState("init");
+
+  const events = ["object:added", "object:modified", "object:removed"];
+  events.forEach(ev => {
+    fabricCanvas.on(ev, () => {
+      if (!isRestoring) {
+        saveHistoryState(ev);
+      }
+    });
+  });
+}
+
+function saveHistoryState(source = "manual") {
+  if (!fabricCanvas) return;
+
+  const json = fabricCanvas.toJSON();
+  undoStack.push(json);
+  if (undoStack.length > 80) undoStack.shift();
+  // κάθε νέο state μηδενίζει redo
+  redoStack = [];
+
+  // κάθε σημαντική αλλαγή → draft autosave
+  scheduleAutosave();
+}
+
+export function undo() {
+  if (!fabricCanvas) return;
+  if (undoStack.length < 2) return;
+
+  const current = undoStack.pop();
+  redoStack.push(current);
+
+  const prev = undoStack[undoStack.length - 1];
+
+  isRestoring = true;
+  fabricCanvas.loadFromJSON(prev, () => {
+    fabricCanvas.renderAll();
+    isRestoring = false;
+  });
+}
+
+export function redo() {
+  if (!fabricCanvas) return;
+  if (!redoStack.length) return;
+
+  const next = redoStack.pop();
+  undoStack.push(next);
+
+  isRestoring = true;
+  fabricCanvas.loadFromJSON(next, () => {
+    fabricCanvas.renderAll();
+    isRestoring = false;
+  });
+}
+
+
+/* ============================================================
    PAGE SYSTEM
    ============================================================ */
 
 export function initPageSystem() {
-  // Buttons
-  document.getElementById("addPageBtn").onclick = addPage;
+  document.getElementById("addPageBtn").onclick = () => addPage();
   document.getElementById("deletePageBtn").onclick = deletePage;
   document.getElementById("prevPageBtn").onclick = () => switchPage(currentPage - 1);
   document.getElementById("nextPageBtn").onclick = () => switchPage(currentPage + 1);
 
-  // Start with 1 empty page
+  // αρχίζουμε με 1 κενή σελίδα
   addPage(true);
 }
 
@@ -78,6 +149,9 @@ export function addPage(isInitial = false) {
   saveCurrentPage();
   refreshThumbnails();
   loadPageToCanvas();
+
+  // νέα σελίδα → reset history για αυτή τη σελίδα
+  resetHistory();
 }
 
 /* ------------------------------------------------------------ */
@@ -93,6 +167,7 @@ export function deletePage() {
 
   refreshThumbnails();
   loadPageToCanvas();
+  resetHistory();
 }
 
 /* ------------------------------------------------------------ */
@@ -105,15 +180,21 @@ export function switchPage(index) {
 
   refreshThumbnails();
   loadPageToCanvas();
+  resetHistory();
 }
 
+function resetHistory() {
+  undoStack = [];
+  redoStack = [];
+  saveHistoryState("page-switch");
+}
 
 /* ============================================================
    SAVE + LOAD PAGE
    ============================================================ */
 
 export function saveCurrentPage() {
-  if (!fabricCanvas) return;
+  if (!fabricCanvas || !pages[currentPage]) return;
 
   const json = fabricCanvas.toJSON();
   const image = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
@@ -127,6 +208,8 @@ export function saveCurrentPage() {
 /* ------------------------------------------------------------ */
 
 export function loadPageToCanvas() {
+  if (!fabricCanvas) return;
+
   const p = pages[currentPage];
   if (!p) return;
 
@@ -136,6 +219,7 @@ export function loadPageToCanvas() {
     });
   } else {
     fabricCanvas.clear();
+    fabricCanvas.renderAll();
   }
 }
 
@@ -155,7 +239,9 @@ export function refreshThumbnails() {
     div.className = "thumb" + (index === currentPage ? " active" : "");
 
     const img = document.createElement("img");
-    img.src = pg.image || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    img.src =
+      pg.image ||
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
 
     div.appendChild(img);
     div.onclick = () => switchPage(index);
@@ -163,8 +249,10 @@ export function refreshThumbnails() {
     box.appendChild(div);
   });
 
-  document.getElementById("pageInfo").textContent =
-    `${currentPage + 1} / ${pages.length}`;
+  const info = document.getElementById("pageInfo");
+  if (info) {
+    info.textContent = `${currentPage + 1} / ${pages.length}`;
+  }
 }
 
 
@@ -177,14 +265,10 @@ function getDraftKey() {
   return user ? "draft_" + user.uid : "draft_guest";
 }
 
-/* ------------------------------------------------------------ */
-
 function scheduleAutosave() {
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(saveDraft, 700);
 }
-
-/* ------------------------------------------------------------ */
 
 export function saveDraft() {
   const key = getDraftKey();
@@ -210,149 +294,15 @@ export function loadDraft() {
     pages = draft.pages || [];
     currentPage = draft.currentPage || 0;
 
+    // αν για κάποιο λόγο είναι άδειο, φτιάξε σελίδα
+    if (!pages.length) {
+      addPage(true);
+      return;
+    }
+
     refreshThumbnails();
     loadPageToCanvas();
   } catch (err) {
     console.error("Draft load error:", err);
   }
 }
-
-// ΠΑΡΑΔΕΙΓΜΑ:
-// const fabricCanvas = new fabric.Canvas('editorCanvas');
-export let fabricCanvas; // αν δεν το έχεις ήδη export
-
-// ΙΣΤΟΡΙΚΟ
-let undoStack = [];
-let redoStack = [];
-let isRestoring = false;
-
-// κάλεσέ το ΜΟΝΟ όταν έχεις ήδη fabricCanvas
-export function initHistory(canvas) {
-  fabricCanvas = canvas;
-
-  saveState("init");
-
-  // κάθε φορά που αλλάζει κάτι στον καμβά, αποθηκεύουμε
-  const events = ["object:added", "object:modified", "object:removed"];
-  events.forEach(ev => {
-    fabricCanvas.on(ev, () => {
-      if (!isRestoring) {
-        saveState(ev);
-      }
-    });
-  });
-}
-
-function saveState(source = "manual") {
-  const json = fabricCanvas.toJSON();
-  undoStack.push(json);
-  // για να μην ξεφύγει
-  if (undoStack.length > 80) {
-    undoStack.shift();
-  }
-  // κάθε νέο state μηδενίζει το redo
-  redoStack = [];
-}
-
-// δημόσιες συναρτήσεις
-export function undo() {
-  if (undoStack.length < 2) return;
-
-  const current = undoStack.pop();
-  redoStack.push(current);
-
-  const prev = undoStack[undoStack.length - 1];
-
-  isRestoring = true;
-  fabricCanvas.loadFromJSON(prev, () => {
-    fabricCanvas.renderAll();
-    isRestoring = false;
-  });
-}
-
-export function redo() {
-  if (!redoStack.length) return;
-
-  const next = redoStack.pop();
-  undoStack.push(next);
-
-  isRestoring = true;
-  fabricCanvas.loadFromJSON(next, () => {
-    fabricCanvas.renderAll();
-    isRestoring = false;
-  });
-}
-
-// ------------------------------
-// AUTO-SAVE SYSTEM
-// ------------------------------
-
-let autoSaveTimer = null;
-let currentProjectName = "autosave-photobook";
-
-// σώζει το state στον browser
-function autoSave() {
-  if (!fabricCanvas) return;
-
-  const json = fabricCanvas.toJSON();
-  const data = {
-    time: Date.now(),
-    json
-  };
-
-  localStorage.setItem(currentProjectName, JSON.stringify(data));
-  console.log("💾 Auto-saved");
-}
-
-// ενεργοποιεί το auto-save
-export function enableAutoSave() {
-  if (autoSaveTimer) clearInterval(autoSaveTimer);
-
-  autoSaveTimer = setInterval(() => {
-    autoSave();
-  }, 1000); // κάθε 1 δευτερόλεπτο
-}
-
-// επαναφορά
-export function tryRestoreProject() {
-  const raw = localStorage.getItem(currentProjectName);
-  if (!raw) return false;
-
-  try {
-    const saved = JSON.parse(raw);
-    if (!saved.json) return false;
-
-    fabricCanvas.loadFromJSON(saved.json, () => {
-      fabricCanvas.renderAll();
-      console.log("🔄 Project restored from auto-save");
-    });
-
-    return true;
-  } catch (e) {
-    console.error("Restore failed:", e);
-    return false;
-  }
-}
-
-// αποθηκεύει project με όνομα
-export function saveProjectAs(name) {
-  const json = fabricCanvas.toJSON();
-  localStorage.setItem("project-" + name, JSON.stringify(json));
-  alert("Το project αποθηκεύτηκε ως: " + name);
-}
-
-// φορτώνει project με όνομα
-export function loadProject(name) {
-  const raw = localStorage.getItem("project-" + name);
-  if (!raw) {
-    alert("Δεν βρέθηκε project με αυτό το όνομα.");
-    return;
-  }
-
-  const json = JSON.parse(raw);
-  fabricCanvas.loadFromJSON(json, () => {
-    fabricCanvas.renderAll();
-  });
-}
-
-
