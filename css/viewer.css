@@ -1,0 +1,134 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* LOADING */
+#viewer-loading {
+  position: fixed;
+  inset: 0;
+  background: #000a;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  font-size: 22px;
+}
+
+/* SIMPLE VIEW */
+#simpleView {
+  display: none;
+  text-align: center;
+  padding: 20px;
+}
+
+.simple-page img {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 10px;
+}
+
+.simple-nav {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 20px;
+}
+.simple-nav button {
+  padding: 8px 15px;
+  font-size: 18px;
+}
+
+/* FLIPBOOK (desktop) */
+#flipbook {
+  display: none;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  perspective: 2000px;
+}
+
+.flip-page {
+  width: 400px;
+  height: 550px;
+  background: #222;
+  position: relative;
+}
+
+.flip-page img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#flipbook-nav {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+#flipbook-nav button {
+  padding: 8px 15px;
+  margin: 0 10px;
+}
+
+/* PASSWORD MODAL */
+#passwordModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000a;
+  backdrop-filter: blur(5px);
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+#passwordModal form {
+  background: #222;
+  padding: 20px;
+  border-radius: 10px;
+  width: 250px;
+}
+#passwordModal input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+#passwordModal button {
+  width: 100%;
+  padding: 10px;
+}
+
+/* SHARE OVERLAY */
+#share-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: #00aaff;
+  color: #000;
+  text-align: center;
+  font-weight: bold;
+  z-index: 500;
+}
+
+/* FULLSCREEN BUTTON */
+#fullscreenBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 20px;
+}
