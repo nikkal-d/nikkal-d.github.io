@@ -526,4 +526,8 @@ select {
   height: 100%;
   object-fit: cover;
 }
+.sticker-grid { display:flex; flex-wrap:wrap; gap:8px; padding:8px; }
+.sticker-thumb { width:64px; height:64px; object-fit:contain; cursor:pointer; border-radius:8px; transition:transform .12s; }
+.sticker-thumb:hover { transform:scale(1.08); }
+
 
