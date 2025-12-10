@@ -3,7 +3,7 @@
 // VIEWER: Load Photobook (Private / Public / Shared)
 // ---------------------------------------------
 
-import { db } from "../firebase-init.js";
+   import { db } from "./firebase-init.js";
 import {
   doc,
   getDoc,
