@@ -3,89 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <title>Photobook Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
- <link rel="stylesheet" href="css/viewer.css">
-
-
-  <style>
- 
-
-    body { margin:0; background:#111; color:white; font-family:Arial; overflow-x:hidden; }
-    #flipbook { display:flex; justify-content:center; gap:10px; margin-top:20px; perspective:2000px; }
-    .flip-page { width:400px; height:550px; background:#222; position:relative; }
-    .flip-page img { width:100%; height:100%; object-fit:contain; }
-    #simpleView { display:none; text-align:center; }
-    .simple-page img { width:100%; max-width:600px; border-radius:8px; }
-    .simple-nav { margin-top:10px; display:flex; justify-content:center; gap:20px; font-size:20px; }
-    #viewer-loading { position:fixed; inset:0; background:#000a; display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); z-index:999; }
-  </style>
+  <link rel="stylesheet" href="css/viewer.css">
 </head>
 
 <body>
 
-  <!-- LOADING -->
   <div id="viewer-loading">Φόρτωση...</div>
 
-  <!-- PASSWORD MODAL -->
-  <div id="passwordModal" style="
-    display:none;
-    position:fixed; inset:0;
-    background:#000a;
-    backdrop-filter:blur(4px);
-    justify-content:center;
-    align-items:center;
-    z-index:999;
-  ">
-    <form id="passwordForm" style="background:#222; padding:20px; border-radius:10px;">
-      <h3>Κωδικός Photobook</h3>
-      <input type="password" name="password" placeholder="Κωδικός" required
-             style="padding:10px; width:100%; margin-bottom:10px;" />
-      <button style="padding:10px; width:100%;">Είσοδος</button>
-    </form>
+  <div id="share-banner">
+      Δημόσια προβολή
+      <button id="copyShareLink">Αντιγραφή</button>
   </div>
 
-  <!-- SIMPLE VIEW (mobile) -->
-  <div id="simpleView"></div>
+  <div id="passwordModal">
+      <form id="passwordForm">
+          <h3>Κωδικός</h3>
+          <input type="password" name="password" placeholder="Κωδικός" required>
+          <button>Είσοδος</button>
+      </form>
+  </div>
 
-  <!-- FLIPBOOK -->
+  <div id="simpleView"></div>
   <div id="flipbook"></div>
 
-  <!-- FLIPBOOK NAVIGATION -->
-  <div id="flipbook-nav" style="margin-top:20px; text-align:center;">
-    <button id="flipPrev">⟵</button>
-    <span id="pageLabel">1 / 1</span>
-    <button id="flipNext">⟶</button>
+  <div id="flipbook-nav">
+      <button id="flipPrev">⟵</button>
+      <span id="pageLabel">1/1</span>
+      <button id="flipNext">⟶</button>
   </div>
 
-  <!-- SHARE OVERLAY -->
-  <div id="share-banner" style="
-    display:none;
-    position:fixed; top:0; left:0; right:0;
-    padding:10px;
-    background:#00aaff;
-    color:#000;
-    text-align:center;
-    font-weight:bold;
-  ">
-    <span>Shared Mode</span>
-    <button id="copyShareLink" style="margin-left:20px;">Αντιγραφή</button>
-  </div>
+  <button id="fullscreenBtn">⛶</button>
 
-  <!-- FULLSCREEN BTN -->
-  <button id="fullscreenBtn" style="
-    position:fixed;
-    bottom:20px; right:20px;
-    padding:10px 15px;
-    background:#444; color:white; border:none;
-    border-radius:8px;
-  ">⛶</button>
-
-
-  <script type="module" src="firebase-init.js"></script>
-  <script type="module" src="js/auth.js"></script>
-  <script type="module" src="js/ui.js"></script>
-  <script type="module" src="viewer.js"></script>
-
+  <script type="module" src="./viewer.js"></script>
 </body>
 </html>
