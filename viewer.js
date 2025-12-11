@@ -1,125 +1,138 @@
-// ------------------------------------------------------
-// VIEWER — Standalone Photobook Viewer (No Firestore)
-// ------------------------------------------------------
+// viewer.js
+// ======================================================
+// Photobook Viewer (Flipbook + Simple View + Zoom)
+// Works WITHOUT Firebase — loads pages from JSON
+// ======================================================
 
-showLoading();
+// DOM elements
+const flipbookContainer = document.getElementById("flipbook");
+const simpleViewContainer = document.getElementById("simpleView");
+const loading = document.getElementById("viewer-loading");
 
-// DEMO pages (μέχρι να βάλουμε αληθινές)
-let pages = [
-  "assets/demo/page1.jpg",
-  "assets/demo/page2.jpg"
+// URL params
+const url = new URL(location.href);
+const bookId = url.searchParams.get("id");
+
+// If no book ID → show demo pages
+const DEFAULT_PAGES = [
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200",
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200",
+  "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1200"
 ];
 
-// Αν έχεις αργότερα pages από το photobook editor, βάλε:
-// pages = project.pages;
-
-// Rendering mode
-let isMobile = window.innerWidth < 768;
+let pages = [];
+let simpleIndex = 0;
+let flipIndex = 0;
 
 // ------------------------------------------------------
-// RENDER
+// LOAD BOOK
 // ------------------------------------------------------
-function renderViewer() {
-  hideLoading();
+async function loadPhotobook() {
+  showLoading();
 
-  if (!pages.length) {
-    document.body.innerHTML += "<h2 style='text-align:center;margin-top:30px'>Δεν υπάρχουν σελίδες</h2>";
+  if (!bookId) {
+    // no id → demo mode
+    pages = DEFAULT_PAGES;
+    renderViewer();
+    hideLoading();
     return;
   }
 
-  if (isMobile) {
-    renderSimpleView();
-  } else {
-    renderFlipbook();
+  try {
+    const jsonUrl = `./assets/projects/${bookId}/info.json`;
+    const res = await fetch(jsonUrl);
+
+    if (!res.ok) {
+      pages = DEFAULT_PAGES;
+      renderViewer();
+      hideLoading();
+      return;
+    }
+
+    const data = await res.json();
+    pages = data.pages?.length ? data.pages : DEFAULT_PAGES;
+
+    renderViewer();
+  } catch (err) {
+    console.error("Viewer load error:", err);
+    pages = DEFAULT_PAGES;
+    renderViewer();
   }
+
+  hideLoading();
 }
 
 // ------------------------------------------------------
-// SIMPLE VIEW
+// VIEW RENDER
 // ------------------------------------------------------
-let simpleIndex = 0;
+function renderViewer() {
+  const isMobile = window.innerWidth < 768;
+  isMobile ? renderSimpleView() : renderFlipbook();
+}
 
+// ------------------------------------------------------
+// SIMPLE VIEW (mobile)
+// ------------------------------------------------------
 function renderSimpleView() {
-  const simpleView = document.getElementById("simpleView");
-  const flipbook = document.getElementById("flipbook");
-
-  simpleView.style.display = "block";
-  flipbook.style.display = "none";
-
+  simpleViewContainer.style.display = "block";
+  flipbookContainer.style.display = "none";
   updateSimplePage();
-  setupSimpleNavigation();
+  setupSimpleNav();
 }
 
 function updateSimplePage() {
-  const simpleView = document.getElementById("simpleView");
-  simpleView.innerHTML = `
+  simpleViewContainer.innerHTML = `
     <div class="simple-page">
       <img src="${pages[simpleIndex]}" alt="page">
     </div>
   `;
 }
 
-function setupSimpleNavigation() {
-  const simpleView = document.getElementById("simpleView");
-
+function setupSimpleNav() {
   const nav = document.createElement("div");
   nav.className = "simple-nav";
-
   nav.innerHTML = `
     <button id="simplePrev">⟵</button>
     <span>${simpleIndex + 1} / ${pages.length}</span>
     <button id="simpleNext">⟶</button>
   `;
-
-  simpleView.appendChild(nav);
+  simpleViewContainer.appendChild(nav);
 
   document.getElementById("simplePrev").onclick = () => {
     if (simpleIndex > 0) {
       simpleIndex--;
       updateSimplePage();
-      setupSimpleNavigation();
+      setupSimpleNav();
     }
   };
-
   document.getElementById("simpleNext").onclick = () => {
     if (simpleIndex < pages.length - 1) {
       simpleIndex++;
       updateSimplePage();
-      setupSimpleNavigation();
+      setupSimpleNav();
     }
   };
 }
 
 // ------------------------------------------------------
-// FLIPBOOK VIEW
+// FLIPBOOK VIEW (desktop)
 // ------------------------------------------------------
-let flipIndex = 0;
-
 function renderFlipbook() {
-  const simpleView = document.getElementById("simpleView");
-  const flipbook = document.getElementById("flipbook");
+  simpleViewContainer.style.display = "none";
+  flipbookContainer.style.display = "flex";
 
-  simpleView.style.display = "none";
-  flipbook.style.display = "flex";
-
-  flipbook.innerHTML = "";
-
+  flipbookContainer.innerHTML = "";
   pages.forEach((src, i) => {
     const page = document.createElement("div");
     page.className = "flip-page";
-
-    page.innerHTML = `
-      <img src="${src}">
-    `;
-
-    flipbook.appendChild(page);
+    page.innerHTML = `<img src="${src}" alt="page ${i+1}">`;
+    flipbookContainer.appendChild(page);
   });
 
-  setupFlipbookNavigation();
-  updateFlipbookUI();
+  setupFlipNav();
 }
 
-function setupFlipbookNavigation() {
+function setupFlipNav() {
   document.getElementById("flipPrev").onclick = () => flipTo("prev");
   document.getElementById("flipNext").onclick = () => flipTo("next");
 }
@@ -127,48 +140,44 @@ function setupFlipbookNavigation() {
 function flipTo(direction) {
   const elems = document.querySelectorAll(".flip-page");
 
-  if (direction === "next" && flipIndex < elems.length - 1) {
-    flipIndex++;
-  }
-  if (direction === "prev" && flipIndex > 0) {
-    flipIndex--;
-  }
+  if (direction === "next" && flipIndex < elems.length - 1) flipIndex++;
+  if (direction === "prev" && flipIndex > 0) flipIndex--;
 
-  elems.forEach((p, i) => {
-    p.style.transform = i <= flipIndex ? "rotateY(-180deg)" : "rotateY(0deg)";
+  elems.forEach((pg, i) => {
+    pg.style.transform = i <= flipIndex ? "rotateY(-180deg)" : "rotateY(0deg)";
+    pg.style.zIndex = elems.length - i;
   });
 
-  updateFlipbookUI();
-}
-
-function updateFlipbookUI() {
-  const lbl = document.getElementById("pageLabel");
-  lbl.textContent = `${flipIndex + 1} / ${pages.length}`;
+  document.getElementById("pageLabel").textContent =
+    `${flipIndex + 1} / ${pages.length}`;
 }
 
 // ------------------------------------------------------
 // FULLSCREEN
 // ------------------------------------------------------
 document.getElementById("fullscreenBtn").onclick = () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
 };
 
 // ------------------------------------------------------
-// LOADING
+// ZOOM (double click + pinch)
 // ------------------------------------------------------
-function showLoading() {
-  document.getElementById("viewer-loading").style.display = "flex";
+function enableZoom(container) {
+  let scale = 1;
+
+  container.addEventListener("dblclick", () => {
+    scale = scale === 1 ? 2 : 1;
+    container.style.transform = `scale(${scale})`;
+  });
 }
 
-function hideLoading() {
-  document.getElementById("viewer-loading").style.display = "none";
-}
+enableZoom(simpleViewContainer);
+enableZoom(flipbookContainer);
 
 // ------------------------------------------------------
-// RUN
+function showLoading() { loading.style.display = "flex"; }
+function hideLoading() { loading.style.display = "none"; }
+
 // ------------------------------------------------------
-window.addEventListener("DOMContentLoaded", renderViewer);
+window.addEventListener("DOMContentLoaded", loadPhotobook);
