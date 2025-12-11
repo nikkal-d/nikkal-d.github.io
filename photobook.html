@@ -1,479 +1,176 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <title>Photobook Studio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Photobook Studio Editor</title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/photobook.css">
+  <link rel="stylesheet" href="./css/photobook.css" />
 
-  <!-- Fabric.js -->
-  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+  <!-- FabricJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
- <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-</script>
+  <!-- PDF.js for PDF import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: #202020;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
 
+    #sidebar {
+      width: 300px;
+      background: #2b2b2b;
+      padding: 15px;
+      overflow-y: auto;
+    }
 
+    #editor {
+      flex: 1;
+      position: relative;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
+    #canvas-wrapper {
+      width: 90%;
+      height: 90%;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    canvas {
+      background: white;
+    }
+
+    /* Tabs */
+    .tab-btns {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    .tab-btns button.active {
+      background: #4caf50;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+
+    .tool-section { margin-bottom: 25px; }
+
+    .sticker-thumb {
+      width: 60px;
+      height: 60px;
+      margin: 4px;
+      cursor: pointer;
+    }
+
+    /* AI images */
+    .ai-image-results {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .ai-image-thumb {
+      width: 100%;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #thumbnails img {
+      width: 80px;
+      margin: 4px;
+      border-radius: 4px;
+      background: #333;
+    }
+    .thumb.active {
+      outline: 2px solid #4caf50;
+    }
+  </style>
 </head>
+
 <body>
 
-  <!-- HEADER -->
-  <header id="topbar">
-  <div class="logo">
-    <a href="index.html" style="text-decoration:none; color:inherit;">
-      📘 Photobook Studio
-    </a>
-  </div>
+  <!-- SIDEBAR -->
+  <div id="sidebar">
 
-  <nav class="main-nav">
-    <a href="index.html">Home</a>
-    <a href="photobook.html" class="active">Photobook</a>
-    <a href="duplicates.html">Find My Duplication</a>
-    <a href="projects.html">My Photobooks</a>
-  </nav>
+    <h2>Photobook Studio</h2>
 
-  <div class="top-controls">
-    <span id="user-label">Επισκέπτης</span>
-    <button id="login-btn">Σύνδεση</button>
-    <button id="logout-btn" style="display:none;">Αποσύνδεση</button>
-    <button id="themeToggleBtn">☾</button>
-  </div>
-<div class="header-auth">
-  <div id="userInfo"></div>
+    <!-- Tabs -->
+    <div class="tab-btns">
+      <button data-tab="ai" class="active">AI Εικόνες</button>
+      <button data-tab="stickers">Stickers</button>
+      <button data-tab="filters">Filters</button>
+      <button data-tab="crop">Crop</button>
+    </div>
 
-  <button id="openLoginBtn" class="btn btn-outline">
-    Σύνδεση
-  </button>
-
-  <button id="logoutBtn" class="btn btn-outline" style="display:none;">
-    Αποσύνδεση
-  </button>
-</div>
-<button id="openRegisterBtn" class="btn btn-link">Εγγραφή</button>
-    
-</header>
-
-
-  <!-- MAIN WRAPPER -->
-  <div id="workspace">
-<!-- ======= PHOTBOOK TOOLBAR ======= -->
-<div id="editorToolbar" class="toolbar">
-
-  <!-- FILE -->
-  <div class="toolbar-group">
-    <button class="tb-btn" id="btnNewPage">➕ Σελίδα</button>
-    <button class="tb-btn" id="btnDeletePage">🗑️ Διαγραφή</button>
-
-    <div class="divider"></div>
-
-    <button class="tb-btn primary" id="exportCloudBtn">☁️ Cloud</button>
-    <button class="tb-btn" id="exportPDFBtn">📄 PDF</button>
-    <button class="tb-btn" id="exportImagesBtn">🖼 ZIP</button>
-    <button class="tb-btn" id="exportFlipbookBtn">📘 Flipbook</button>
-  </div>
-
-  <!-- INSERT -->
-  <div class="toolbar-group">
-    <button class="tb-btn" id="btnUploadImage">🖼 Εικόνα</button>
-    <button class="tb-btn" id="btnAddText">🔤 Κείμενο</button>
-    <button class="tb-btn" id="btnAddShape">⬛ Σχήμα</button>
-    <button class="tb-btn" id="btnStickers">✨ Stickers</button>
-    <button class="tb-btn" id="btnTemplates">📚 Templates</button>
-    <button class="tb-btn" id="btnUploadPDF">📑 PDF → Σελίδες</button>
-  </div>
-
-  <!-- EDITING -->
-  <div class="toolbar-group">
-    <button class="tb-btn" id="undoBtn">↶ Undo</button>
-    <button class="tb-btn" id="redoBtn">↷ Redo</button>
-
-    <div class="divider"></div>
-
-    <button class="tb-btn" id="shadowBtn">🌗 Σκιά</button>
-    <button class="tb-btn" id="filtersBtn">🎨 Φίλτρα</button>
-    <button class="tb-btn" id="cropBtn">✂️ Περικοπή</button>
-  </div>
-
-  <!-- VIEW -->
-  <div class="toolbar-group">
-    <select id="pageSizeSelect" class="tb-select">
-      <option value="A4">A4</option>
-      <option value="Square">Square</option>
-      <option value="Landscape">Landscape</option>
-    </select>
-
-    <button class="tb-btn" id="themeToggle">🌓 Theme</button>
-  </div>
-
-  <button id="cropBtn">✂️ Περικοπή</button>
-<button id="cropOK" style="display:none; background:#28a745; color:#fff;">✔ Crop</button>
-<button id="cropCancel" style="display:none; background:#c62828; color:#fff;">✖ Cancel</button>
-
-
-</div>
-
-    <div class="tool-section">
-  <h3>AI Εικόνες</h3>
-  <div class="ai-search-row">
-    <input id="aiImageSearch" type="text" placeholder="π.χ. flowers, wedding, baby">
-    <button id="aiImageSearchBtn">Αναζήτηση</button>
-  </div>
-  <div id="aiImageResults" class="ai-image-results"></div>
-</div>
-
-
-    
-<!-- ======= END TOOLBAR ======= -->
-
-   
+    <!-- TAB: AI IMAGES -->
+    <div id="tab-ai" class="tab active">
+      <div class="tool-section">
+        <h3>AI Εικόνες</h3>
+        <div class="ai-search-row" style="display:flex;gap:6px;">
+          <input id="aiImageSearch" type="text" placeholder="π.χ. flowers, baby, wedding" style="flex:1;" />
+          <button id="aiImageSearchBtn">OK</button>
         </div>
-
-       <div id="filtersPanel" class="panel hidden">
-  <h3>🎨 Φίλτρα</h3>
-
-  Φωτεινότητα
-  <input type="range" id="fltBrightness" min="-1" max="1" step="0.05">
-
-  Αντίθεση
-  <input type="range" id="fltContrast" min="-1" max="1" step="0.05">
-
-  Κορεσμός
-  <input type="range" id="fltSaturation" min="-1" max="1" step="0.05">
-
-  Blur
-  <input type="range" id="fltBlur" min="0" max="1" step="0.02">
-
-  <button id="fltGray">Grayscale</button>
-  <button id="fltVintage">Vintage</button>
-  <button id="fltRemove">Αφαίρεση φίλτρων</button>
-</div>
-
-        <!-- STICKERS -->
-        <div id="stickersPanel" class="panel hidden">
-  <h3>✨ Stickers</h3>
-
-  <select id="stickerCategory">
-    <option value="emojis">Emojis</option>
-    <option value="shapes">Shapes</option>
-    <option value="frames">Frames</option>
-    <option value="fun">Fun</option>
-  </select>
-
-  <div id="stickerGrid" class="sticker-grid"></div>
-</div>
-
-
-        <!-- TEMPLATES -->
-        <div id="templatesPanel" class="panel hidden">
-  <h3>📚 Templates</h3>
-
-  <select id="templateCategory">
-    <option value="minimal">Minimal</option>
-    <option value="wedding">Wedding</option>
-    <option value="travel">Travel</option>
-    <option value="kids">Kids</option>
-  </select>
-
-  <div id="templateGrid" class="template-grid"></div>
-</div>
-
-
-        <!-- EXPORT -->
-        <div class="tab" id="tab-export">
-          <button id="exportPdfBtn">📄 PDF</button>
-          <button id="exportFlipbookBtn">📘 Flipbook</button>
-          <button id="exportCloudBtn">☁ Cloud</button>
-        </div>
-
-  <button id="saveProjectBtn">💾 Save as</button>
-<button id="loadProjectBtn">📂 Load</button>
-
-  
+        <div id="aiImageResults" class="ai-image-results"></div>
       </div>
-    </aside>
+    </div>
 
-  <input type="file" id="pdfInput" accept="application/pdf" style="display:none;">
+    <!-- TAB: STICKERS -->
+    <div id="tab-stickers" class="tab">
+      <h3>Stickers</h3>
+      <button onclick="loadStickers('emojis')">Emoji</button>
+      <div id="stickerGrid"></div>
+    </div>
 
-  
+    <!-- TAB: FILTERS -->
+    <div id="tab-filters" class="tab">
+      <h3>Filters</h3>
+      <button onclick="applyFilter('grayscale')">Grayscale</button>
+      <button onclick="applyFilter('vintage')">Vintage</button>
+      <button onclick="applyFilter('remove')">Clear</button>
+    </div>
 
-    <!-- CANVAS AREA -->
-    <main id="canvas-area">
-      <div id="canvas-wrapper">
-        <canvas id="canvas"></canvas>
-      </div>
+    <!-- TAB: CROP -->
+    <div id="tab-crop" class="tab">
+      <h3>Crop Tool</h3>
+      <button onclick="startCrop()">Start Crop</button>
+      <button id="cropOK" style="display:none;" onclick="applyCrop()">Apply</button>
+      <button id="cropCancel" style="display:none;" onclick="cancelCrop()">Cancel</button>
+    </div>
 
-      <div id="page-controls">
-        <button id="prevPageBtn">‹</button>
-        <span id="pageInfo">1 / 1</span>
-        <button id="nextPageBtn">›</button>
-      </div>
-    </main>
-
-    <!-- RIGHT THUMBNAILS -->
-    <aside id="thumbs">
-      <button id="addPageBtn">+ Σελίδα</button>
-      <button id="deletePageBtn">✕</button>
-
-      <h4>Σελίδες</h4>
-      <div id="thumbnails"></div>
-    </aside>
+    <h3>Σελίδες</h3>
+    <button id="addPageBtn">➕ Νέα σελίδα</button>
+    <button id="deletePageBtn">🗑️ Διαγραφή</button>
+    <div id="pageInfo">1/1</div>
+    <div id="thumbnails"></div>
 
   </div>
-  <script type="module">
-import { exportToCloud, exportAsPDF, exportAsZip, exportAsFlipbook } from "./js/export.js";
 
-// Μάζεμα σελίδων από canvas:
-function collectPages() {
-  return pages.map(p => p.image);
-}
-
-document.getElementById("exportCloudBtn").onclick = async () => {
-  const pagesData = collectPages();
-  const title = prompt("Τίτλος βιβλίου:");
-  const pass = prompt("Κωδικός (προαιρετικός):");
-
-  const id = await exportToCloud(pagesData, title, pass);
-  if (id) alert("Το βιβλίο ανέβηκε!");
-};
-
-document.getElementById("exportPDFBtn").onclick = () => {
-  exportAsPDF(collectPages());
-};
-
-document.getElementById("exportImagesBtn").onclick = () => {
-  exportAsZip(collectPages());
-};
-
-document.getElementById("exportFlipbookBtn").onclick = () => {
-  exportAsFlipbook(collectPages());
-};
-</script>
-
-  
-
-  <!-- JS Modules -->
-  <script type="module" src="firebase-init.js"></script>
-  <script type="module" src="js/core.js"></script>
-  <script type="module" src="js/tools.js"></script>
-  <script type="module" src="js/export.js"></script>
-  <script type="module" src="js/auth.js"></script>
-  <script type="module" src="js/ui.js"></script>
-  <script type="module" src="viewer.js"></script>
-
-<!-- LOGIN MODAL -->
-<div id="loginModal" class="modal">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <h2>Σύνδεση</h2>
-      <button class="close-modal" type="button">&times;</button>
-    </div>
-    <div class="modal-body">
-      <form id="loginForm" class="auth-form">
-        <label>
-          Email
-          <input type="email" name="email" required>
-        </label>
-        <label>
-          Κωδικός
-          <input type="password" name="password" required>
-        </label>
-        <button type="submit" class="btn btn-primary">Σύνδεση</button>
-      </form>
-      <p class="auth-switch">
-        Δεν έχεις λογαριασμό;
-        <button type="button" class="link-btn" id="switchToRegister">
-          Εγγραφή
-        </button>
-      </p>
+  <!-- EDITOR WORKSPACE -->
+  <div id="editor">
+    <div id="canvas-wrapper">
+      <canvas id="canvas"></canvas>
     </div>
   </div>
-</div>
 
-<!-- REGISTER MODAL -->
-<div id="registerModal" class="modal">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <h2>Εγγραφή</h2>
-      <button class="close-modal" type="button">&times;</button>
-    </div>
-    <div class="modal-body">
-      <form id="registerForm" class="auth-form">
-        <label>
-          Όνομα (προαιρετικό)
-          <input type="text" name="name">
-        </label>
-        <label>
-          Email
-          <input type="email" name="email" required>
-        </label>
-        <label>
-          Κωδικός
-          <input type="password" name="password" required minlength="6">
-        </label>
-        <button type="submit" class="btn btn-primary">Εγγραφή</button>
-      </form>
-      <p class="auth-switch">
-        Έχεις ήδη λογαριασμό;
-        <button type="button" class="link-btn" id="switchToLogin">
-          Σύνδεση
-        </button>
-      </p>
-    </div>
-  </div>
-</div>
-
-
-  <script type="module">
-  import "./firebase-init.js";
-  import "./js/auth.js";
-
-  const loginModal = document.getElementById("loginModal");
-  const registerModal = document.getElementById("registerModal");
-
-  const switchToRegister = document.getElementById("switchToRegister");
-  const switchToLogin = document.getElementById("switchToLogin");
-
-  function showModal(el) { el?.classList.add("visible"); }
-  function hideModal(el) { el?.classList.remove("visible"); }
-
-  switchToRegister?.addEventListener("click", () => {
-    hideModal(loginModal);
-    showModal(registerModal);
-  });
-
-  switchToLogin?.addEventListener("click", () => {
-    hideModal(registerModal);
-    showModal(loginModal);
-  });
-
-
-import { applyFilter } from "./js/tools.js";
-
-document.getElementById("filtersBtn").onclick = () => {
-  document.getElementById("filtersPanel").classList.toggle("hidden");
-};
-
-document.getElementById("fltBrightness").oninput = (e) =>
-  applyFilter("brightness", parseFloat(e.target.value));
-
-document.getElementById("fltContrast").oninput = (e) =>
-  applyFilter("contrast", parseFloat(e.target.value));
-
-document.getElementById("fltSaturation").oninput = (e) =>
-  applyFilter("saturation", parseFloat(e.target.value));
-
-document.getElementById("fltBlur").oninput = (e) =>
-  applyFilter("blur", parseFloat(e.target.value));
-
-document.getElementById("fltGray").onclick = () => applyFilter("grayscale");
-document.getElementById("fltVintage").onclick = () => applyFilter("vintage");
-document.getElementById("fltRemove").onclick = () => applyFilter("remove");
-
-
-
-    import { startCrop, applyCrop, cancelCrop } from "./js/tools.js";
-
-document.getElementById("cropBtn").onclick = () => startCrop();
-document.getElementById("cropOK").onclick = () => applyCrop();
-document.getElementById("cropCancel").onclick = () => cancelCrop();
-
-
-    import { loadStickers } from "./js/tools.js";
-
-document.getElementById("btnStickers").onclick = () => {
-  document.getElementById("stickersPanel").classList.toggle("hidden");
-  loadStickers(document.getElementById("stickerCategory").value);
-};
-
-document.getElementById("stickerCategory").onchange = (e) => {
-  loadStickers(e.target.value);
-};
-
-
-    import { loadTemplates } from "./js/tools.js";
-
-document.getElementById("btnTemplates").onclick = () => {
-  document.getElementById("templatesPanel").classList.toggle("hidden");
-  loadTemplates(document.getElementById("templateCategory").value);
-};
-
-document.getElementById("templateCategory").onchange = (e) => {
-  loadTemplates(e.target.value);
-};
-
-import { importPDF } from "./js/tools.js";
-
-document.getElementById("btnUploadPDF").onclick = () => {
-  document.getElementById("pdfInput").click();
-};
-
-document.getElementById("pdfInput").onchange = (e) => {
-  if (e.target.files.length > 0) {
-    importPDF(e.target.files[0]);
-  }
-};
-
-const canvas = new fabric.Canvas("editorCanvas", {
-  preserveObjectStacking: true
-});
-
-// εδώ:
-initHistory(canvas);
-
-import { undo, redo } from "./js/core.js";
-
-document.getElementById("undoBtn").onclick = () => undo();
-document.getElementById("redoBtn").onclick = () => redo();
-
-
-// 1️⃣ Προσπαθούμε να επαναφέρουμε παλιό project
-const restored = tryRestoreProject();
-
-// 2️⃣ Αν δεν υπάρχει τίποτα, ξεκινάμε νέο project
-if (!restored) {
-  console.log("🆕 Starting empty project");
-}
-
-// 3️⃣ Ενεργοποιούμε auto-save
-enableAutoSave();
-
-
-    import { saveProjectAs, loadProject } from "./js/core.js";
-
-document.getElementById("saveProjectBtn").onclick = () => {
-  const name = prompt("Όνομα project:");
-  if (name) saveProjectAs(name);
-};
-
-document.getElementById("loadProjectBtn").onclick = () => {
-  const name = prompt("Ποιο project να φορτώσω;");
-  if (name) loadProject(name);
-};
-
-
-    import { loadStickersFromList } from './js/tools.js';
-
-document.getElementById('btnStickers').addEventListener('click', () => {
-  const panel = document.getElementById('stickersPanel');
-  panel.classList.toggle('hidden');
-  if (!panel.classList.contains('hidden')) {
-    loadStickersFromList();
-  }
-});
-
-    
-</script>
-
-  
-  
-
-  
+  <!-- Editor scripts -->
+  <script type="module" src="./js/core.js"></script>
+  <script type="module" src="./js/tools.js"></script>
+  <script type="module" src="./js/ui.js"></script>
 
 </body>
 </html>
