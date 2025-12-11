@@ -323,3 +323,39 @@ export function loadDraft() {
     console.error("Draft load error:", err);
   }
 }
+
+export async function saveCurrentPage() {
+  if (!fabricCanvas) return;
+
+  const dataUrl = fabricCanvas.toDataURL("image/jpeg", 0.92);
+
+  const projectId = window.currentProjectId || "demo";
+  const index = window.currentPageIndex || 0;
+
+  const folder = `./assets/projects/${projectId}`;
+  const filename = `${folder}/page${index + 1}.jpg`;
+
+  // Save image file
+  await fetch(filename, {
+    method: "PUT",
+    body: dataUrl.split(",")[1]
+  });
+
+  // Update project JSON
+  const json = {
+    pages: []
+  };
+
+  const totalPages = window.totalPages || 1;
+  for (let i = 1; i <= totalPages; i++) {
+    json.pages.push(`${folder}/page${i}.jpg`);
+  }
+
+  await fetch(`${folder}/info.json`, {
+    method: "PUT",
+    body: JSON.stringify(json)
+  });
+
+  console.log("Saved page", index + 1);
+}
+
