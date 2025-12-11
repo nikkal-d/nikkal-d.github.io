@@ -1,9 +1,18 @@
 // js/tools.js
 // ---------------------------------------------
-// Tools: Filters • Crop • Stickers • Templates • PDF Import
+// Photobook Studio — Tools
+// Filters • Crop • Stickers • Templates • PDF Import • AI Images
 // ---------------------------------------------
 
-import { fabricCanvas } from "./core.js";
+import { fabricCanvas, saveCurrentPage } from "./core.js";
+
+/* ============================================================
+   INIT (τρέχει μόνο σε σελίδες με editor UI)
+   ============================================================ */
+
+window.addEventListener("DOMContentLoaded", () => {
+  initAIImageSearch();
+});
 
 /* ============================================================
    STICKERS — EMOJIS από list.json + Twemoji
@@ -34,22 +43,26 @@ export async function loadStickersFromList() {
   }
 }
 
-// απλή έκδοση για το dropdown κατηγοριών (emojis / shapes / frames κλπ)
+// γενικό loader για κατηγορίες (προς το παρόν μόνο emojis)
 export function loadStickers(category) {
-  // προς το παρόν υποστηρίζουμε μόνο emojis (AI library μπορεί να μπει εδώ αργότερα)
+  const grid = document.getElementById("stickerGrid");
+  if (!grid) return;
+
   if (category === "emojis") {
     loadStickersFromList();
   } else {
-    const grid = document.getElementById("stickerGrid");
-    if (grid) {
-      grid.innerHTML = "Άλλα stickers θα προστεθούν σύντομα 🙂";
-    }
+    grid.innerHTML = "Άλλα stickers θα προστεθούν σύντομα 🙂";
   }
 }
 
 export function addStickerToCanvas(url) {
   if (!fabricCanvas) {
     alert("Ο καμβάς δεν είναι έτοιμος!");
+    return;
+  }
+
+  if (typeof fabric === "undefined" || !fabric.Image) {
+    console.error("fabric.js δεν φορτώθηκε σωστά.");
     return;
   }
 
@@ -66,6 +79,7 @@ export function addStickerToCanvas(url) {
       fabricCanvas.add(img);
       fabricCanvas.setActiveObject(img);
       fabricCanvas.renderAll();
+      saveCurrentPage();
     },
     { crossOrigin: "anonymous" }
   );
@@ -98,6 +112,11 @@ export function applyFilter(type, value = 0) {
     return;
   }
 
+  if (typeof fabric === "undefined" || !fabric.Image || !fabric.Image.filters) {
+    console.error("fabric.js filters module δεν είναι διαθέσιμο.");
+    return;
+  }
+
   if (!obj.filters) obj.filters = [];
 
   switch (type) {
@@ -126,10 +145,11 @@ export function applyFilter(type, value = 0) {
 
   obj.applyFilters();
   fabricCanvas.requestRenderAll();
+  saveCurrentPage();
 }
 
 /* ============================================================
-   REAL CROP TOOL SYSTEM
+   CROP TOOL
    ============================================================ */
 
 let cropping = false;
@@ -147,11 +167,8 @@ export function startCrop() {
 
   cropping = true;
   cropTarget = obj;
-
-  // Disable object movement while cropping
   cropTarget.selectable = false;
 
-  // Create crop rectangle
   cropRect = new fabric.Rect({
     left: obj.left + 40,
     top: obj.top + 40,
@@ -187,7 +204,8 @@ export function applyCrop() {
   const ctx = tempCanvas.getContext("2d");
 
   const img = new Image();
-  img.src = cropTarget._originalElement.src;
+  img.crossOrigin = "anonymous";
+  img.src = cropTarget._originalElement?.src || cropTarget.src;
 
   img.onload = () => {
     ctx.drawImage(
@@ -218,6 +236,7 @@ export function applyCrop() {
 
       resetCropState();
       fabricCanvas.requestRenderAll();
+      saveCurrentPage();
     });
   };
 }
@@ -247,7 +266,7 @@ function showCropButtons(show) {
 }
 
 /* ============================================================
-   TEMPLATES SYSTEM (placeholder για τώρα)
+   TEMPLATES SYSTEM (placeholder)
    ============================================================ */
 
 let templatesCache = {};
@@ -289,7 +308,6 @@ function showTemplates(files, category) {
     img.src = `./assets/templates/${category}/${file.replace(".json", ".jpg")}`;
 
     box.appendChild(img);
-
     box.onclick = () => applyTemplate(category, file);
     grid.appendChild(box);
   });
@@ -314,6 +332,7 @@ export function applyTemplate(category, templateJson) {
         });
 
         fabricCanvas.renderAll();
+        saveCurrentPage();
       });
     })
     .catch((err) => {
@@ -370,6 +389,7 @@ export function importPDF(file) {
           fabricCanvas.add(img);
           fabricCanvas.setActiveObject(img);
           fabricCanvas.renderAll();
+          saveCurrentPage();
         });
       }
     } catch (err) {
@@ -379,4 +399,87 @@ export function importPDF(file) {
   };
 
   reader.readAsArrayBuffer(file);
+}
+
+/* ============================================================
+   AI IMAGES (Unsplash source API – χωρίς API key)
+   ============================================================ */
+
+function initAIImageSearch() {
+  const input = document.getElementById("aiImageSearch");
+  const btn = document.getElementById("aiImageSearchBtn");
+  const results = document.getElementById("aiImageResults");
+
+  // Αν δεν υπάρχουν αυτά τα στοιχεία στη σελίδα, απλά δεν ενεργοποιείται το feature
+  if (!input || !btn || !results) return;
+
+  const doSearch = () => {
+    const q = input.value.trim() || "abstract";
+    loadAIImages(q, results);
+  };
+
+  btn.addEventListener("click", doSearch);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      doSearch();
+    }
+  });
+
+  // αρχικό demo search
+  loadAIImages("flowers", results);
+}
+
+function loadAIImages(query, container) {
+  container.innerHTML = `Αναζήτηση για "<strong>${query}</strong>"…`;
+
+  // Χρησιμοποιούμε Unsplash Source χωρίς API key
+  // Θα φέρουμε 6 τυχαίες εικόνες που ταιριάζουν στο query
+  const count = 6;
+  container.innerHTML = "";
+
+  for (let i = 0; i < count; i++) {
+    const img = document.createElement("img");
+    img.className = "ai-image-thumb";
+    const url = `https://source.unsplash.com/800x600/?${encodeURIComponent(
+      query
+    )}&sig=${i}`;
+
+    img.src = url;
+    img.alt = query;
+    img.title = "Πάτα για να προστεθεί στη σελίδα";
+
+    img.onclick = () => addAIImageToCanvas(url);
+
+    container.appendChild(img);
+  }
+}
+
+function addAIImageToCanvas(url) {
+  if (!fabricCanvas) {
+    alert("Ο καμβάς δεν είναι έτοιμος.");
+    return;
+  }
+  if (typeof fabric === "undefined" || !fabric.Image) {
+    console.error("fabric.js δεν είναι διαθέσιμο.");
+    return;
+  }
+
+  fabric.Image.fromURL(
+    url,
+    (img) => {
+      // προσαρμογή στο μέγεθος καμβά
+      const maxWidth = fabricCanvas.width * 0.9;
+      img.scaleToWidth(maxWidth);
+
+      img.left = (fabricCanvas.width - img.getScaledWidth()) / 2;
+      img.top = (fabricCanvas.height - img.getScaledHeight()) / 2;
+
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.renderAll();
+      saveCurrentPage();
+    },
+    { crossOrigin: "anonymous" }
+  );
 }
