@@ -1,176 +1,340 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8" />
-  <title>Photobook Studio Editor</title>
+  <meta charset="UTF-8">
+  <title>Photobook Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="./css/photobook.css" />
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/photobook.css">
 
-  <!-- FabricJS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <!-- Fabric.js -->
+  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-  <!-- PDF.js for PDF import -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      background: #202020;
-      color: white;
-      font-family: Arial, sans-serif;
+  <!-- pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     }
-
-    #sidebar {
-      width: 300px;
-      background: #2b2b2b;
-      padding: 15px;
-      overflow-y: auto;
-    }
-
-    #editor {
-      flex: 1;
-      position: relative;
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #canvas-wrapper {
-      width: 90%;
-      height: 90%;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    canvas {
-      background: white;
-    }
-
-    /* Tabs */
-    .tab-btns {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 15px;
-    }
-    .tab-btns button.active {
-      background: #4caf50;
-    }
-    .tab {
-      display: none;
-    }
-    .tab.active {
-      display: block;
-    }
-
-    .tool-section { margin-bottom: 25px; }
-
-    .sticker-thumb {
-      width: 60px;
-      height: 60px;
-      margin: 4px;
-      cursor: pointer;
-    }
-
-    /* AI images */
-    .ai-image-results {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      max-height: 220px;
-      overflow-y: auto;
-    }
-    .ai-image-thumb {
-      width: 100%;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    #thumbnails img {
-      width: 80px;
-      margin: 4px;
-      border-radius: 4px;
-      background: #333;
-    }
-    .thumb.active {
-      outline: 2px solid #4caf50;
-    }
-  </style>
+  </script>
 </head>
-
 <body>
 
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-
-    <h2>Photobook Studio</h2>
-
-    <!-- Tabs -->
-    <div class="tab-btns">
-      <button data-tab="ai" class="active">AI Εικόνες</button>
-      <button data-tab="stickers">Stickers</button>
-      <button data-tab="filters">Filters</button>
-      <button data-tab="crop">Crop</button>
+  <!-- HEADER -->
+  <header id="topbar">
+    <div class="logo">
+      <a href="index.html" style="text-decoration:none; color:inherit;">
+        📘 Photobook Studio
+      </a>
     </div>
 
-    <!-- TAB: AI IMAGES -->
-    <div id="tab-ai" class="tab active">
-      <div class="tool-section">
-        <h3>AI Εικόνες</h3>
-        <div class="ai-search-row" style="display:flex;gap:6px;">
-          <input id="aiImageSearch" type="text" placeholder="π.χ. flowers, baby, wedding" style="flex:1;" />
-          <button id="aiImageSearchBtn">OK</button>
-        </div>
-        <div id="aiImageResults" class="ai-image-results"></div>
+    <nav class="main-nav">
+      <a href="index.html">Home</a>
+      <a href="photobook.html" class="active">Photobook</a>
+      <a href="duplicates.html">Find My Duplication</a>
+      <a href="projects.html">My Photobooks</a>
+    </nav>
+
+    <div class="top-controls">
+      <span id="user-label">Επισκέπτης</span>
+      <button id="login-btn">Σύνδεση</button>
+      <button id="logout-btn" style="display:none;">Αποσύνδεση</button>
+      <button id="themeToggleBtn">☾</button>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <div id="workspace">
+
+    <!-- TOOLBAR -->
+    <div id="editorToolbar" class="toolbar">
+
+      <!-- FILE / PAGES -->
+      <div class="toolbar-group">
+        <button class="tb-btn" id="addPageBtn">➕ Σελίδα</button>
+        <button class="tb-btn" id="deletePageBtn">🗑️ Διαγραφή</button>
+
+        <div class="divider"></div>
+
+        <button class="tb-btn primary" id="exportCloudBtn">☁️ Cloud</button>
+        <button class="tb-btn" id="exportPDFBtn">📄 PDF</button>
+        <button class="tb-btn" id="exportImagesBtn">🖼 ZIP</button>
+        <button class="tb-btn" id="exportFlipbookBtn">📘 Flipbook</button>
       </div>
+
+      <!-- INSERT -->
+      <div class="toolbar-group">
+        <button class="tb-btn" id="btnUploadImage">🖼 Εικόνα</button>
+        <input type="file" id="imageInput" accept="image/*" style="display:none">
+
+        <button class="tb-btn" id="btnAddText">🔤 Κείμενο</button>
+        <button class="tb-btn" id="btnStickers">😊 Stickers</button>
+        <button class="tb-btn" id="btnTemplates">📚 Templates</button>
+        <button class="tb-btn" id="btnUploadPDF">📎 PDF</button>
+        <input type="file" id="pdfInput" accept="application/pdf" style="display:none">
+      </div>
+
+      <!-- EDIT -->
+      <div class="toolbar-group">
+        <button class="tb-btn" id="undoBtn">↶ Undo</button>
+        <button class="tb-btn" id="redoBtn">↷ Redo</button>
+        <button class="tb-btn" id="cropBtn">✂ Crop</button>
+        <button class="tb-btn" id="cropOK" style="display:none;">✅ OK</button>
+        <button class="tb-btn" id="cropCancel" style="display:none;">❌ Ακύρωση</button>
+      </div>
+
     </div>
 
-    <!-- TAB: STICKERS -->
-    <div id="tab-stickers" class="tab">
-      <h3>Stickers</h3>
-      <button onclick="loadStickers('emojis')">Emoji</button>
-      <div id="stickerGrid"></div>
+    <!-- LAYOUT -->
+    <div id="editorLayout">
+
+      <!-- LEFT PANEL (filters, stickers, templates) -->
+      <aside id="leftPanel">
+        <h3>Εργαλεία</h3>
+
+        <!-- FILTERS -->
+        <section class="panel" id="filtersPanel">
+          <h4>Φίλτρα εικόνας</h4>
+          <label>Φωτεινότητα
+            <input type="range" id="fltBrightness" min="-1" max="1" step="0.1" value="0">
+          </label>
+          <label>Αντίθεση
+            <input type="range" id="fltContrast" min="-1" max="1" step="0.1" value="0">
+          </label>
+          <label>Κορεσμός
+            <input type="range" id="fltSaturation" min="-1" max="1" step="0.1" value="0">
+          </label>
+          <label>Blur
+            <input type="range" id="fltBlur" min="0" max="1" step="0.1" value="0">
+          </label>
+
+          <div class="panel-row">
+            <button class="sm-btn" id="fltGray">Grayscale</button>
+            <button class="sm-btn" id="fltVintage">Vintage</button>
+            <button class="sm-btn" id="fltRemove">Καθαρό</button>
+          </div>
+        </section>
+
+        <!-- STICKERS -->
+        <section class="panel" id="stickersPanel">
+          <h4>Stickers (emojis)</h4>
+          <div id="stickerGrid" class="thumb-grid">
+            Φόρτωση…
+          </div>
+        </section>
+
+        <!-- TEMPLATES -->
+        <section class="panel" id="templatesPanel">
+          <h4>Templates</h4>
+          <select id="templateCategory">
+            <option value="basic">Basic</option>
+            <option value="wedding">Wedding</option>
+            <option value="travel">Travel</option>
+          </select>
+          <div id="templateGrid" class="thumb-grid"></div>
+        </section>
+      </aside>
+
+      <!-- CENTER CANVAS -->
+      <main id="editorMain">
+        <div id="canvas-wrapper">
+          <canvas id="canvas"></canvas>
+        </div>
+
+        <div id="pageControls">
+          <button id="prevPageBtn">⟵</button>
+          <span id="pageInfo">1 / 1</span>
+          <button id="nextPageBtn">⟶</button>
+        </div>
+      </main>
+
+      <!-- RIGHT THUMBNAILS -->
+      <aside id="thumbsPanel">
+        <h4>Σελίδες</h4>
+        <div id="thumbnails"></div>
+      </aside>
     </div>
-
-    <!-- TAB: FILTERS -->
-    <div id="tab-filters" class="tab">
-      <h3>Filters</h3>
-      <button onclick="applyFilter('grayscale')">Grayscale</button>
-      <button onclick="applyFilter('vintage')">Vintage</button>
-      <button onclick="applyFilter('remove')">Clear</button>
-    </div>
-
-    <!-- TAB: CROP -->
-    <div id="tab-crop" class="tab">
-      <h3>Crop Tool</h3>
-      <button onclick="startCrop()">Start Crop</button>
-      <button id="cropOK" style="display:none;" onclick="applyCrop()">Apply</button>
-      <button id="cropCancel" style="display:none;" onclick="cancelCrop()">Cancel</button>
-    </div>
-
-    <h3>Σελίδες</h3>
-    <button id="addPageBtn">➕ Νέα σελίδα</button>
-    <button id="deletePageBtn">🗑️ Διαγραφή</button>
-    <div id="pageInfo">1/1</div>
-    <div id="thumbnails"></div>
-
   </div>
 
-  <!-- EDITOR WORKSPACE -->
-  <div id="editor">
-    <div id="canvas-wrapper">
-      <canvas id="canvas"></canvas>
+  <!-- LOGIN MODALS (υποθέτω ότι ήδη υπάρχουν στο auth.js σου) -->
+  <!-- μπορείς να κρατήσεις τα δικά σου αν τα έχεις, εδώ βάζω ένα απλό placeholder -->
+  <div id="authModal" class="modal" style="display:none;">
+    <div class="modal-inner">
+      <h3>Σύνδεση</h3>
+      <p>Το auth το χειρίζεται το auth.js – εδώ απλά placeholder.</p>
+      <button id="closeAuthModal">Κλείσιμο</button>
     </div>
   </div>
 
-  <!-- Editor scripts -->
+  <!-- JS MODULES -->
+  <script type="module" src="./js/firebase-init.js"></script>
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/tools.js"></script>
+  <script type="module" src="./js/export.js"></script>
+  <script type="module" src="./js/auth.js"></script>
   <script type="module" src="./js/ui.js"></script>
+
+  <!-- PAGE-SPECIFIC WIRING -->
+  <script type="module">
+    import { fabricCanvas, pages, saveCurrentPage } from "./js/core.js";
+    import { applyFilter, startCrop, applyCrop, cancelCrop, importPDF, loadStickersFromList, loadTemplates } from "./js/tools.js";
+    import { exportToCloud, exportAsPDF, exportAsZip, exportAsFlipbook } from "./js/export.js";
+
+    // ========= FILTERS =========
+    const sliderBrightness = document.getElementById("fltBrightness");
+    const sliderContrast = document.getElementById("fltContrast");
+    const sliderSaturation = document.getElementById("fltSaturation");
+    const sliderBlur = document.getElementById("fltBlur");
+
+    if (sliderBrightness) {
+      sliderBrightness.oninput = e => applyFilter("brightness", parseFloat(e.target.value));
+    }
+    if (sliderContrast) {
+      sliderContrast.oninput = e => applyFilter("contrast", parseFloat(e.target.value));
+    }
+    if (sliderSaturation) {
+      sliderSaturation.oninput = e => applyFilter("saturation", parseFloat(e.target.value));
+    }
+    if (sliderBlur) {
+      sliderBlur.oninput = e => applyFilter("blur", parseFloat(e.target.value));
+    }
+
+    document.getElementById("fltGray")?.addEventListener("click", () => applyFilter("grayscale"));
+    document.getElementById("fltVintage")?.addEventListener("click", () => applyFilter("vintage"));
+    document.getElementById("fltRemove")?.addEventListener("click", () => applyFilter("remove"));
+
+    // ========= CROP =========
+    document.getElementById("cropBtn")?.addEventListener("click", () => startCrop());
+    document.getElementById("cropOK")?.addEventListener("click", () => applyCrop());
+    document.getElementById("cropCancel")?.addEventListener("click", () => cancelCrop());
+
+    // ========= STICKERS (emojis) =========
+    document.getElementById("btnStickers")?.addEventListener("click", () => {
+      const panel = document.getElementById("stickersPanel");
+      if (!panel) return;
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open")) {
+        loadStickersFromList();
+      }
+    });
+
+    // ========= TEMPLATES =========
+    document.getElementById("btnTemplates")?.addEventListener("click", () => {
+      const panel = document.getElementById("templatesPanel");
+      if (!panel) return;
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open")) {
+        const cat = document.getElementById("templateCategory")?.value || "basic";
+        loadTemplates(cat);
+      }
+    });
+
+    document.getElementById("templateCategory")?.addEventListener("change", (e) => {
+      loadTemplates(e.target.value);
+    });
+
+    // ========= PDF IMPORT =========
+    document.getElementById("btnUploadPDF")?.addEventListener("click", () => {
+      document.getElementById("pdfInput")?.click();
+    });
+
+    document.getElementById("pdfInput")?.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) importPDF(file);
+    });
+
+    // ========= IMAGE UPLOAD =========
+    const imgBtn = document.getElementById("btnUploadImage");
+    const imgInput = document.getElementById("imageInput");
+
+    if (imgBtn && imgInput) {
+      imgBtn.addEventListener("click", () => imgInput.click());
+
+      imgInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file || !fabricCanvas) return;
+
+        const url = URL.createObjectURL(file);
+        fabric.Image.fromURL(url, (img) => {
+          img.scaleToWidth(fabricCanvas.width * 0.8);
+          img.left = fabricCanvas.width / 2 - img.width / 2;
+          img.top = fabricCanvas.height / 2 - img.height / 2;
+
+          fabricCanvas.add(img);
+          fabricCanvas.setActiveObject(img);
+          fabricCanvas.requestRenderAll();
+          saveCurrentPage();
+        }, { crossOrigin: "anonymous" });
+      });
+    }
+
+    // ========= TEXT =========
+    document.getElementById("btnAddText")?.addEventListener("click", () => {
+      if (!fabricCanvas) return;
+      const text = new fabric.IText("Δικό σου κείμενο", {
+        left: fabricCanvas.width / 2 - 100,
+        top: fabricCanvas.height / 2 - 20,
+        fontSize: 28,
+        fill: "#222"
+      });
+      fabricCanvas.add(text);
+      fabricCanvas.setActiveObject(text);
+      fabricCanvas.requestRenderAll();
+      saveCurrentPage();
+    });
+
+    // ========= EXPORT HELPERS =========
+    function collectPagesData() {
+      // παίρνουμε τα image data URLs από το core.js
+      return (pages || []).map(p => p.image).filter(Boolean);
+    }
+
+    document.getElementById("exportCloudBtn")?.addEventListener("click", async () => {
+      const title = prompt("Τίτλος βιβλίου:", "Το Photobook μου");
+      const pwd = prompt("Κωδικός (προαιρετικό):", "");
+
+      const allPages = collectPagesData();
+      if (!allPages.length) {
+        alert("Δεν υπάρχουν σελίδες για αποστολή.");
+        return;
+      }
+
+      const bookId = await exportToCloud(allPages, title, pwd);
+      if (bookId) {
+        const link = `${location.origin}${location.pathname.replace("photobook.html","viewer.html")}?id=${bookId}`;
+        alert("Το βιβλίο ανέβηκε στο cloud!\n\nID: " + bookId + "\nLink:\n" + link);
+      }
+    });
+
+    document.getElementById("exportPDFBtn")?.addEventListener("click", async () => {
+      const allPages = collectPagesData();
+      if (!allPages.length) {
+        alert("Δεν υπάρχουν σελίδες.");
+        return;
+      }
+      await exportAsPDF(allPages);
+    });
+
+    document.getElementById("exportImagesBtn")?.addEventListener("click", async () => {
+      const allPages = collectPagesData();
+      if (!allPages.length) {
+        alert("Δεν υπάρχουν σελίδες.");
+        return;
+      }
+      await exportAsZip(allPages);
+    });
+
+    document.getElementById("exportFlipbookBtn")?.addEventListener("click", async () => {
+      const allPages = collectPagesData();
+      if (!allPages.length) {
+        alert("Δεν υπάρχουν σελίδες.");
+        return;
+      }
+      await exportAsFlipbook(allPages);
+    });
+  </script>
 
 </body>
 </html>
