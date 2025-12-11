@@ -542,5 +542,29 @@ select {
   transform: scale(1.1);
 }
 
+.ai-search-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.ai-search-row input {
+  flex: 1;
+}
+.ai-image-results {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.ai-image-thumb {
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ai-image-thumb:hover {
+  outline: 2px solid #4caf50;
+}
+
 
 
