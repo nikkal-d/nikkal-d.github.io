@@ -21,14 +21,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function initThemeToggle() {
   const btn = document.getElementById("themeToggleBtn");
-  if (!btn) {
-    // π.χ. viewer.html, projects.html κτλ.
-    return;
-  }
-
   let current = localStorage.getItem("theme") || "dark";
 
   document.documentElement.setAttribute("data-theme", current);
+
+  if (!btn) {
+    // αν δεν υπάρχει κουμπί, απλά μην κάνεις τίποτα άλλο
+    return;
+  }
+
   btn.textContent = current === "dark" ? "☾" : "☀";
 
   btn.onclick = () => {
@@ -47,9 +48,8 @@ function initTabs() {
   const btns = document.querySelectorAll(".tab-btns button");
   const tabs = document.querySelectorAll(".tab");
 
-  if (!btns.length || !tabs.length) {
-    return; // δεν υπάρχουν tabs σε αυτή τη σελίδα
-  }
+  // αν δεν υπάρχουν tabs, απλά μην κάνεις τίποτα
+  if (!btns.length || !tabs.length) return;
 
   btns.forEach(btn => {
     btn.onclick = () => {
@@ -64,7 +64,7 @@ function initTabs() {
     };
   });
 
-  // start with first tab open
+  // start with first tab open (αν υπάρχει)
   if (btns[0]) btns[0].click();
 }
 
@@ -73,7 +73,7 @@ function initTabs() {
    ============================================================ */
 
 function initKeyboardShortcuts() {
-  if (!fabricCanvas) return; // viewer κ.λπ. δεν έχουν editor
+  if (!fabricCanvas) return;
 
   document.addEventListener("keydown", (e) => {
     const obj = fabricCanvas.getActiveObject();
@@ -131,7 +131,7 @@ function initKeyboardShortcuts() {
 }
 
 /* ============================================================
-   UNDO / REDO
+   UNDO / REDO (απλό, ανεξάρτητο από core.js history)
    ============================================================ */
 
 let undoStack = [];
@@ -141,8 +141,8 @@ function initUndoRedo() {
   if (!fabricCanvas) return;
 
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === "z") undo();
-    if (e.ctrlKey && e.key === "y") redo();
+    if (e.ctrlKey && e.key === "z") doUndo();
+    if (e.ctrlKey && e.key === "y") doRedo();
   });
 
   fabricCanvas.on("object:added", saveState);
@@ -161,7 +161,7 @@ function saveState() {
   redoStack = [];
 }
 
-function undo() {
+function doUndo() {
   if (!fabricCanvas) return;
   if (undoStack.length < 2) return;
 
@@ -175,9 +175,9 @@ function undo() {
   });
 }
 
-function redo() {
+function doRedo() {
   if (!fabricCanvas) return;
-  if (redoStack.length === 0) return;
+  if (!redoStack.length) return;
 
   const next = redoStack.pop();
   undoStack.push(next);
