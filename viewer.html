@@ -8,33 +8,38 @@
 
 <body>
 
-<!-- Single Loading Element -->
-<div id="viewer-loading" style="
-  display:none;
-  position:fixed;
-  inset:0;
-  background:#0009;
-  z-index:9999;
-  color:white;
-  font-size:24px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-">
-  Φόρτωση...
-</div>
+  <!-- ΜΟΝΟ ΕΝΑΣ loader -->
+  <div id="viewer-loading" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:#0009;
+    z-index:9999;
+    color:white;
+    font-size:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  ">
+    Φόρτωση…
+  </div>
 
-<div id="simpleView"></div>
-<div id="flipbook"></div>
+  <div id="simpleView"></div>
+  <div id="flipbook"></div>
 
-<div id="flipbook-nav">
-  <button id="flipPrev">⟵</button>
-  <span id="pageLabel">1/1</span>
-  <button id="flipNext">⟶</button>
-</div>
+  <div id="flipbook-nav">
+    <button id="flipPrev">⟵</button>
+    <span id="pageLabel">1 / 1</span>
+    <button id="flipNext">⟶</button>
+  </div>
 
-<button id="fullscreenBtn">⛶</button>
+  <button id="fullscreenBtn">⛶</button>
 
-<script type="module" src="./viewer.js"></script>
+  <div id="share-banner" style="display:none;">
+    <span>Shared Photobook</span>
+    <button id="copyShareLink">Αντιγραφή</button>
+  </div>
+
+  <script type="module" src="./viewer.js"></script>
 </body>
 </html>
