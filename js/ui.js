@@ -21,6 +21,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function initThemeToggle() {
   const btn = document.getElementById("themeToggleBtn");
+  if (!btn) {
+    // π.χ. viewer.html, projects.html κτλ.
+    return;
+  }
+
   let current = localStorage.getItem("theme") || "dark";
 
   document.documentElement.setAttribute("data-theme", current);
@@ -42,6 +47,10 @@ function initTabs() {
   const btns = document.querySelectorAll(".tab-btns button");
   const tabs = document.querySelectorAll(".tab");
 
+  if (!btns.length || !tabs.length) {
+    return; // δεν υπάρχουν tabs σε αυτή τη σελίδα
+  }
+
   btns.forEach(btn => {
     btn.onclick = () => {
       const id = btn.getAttribute("data-tab");
@@ -50,12 +59,13 @@ function initTabs() {
       btns.forEach(b => b.classList.remove("active"));
 
       btn.classList.add("active");
-      document.getElementById("tab-" + id).classList.add("active");
+      const tabEl = document.getElementById("tab-" + id);
+      if (tabEl) tabEl.classList.add("active");
     };
   });
 
   // start with first tab open
-  btns[0].click();
+  if (btns[0]) btns[0].click();
 }
 
 /* ============================================================
@@ -63,6 +73,8 @@ function initTabs() {
    ============================================================ */
 
 function initKeyboardShortcuts() {
+  if (!fabricCanvas) return; // viewer κ.λπ. δεν έχουν editor
+
   document.addEventListener("keydown", (e) => {
     const obj = fabricCanvas.getActiveObject();
 
@@ -126,6 +138,8 @@ let undoStack = [];
 let redoStack = [];
 
 function initUndoRedo() {
+  if (!fabricCanvas) return;
+
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.key === "z") undo();
     if (e.ctrlKey && e.key === "y") redo();
@@ -139,6 +153,7 @@ function initUndoRedo() {
 }
 
 function saveState() {
+  if (!fabricCanvas) return;
   const json = fabricCanvas.toJSON();
   undoStack.push(json);
 
@@ -147,6 +162,7 @@ function saveState() {
 }
 
 function undo() {
+  if (!fabricCanvas) return;
   if (undoStack.length < 2) return;
 
   const current = undoStack.pop();
@@ -160,6 +176,7 @@ function undo() {
 }
 
 function redo() {
+  if (!fabricCanvas) return;
   if (redoStack.length === 0) return;
 
   const next = redoStack.pop();
