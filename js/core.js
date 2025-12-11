@@ -23,15 +23,14 @@ let autosaveTimer = null;
    ============================================================ */
 
 window.addEventListener("DOMContentLoaded", () => {
-  // Αν δεν υπάρχει canvas στη σελίδα, δεν κάνουμε τίποτα (π.χ. viewer.html)
   const canvasEl = document.getElementById("canvas");
   if (!canvasEl) {
+    // π.χ. viewer.html κτλ.
     return;
   }
 
-  // Αν για κάποιο λόγο δεν φορτώθηκε το fabric.js, μην σκάσεις
   if (typeof fabric === "undefined" || !fabric.Canvas) {
-    console.error("fabric.js δεν φορτώθηκε. Ο editor θα είναι ανενεργός σε αυτή τη σελίδα.");
+    console.error("fabric.js δεν φορτώθηκε. Ο editor δεν θα ενεργοποιηθεί.");
     return;
   }
 
@@ -41,15 +40,12 @@ window.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", resizeCanvas);
 
   initHistory();
-
-  // φόρτωμα draft (guest ή user)
   loadDraft();
 });
 
 /* ------------------------------------------------------------ */
 
 function initCanvas() {
-  // ΠΡΟΣΟΧΗ: το canvas στο HTML πρέπει να έχει id="canvas"
   fabricCanvas = new fabric.Canvas("canvas", {
     preserveObjectStacking: true,
     selection: true,
@@ -68,9 +64,8 @@ function resizeCanvas() {
   fabricCanvas.requestRenderAll();
 }
 
-
 /* ============================================================
-   HISTORY SYSTEM (GLOBAL)
+   HISTORY SYSTEM
    ============================================================ */
 
 function initHistory() {
@@ -94,10 +89,8 @@ function saveHistoryState(source = "manual") {
   const json = fabricCanvas.toJSON();
   undoStack.push(json);
   if (undoStack.length > 80) undoStack.shift();
-  // κάθε νέο state μηδενίζει redo
   redoStack = [];
 
-  // κάθε σημαντική αλλαγή → draft autosave
   scheduleAutosave();
 }
 
@@ -130,7 +123,6 @@ export function redo() {
     isRestoring = false;
   });
 }
-
 
 /* ============================================================
    PAGE SYSTEM
@@ -166,8 +158,6 @@ export function addPage(isInitial = false) {
   saveCurrentPage();
   refreshThumbnails();
   loadPageToCanvas();
-
-  // νέα σελίδα → reset history για αυτή τη σελίδα
   resetHistory();
 }
 
@@ -240,7 +230,6 @@ export function loadPageToCanvas() {
   }
 }
 
-
 /* ============================================================
    THUMBNAILS
    ============================================================ */
@@ -272,9 +261,8 @@ export function refreshThumbnails() {
   }
 }
 
-
 /* ============================================================
-   DRAFT SAVE / LOAD PER USER
+   DRAFT SAVE / LOAD PER USER (localStorage)
    ============================================================ */
 
 function getDraftKey() {
@@ -295,7 +283,11 @@ export function saveDraft() {
     currentPage
   };
 
-  localStorage.setItem(key, JSON.stringify(draft));
+  try {
+    localStorage.setItem(key, JSON.stringify(draft));
+  } catch (err) {
+    console.warn("draft save failed", err);
+  }
 }
 
 /* ------------------------------------------------------------ */
@@ -311,7 +303,6 @@ export function loadDraft() {
     pages = draft.pages || [];
     currentPage = draft.currentPage || 0;
 
-    // αν για κάποιο λόγο είναι άδειο, φτιάξε σελίδα
     if (!pages.length) {
       addPage(true);
       return;
@@ -323,39 +314,3 @@ export function loadDraft() {
     console.error("Draft load error:", err);
   }
 }
-
-export async function saveCurrentPage() {
-  if (!fabricCanvas) return;
-
-  const dataUrl = fabricCanvas.toDataURL("image/jpeg", 0.92);
-
-  const projectId = window.currentProjectId || "demo";
-  const index = window.currentPageIndex || 0;
-
-  const folder = `./assets/projects/${projectId}`;
-  const filename = `${folder}/page${index + 1}.jpg`;
-
-  // Save image file
-  await fetch(filename, {
-    method: "PUT",
-    body: dataUrl.split(",")[1]
-  });
-
-  // Update project JSON
-  const json = {
-    pages: []
-  };
-
-  const totalPages = window.totalPages || 1;
-  for (let i = 1; i <= totalPages; i++) {
-    json.pages.push(`${folder}/page${i}.jpg`);
-  }
-
-  await fetch(`${folder}/info.json`, {
-    method: "PUT",
-    body: JSON.stringify(json)
-  });
-
-  console.log("Saved page", index + 1);
-}
-
