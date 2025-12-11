@@ -23,6 +23,18 @@ let autosaveTimer = null;
    ============================================================ */
 
 window.addEventListener("DOMContentLoaded", () => {
+  // Αν δεν υπάρχει canvas στη σελίδα, δεν κάνουμε τίποτα (π.χ. viewer.html)
+  const canvasEl = document.getElementById("canvas");
+  if (!canvasEl) {
+    return;
+  }
+
+  // Αν για κάποιο λόγο δεν φορτώθηκε το fabric.js, μην σκάσεις
+  if (typeof fabric === "undefined" || !fabric.Canvas) {
+    console.error("fabric.js δεν φορτώθηκε. Ο editor θα είναι ανενεργός σε αυτή τη σελίδα.");
+    return;
+  }
+
   initCanvas();
   initPageSystem();
   resizeCanvas();
@@ -125,10 +137,15 @@ export function redo() {
    ============================================================ */
 
 export function initPageSystem() {
-  document.getElementById("addPageBtn").onclick = () => addPage();
-  document.getElementById("deletePageBtn").onclick = deletePage;
-  document.getElementById("prevPageBtn").onclick = () => switchPage(currentPage - 1);
-  document.getElementById("nextPageBtn").onclick = () => switchPage(currentPage + 1);
+  const addBtn = document.getElementById("addPageBtn");
+  const delBtn = document.getElementById("deletePageBtn");
+  const prevBtn = document.getElementById("prevPageBtn");
+  const nextBtn = document.getElementById("nextPageBtn");
+
+  if (addBtn) addBtn.onclick = () => addPage();
+  if (delBtn) delBtn.onclick = deletePage;
+  if (prevBtn) prevBtn.onclick = () => switchPage(currentPage - 1);
+  if (nextBtn) nextBtn.onclick = () => switchPage(currentPage + 1);
 
   // αρχίζουμε με 1 κενή σελίδα
   addPage(true);
