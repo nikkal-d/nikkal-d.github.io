@@ -8,21 +8,8 @@
 
 <body>
 
-<div id="viewer-loading" style="display:none">Φόρτωση...</div>
-
-  <div id="simpleView"></div>
-  <div id="flipbook"></div>
-
-  <div id="flipbook-nav">
-      <button id="flipPrev">⟵</button>
-      <span id="pageLabel">1/1</span>
-      <button id="flipNext">⟶</button>
-  </div>
-
-  <button id="fullscreenBtn">⛶</button>
-
-
-  <div id="viewer-loading" style="
+<!-- Single Loading Element -->
+<div id="viewer-loading" style="
   display:none;
   position:fixed;
   inset:0;
@@ -37,7 +24,17 @@
   Φόρτωση...
 </div>
 
+<div id="simpleView"></div>
+<div id="flipbook"></div>
 
-  <script type="module" src="./viewer.js"></script>
+<div id="flipbook-nav">
+  <button id="flipPrev">⟵</button>
+  <span id="pageLabel">1/1</span>
+  <button id="flipNext">⟶</button>
+</div>
+
+<button id="fullscreenBtn">⛶</button>
+
+<script type="module" src="./viewer.js"></script>
 </body>
 </html>
