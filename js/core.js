@@ -20,6 +20,38 @@ let panMode = false;
 let isPanning = false;
 let panLast = { x: 0, y: 0 };
 
+// ============================================================
+// FABRIC FIX — Kill "alphabetical" textBaseline forever
+// ============================================================
+(function fixFabricTextBaseline() {
+  if (typeof fabric === "undefined") return;
+
+  const proto = fabric.Textbox.prototype;
+
+  // force valid baseline
+  Object.defineProperty(proto, "textBaseline", {
+    get() {
+      return "top";
+    },
+    set() {
+      /* ignore */
+    }
+  });
+
+  // also patch IText
+  const ip = fabric.IText.prototype;
+  Object.defineProperty(ip, "textBaseline", {
+    get() {
+      return "top";
+    },
+    set() {
+      /* ignore */
+    }
+  });
+})();
+
+
+
 window.addEventListener("DOMContentLoaded", () => {
   if (!document.getElementById("canvas") || typeof fabric === "undefined") return;
 
