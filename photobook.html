@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Photobook Studio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/photobook.css">
+  <link rel="stylesheet" href="./css/photobook.css" />
 
   <!-- Fabric.js -->
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
@@ -28,194 +27,210 @@
 
 <body>
 
-<!-- ================= TOP BAR ================= -->
 <header id="topbar">
-  <div class="logo">📘 Photobook Studio</div>
+  <div class="brand">
+    <span class="logo">📘</span>
+    <span class="title">Photobook Studio</span>
+  </div>
 
-  <div class="top-controls">
-    <button id="undoBtn">↶</button>
-    <button id="redoBtn">↷</button>
+  <div class="top-actions">
+    <button id="undoBtn" class="tb" title="Undo (Ctrl+Z)">↶</button>
+    <button id="redoBtn" class="tb" title="Redo (Ctrl+Shift+Z)">↷</button>
 
-    <button id="zoomOutBtn">−</button>
-    <span id="zoomLabel">100%</span>
-    <button id="zoomInBtn">+</button>
+    <div class="zoom-box">
+      <button id="zoomOutBtn" class="tb" title="Zoom out">−</button>
+      <span id="zoomLabel">100%</span>
+      <button id="zoomInBtn" class="tb" title="Zoom in">+</button>
+      <button id="zoomResetBtn" class="tb" title="Reset zoom">⟲</button>
+      <button id="zoomFitBtn" class="tb" title="Fit to screen">⤢</button>
+    </div>
 
-    <button id="themeToggleBtn">☾</button>
+    <select id="sizePreset" class="select" title="Canvas size">
+      <option value="A4P">A4 Portrait</option>
+      <option value="A4L">A4 Landscape</option>
+      <option value="SQUARE">Square</option>
+      <option value="STORY">Story 1080×1920</option>
+      <option value="HD">HD 1920×1080</option>
+      <option value="CUSTOM">Custom…</option>
+    </select>
+
+    <button id="themeToggleBtn" class="tb" title="Theme">☾</button>
   </div>
 </header>
 
-<!-- ================= LEFT SIDEBAR ================= -->
-<aside class="sidebar left">
-  <button class="side-btn" data-panel="import">📁</button>
-  <button class="side-btn" data-panel="edit">✏️</button>
-  <button class="side-btn" data-panel="layers">🧱</button>
+<!-- LEFT BAR -->
+<aside class="rail left">
+  <button class="rail-btn active" data-panel="import" title="Import">📁</button>
+  <button class="rail-btn" data-panel="text" title="Text">T</button>
+  <button class="rail-btn" data-panel="stickers" title="Stickers">😊</button>
+  <button class="rail-btn" data-panel="shapes" title="Shapes">⬛</button>
+  <button class="rail-btn" data-panel="effects" title="Effects">✨</button>
+  <button class="rail-btn" data-panel="layers" title="Layers">🧱</button>
 </aside>
 
-<!-- ================= LEFT DRAWER ================= -->
-<div id="leftDrawer" class="drawer left">
-
-  <div class="drawer-panel" id="panel-import">
-    <h3>Import</h3>
-    <button id="btnUploadImage">🖼 Εικόνα</button>
-    <input type="file" id="imageInput" accept="image/*" hidden>
-
-    <button id="btnUploadPDF">📄 PDF</button>
-    <input type="file" id="pdfInput" accept="application/pdf" hidden>
-  </div>
-
-  <div class="drawer-panel" id="panel-edit">
-    <h3>Edit</h3>
-    <button id="cropBtn">✂ Crop</button>
-    <button id="removeBgBtn">🧠 Remove BG</button>
-
-    <hr>
-
-    <button id="bringForwardBtn">⬆ Bring Forward</button>
-    <button id="sendBackwardBtn">⬇ Send Backward</button>
-  </div>
-
-  <div class="drawer-panel" id="panel-layers">
-    <h3>Layers</h3>
-    <div id="layersList">Επίλεξε αντικείμενο</div>
-  </div>
-
-</div>
-
-<!-- ================= RIGHT SIDEBAR ================= -->
-<button id="exportFab" class="export-fab">Export</button>
-
-<aside id="exportDrawer" class="drawer right">
+<!-- LEFT DRAWER -->
+<section id="leftDrawer" class="drawer left open">
   <div class="drawer-head">
-    <h3>Export</h3>
-    <button id="exportCloseBtn">✕</button>
+    <h3 id="drawerTitle">Import</h3>
+    <button id="drawerCloseBtn" class="icon">✕</button>
   </div>
 
-  <button id="exportCloudBtn">☁ Cloud</button>
-  <button id="exportPDFBtn">📄 PDF</button>
-  <button id="exportImagesBtn">🖼 ZIP Images</button>
-  <button id="exportFlipbookBtn">📘 Flipbook</button>
-</aside>
+  <div class="drawer-body">
+    <!-- IMPORT -->
+    <div class="panel active" id="panel-import">
+      <button id="btnUploadImage" class="btn">🖼 Εικόνα</button>
+      <input id="imageInput" type="file" accept="image/*" hidden />
 
-<!-- ================= MAIN CANVAS ================= -->
-<main id="editorMain">
-  <div id="canvas-wrapper">
-    <canvas id="canvas"></canvas>
+      <button id="btnUploadPDF" class="btn">📄 PDF</button>
+      <input id="pdfInput" type="file" accept="application/pdf" hidden />
+
+      <div class="hint">
+        Tip: Ctrl+Wheel για zoom • Space+Drag για pan
+      </div>
+    </div>
+
+    <!-- TEXT -->
+    <div class="panel" id="panel-text">
+      <button id="addHeadingBtn" class="btn">Heading</button>
+      <button id="addBodyBtn" class="btn">Body text</button>
+      <button id="addCustomTextBtn" class="btn">Custom…</button>
+    </div>
+
+    <!-- STICKERS -->
+    <div class="panel" id="panel-stickers">
+      <div class="row">
+        <input id="stickerSearch" class="input" placeholder="Search stickers…" />
+        <button id="reloadStickersBtn" class="btn small">↻</button>
+      </div>
+      <div id="stickerGrid" class="grid"></div>
+      <div class="hint">Τα stickers φορτώνονται από <code>assets/stickers/list.json</code></div>
+    </div>
+
+    <!-- SHAPES -->
+    <div class="panel" id="panel-shapes">
+      <button id="addRectBtn" class="btn">Rectangle</button>
+      <button id="addCircleBtn" class="btn">Circle</button>
+      <button id="addLineBtn" class="btn">Line</button>
+    </div>
+
+    <!-- EFFECTS -->
+    <div class="panel" id="panel-effects">
+      <label class="label">
+        Opacity
+        <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="1" />
+      </label>
+
+      <label class="label">
+        Shadow
+        <input id="shadowToggle" type="checkbox" />
+      </label>
+
+      <button id="deleteObjBtn" class="btn danger">Delete selected</button>
+    </div>
+
+    <!-- LAYERS -->
+    <div class="panel" id="panel-layers">
+      <div class="row">
+        <button id="bringForwardBtn" class="btn small">⬆</button>
+        <button id="sendBackwardBtn" class="btn small">⬇</button>
+        <button id="bringToFrontBtn" class="btn small">⏫</button>
+        <button id="sendToBackBtn" class="btn small">⏬</button>
+      </div>
+
+      <div id="layersList" class="layers"></div>
+      <div class="hint">Κάνε click σε layer για επιλογή • 👁 hide • 🔒 lock</div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN -->
+<main id="workspace">
+  <div id="stageWrap">
+    <div id="canvasHost">
+      <canvas id="canvas"></canvas>
+    </div>
   </div>
 
-  <div id="pageControls">
-    <button id="prevPageBtn">⟵</button>
+  <div id="pageBar">
+    <button id="prevPageBtn" class="tb">⟵</button>
     <span id="pageInfo">1 / 1</span>
-    <button id="nextPageBtn">⟶</button>
+    <button id="nextPageBtn" class="tb">⟶</button>
+    <button id="addPageBtn" class="tb">＋</button>
+    <button id="dupPageBtn" class="tb">⎘</button>
+    <button id="deletePageBtn" class="tb">🗑</button>
+
+    <div class="spacer"></div>
+
+    <button id="previewFlipbookBtn" class="tb">👀 Preview</button>
   </div>
+
+  <div id="thumbStrip"></div>
 </main>
 
-<!-- ================= SCRIPTS ================= -->
-<script type="module" src="./firebase-init.js"></script>
+<!-- EXPORT FAB + RIGHT DRAWER -->
+<button id="exportFab" class="export-fab">Export</button>
+
+<section id="exportDrawer" class="drawer right">
+  <div class="drawer-head">
+    <h3>Export</h3>
+    <button id="exportCloseBtn" class="icon">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <label class="label">
+      Format
+      <select id="exportFormat" class="select">
+        <option value="PNG">PNG (Pages)</option>
+        <option value="JPG">JPG (Pages)</option>
+        <option value="PDF">PDF</option>
+        <option value="ZIP">ZIP (PNG)</option>
+        <option value="FLIPBOOK">Flipbook ZIP</option>
+      </select>
+    </label>
+
+    <label class="label">
+      Quality (JPG/PDF images)
+      <input id="exportQuality" type="range" min="0.4" max="1" step="0.05" value="0.9" />
+    </label>
+
+    <label class="label">
+      Range
+      <select id="exportRange" class="select">
+        <option value="ALL">All pages</option>
+        <option value="CURRENT">Current page</option>
+      </select>
+    </label>
+
+    <button id="doExportBtn" class="btn primary">⬇ Export</button>
+  </div>
+</section>
+
+<!-- FLIPBOOK PREVIEW MODAL -->
+<div id="previewModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Flipbook Preview</div>
+      <button id="closePreviewBtn" class="icon">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div id="previewFlipbook" class="preview-flip"></div>
+
+      <div class="preview-nav">
+        <button id="pvPrev" class="tb">⟵</button>
+        <span id="pvLabel">1 / 1</span>
+        <button id="pvNext" class="tb">⟶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODULES -->
 <script type="module" src="./js/core.js"></script>
 <script type="module" src="./js/tools.js"></script>
 <script type="module" src="./js/export.js"></script>
+<script type="module" src="./js/flipbook-preview.js"></script>
 <script type="module" src="./js/ui.js"></script>
-
-<!-- ================= UI BINDINGS ================= -->
-<script type="module">
-  import { fabricCanvas, pages } from "./js/core.js";
-  import { exportAsZip, exportAsPDF, exportAsFlipbook, exportToCloud } from "./js/export.js";
-  import { bringForward, sendBackward, removeBackground } from "./js/tools.js";
-
-  /* ---------- Sidebar logic ---------- */
-  const sideBtns = document.querySelectorAll(".side-btn");
-  const drawer = document.getElementById("leftDrawer");
-  const panels = document.querySelectorAll(".drawer-panel");
-
-  sideBtns.forEach(btn => {
-    btn.onclick = () => {
-      const target = btn.dataset.panel;
-
-      if (btn.classList.contains("active")) {
-        btn.classList.remove("active");
-        drawer.classList.remove("open");
-        panels.forEach(p => p.classList.remove("active"));
-        return;
-      }
-
-      sideBtns.forEach(b => b.classList.remove("active"));
-      panels.forEach(p => p.classList.remove("active"));
-
-      btn.classList.add("active");
-      drawer.classList.add("open");
-      document.getElementById("panel-" + target)?.classList.add("active");
-    };
-  });
-
-  /* ---------- Import Image ---------- */
-  const imgBtn = document.getElementById("btnUploadImage");
-  const imgInput = document.getElementById("imageInput");
-
-  imgBtn.onclick = () => imgInput.click();
-  imgInput.onchange = e => {
-    const file = e.target.files[0];
-    if (!file || !fabricCanvas) return;
-
-    const url = URL.createObjectURL(file);
-    fabric.Image.fromURL(url, img => {
-      img.scaleToWidth(fabricCanvas.width * 0.6);
-      fabricCanvas.add(img).setActiveObject(img);
-    });
-  };
-
-  /* ---------- Import PDF (images only for now) ---------- */
-  document.getElementById("btnUploadPDF").onclick = () =>
-    document.getElementById("pdfInput").click();
-
-  /* ---------- Layer order ---------- */
-  document.getElementById("bringForwardBtn").onclick = bringForward;
-  document.getElementById("sendBackwardBtn").onclick = sendBackward;
-
-  /* ---------- Remove background ---------- */
-  document.getElementById("removeBgBtn").onclick = removeBackground;
-
-  /* ---------- Export drawer ---------- */
-  const exportDrawer = document.getElementById("exportDrawer");
-  document.getElementById("exportFab").onclick = () => exportDrawer.classList.add("open");
-  document.getElementById("exportCloseBtn").onclick = () => exportDrawer.classList.remove("open");
-
-  function collectPages() {
-    return pages.map(p => p.image).filter(Boolean);
-  }
-
-  document.getElementById("exportImagesBtn").onclick = () =>
-    exportAsZip(collectPages());
-
-  document.getElementById("exportPDFBtn").onclick = () =>
-    exportAsPDF(collectPages());
-
-  document.getElementById("exportFlipbookBtn").onclick = () =>
-    exportAsFlipbook(collectPages());
-
-  document.getElementById("exportCloudBtn").onclick = async () => {
-    const id = await exportToCloud(collectPages(), "My Photobook");
-    if (id) alert("Uploaded! ID: " + id);
-  };
-
-  /* ---------- Canvas Zoom ---------- */
-  let zoom = 1;
-  const zoomLbl = document.getElementById("zoomLabel");
-
-  function applyZoom() {
-    fabricCanvas.setZoom(zoom);
-    zoomLbl.textContent = Math.round(zoom * 100) + "%";
-    fabricCanvas.requestRenderAll();
-  }
-
-  document.getElementById("zoomInBtn").onclick = () => {
-    zoom = Math.min(3, zoom + 0.1);
-    applyZoom();
-  };
-  document.getElementById("zoomOutBtn").onclick = () => {
-    zoom = Math.max(0.3, zoom - 0.1);
-    applyZoom();
-  };
-</script>
 
 </body>
 </html>
