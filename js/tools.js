@@ -1,22 +1,73 @@
 // js/tools.js
 // ============================================================
-// Tools: PDF import (image + editable text), layers
+// Tools: images, pdf import, layers, background removal hook
 // ============================================================
 
 import { fabricCanvas, addPage, saveCurrentPage } from "./core.js";
 
 /* ============================================================
-   LAYER ORDER
+   LAYERS
    ============================================================ */
 
 export function bringForward() {
   const obj = fabricCanvas?.getActiveObject();
-  if (obj) fabricCanvas.bringForward(obj);
+  if (obj) {
+    fabricCanvas.bringForward(obj);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  }
 }
 
 export function sendBackward() {
   const obj = fabricCanvas?.getActiveObject();
-  if (obj) fabricCanvas.sendBackwards(obj);
+  if (obj) {
+    fabricCanvas.sendBackwards(obj);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  }
+}
+
+/* ============================================================
+   BACKGROUND REMOVAL (STUB – AI next stage)
+   ============================================================ */
+
+export function removeBackground() {
+  const obj = fabricCanvas?.getActiveObject();
+  if (!obj || obj.type !== "image") {
+    alert("Επίλεξε πρώτα μία εικόνα.");
+    return;
+  }
+
+  alert(
+    "Background removal:\n\n" +
+    "Το feature θα ενεργοποιηθεί με AI API (επόμενο στάδιο).\n" +
+    "Ο editor είναι έτοιμος για αυτό."
+  );
+}
+
+/* ============================================================
+   IMAGE IMPORT
+   ============================================================ */
+
+export function importImage(file) {
+  if (!fabricCanvas) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    fabric.Image.fromURL(e.target.result, img => {
+      img.set({
+        left: 100,
+        top: 100,
+        selectable: true
+      });
+
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.requestRenderAll();
+      saveCurrentPage();
+    });
+  };
+  reader.readAsDataURL(file);
 }
 
 /* ============================================================
@@ -95,7 +146,6 @@ async function renderPdfText(page) {
       originY: "top",
       selectable: true,
       editable: true
-      // ⛔ ΔΕΝ υπάρχει textBaseline εδώ
     });
 
     fabricCanvas.add(txt);
