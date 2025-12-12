@@ -1,316 +1,182 @@
-/* ============================================================
-   Photobook Studio — CORE MODULE
-   Canvas, Pages, Thumbnails, Draft Save/Load, History
-   ============================================================ */
+// js/core.js
+// ============================================================
+// Core editor engine (canvas, pages, undo/redo, draft)
+// SANITIZES legacy textBaseline = 'alphabetical'
+// ============================================================
 
-import { auth } from "../firebase-init.js";
-
-/* GLOBAL STATE */
 export let fabricCanvas = null;
 export let pages = [];
 export let currentPage = 0;
 
-// history
+/* ============================================================
+   HISTORY
+   ============================================================ */
+
 let undoStack = [];
 let redoStack = [];
-let isRestoring = false;
-
-// draft autosave
-let autosaveTimer = null;
+let restoring = false;
 
 /* ============================================================
-   INITIALIZATION
+   INIT
    ============================================================ */
 
 window.addEventListener("DOMContentLoaded", () => {
   const canvasEl = document.getElementById("canvas");
-  if (!canvasEl) {
-    // π.χ. viewer.html κτλ.
-    return;
-  }
+  if (!canvasEl || typeof fabric === "undefined") return;
 
-  if (typeof fabric === "undefined" || !fabric.Canvas) {
-    console.error("fabric.js δεν φορτώθηκε. Ο editor δεν θα ενεργοποιηθεί.");
-    return;
-  }
+  fabricCanvas = new fabric.Canvas("canvas", {
+    preserveObjectStacking: true
+  });
 
-  initCanvas();
-  initPageSystem();
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  initHistory();
+  bindHistory();
+  initPages();
   loadDraft();
 });
 
-/* ------------------------------------------------------------ */
-
-function initCanvas() {
-  fabricCanvas = new fabric.Canvas("canvas", {
-    preserveObjectStacking: true,
-    selection: true,
-    backgroundColor: "#ffffff"
-  });
-}
-
-/* ------------------------------------------------------------ */
+/* ============================================================
+   CANVAS
+   ============================================================ */
 
 function resizeCanvas() {
   const wrap = document.getElementById("canvas-wrapper");
   if (!wrap || !fabricCanvas) return;
 
-  fabricCanvas.setWidth(wrap.clientWidth);
-  fabricCanvas.setHeight(wrap.clientHeight);
+  fabricCanvas.setWidth(wrap.clientWidth - 20);
+  fabricCanvas.setHeight(wrap.clientHeight - 20);
   fabricCanvas.requestRenderAll();
 }
 
 /* ============================================================
-   HISTORY SYSTEM
+   HISTORY
    ============================================================ */
 
-function initHistory() {
-  if (!fabricCanvas) return;
-
-  saveHistoryState("init");
-
+function bindHistory() {
   const events = ["object:added", "object:modified", "object:removed"];
   events.forEach(ev => {
     fabricCanvas.on(ev, () => {
-      if (!isRestoring) {
-        saveHistoryState(ev);
-      }
+      if (!restoring) saveHistory();
     });
   });
 }
 
-function saveHistoryState(source = "manual") {
-  if (!fabricCanvas) return;
-
-  const json = fabricCanvas.toJSON();
-  undoStack.push(json);
-  if (undoStack.length > 80) undoStack.shift();
+function saveHistory() {
+  undoStack.push(fabricCanvas.toJSON());
+  if (undoStack.length > 50) undoStack.shift();
   redoStack = [];
-
-  scheduleAutosave();
 }
 
 export function undo() {
-  if (!fabricCanvas) return;
   if (undoStack.length < 2) return;
 
-  const current = undoStack.pop();
-  redoStack.push(current);
+  const curr = undoStack.pop();
+  redoStack.push(curr);
 
-  const prev = undoStack[undoStack.length - 1];
-
-  isRestoring = true;
-  fabricCanvas.loadFromJSON(prev, () => {
-    fabricCanvas.renderAll();
-    isRestoring = false;
+  restoring = true;
+  loadFromJSONSafe(undoStack[undoStack.length - 1], () => {
+    restoring = false;
   });
 }
 
 export function redo() {
-  if (!fabricCanvas) return;
   if (!redoStack.length) return;
 
   const next = redoStack.pop();
   undoStack.push(next);
 
-  isRestoring = true;
-  fabricCanvas.loadFromJSON(next, () => {
-    fabricCanvas.renderAll();
-    isRestoring = false;
+  restoring = true;
+  loadFromJSONSafe(next, () => {
+    restoring = false;
   });
 }
 
 /* ============================================================
-   PAGE SYSTEM
+   PAGES
    ============================================================ */
 
-export function initPageSystem() {
-  const addBtn = document.getElementById("addPageBtn");
-  const delBtn = document.getElementById("deletePageBtn");
-  const prevBtn = document.getElementById("prevPageBtn");
-  const nextBtn = document.getElementById("nextPageBtn");
-
-  if (addBtn) addBtn.onclick = () => addPage();
-  if (delBtn) delBtn.onclick = deletePage;
-  if (prevBtn) prevBtn.onclick = () => switchPage(currentPage - 1);
-  if (nextBtn) nextBtn.onclick = () => switchPage(currentPage + 1);
-
-  // αρχίζουμε με 1 κενή σελίδα
-  addPage(true);
+function initPages() {
+  addPage();
 }
 
-/* ------------------------------------------------------------ */
-
-export function addPage(isInitial = false) {
-  const pageObj = {
-    json: null,
-    image: null
-  };
-
-  pages.push(pageObj);
-
-  if (!isInitial) currentPage = pages.length - 1;
-
-  saveCurrentPage();
-  refreshThumbnails();
-  loadPageToCanvas();
-  resetHistory();
+export function addPage() {
+  pages.push({ json: null, image: null });
+  currentPage = pages.length - 1;
+  fabricCanvas.clear();
+  saveHistory();
 }
-
-/* ------------------------------------------------------------ */
-
-export function deletePage() {
-  if (pages.length <= 1) {
-    alert("Πρέπει να υπάρχει τουλάχιστον μία σελίδα.");
-    return;
-  }
-
-  pages.splice(currentPage, 1);
-  currentPage = Math.max(0, currentPage - 1);
-
-  refreshThumbnails();
-  loadPageToCanvas();
-  resetHistory();
-}
-
-/* ------------------------------------------------------------ */
-
-export function switchPage(index) {
-  if (index < 0 || index >= pages.length) return;
-
-  saveCurrentPage();
-  currentPage = index;
-
-  refreshThumbnails();
-  loadPageToCanvas();
-  resetHistory();
-}
-
-function resetHistory() {
-  undoStack = [];
-  redoStack = [];
-  saveHistoryState("page-switch");
-}
-
-/* ============================================================
-   SAVE + LOAD PAGE
-   ============================================================ */
 
 export function saveCurrentPage() {
-  if (!fabricCanvas || !pages[currentPage]) return;
+  if (!pages[currentPage]) return;
 
-  const json = fabricCanvas.toJSON();
-  const image = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
-
-  pages[currentPage].json = json;
-  pages[currentPage].image = image;
-
-  scheduleAutosave();
-}
-
-/* ------------------------------------------------------------ */
-
-export function loadPageToCanvas() {
-  if (!fabricCanvas) return;
-
-  const p = pages[currentPage];
-  if (!p) return;
-
-  if (p.json) {
-    fabricCanvas.loadFromJSON(p.json, () => {
-      fabricCanvas.renderAll();
-    });
-  } else {
-    fabricCanvas.clear();
-    fabricCanvas.renderAll();
-  }
-}
-
-/* ============================================================
-   THUMBNAILS
-   ============================================================ */
-
-export function refreshThumbnails() {
-  const box = document.getElementById("thumbnails");
-  if (!box) return;
-
-  box.innerHTML = "";
-
-  pages.forEach((pg, index) => {
-    const div = document.createElement("div");
-    div.className = "thumb" + (index === currentPage ? " active" : "");
-
-    const img = document.createElement("img");
-    img.src =
-      pg.image ||
-      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
-
-    div.appendChild(img);
-    div.onclick = () => switchPage(index);
-
-    box.appendChild(div);
+  pages[currentPage].json = fabricCanvas.toJSON();
+  pages[currentPage].image = fabricCanvas.toDataURL({
+    format: "png",
+    quality: 0.9
   });
-
-  const info = document.getElementById("pageInfo");
-  if (info) {
-    info.textContent = `${currentPage + 1} / ${pages.length}`;
-  }
 }
 
 /* ============================================================
-   DRAFT SAVE / LOAD PER USER (localStorage)
+   SAFE LOAD (SANITIZE)
    ============================================================ */
 
-function getDraftKey() {
-  const user = auth.currentUser;
-  return user ? "draft_" + user.uid : "draft_guest";
+function sanitizeObject(obj) {
+  if (obj.textBaseline === "alphabetical") {
+    obj.textBaseline = "top";
+  }
+  return obj;
 }
 
-function scheduleAutosave() {
-  clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(saveDraft, 700);
+function sanitizeJSON(json) {
+  if (!json || !json.objects) return json;
+
+  json.objects = json.objects.map(obj => sanitizeObject(obj));
+  return json;
+}
+
+function loadFromJSONSafe(json, cb) {
+  const clean = sanitizeJSON(structuredClone(json));
+
+  fabricCanvas.loadFromJSON(clean, () => {
+    fabricCanvas.renderAll();
+    cb?.();
+  });
+}
+
+/* ============================================================
+   DRAFT SAVE / LOAD
+   ============================================================ */
+
+function draftKey() {
+  return "photobook_draft_v2";
 }
 
 export function saveDraft() {
-  const key = getDraftKey();
-
-  const draft = {
-    pages,
-    currentPage
-  };
-
-  try {
-    localStorage.setItem(key, JSON.stringify(draft));
-  } catch (err) {
-    console.warn("draft save failed", err);
-  }
+  saveCurrentPage();
+  localStorage.setItem(
+    draftKey(),
+    JSON.stringify({ pages, currentPage })
+  );
 }
 
-/* ------------------------------------------------------------ */
-
-export function loadDraft() {
-  const key = getDraftKey();
-  const raw = localStorage.getItem(key);
-
+function loadDraft() {
+  const raw = localStorage.getItem(draftKey());
   if (!raw) return;
 
   try {
-    const draft = JSON.parse(raw);
-    pages = draft.pages || [];
-    currentPage = draft.currentPage || 0;
+    const data = JSON.parse(raw);
+    pages = data.pages || [];
+    currentPage = data.currentPage || 0;
 
-    if (!pages.length) {
-      addPage(true);
-      return;
-    }
+    if (!pages.length) return;
 
-    refreshThumbnails();
-    loadPageToCanvas();
-  } catch (err) {
-    console.error("Draft load error:", err);
+    restoring = true;
+    loadFromJSONSafe(pages[currentPage].json, () => {
+      restoring = false;
+      saveHistory();
+    });
+  } catch {
+    console.warn("Draft corrupted, ignoring");
   }
 }
