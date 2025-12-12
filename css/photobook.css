@@ -362,3 +362,58 @@ html, body {
   --thumb-bg: #eee;
 }
 
+
+.export-fab{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  z-index:2000;
+  padding:10px 14px;
+  border:none;
+  border-radius:12px;
+  background:var(--acc);
+  color:#fff;
+  cursor:pointer;
+  box-shadow:0 8px 20px #0006;
+}
+.export-drawer{
+  position:fixed;
+  top:50px;               /* κάτω από topbar */
+  right:0;
+  width:320px;
+  height:calc(100vh - 50px);
+  background:var(--panel);
+  border-left:1px solid var(--border);
+  transform:translateX(100%);
+  transition:transform .2s ease;
+  z-index:1999;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.export-drawer.open{ transform:translateX(0); }
+.export-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.export-head button{
+  background:var(--btn-bg);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+}
+.export-drawer button{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--btn-bg);
+  color:var(--text);
+  cursor:pointer;
+}
+.export-drawer button:hover{ background:var(--btn-hover); }
+.export-drawer label{ display:flex; flex-direction:column; gap:6px; }
+
