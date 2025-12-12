@@ -130,59 +130,20 @@ function initKeyboardShortcuts() {
   });
 }
 
-/* ============================================================
-   UNDO / REDO (απλό, ανεξάρτητο από core.js history)
-   ============================================================ */
+import { undo, redo } from "./core.js";
 
-let undoStack = [];
-let redoStack = [];
-
-function initUndoRedo() {
-  if (!fabricCanvas) return;
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("undoBtn")?.addEventListener("click", undo);
+  document.getElementById("redoBtn")?.addEventListener("click", redo);
 
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === "z") doUndo();
-    if (e.ctrlKey && e.key === "y") doRedo();
+    if (e.ctrlKey && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      undo();
+    }
+    if (e.ctrlKey && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))) {
+      e.preventDefault();
+      redo();
+    }
   });
-
-  fabricCanvas.on("object:added", saveState);
-  fabricCanvas.on("object:modified", saveState);
-  fabricCanvas.on("object:removed", saveState);
-
-  saveState(); // initial
-}
-
-function saveState() {
-  if (!fabricCanvas) return;
-  const json = fabricCanvas.toJSON();
-  undoStack.push(json);
-
-  if (undoStack.length > 40) undoStack.shift();
-  redoStack = [];
-}
-
-function doUndo() {
-  if (!fabricCanvas) return;
-  if (undoStack.length < 2) return;
-
-  const current = undoStack.pop();
-  redoStack.push(current);
-
-  const prev = undoStack[undoStack.length - 1];
-
-  fabricCanvas.loadFromJSON(prev, () => {
-    fabricCanvas.renderAll();
-  });
-}
-
-function doRedo() {
-  if (!fabricCanvas) return;
-  if (!redoStack.length) return;
-
-  const next = redoStack.pop();
-  undoStack.push(next);
-
-  fabricCanvas.loadFromJSON(next, () => {
-    fabricCanvas.renderAll();
-  });
-}
+});
