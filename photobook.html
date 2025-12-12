@@ -5,19 +5,13 @@
   <title>Photobook Studio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ===============================
-       HARD FIX — BLOCK alphabetical
-       MUST be BEFORE fabric.min.js
-       =============================== -->
+  <!-- HARD FIX: block alphabetical -->
   <script>
   (function () {
     const proto = CanvasRenderingContext2D.prototype;
     const desc = Object.getOwnPropertyDescriptor(proto, "textBaseline");
-
     Object.defineProperty(proto, "textBaseline", {
-      get() {
-        return this.___tb || "top";
-      },
+      get() { return this.___tb || "top"; },
       set(v) {
         this.___tb = (v === "alphabetical") ? "top" : v;
         if (desc && desc.set) {
@@ -28,21 +22,16 @@
   })();
   </script>
 
-  <!-- ===============================
-       FABRIC
-       =============================== -->
+  <!-- FABRIC -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-  <!-- ===============================
-       CSS
-       =============================== -->
+  <!-- CSS -->
   <link rel="stylesheet" href="./css/photobook.css" />
 </head>
-
 <body>
 
 <!-- =====================================================
-     TOP BAR
+TOP BAR
 ===================================================== -->
 <div class="topbar">
   <div class="top-actions">
@@ -55,30 +44,28 @@
     <button class="btn" id="btnUndo">Undo</button>
     <button class="btn" id="btnRedo">Redo</button>
     <button class="btn" id="btnFit">Fit</button>
-    <button class="btn primary" id="btnExport">Export</button>
+    <button class="btn" id="btnExportToggle">Export</button>
+    <button class="btn primary" id="btnLogin">Σύνδεση</button>
   </div>
 </div>
 
 <!-- =====================================================
-     APP LAYOUT
+APP
 ===================================================== -->
 <div class="app">
 
-  <!-- ===============================
-       LEFT TOOLBAR
-       =============================== -->
+  <!-- LEFT TOOLS -->
   <div class="sidebar">
-    <button class="tb" id="toolImage" title="Image">🖼</button>
-    <button class="tb" id="toolText" title="Text">T</button>
-    <button class="tb" id="toolRect" title="Rectangle">▭</button>
-    <button class="tb" id="toolCircle" title="Circle">◯</button>
-    <button class="tb" id="toolLine" title="Line">／</button>
-    <button class="tb" id="toolDelete" title="Delete">🗑</button>
+    <button class="tb" id="toolImage" title="Εικόνα">🖼</button>
+    <button class="tb" id="toolPDF" title="PDF">📄</button>
+    <button class="tb" id="toolText" title="Κείμενο">T</button>
+    <button class="tb" id="toolRect" title="Ορθογώνιο">▭</button>
+    <button class="tb" id="toolCircle" title="Κύκλος">◯</button>
+    <button class="tb" id="toolLine" title="Γραμμή">／</button>
+    <button class="tb" id="toolDelete" title="Διαγραφή">🗑</button>
   </div>
 
-  <!-- ===============================
-       CANVAS AREA
-       =============================== -->
+  <!-- CANVAS -->
   <div class="canvas-area">
 
     <div class="canvas-toolbar">
@@ -91,45 +78,39 @@
       <canvas id="canvas"></canvas>
     </div>
 
-    <!-- ===============================
-         THUMBNAILS / PAGES
-         =============================== -->
     <div class="thumb-strip" id="thumbStrip"></div>
-
   </div>
 </div>
 
-<!-- =====================================================
-     HIDDEN INPUTS
-===================================================== -->
+<!-- HIDDEN INPUTS -->
 <input type="file" id="imageInput" accept="image/*" hidden />
+<input type="file" id="pdfInput" accept="application/pdf" hidden />
 
 <!-- =====================================================
-     EXPORT DRAWER
+EXPORT SIDEBAR
 ===================================================== -->
 <div id="exportDrawer">
   <h3>Export</h3>
 
-  <label>Format</label>
+  <label>Μορφή</label>
   <select>
     <option>PNG</option>
     <option>PDF</option>
     <option>Flipbook</option>
   </select>
 
-  <label>Quality</label>
+  <label>Ποιότητα</label>
   <input type="range" min="0.5" max="1" step="0.1" value="0.9" />
 
   <button class="btn primary">Export</button>
 </div>
 
 <!-- =====================================================
-     MODULES
+MODULES
 ===================================================== -->
 <script type="module">
 import {
   setZoom,
-  resetZoom,
   fitToScreen,
   undo,
   redo,
@@ -139,6 +120,7 @@ import {
 
 import {
   importImage,
+  importPDF,
   addHeading,
   addRect,
   addCircle,
@@ -146,52 +128,54 @@ import {
   deleteSelected
 } from "./js/tools.js";
 
-/* ------------------ PAGE NAV ------------------ */
-document.getElementById("btnNextPage").onclick = nextPage;
-document.getElementById("btnPrevPage").onclick = prevPage;
+/* PAGES */
+btnNextPage.onclick = nextPage;
+btnPrevPage.onclick = prevPage;
 
-/* ------------------ UNDO / REDO ------------------ */
-document.getElementById("btnUndo").onclick = undo;
-document.getElementById("btnRedo").onclick = redo;
+/* HISTORY */
+btnUndo.onclick = undo;
+btnRedo.onclick = redo;
 
-/* ------------------ ZOOM ------------------ */
+/* ZOOM */
 let zoom = 1;
-const zoomLabel = document.getElementById("zoomLabel");
-
-document.getElementById("zoomIn").onclick = () => {
+zoomIn.onclick = () => {
   zoom += 0.1;
   setZoom(zoom);
   zoomLabel.textContent = Math.round(zoom * 100) + "%";
 };
-
-document.getElementById("zoomOut").onclick = () => {
+zoomOut.onclick = () => {
   zoom = Math.max(0.2, zoom - 0.1);
   setZoom(zoom);
   zoomLabel.textContent = Math.round(zoom * 100) + "%";
 };
-
-document.getElementById("btnFit").onclick = () => {
+btnFit.onclick = () => {
   fitToScreen();
   zoom = 1;
   zoomLabel.textContent = "100%";
 };
 
-/* ------------------ EXPORT DRAWER ------------------ */
-document.getElementById("btnExport").onclick = () => {
-  document.getElementById("exportDrawer").classList.toggle("open");
+/* EXPORT SIDEBAR */
+btnExportToggle.onclick = () => {
+  exportDrawer.classList.toggle("open");
 };
 
-/* ------------------ TOOLS ------------------ */
-const imgInput = document.getElementById("imageInput");
+/* TOOLS */
+toolImage.onclick = () => imageInput.click();
+imageInput.onchange = e => importImage(e.target.files[0]);
 
-document.getElementById("toolImage").onclick = () => imgInput.click();
-imgInput.onchange = e => importImage(e.target.files[0]);
+toolPDF.onclick = () => pdfInput.click();
+pdfInput.onchange = e => importPDF(e.target.files[0]);
 
-document.getElementById("toolText").onclick = () => addHeading();
-document.getElementById("toolRect").onclick = addRect;
-document.getElementById("toolCircle").onclick = addCircle;
-document.getElementById("toolLine").onclick = addLine;
-document.getElementById("toolDelete").onclick = deleteSelected;
+toolText.onclick = () => addHeading();
+toolRect.onclick = addRect;
+toolCircle.onclick = addCircle;
+toolLine.onclick = addLine;
+toolDelete.onclick = deleteSelected;
+
+/* AUTH */
+btnLogin.onclick = () => {
+  alert("Σύνδεση χρήστη (Firebase Auth) – επόμενο βήμα");
+};
 </script>
 
 </body>
