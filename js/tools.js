@@ -483,3 +483,24 @@ function addAIImageToCanvas(url) {
     { crossOrigin: "anonymous" }
   );
 }
+
+export function bringForward() {
+  const obj = fabricCanvas.getActiveObject();
+  if (obj) fabricCanvas.bringForward(obj);
+}
+
+export function sendBackward() {
+  const obj = fabricCanvas.getActiveObject();
+  if (obj) fabricCanvas.sendBackwards(obj);
+}
+
+export function bringToFront() {
+  const obj = fabricCanvas.getActiveObject();
+  if (obj) fabricCanvas.bringToFront(obj);
+}
+
+export function sendToBack() {
+  const obj = fabricCanvas.getActiveObject();
+  if (obj) fabricCanvas.sendToBack(obj);
+}
+
