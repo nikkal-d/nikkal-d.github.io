@@ -348,3 +348,17 @@ html, body {
     display: none;
   }
 }
+
+/* ================= LIGHT THEME ================= */
+:root[data-theme="light"] {
+  --bg: #f4f4f4;
+  --bg-light: #ffffff;
+  --bg-dark: #e6e6e6;
+  --text: #111;
+  --panel: #ffffff;
+  --border: #ccc;
+  --btn-bg: #ddd;
+  --btn-hover: #ccc;
+  --thumb-bg: #eee;
+}
+
