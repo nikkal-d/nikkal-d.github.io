@@ -1,253 +1,195 @@
-/* ============================================================
-   Photobook Studio — Canva-like CSS
-   ============================================================ */
-
-:root {
-  --bg: #121212;
-  --bg-dark: #1a1a1a;
-  --panel: #1f1f1f;
-  --border: #2f2f2f;
-  --text: #eaeaea;
-  --muted: #aaa;
-
-  --btn-bg: #2a2a2a;
-  --btn-hover: #3a3a3a;
-  --acc: #4f7cff;
+:root{
+  --bg:#121212;
+  --bg2:#1a1a1a;
+  --panel:#1f1f1f;
+  --border:#2f2f2f;
+  --text:#eaeaea;
+  --muted:#a9a9a9;
+  --btn:#2a2a2a;
+  --btn2:#383838;
+  --acc:#4f7cff;
+  --danger:#ff4d4d;
 }
 
-/* LIGHT THEME */
-:root[data-theme="light"] {
-  --bg: #f2f2f2;
-  --bg-dark: #e6e6e6;
-  --panel: #ffffff;
-  --border: #ccc;
-  --text: #111;
-  --muted: #555;
-
-  --btn-bg: #e0e0e0;
-  --btn-hover: #d0d0d0;
-  --acc: #4f7cff;
+:root[data-theme="light"]{
+  --bg:#f3f4f6;
+  --bg2:#ffffff;
+  --panel:#ffffff;
+  --border:#d5d7dd;
+  --text:#121212;
+  --muted:#555;
+  --btn:#eceef3;
+  --btn2:#dde1ea;
+  --acc:#2f62ff;
+  --danger:#e11d48;
 }
 
-/* ============================================================
-   RESET
-   ============================================================ */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Arial;overflow:hidden}
 
-* {
-  box-sizing: border-box;
+#topbar{
+  position:fixed;left:0;right:0;top:0;height:56px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;z-index:3000
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo{font-size:20px}
+.brand .title{font-weight:700}
+.top-actions{display:flex;align-items:center;gap:10px}
+
+.tb{
+  background:var(--btn);border:1px solid var(--border);color:var(--text);
+  padding:8px 10px;border-radius:10px;cursor:pointer
+}
+.tb:hover{background:var(--btn2)}
+.select,.input{
+  background:var(--btn);border:1px solid var(--border);color:var(--text);
+  padding:8px 10px;border-radius:10px;
+}
+.zoom-box{display:flex;align-items:center;gap:6px}
+#zoomLabel{min-width:52px;text-align:center;color:var(--muted)}
+
+.rail{
+  position:fixed;top:56px;bottom:0;width:64px;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:10px;z-index:2500
+}
+.rail-btn{
+  width:44px;height:44px;border-radius:12px;
+  background:var(--btn);border:1px solid var(--border);color:var(--text);
+  cursor:pointer;font-size:16px
+}
+.rail-btn:hover{background:var(--btn2)}
+.rail-btn.active{background:var(--acc);border-color:transparent;color:#fff}
+
+.drawer{
+  position:fixed;top:56px;bottom:0;width:320px;
+  background:var(--panel);border-right:1px solid var(--border);
+  transform:translateX(-110%);transition:transform .18s ease;
+  z-index:2400;display:flex;flex-direction:column
+}
+.drawer.left.open{transform:translateX(64px)}
+.drawer.right{
+  right:0;left:auto;border-right:none;border-left:1px solid var(--border);
+  transform:translateX(110%)
+}
+.drawer.right.open{transform:translateX(0)}
+.drawer-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 12px;border-bottom:1px solid var(--border)
+}
+.drawer-head h3{margin:0;font-size:16px}
+.icon{
+  background:var(--btn);border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:6px 10px;cursor:pointer
+}
+.icon:hover{background:var(--btn2)}
+.drawer-body{padding:12px;overflow:auto}
+.panel{display:none}
+.panel.active{display:block}
+.btn{
+  width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+  background:var(--btn);color:var(--text);cursor:pointer;margin-bottom:10px
+}
+.btn:hover{background:var(--btn2)}
+.btn.primary{background:var(--acc);border-color:transparent;color:#fff}
+.btn.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+.btn.small{width:auto;padding:8px 10px;border-radius:10px;margin:0}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.label{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.hint{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.35}
+
+.grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px
+}
+.sticker{
+  background:var(--btn);border:1px solid var(--border);border-radius:12px;
+  height:46px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:22px
+}
+.sticker:hover{background:var(--btn2)}
+
+.layers{display:flex;flex-direction:column;gap:8px}
+.layer-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 10px;border-radius:12px;border:1px solid var(--border);
+  background:var(--btn);cursor:pointer
+}
+.layer-item:hover{background:var(--btn2)}
+.layer-left{display:flex;align-items:center;gap:8px}
+.badge{font-size:12px;color:var(--muted)}
+.layer-actions{display:flex;gap:6px}
+.pill{
+  background:transparent;border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:5px 8px;cursor:pointer
+}
+.pill:hover{background:var(--btn2)}
+.layer-item.active{outline:2px solid var(--acc)}
+
+#workspace{
+  position:absolute;top:56px;left:64px;right:0;bottom:0;
+  display:flex;flex-direction:column
+}
+#stageWrap{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:18px;overflow:hidden
+}
+#canvasHost{
+  background:#fff;border-radius:14px;
+  box-shadow:0 18px 45px rgba(0,0,0,.35);
+  width:min(1400px, calc(100vw - 64px - 40px));
+  height:min(820px, calc(100vh - 56px - 170px));
+  display:flex;align-items:center;justify-content:center;
+  padding:14px
+}
+canvas{border:1px solid #d6d6d6;border-radius:10px}
+
+#pageBar{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-top:1px solid var(--border);
+  background:var(--bg2)
+}
+.spacer{flex:1}
+#thumbStrip{
+  display:flex;gap:10px;overflow:auto;
+  padding:10px 12px;border-top:1px solid var(--border);
+  background:var(--bg2)
+}
+.thumb{
+  width:110px;height:78px;border-radius:12px;border:1px solid var(--border);
+  background:var(--btn);flex:0 0 auto;cursor:pointer;overflow:hidden;
+  display:flex;align-items:center;justify-content:center
+}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb.active{outline:2px solid var(--acc)}
+
+.export-fab{
+  position:fixed;right:16px;bottom:16px;z-index:2800;
+  background:var(--acc);border:none;color:#fff;border-radius:14px;
+  padding:12px 14px;cursor:pointer;box-shadow:0 18px 45px rgba(0,0,0,.35)
 }
 
-html, body {
-  margin: 0;
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  overflow: hidden;
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  display:none;align-items:center;justify-content:center;z-index:4000;
+  padding:18px
 }
-
-/* ============================================================
-   TOP BAR
-   ============================================================ */
-
-#topbar {
-  height: 50px;
-  background: var(--bg-dark);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 3000;
+.modal.open{display:flex}
+.modal-card{
+  width:min(1100px, 100%);height:min(820px, 100%);
+  background:var(--panel);border:1px solid var(--border);border-radius:18px;
+  display:flex;flex-direction:column;overflow:hidden
 }
-
-#topbar .logo {
-  font-weight: 600;
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px;border-bottom:1px solid var(--border)
 }
-
-.top-controls button {
-  margin-left: 6px;
-  padding: 6px 10px;
-  background: var(--btn-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
+.modal-title{font-weight:700}
+.modal-body{flex:1;display:flex;flex-direction:column;gap:10px;padding:12px}
+.preview-flip{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  overflow:hidden
 }
-
-.top-controls button:hover {
-  background: var(--btn-hover);
-}
-
-/* ============================================================
-   SIDEBARS
-   ============================================================ */
-
-.sidebar {
-  position: fixed;
-  top: 50px;
-  bottom: 0;
-  width: 60px;
-  background: var(--bg-dark);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 8px;
-  z-index: 2000;
-}
-
-.sidebar.left {
-  left: 0;
-}
-
-.side-btn {
-  width: 44px;
-  height: 44px;
-  margin: 6px 0;
-  border-radius: 10px;
-  border: none;
-  background: var(--btn-bg);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.side-btn.active {
-  background: var(--acc);
-  color: #fff;
-}
-
-/* ============================================================
-   DRAWERS (LEFT / RIGHT)
-   ============================================================ */
-
-.drawer {
-  position: fixed;
-  top: 50px;
-  bottom: 0;
-  width: 300px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  padding: 14px;
-  overflow-y: auto;
-  transition: transform 0.25s ease;
-  z-index: 1999;
-}
-
-.drawer.left {
-  left: 0;
-  transform: translateX(-100%);
-}
-
-.drawer.left.open {
-  transform: translateX(60px);
-}
-
-.drawer.right {
-  right: 0;
-  border-right: none;
-  border-left: 1px solid var(--border);
-  transform: translateX(100%);
-}
-
-.drawer.right.open {
-  transform: translateX(0);
-}
-
-.drawer h3 {
-  margin-top: 0;
-}
-
-.drawer-panel {
-  display: none;
-}
-
-.drawer-panel.active {
-  display: block;
-}
-
-.drawer button {
-  width: 100%;
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  background: var(--btn-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.drawer button:hover {
-  background: var(--btn-hover);
-}
-
-/* ============================================================
-   EXPORT FAB
-   ============================================================ */
-
-.export-fab {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: none;
-  background: var(--acc);
-  color: #fff;
-  cursor: pointer;
-  z-index: 2500;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-}
-
-/* ============================================================
-   MAIN EDITOR AREA
-   ============================================================ */
-
-#editorMain {
-  position: absolute;
-  top: 50px;
-  left: 60px;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Canvas wrapper */
-#canvas-wrapper {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-  padding: 10px;
-}
-
-/* Fabric canvas */
-canvas {
-  border: 1px solid #ccc;
-}
-
-/* ============================================================
-   PAGE CONTROLS
-   ============================================================ */
-
-#pageControls {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#pageControls button {
-  padding: 6px 10px;
-  background: var(--btn-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
-}
+.preview-nav{display:flex;gap:10px;align-items:center;justify-content:center}
