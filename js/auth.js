@@ -125,3 +125,20 @@ onAuthStateChanged(auth, (user) => {
     openLoginBtn.style.display = "inline-flex";
   }
 });
+
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+
+if (loginBtn) {
+  loginBtn.onclick = () => {
+    alert("Auth UI θα μπει στο επόμενο βήμα (Firebase ready).");
+  };
+}
+
+if (logoutBtn) {
+  logoutBtn.onclick = async () => {
+    await signOut(auth);
+    location.reload();
+  };
+}
+
