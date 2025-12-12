@@ -1,25 +1,17 @@
 // js/ui.js
 // ============================================================
-// UI bindings for Photobook Studio (Canva-style)
+// UI bindings for Photobook Studio (NO legacy calls)
 // ============================================================
 
-import {
-  fabricCanvas,
-  undo,
-  redo,
-  refreshThumbnails
-} from "./core.js";
+import { fabricCanvas, undo, redo } from "./core.js";
 
 /* ============================================================
    UNDO / REDO
    ============================================================ */
 
 window.addEventListener("DOMContentLoaded", () => {
-  const undoBtn = document.getElementById("undoBtn");
-  const redoBtn = document.getElementById("redoBtn");
-
-  undoBtn?.addEventListener("click", undo);
-  redoBtn?.addEventListener("click", redo);
+  document.getElementById("undoBtn")?.addEventListener("click", undo);
+  document.getElementById("redoBtn")?.addEventListener("click", redo);
 
   document.addEventListener("keydown", e => {
     if (e.ctrlKey && e.key.toLowerCase() === "z") {
@@ -41,7 +33,7 @@ window.addEventListener("DOMContentLoaded", () => {
    LAYERS PANEL
    ============================================================ */
 
-export function updateLayersPanel() {
+function updateLayersPanel() {
   const box = document.getElementById("layersList");
   if (!box || !fabricCanvas) return;
 
@@ -54,12 +46,12 @@ export function updateLayersPanel() {
     return;
   }
 
-  objects.forEach((obj, index) => {
+  objects.forEach(obj => {
     const item = document.createElement("div");
-    item.textContent = `${obj.type}`;
+    item.textContent = obj.type;
     item.style.padding = "6px";
     item.style.cursor = "pointer";
-    item.style.borderBottom = "1px solid #333";
+    item.style.borderBottom = "1px solid #444";
 
     item.onclick = () => {
       fabricCanvas.setActiveObject(obj);
@@ -71,19 +63,19 @@ export function updateLayersPanel() {
 }
 
 /* ============================================================
-   UPDATE LAYERS ON CANVAS CHANGES
+   BIND LAYER EVENTS
    ============================================================ */
 
-function bindLayerEvents() {
-  if (!fabricCanvas) return;
-
-  fabricCanvas.on("object:added", updateLayersPanel);
-  fabricCanvas.on("object:removed", updateLayersPanel);
-  fabricCanvas.on("object:modified", updateLayersPanel);
-  fabricCanvas.on("selection:created", updateLayersPanel);
-  fabricCanvas.on("selection:updated", updateLayersPanel);
-}
-
 window.addEventListener("DOMContentLoaded", () => {
-  setTimeout(bindLayerEvents, 500);
+  setTimeout(() => {
+    if (!fabricCanvas) return;
+
+    fabricCanvas.on("object:added", updateLayersPanel);
+    fabricCanvas.on("object:removed", updateLayersPanel);
+    fabricCanvas.on("object:modified", updateLayersPanel);
+    fabricCanvas.on("selection:created", updateLayersPanel);
+    fabricCanvas.on("selection:updated", updateLayersPanel);
+
+    updateLayersPanel();
+  }, 500);
 });
