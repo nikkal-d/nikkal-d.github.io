@@ -1,6 +1,7 @@
 // js/core.js
 // ============================================================
-// Core: canvas, zoom/pan, pages, thumbnails, autosave draft
+// Core: canvas, CORRECT zoom (center zoom), pan, pages, thumbnails,
+// draft save + deep sanitize to kill "alphabetical" warnings.
 // ============================================================
 
 export let fabricCanvas = null;
@@ -33,6 +34,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // initial page
   addPage(true);
+
+  // load draft AFTER basic init
   loadDraft();
 
   // autosave
@@ -43,40 +46,61 @@ export function getZoom() {
   return zoom;
 }
 
+/**
+ * Correct zoom: zoom around canvas CENTER, not top-left.
+ * This fixes the "image moves but doesn't zoom properly" feeling.
+ */
 export function setZoom(value) {
-  zoom = Math.max(0.2, Math.min(4, value));
-  fabricCanvas.setZoom(zoom);
+  if (!fabricCanvas) return;
+  zoom = Math.max(0.2, Math.min(4, Number(value) || 1));
+
+  const center = new fabric.Point(
+    fabricCanvas.getWidth() / 2,
+    fabricCanvas.getHeight() / 2
+  );
+
+  fabricCanvas.zoomToPoint(center, zoom);
   fabricCanvas.requestRenderAll();
 }
 
 export function resetZoom() {
-  setZoom(1);
+  if (!fabricCanvas) return;
+  zoom = 1;
   fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+  fabricCanvas.setZoom(1);
+  fabricCanvas.requestRenderAll();
 }
 
 export function fitToScreen() {
   const host = document.getElementById("canvasHost");
   if (!host || !fabricCanvas) return;
 
-  const pad = 28; // host padding-ish
+  const pad = 28;
   const availW = host.clientWidth - pad;
   const availH = host.clientHeight - pad;
 
-  const s = Math.min(availW / fabricCanvas.getWidth(), availH / fabricCanvas.getHeight());
+  // Reset transforms first
   resetZoom();
+
+  const s = Math.min(
+    availW / fabricCanvas.getWidth(),
+    availH / fabricCanvas.getHeight()
+  );
+
+  // Zoom around center
   setZoom(s);
 
-  // center
+  // Center inside host by shifting viewport transform
   const vt = fabricCanvas.viewportTransform;
   const cx = (availW - fabricCanvas.getWidth() * s) / 2;
   const cy = (availH - fabricCanvas.getHeight() * s) / 2;
   vt[4] = cx;
   vt[5] = cy;
   fabricCanvas.setViewportTransform(vt);
+  fabricCanvas.requestRenderAll();
 }
 
 export function setCanvasSizePreset(preset) {
-  // px sizes (good for preview/export consistency)
   const presets = {
     A4P: { w: 1240, h: 1754 },
     A4L: { w: 1754, h: 1240 },
@@ -86,7 +110,7 @@ export function setCanvasSizePreset(preset) {
   };
 
   const p = presets[preset];
-  if (!p) return;
+  if (!p || !fabricCanvas) return;
 
   fabricCanvas.setWidth(p.w);
   fabricCanvas.setHeight(p.h);
@@ -94,18 +118,24 @@ export function setCanvasSizePreset(preset) {
 
   resetZoom();
   fitToScreen();
+
   saveHistory();
   saveCurrentPage();
 }
 
 export function setCanvasCustom(w, h) {
+  if (!fabricCanvas) return;
+
   const W = Math.max(200, Math.min(4000, Number(w)));
   const H = Math.max(200, Math.min(4000, Number(h)));
+
   fabricCanvas.setWidth(W);
   fabricCanvas.setHeight(H);
   fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
+
   resetZoom();
   fitToScreen();
+
   saveHistory();
   saveCurrentPage();
 }
@@ -313,7 +343,7 @@ function bindPanZoom() {
     isPanning = false;
   });
 
-  // Ctrl + wheel zoom
+  // Ctrl + wheel zoom (around pointer)
   fabricCanvas.on("mouse:wheel", (opt) => {
     const e = opt.e;
     if (!e.ctrlKey) return;
@@ -350,7 +380,7 @@ function loadDraft() {
     pages = data.pages || pages;
     currentPage = Math.max(0, Math.min((data.currentPage ?? 0), pages.length - 1));
 
-    // sanitize legacy
+    // deep sanitize legacy BEFORE loadFromJSON
     pages.forEach(p => p?.json && sanitizeJSON(p.json));
 
     loadPageToCanvas();
@@ -359,19 +389,34 @@ function loadDraft() {
   } catch {}
 }
 
-// -------------------- SANITIZE --------------------
+// -------------------- SANITIZE (DEEP) --------------------
 
+/**
+ * Deep sanitize any "textBaseline":"alphabetical" anywhere in JSON tree.
+ * This kills the Fabric warning permanently even for old drafts.
+ */
 function sanitizeJSON(json) {
-  if (!json?.objects) return;
-  json.objects.forEach(o => {
-    if (o?.textBaseline === "alphabetical") o.textBaseline = "top";
-    if (o?.styles) {
-      // in case styles carry baseline
-      Object.values(o.styles).forEach(line =>
-        Object.values(line).forEach(style => {
-          if (style?.textBaseline === "alphabetical") style.textBaseline = "top";
-        })
-      );
+  if (!json) return;
+
+  const walk = (node) => {
+    if (!node || typeof node !== "object") return;
+
+    // If this node has textBaseline
+    if (node.textBaseline === "alphabetical") node.textBaseline = "top";
+
+    // Walk arrays
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
     }
-  });
+
+    // Walk object keys
+    for (const k of Object.keys(node)) {
+      const v = node[k];
+      if (k === "textBaseline" && v === "alphabetical") node[k] = "top";
+      walk(v);
+    }
+  };
+
+  walk(json);
 }
