@@ -1,236 +1,198 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
   <title>Photobook Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="./css/photobook.css" />
-
-  <!-- Fabric.js -->
-  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
-
-  <!-- pdf.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- ===============================
+       HARD FIX — BLOCK alphabetical
+       MUST be BEFORE fabric.min.js
+       =============================== -->
   <script>
-    if (window.pdfjsLib) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    }
+  (function () {
+    const proto = CanvasRenderingContext2D.prototype;
+    const desc = Object.getOwnPropertyDescriptor(proto, "textBaseline");
+
+    Object.defineProperty(proto, "textBaseline", {
+      get() {
+        return this.___tb || "top";
+      },
+      set(v) {
+        this.___tb = (v === "alphabetical") ? "top" : v;
+        if (desc && desc.set) {
+          try { desc.set.call(this, this.___tb); } catch {}
+        }
+      }
+    });
+  })();
   </script>
 
-  <!-- Export libs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- ===============================
+       FABRIC
+       =============================== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
+  <!-- ===============================
+       CSS
+       =============================== -->
+  <link rel="stylesheet" href="./css/photobook.css" />
 </head>
 
 <body>
 
-<header id="topbar">
-  <div class="brand">
-    <span class="logo">📘</span>
-    <span class="title">Photobook Studio</span>
+<!-- =====================================================
+     TOP BAR
+===================================================== -->
+<div class="topbar">
+  <div class="top-actions">
+    <button class="btn" id="btnPrevPage">◀</button>
+    <span id="pageInfo">1 / 1</span>
+    <button class="btn" id="btnNextPage">▶</button>
   </div>
 
   <div class="top-actions">
-    <button id="undoBtn" class="tb" title="Undo (Ctrl+Z)">↶</button>
-    <button id="redoBtn" class="tb" title="Redo (Ctrl+Shift+Z)">↷</button>
-
-    <div class="zoom-box">
-      <button id="zoomOutBtn" class="tb" title="Zoom out">−</button>
-      <span id="zoomLabel">100%</span>
-      <button id="zoomInBtn" class="tb" title="Zoom in">+</button>
-      <button id="zoomResetBtn" class="tb" title="Reset zoom">⟲</button>
-      <button id="zoomFitBtn" class="tb" title="Fit to screen">⤢</button>
-    </div>
-
-    <select id="sizePreset" class="select" title="Canvas size">
-      <option value="A4P">A4 Portrait</option>
-      <option value="A4L">A4 Landscape</option>
-      <option value="SQUARE">Square</option>
-      <option value="STORY">Story 1080×1920</option>
-      <option value="HD">HD 1920×1080</option>
-      <option value="CUSTOM">Custom…</option>
-    </select>
-
-    <button id="themeToggleBtn" class="tb" title="Theme">☾</button>
-  </div>
-</header>
-
-<!-- LEFT BAR -->
-<aside class="rail left">
-  <button class="rail-btn active" data-panel="import" title="Import">📁</button>
-  <button class="rail-btn" data-panel="text" title="Text">T</button>
-  <button class="rail-btn" data-panel="stickers" title="Stickers">😊</button>
-  <button class="rail-btn" data-panel="shapes" title="Shapes">⬛</button>
-  <button class="rail-btn" data-panel="effects" title="Effects">✨</button>
-  <button class="rail-btn" data-panel="layers" title="Layers">🧱</button>
-</aside>
-
-<!-- LEFT DRAWER -->
-<section id="leftDrawer" class="drawer left open">
-  <div class="drawer-head">
-    <h3 id="drawerTitle">Import</h3>
-    <button id="drawerCloseBtn" class="icon">✕</button>
-  </div>
-
-  <div class="drawer-body">
-    <!-- IMPORT -->
-    <div class="panel active" id="panel-import">
-      <button id="btnUploadImage" class="btn">🖼 Εικόνα</button>
-      <input id="imageInput" type="file" accept="image/*" hidden />
-
-      <button id="btnUploadPDF" class="btn">📄 PDF</button>
-      <input id="pdfInput" type="file" accept="application/pdf" hidden />
-
-      <div class="hint">
-        Tip: Ctrl+Wheel για zoom • Space+Drag για pan
-      </div>
-    </div>
-
-    <!-- TEXT -->
-    <div class="panel" id="panel-text">
-      <button id="addHeadingBtn" class="btn">Heading</button>
-      <button id="addBodyBtn" class="btn">Body text</button>
-      <button id="addCustomTextBtn" class="btn">Custom…</button>
-    </div>
-
-    <!-- STICKERS -->
-    <div class="panel" id="panel-stickers">
-      <div class="row">
-        <input id="stickerSearch" class="input" placeholder="Search stickers…" />
-        <button id="reloadStickersBtn" class="btn small">↻</button>
-      </div>
-      <div id="stickerGrid" class="grid"></div>
-      <div class="hint">Τα stickers φορτώνονται από <code>assets/stickers/list.json</code></div>
-    </div>
-
-    <!-- SHAPES -->
-    <div class="panel" id="panel-shapes">
-      <button id="addRectBtn" class="btn">Rectangle</button>
-      <button id="addCircleBtn" class="btn">Circle</button>
-      <button id="addLineBtn" class="btn">Line</button>
-    </div>
-
-    <!-- EFFECTS -->
-    <div class="panel" id="panel-effects">
-      <label class="label">
-        Opacity
-        <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="1" />
-      </label>
-
-      <label class="label">
-        Shadow
-        <input id="shadowToggle" type="checkbox" />
-      </label>
-
-      <button id="deleteObjBtn" class="btn danger">Delete selected</button>
-    </div>
-
-    <!-- LAYERS -->
-    <div class="panel" id="panel-layers">
-      <div class="row">
-        <button id="bringForwardBtn" class="btn small">⬆</button>
-        <button id="sendBackwardBtn" class="btn small">⬇</button>
-        <button id="bringToFrontBtn" class="btn small">⏫</button>
-        <button id="sendToBackBtn" class="btn small">⏬</button>
-      </div>
-
-      <div id="layersList" class="layers"></div>
-      <div class="hint">Κάνε click σε layer για επιλογή • 👁 hide • 🔒 lock</div>
-    </div>
-  </div>
-</section>
-
-<!-- MAIN -->
-<main id="workspace">
-  <div id="stageWrap">
-    <div id="canvasHost">
-      <canvas id="canvas"></canvas>
-    </div>
-  </div>
-
-  <div id="pageBar">
-    <button id="prevPageBtn" class="tb">⟵</button>
-    <span id="pageInfo">1 / 1</span>
-    <button id="nextPageBtn" class="tb">⟶</button>
-    <button id="addPageBtn" class="tb">＋</button>
-    <button id="dupPageBtn" class="tb">⎘</button>
-    <button id="deletePageBtn" class="tb">🗑</button>
-
-    <div class="spacer"></div>
-
-    <button id="previewFlipbookBtn" class="tb">👀 Preview</button>
-  </div>
-
-  <div id="thumbStrip"></div>
-</main>
-
-<!-- EXPORT FAB + RIGHT DRAWER -->
-<button id="exportFab" class="export-fab">Export</button>
-
-<section id="exportDrawer" class="drawer right">
-  <div class="drawer-head">
-    <h3>Export</h3>
-    <button id="exportCloseBtn" class="icon">✕</button>
-  </div>
-
-  <div class="drawer-body">
-    <label class="label">
-      Format
-      <select id="exportFormat" class="select">
-        <option value="PNG">PNG (Pages)</option>
-        <option value="JPG">JPG (Pages)</option>
-        <option value="PDF">PDF</option>
-        <option value="ZIP">ZIP (PNG)</option>
-        <option value="FLIPBOOK">Flipbook ZIP</option>
-      </select>
-    </label>
-
-    <label class="label">
-      Quality (JPG/PDF images)
-      <input id="exportQuality" type="range" min="0.4" max="1" step="0.05" value="0.9" />
-    </label>
-
-    <label class="label">
-      Range
-      <select id="exportRange" class="select">
-        <option value="ALL">All pages</option>
-        <option value="CURRENT">Current page</option>
-      </select>
-    </label>
-
-    <button id="doExportBtn" class="btn primary">⬇ Export</button>
-  </div>
-</section>
-
-<!-- FLIPBOOK PREVIEW MODAL -->
-<div id="previewModal" class="modal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <div class="modal-title">Flipbook Preview</div>
-      <button id="closePreviewBtn" class="icon">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div id="previewFlipbook" class="preview-flip"></div>
-
-      <div class="preview-nav">
-        <button id="pvPrev" class="tb">⟵</button>
-        <span id="pvLabel">1 / 1</span>
-        <button id="pvNext" class="tb">⟶</button>
-      </div>
-    </div>
+    <button class="btn" id="btnUndo">Undo</button>
+    <button class="btn" id="btnRedo">Redo</button>
+    <button class="btn" id="btnFit">Fit</button>
+    <button class="btn primary" id="btnExport">Export</button>
   </div>
 </div>
 
-<!-- MODULES -->
-<script type="module" src="./js/core.js"></script>
-<script type="module" src="./js/tools.js"></script>
-<script type="module" src="./js/export.js"></script>
-<script type="module" src="./js/flipbook-preview.js"></script>
-<script type="module" src="./js/ui.js"></script>
+<!-- =====================================================
+     APP LAYOUT
+===================================================== -->
+<div class="app">
+
+  <!-- ===============================
+       LEFT TOOLBAR
+       =============================== -->
+  <div class="sidebar">
+    <button class="tb" id="toolImage" title="Image">🖼</button>
+    <button class="tb" id="toolText" title="Text">T</button>
+    <button class="tb" id="toolRect" title="Rectangle">▭</button>
+    <button class="tb" id="toolCircle" title="Circle">◯</button>
+    <button class="tb" id="toolLine" title="Line">／</button>
+    <button class="tb" id="toolDelete" title="Delete">🗑</button>
+  </div>
+
+  <!-- ===============================
+       CANVAS AREA
+       =============================== -->
+  <div class="canvas-area">
+
+    <div class="canvas-toolbar">
+      <button class="btn" id="zoomOut">−</button>
+      <span id="zoomLabel">100%</span>
+      <button class="btn" id="zoomIn">+</button>
+    </div>
+
+    <div id="canvasHost">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- ===============================
+         THUMBNAILS / PAGES
+         =============================== -->
+    <div class="thumb-strip" id="thumbStrip"></div>
+
+  </div>
+</div>
+
+<!-- =====================================================
+     HIDDEN INPUTS
+===================================================== -->
+<input type="file" id="imageInput" accept="image/*" hidden />
+
+<!-- =====================================================
+     EXPORT DRAWER
+===================================================== -->
+<div id="exportDrawer">
+  <h3>Export</h3>
+
+  <label>Format</label>
+  <select>
+    <option>PNG</option>
+    <option>PDF</option>
+    <option>Flipbook</option>
+  </select>
+
+  <label>Quality</label>
+  <input type="range" min="0.5" max="1" step="0.1" value="0.9" />
+
+  <button class="btn primary">Export</button>
+</div>
+
+<!-- =====================================================
+     MODULES
+===================================================== -->
+<script type="module">
+import {
+  setZoom,
+  resetZoom,
+  fitToScreen,
+  undo,
+  redo,
+  nextPage,
+  prevPage
+} from "./js/core.js";
+
+import {
+  importImage,
+  addHeading,
+  addRect,
+  addCircle,
+  addLine,
+  deleteSelected
+} from "./js/tools.js";
+
+/* ------------------ PAGE NAV ------------------ */
+document.getElementById("btnNextPage").onclick = nextPage;
+document.getElementById("btnPrevPage").onclick = prevPage;
+
+/* ------------------ UNDO / REDO ------------------ */
+document.getElementById("btnUndo").onclick = undo;
+document.getElementById("btnRedo").onclick = redo;
+
+/* ------------------ ZOOM ------------------ */
+let zoom = 1;
+const zoomLabel = document.getElementById("zoomLabel");
+
+document.getElementById("zoomIn").onclick = () => {
+  zoom += 0.1;
+  setZoom(zoom);
+  zoomLabel.textContent = Math.round(zoom * 100) + "%";
+};
+
+document.getElementById("zoomOut").onclick = () => {
+  zoom = Math.max(0.2, zoom - 0.1);
+  setZoom(zoom);
+  zoomLabel.textContent = Math.round(zoom * 100) + "%";
+};
+
+document.getElementById("btnFit").onclick = () => {
+  fitToScreen();
+  zoom = 1;
+  zoomLabel.textContent = "100%";
+};
+
+/* ------------------ EXPORT DRAWER ------------------ */
+document.getElementById("btnExport").onclick = () => {
+  document.getElementById("exportDrawer").classList.toggle("open");
+};
+
+/* ------------------ TOOLS ------------------ */
+const imgInput = document.getElementById("imageInput");
+
+document.getElementById("toolImage").onclick = () => imgInput.click();
+imgInput.onchange = e => importImage(e.target.files[0]);
+
+document.getElementById("toolText").onclick = () => addHeading();
+document.getElementById("toolRect").onclick = addRect;
+document.getElementById("toolCircle").onclick = addCircle;
+document.getElementById("toolLine").onclick = addLine;
+document.getElementById("toolDelete").onclick = deleteSelected;
+</script>
 
 </body>
 </html>
