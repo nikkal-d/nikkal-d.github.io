@@ -1,0 +1,14 @@
+{
+  "stickers": [
+    { "type": "emoji", "name": "Heart", "value": "❤️" },
+    { "type": "emoji", "name": "Sparkles", "value": "✨" },
+    { "type": "emoji", "name": "Smiley", "value": "😊" },
+    { "type": "emoji", "name": "Star", "value": "⭐" },
+    { "type": "emoji", "name": "Sun", "value": "☀️" },
+    { "type": "emoji", "name": "Flower", "value": "🌸" },
+    { "type": "emoji", "name": "Camera", "value": "📷" },
+    { "type": "emoji", "name": "Balloon", "value": "🎈" },
+    { "type": "emoji", "name": "Gift", "value": "🎁" },
+    { "type": "emoji", "name": "Cloud", "value": "☁️" }
+  ]
+}
