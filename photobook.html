@@ -1,181 +1,194 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8" />
-  <title>Photobook Studio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<title>Photobook Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- HARD FIX: block alphabetical -->
-  <script>
-  (function () {
-    const proto = CanvasRenderingContext2D.prototype;
-    const desc = Object.getOwnPropertyDescriptor(proto, "textBaseline");
-    Object.defineProperty(proto, "textBaseline", {
-      get() { return this.___tb || "top"; },
-      set(v) {
-        this.___tb = (v === "alphabetical") ? "top" : v;
-        if (desc && desc.set) {
-          try { desc.set.call(this, this.___tb); } catch {}
-        }
-      }
-    });
-  })();
-  </script>
+<!-- HARD FIX: CanvasTextBaseline -->
+<script>
+(function () {
+  const proto = CanvasRenderingContext2D.prototype;
+  Object.defineProperty(proto, "textBaseline", {
+    get() { return this.__tb || "top"; },
+    set(v) { this.__tb = v === "alphabetical" ? "top" : v; }
+  });
+})();
+</script>
 
-  <!-- FABRIC -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<link rel="stylesheet" href="./css/photobook.css" />
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="./css/photobook.css" />
+<style>
+body { margin:0; font-family:Inter, Arial; background:#f5f6f8; }
+.topbar {
+  height:48px; background:#fff; border-bottom:1px solid #ddd;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 12px;
+}
+.app { display:flex; height:calc(100vh - 48px); }
+
+/* LEFT */
+.sidebar {
+  width:56px; background:#fff; border-right:1px solid #ddd;
+  display:flex; flex-direction:column;
+}
+.sidebar button {
+  height:56px; border:none; background:none; cursor:pointer;
+}
+.left-panels {
+  width:0; overflow:hidden; background:#fff;
+  border-right:1px solid #ddd; transition:.25s;
+}
+.left-panels.open { width:260px; }
+.panel { display:none; padding:12px; }
+.panel.active { display:block; }
+
+/* CANVAS */
+.canvas-area { flex:1; display:flex; flex-direction:column; align-items:center; }
+#canvasHost {
+  background:#999; flex:1; display:flex; align-items:center; justify-content:center;
+  width:100%;
+}
+canvas { background:#fff; box-shadow:0 10px 30px rgba(0,0,0,.2); }
+
+/* RIGHT EXPORT */
+.export-panel {
+  width:260px; background:#fff; border-left:1px solid #ddd;
+  padding:12px;
+}
+.btn { padding:8px 10px; margin:4px 0; width:100%; }
+.btn.primary { background:#6b5cff; color:#fff; border:none; }
+
+.flip-preview {
+  position:fixed; inset:0; background:rgba(0,0,0,.7);
+  display:none; align-items:center; justify-content:center;
+}
+.flip-book {
+  background:#fff; padding:20px; width:80%; height:80%;
+}
+</style>
 </head>
+
 <body>
 
-<!-- =====================================================
-TOP BAR
-===================================================== -->
 <div class="topbar">
-  <div class="top-actions">
-    <button class="btn" id="btnPrevPage">◀</button>
-    <span id="pageInfo">1 / 1</span>
-    <button class="btn" id="btnNextPage">▶</button>
+  <div>
+    <select id="canvasSize">
+      <option value="a4">A4</option>
+      <option value="a5">A5</option>
+      <option value="square">Square</option>
+      <option value="custom">Custom</option>
+    </select>
+    <button id="zoomIn">＋</button>
+    <button id="zoomOut">－</button>
   </div>
-
-  <div class="top-actions">
-    <button class="btn" id="btnUndo">Undo</button>
-    <button class="btn" id="btnRedo">Redo</button>
-    <button class="btn" id="btnFit">Fit</button>
-    <button class="btn" id="btnExportToggle">Export</button>
-    <button class="btn primary" id="btnLogin">Σύνδεση</button>
+  <div>
+    <button id="undo">Undo</button>
+    <button id="redo">Redo</button>
   </div>
 </div>
 
-<!-- =====================================================
-APP
-===================================================== -->
 <div class="app">
 
-  <!-- LEFT TOOLS -->
-  <div class="sidebar">
-    <button class="tb" id="toolImage" title="Εικόνα">🖼</button>
-    <button class="tb" id="toolPDF" title="PDF">📄</button>
-    <button class="tb" id="toolText" title="Κείμενο">T</button>
-    <button class="tb" id="toolRect" title="Ορθογώνιο">▭</button>
-    <button class="tb" id="toolCircle" title="Κύκλος">◯</button>
-    <button class="tb" id="toolLine" title="Γραμμή">／</button>
-    <button class="tb" id="toolDelete" title="Διαγραφή">🗑</button>
+<!-- LEFT -->
+<div class="sidebar">
+  <button data-panel="images">🖼</button>
+  <button data-panel="pdf">📄</button>
+  <button data-panel="text">T</button>
+  <button data-panel="shapes">▭</button>
+  <button data-panel="layers">☰</button>
+</div>
+
+<div class="left-panels" id="leftPanels">
+  <div class="panel" data-panel="images">
+    <h3>Images</h3>
+    <input type="file" id="imgInput" accept="image/*">
   </div>
-
-  <!-- CANVAS -->
-  <div class="canvas-area">
-
-    <div class="canvas-toolbar">
-      <button class="btn" id="zoomOut">−</button>
-      <span id="zoomLabel">100%</span>
-      <button class="btn" id="zoomIn">+</button>
-    </div>
-
-    <div id="canvasHost">
-      <canvas id="canvas"></canvas>
-    </div>
-
-    <div class="thumb-strip" id="thumbStrip"></div>
+  <div class="panel" data-panel="pdf">
+    <h3>PDF</h3>
+    <input type="file" id="pdfInput" accept="application/pdf">
+  </div>
+  <div class="panel" data-panel="text">
+    <button id="addText">Add text</button>
+  </div>
+  <div class="panel" data-panel="shapes">
+    <button id="rect">Rectangle</button>
+    <button id="circle">Circle</button>
+  </div>
+  <div class="panel" data-panel="layers">
+    <button id="bringFront">Bring front</button>
+    <button id="sendBack">Send back</button>
   </div>
 </div>
 
-<!-- HIDDEN INPUTS -->
-<input type="file" id="imageInput" accept="image/*" hidden />
-<input type="file" id="pdfInput" accept="application/pdf" hidden />
+<!-- CANVAS -->
+<div class="canvas-area">
+  <div id="canvasHost">
+    <canvas id="canvas" width="800" height="600"></canvas>
+  </div>
+</div>
 
-<!-- =====================================================
-EXPORT SIDEBAR
-===================================================== -->
-<div id="exportDrawer">
+<!-- EXPORT -->
+<div class="export-panel">
   <h3>Export</h3>
-
-  <label>Μορφή</label>
-  <select>
-    <option>PNG</option>
-    <option>PDF</option>
-    <option>Flipbook</option>
-  </select>
-
-  <label>Ποιότητα</label>
-  <input type="range" min="0.5" max="1" step="0.1" value="0.9" />
-
-  <button class="btn primary">Export</button>
+  <button class="btn" id="expPNG">PNG</button>
+  <button class="btn" id="expPDF">PDF</button>
+  <button class="btn" id="expZIP">ZIP</button>
+  <button class="btn" id="previewFlip">Flipbook preview</button>
+  <button class="btn primary" id="cloudExport">Cloud export</button>
 </div>
 
-<!-- =====================================================
-MODULES
-===================================================== -->
-<script type="module">
-import {
-  setZoom,
-  fitToScreen,
-  undo,
-  redo,
-  nextPage,
-  prevPage
-} from "./js/core.js";
+</div>
 
-import {
-  importImage,
-  importPDF,
-  addHeading,
-  addRect,
-  addCircle,
-  addLine,
-  deleteSelected
-} from "./js/tools.js";
+<!-- FLIPBOOK -->
+<div class="flip-preview" id="flipPreview">
+  <div class="flip-book">
+    <button onclick="flipPreview.style.display='none'">Close</button>
+    <div id="flipContent">Flipbook preview εδώ</div>
+  </div>
+</div>
 
-/* PAGES */
-btnNextPage.onclick = nextPage;
-btnPrevPage.onclick = prevPage;
+<script>
+/* UI TOGGLE */
+const panels=document.querySelectorAll('.panel');
+document.querySelectorAll('.sidebar button').forEach(b=>{
+  b.onclick=()=>{
+    const p=b.dataset.panel;
+    const wrap=document.getElementById('leftPanels');
+    const active=wrap.querySelector('.panel.active');
+    if(active && active.dataset.panel===p){
+      wrap.classList.remove('open'); active.classList.remove('active');
+    } else {
+      panels.forEach(x=>x.classList.remove('active'));
+      wrap.classList.add('open');
+      wrap.querySelector(`[data-panel="${p}"]`).classList.add('active');
+    }
+  }
+});
 
-/* HISTORY */
-btnUndo.onclick = undo;
-btnRedo.onclick = redo;
+/* CANVAS */
+const canvas=new fabric.Canvas('canvas');
+let zoom=1;
 
-/* ZOOM */
-let zoom = 1;
-zoomIn.onclick = () => {
-  zoom += 0.1;
-  setZoom(zoom);
-  zoomLabel.textContent = Math.round(zoom * 100) + "%";
-};
-zoomOut.onclick = () => {
-  zoom = Math.max(0.2, zoom - 0.1);
-  setZoom(zoom);
-  zoomLabel.textContent = Math.round(zoom * 100) + "%";
-};
-btnFit.onclick = () => {
-  fitToScreen();
-  zoom = 1;
-  zoomLabel.textContent = "100%";
-};
+zoomIn.onclick=()=>{ zoom=Math.min(3,zoom+0.1); canvas.setZoom(zoom); }
+zoomOut.onclick=()=>{ zoom=Math.max(0.3,zoom-0.1); canvas.setZoom(zoom); }
 
-/* EXPORT SIDEBAR */
-btnExportToggle.onclick = () => {
-  exportDrawer.classList.toggle("open");
-};
+addText.onclick=()=>canvas.add(new fabric.IText("Text",{left:100,top:100}));
+rect.onclick=()=>canvas.add(new fabric.Rect({width:120,height:80,fill:'#ddd'}));
+circle.onclick=()=>canvas.add(new fabric.Circle({radius:50,fill:'#ddd'}));
 
-/* TOOLS */
-toolImage.onclick = () => imageInput.click();
-imageInput.onchange = e => importImage(e.target.files[0]);
+bringFront.onclick=()=>canvas.getActiveObject()?.bringToFront();
+sendBack.onclick=()=>canvas.getActiveObject()?.sendToBack();
 
-toolPDF.onclick = () => pdfInput.click();
-pdfInput.onchange = e => importPDF(e.target.files[0]);
+/* FLIPBOOK */
+previewFlip.onclick=()=>{
+  document.getElementById('flipPreview').style.display='flex';
+}
 
-toolText.onclick = () => addHeading();
-toolRect.onclick = addRect;
-toolCircle.onclick = addCircle;
-toolLine.onclick = addLine;
-toolDelete.onclick = deleteSelected;
-
-/* AUTH */
-btnLogin.onclick = () => {
-  alert("Σύνδεση χρήστη (Firebase Auth) – επόμενο βήμα");
-};
+/* EXPORT MOCKS */
+cloudExport.onclick=()=>alert("Cloud export (Firebase) – έτοιμο hook");
+expPNG.onclick=()=>window.open(canvas.toDataURL());
 </script>
 
 </body>
