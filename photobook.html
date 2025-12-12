@@ -366,7 +366,39 @@
       }
       await exportAsFlipbook(allPages);
     });
+
+    const drawer = document.getElementById("exportDrawer");
+document.getElementById("exportDrawerBtn")?.addEventListener("click", () => drawer?.classList.add("open"));
+document.getElementById("exportDrawerClose")?.addEventListener("click", () => drawer?.classList.remove("open"));
+
+    
   </script>
 
+<button id="exportDrawerBtn" class="export-fab">Export</button>
+
+<aside id="exportDrawer" class="export-drawer">
+  <div class="export-head">
+    <h3>Export</h3>
+    <button id="exportDrawerClose">✕</button>
+  </div>
+
+  <label>Διαστάσεις
+    <select id="exportSize">
+      <option value="auto">Auto</option>
+      <option value="a4">A4</option>
+      <option value="square">Square</option>
+      <option value="story">Story (1080x1920)</option>
+    </select>
+  </label>
+
+  <button id="exportCloudBtn">☁ Cloud</button>
+  <button id="exportPDFBtn">📄 PDF</button>
+  <button id="exportImagesBtn">🖼 ZIP Images</button>
+  <button id="exportFlipbookBtn">📘 Flipbook ZIP</button>
+</aside>
+
+  
+
+  
 </body>
 </html>
