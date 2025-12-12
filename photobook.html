@@ -18,387 +18,204 @@
       pdfjsLib.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     }
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  
   </script>
+
+  <!-- Export libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
+
 <body>
 
-  <!-- HEADER -->
-  <header id="topbar">
-    <div class="logo">
-      <a href="index.html" style="text-decoration:none; color:inherit;">
-        📘 Photobook Studio
-      </a>
-    </div>
+<!-- ================= TOP BAR ================= -->
+<header id="topbar">
+  <div class="logo">📘 Photobook Studio</div>
 
-    <nav class="main-nav">
-      <a href="index.html">Home</a>
-      <a href="photobook.html" class="active">Photobook</a>
-      <a href="duplicates.html">Find My Duplication</a>
-      <a href="projects.html">My Photobooks</a>
-    </nav>
+  <div class="top-controls">
+    <button id="undoBtn">↶</button>
+    <button id="redoBtn">↷</button>
 
-    <div class="top-controls">
-      <span id="user-label">Επισκέπτης</span>
-      <button id="login-btn">Σύνδεση</button>
-      <button id="logout-btn" style="display:none;">Αποσύνδεση</button>
-      <button id="themeToggleBtn">☾</button>
-    </div>
-  </header>
+    <button id="zoomOutBtn">−</button>
+    <span id="zoomLabel">100%</span>
+    <button id="zoomInBtn">+</button>
 
-  <!-- MAIN WRAPPER -->
-  <div id="workspace">
+    <button id="themeToggleBtn">☾</button>
+  </div>
+</header>
 
-    <!-- TOOLBAR -->
-    <div id="editorToolbar" class="toolbar">
+<!-- ================= LEFT SIDEBAR ================= -->
+<aside class="sidebar left">
+  <button class="side-btn" data-panel="import">📁</button>
+  <button class="side-btn" data-panel="edit">✏️</button>
+  <button class="side-btn" data-panel="layers">🧱</button>
+</aside>
 
-      <!-- FILE / PAGES -->
-      <div class="toolbar-group">
-        <button class="tb-btn" id="addPageBtn">➕ Σελίδα</button>
-        <button class="tb-btn" id="deletePageBtn">🗑️ Διαγραφή</button>
+<!-- ================= LEFT DRAWER ================= -->
+<div id="leftDrawer" class="drawer left">
 
-        <div class="divider"></div>
+  <div class="drawer-panel" id="panel-import">
+    <h3>Import</h3>
+    <button id="btnUploadImage">🖼 Εικόνα</button>
+    <input type="file" id="imageInput" accept="image/*" hidden>
 
-        <button class="tb-btn primary" id="exportCloudBtn">☁️ Cloud</button>
-        <button class="tb-btn" id="exportPDFBtn">📄 PDF</button>
-        <button class="tb-btn" id="exportImagesBtn">🖼 ZIP</button>
-        <button class="tb-btn" id="exportFlipbookBtn">📘 Flipbook</button>
-      </div>
-
-      <!-- INSERT -->
-      <div class="toolbar-group">
-        <button class="tb-btn" id="btnUploadImage">🖼 Εικόνα</button>
-        <input type="file" id="imageInput" accept="image/*" style="display:none">
-
-        <button class="tb-btn" id="btnAddText">🔤 Κείμενο</button>
-        <button class="tb-btn" id="btnStickers">😊 Stickers</button>
-        <button class="tb-btn" id="btnTemplates">📚 Templates</button>
-        <button class="tb-btn" id="btnUploadPDF">📎 PDF</button>
-        <input type="file" id="pdfInput" accept="application/pdf" style="display:none">
-      </div>
-
-      <!-- EDIT -->
-      <div class="toolbar-group">
-        <button class="tb-btn" id="undoBtn">↶ Undo</button>
-        <button class="tb-btn" id="redoBtn">↷ Redo</button>
-        <button class="tb-btn" id="cropBtn">✂ Crop</button>
-        <button class="tb-btn" id="cropOK" style="display:none;">✅ OK</button>
-        <button class="tb-btn" id="cropCancel" style="display:none;">❌ Ακύρωση</button>
-        <button onclick="bringForward()">⬆</button>
-<button onclick="sendBackward()">⬇</button>
-
-      </div>
-
-    </div>
-
-    <!-- LAYOUT -->
-    <div id="editorLayout">
-
-      <!-- LEFT PANEL (filters, stickers, templates) -->
-      <aside id="leftPanel">
-        <h3>Εργαλεία</h3>
-
-        <!-- FILTERS -->
-        <section class="panel" id="filtersPanel">
-          <h4>Φίλτρα εικόνας</h4>
-          <label>Φωτεινότητα
-            <input type="range" id="fltBrightness" min="-1" max="1" step="0.1" value="0">
-          </label>
-          <label>Αντίθεση
-            <input type="range" id="fltContrast" min="-1" max="1" step="0.1" value="0">
-          </label>
-          <label>Κορεσμός
-            <input type="range" id="fltSaturation" min="-1" max="1" step="0.1" value="0">
-          </label>
-          <label>Blur
-            <input type="range" id="fltBlur" min="0" max="1" step="0.1" value="0">
-          </label>
-
-          <div class="panel-row">
-            <button class="sm-btn" id="fltGray">Grayscale</button>
-            <button class="sm-btn" id="fltVintage">Vintage</button>
-            <button class="sm-btn" id="fltRemove">Καθαρό</button>
-          </div>
-        </section>
-
-        <!-- STICKERS -->
-        <section class="panel" id="stickersPanel">
-          <h4>Stickers (emojis)</h4>
-          <div id="stickerGrid" class="thumb-grid">
-            Φόρτωση…
-          </div>
-        </section>
-
-        <!-- TEMPLATES -->
-        <section class="panel" id="templatesPanel">
-          <h4>Templates</h4>
-          <select id="templateCategory">
-            <option value="basic">Basic</option>
-            <option value="wedding">Wedding</option>
-            <option value="travel">Travel</option>
-          </select>
-          <div id="templateGrid" class="thumb-grid"></div>
-        </section>
-      </aside>
-
-      <!-- CENTER CANVAS -->
-      <main id="editorMain">
-        <div id="canvas-wrapper">
-          <canvas id="canvas"></canvas>
-        </div>
-
-        <div id="pageControls">
-          <button id="prevPageBtn">⟵</button>
-          <span id="pageInfo">1 / 1</span>
-          <button id="nextPageBtn">⟶</button>
-        </div>
-      </main>
-
-      <!-- RIGHT THUMBNAILS -->
-      <aside id="thumbsPanel">
-        <h4>Σελίδες</h4>
-        <div id="thumbnails"></div>
-      </aside>
-    </div>
+    <button id="btnUploadPDF">📄 PDF</button>
+    <input type="file" id="pdfInput" accept="application/pdf" hidden>
   </div>
 
-  <!-- LOGIN MODALS (υποθέτω ότι ήδη υπάρχουν στο auth.js σου) -->
-  <!-- μπορείς να κρατήσεις τα δικά σου αν τα έχεις, εδώ βάζω ένα απλό placeholder -->
-  <div id="authModal" class="modal" style="display:none;">
-    <div class="modal-inner">
-      <h3>Σύνδεση</h3>
-      <p>Το auth το χειρίζεται το auth.js – εδώ απλά placeholder.</p>
-      <button id="closeAuthModal">Κλείσιμο</button>
-    </div>
+  <div class="drawer-panel" id="panel-edit">
+    <h3>Edit</h3>
+    <button id="cropBtn">✂ Crop</button>
+    <button id="removeBgBtn">🧠 Remove BG</button>
+
+    <hr>
+
+    <button id="bringForwardBtn">⬆ Bring Forward</button>
+    <button id="sendBackwardBtn">⬇ Send Backward</button>
   </div>
 
-  <!-- JSZip για ZIP εξαγωγή -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <div class="drawer-panel" id="panel-layers">
+    <h3>Layers</h3>
+    <div id="layersList">Επίλεξε αντικείμενο</div>
+  </div>
 
-<!-- FileSaver για αποθήκευση αρχείων -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</div>
 
-  <!-- Fabric.js -->
-<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+<!-- ================= RIGHT SIDEBAR ================= -->
+<button id="exportFab" class="export-fab">Export</button>
 
-<!-- pdf.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  if (window.pdfjsLib) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  }
-</script>
-
-<!-- JSZip & FileSaver -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-
-  <!-- JS MODULES -->
-  <script type="module" src="./firebase-init.js"></script>
-  <script type="module" src="./js/core.js"></script>
-  <script type="module" src="./js/tools.js"></script>
-  <script type="module" src="./js/export.js"></script>
-  <script type="module" src="./js/auth.js"></script>
-  <script type="module" src="./js/ui.js"></script>
-
-  <!-- PAGE-SPECIFIC WIRING -->
-  <script type="module">
-    import { fabricCanvas, pages, saveCurrentPage } from "./js/core.js";
-    import { applyFilter, startCrop, applyCrop, cancelCrop, importPDF, loadStickersFromList, loadTemplates } from "./js/tools.js";
-    import { exportToCloud, exportAsPDF, exportAsZip, exportAsFlipbook } from "./js/export.js";
-
-    // ========= FILTERS =========
-    const sliderBrightness = document.getElementById("fltBrightness");
-    const sliderContrast = document.getElementById("fltContrast");
-    const sliderSaturation = document.getElementById("fltSaturation");
-    const sliderBlur = document.getElementById("fltBlur");
-
-    if (sliderBrightness) {
-      sliderBrightness.oninput = e => applyFilter("brightness", parseFloat(e.target.value));
-    }
-    if (sliderContrast) {
-      sliderContrast.oninput = e => applyFilter("contrast", parseFloat(e.target.value));
-    }
-    if (sliderSaturation) {
-      sliderSaturation.oninput = e => applyFilter("saturation", parseFloat(e.target.value));
-    }
-    if (sliderBlur) {
-      sliderBlur.oninput = e => applyFilter("blur", parseFloat(e.target.value));
-    }
-
-    document.getElementById("fltGray")?.addEventListener("click", () => applyFilter("grayscale"));
-    document.getElementById("fltVintage")?.addEventListener("click", () => applyFilter("vintage"));
-    document.getElementById("fltRemove")?.addEventListener("click", () => applyFilter("remove"));
-
-    // ========= CROP =========
-    document.getElementById("cropBtn")?.addEventListener("click", () => startCrop());
-    document.getElementById("cropOK")?.addEventListener("click", () => applyCrop());
-    document.getElementById("cropCancel")?.addEventListener("click", () => cancelCrop());
-
-    // ========= STICKERS (emojis) =========
-    document.getElementById("btnStickers")?.addEventListener("click", () => {
-      const panel = document.getElementById("stickersPanel");
-      if (!panel) return;
-      panel.classList.toggle("open");
-      if (panel.classList.contains("open")) {
-        loadStickersFromList();
-      }
-    });
-
-    // ========= TEMPLATES =========
-    document.getElementById("btnTemplates")?.addEventListener("click", () => {
-      const panel = document.getElementById("templatesPanel");
-      if (!panel) return;
-      panel.classList.toggle("open");
-      if (panel.classList.contains("open")) {
-        const cat = document.getElementById("templateCategory")?.value || "basic";
-        loadTemplates(cat);
-      }
-    });
-
-    document.getElementById("templateCategory")?.addEventListener("change", (e) => {
-      loadTemplates(e.target.value);
-    });
-
-    // ========= PDF IMPORT =========
-    document.getElementById("btnUploadPDF")?.addEventListener("click", () => {
-      document.getElementById("pdfInput")?.click();
-    });
-
-    document.getElementById("pdfInput")?.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) importPDF(file);
-    });
-
-    // ========= IMAGE UPLOAD =========
-    const imgBtn = document.getElementById("btnUploadImage");
-    const imgInput = document.getElementById("imageInput");
-
-    if (imgBtn && imgInput) {
-      imgBtn.addEventListener("click", () => imgInput.click());
-
-      imgInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (!file || !fabricCanvas) return;
-
-        const url = URL.createObjectURL(file);
-        fabric.Image.fromURL(url, (img) => {
-          img.scaleToWidth(fabricCanvas.width * 0.8);
-          img.left = fabricCanvas.width / 2 - img.width / 2;
-          img.top = fabricCanvas.height / 2 - img.height / 2;
-
-          fabricCanvas.add(img);
-          fabricCanvas.setActiveObject(img);
-          fabricCanvas.requestRenderAll();
-          saveCurrentPage();
-        }, { crossOrigin: "anonymous" });
-      });
-    }
-
-    // ========= TEXT =========
-    document.getElementById("btnAddText")?.addEventListener("click", () => {
-      if (!fabricCanvas) return;
-      const text = new fabric.IText("Δικό σου κείμενο", {
-        left: fabricCanvas.width / 2 - 100,
-        top: fabricCanvas.height / 2 - 20,
-        fontSize: 28,
-        fill: "#222"
-      });
-      fabricCanvas.add(text);
-      fabricCanvas.setActiveObject(text);
-      fabricCanvas.requestRenderAll();
-      saveCurrentPage();
-    });
-
-    // ========= EXPORT HELPERS =========
-    function collectPagesData() {
-      // παίρνουμε τα image data URLs από το core.js
-      return (pages || []).map(p => p.image).filter(Boolean);
-    }
-
-    document.getElementById("exportCloudBtn")?.addEventListener("click", async () => {
-      const title = prompt("Τίτλος βιβλίου:", "Το Photobook μου");
-      const pwd = prompt("Κωδικός (προαιρετικό):", "");
-
-      const allPages = collectPagesData();
-      if (!allPages.length) {
-        alert("Δεν υπάρχουν σελίδες για αποστολή.");
-        return;
-      }
-
-      const bookId = await exportToCloud(allPages, title, pwd);
-      if (bookId) {
-        const link = `${location.origin}${location.pathname.replace("photobook.html","viewer.html")}?id=${bookId}`;
-        alert("Το βιβλίο ανέβηκε στο cloud!\n\nID: " + bookId + "\nLink:\n" + link);
-      }
-    });
-
-    document.getElementById("exportPDFBtn")?.addEventListener("click", async () => {
-      const allPages = collectPagesData();
-      if (!allPages.length) {
-        alert("Δεν υπάρχουν σελίδες.");
-        return;
-      }
-      await exportAsPDF(allPages);
-    });
-
-    document.getElementById("exportImagesBtn")?.addEventListener("click", async () => {
-      const allPages = collectPagesData();
-      if (!allPages.length) {
-        alert("Δεν υπάρχουν σελίδες.");
-        return;
-      }
-      await exportAsZip(allPages);
-    });
-
-    document.getElementById("exportFlipbookBtn")?.addEventListener("click", async () => {
-      const allPages = collectPagesData();
-      if (!allPages.length) {
-        alert("Δεν υπάρχουν σελίδες.");
-        return;
-      }
-      await exportAsFlipbook(allPages);
-    });
-
-    const drawer = document.getElementById("exportDrawer");
-document.getElementById("exportDrawerBtn")?.addEventListener("click", () => drawer?.classList.add("open"));
-document.getElementById("exportDrawerClose")?.addEventListener("click", () => drawer?.classList.remove("open"));
-
-    
-  </script>
-
-<button id="exportDrawerBtn" class="export-fab">Export</button>
-
-<aside id="exportDrawer" class="export-drawer">
-  <div class="export-head">
+<aside id="exportDrawer" class="drawer right">
+  <div class="drawer-head">
     <h3>Export</h3>
-    <button id="exportDrawerClose">✕</button>
+    <button id="exportCloseBtn">✕</button>
   </div>
-
-  <label>Διαστάσεις
-    <select id="exportSize">
-      <option value="auto">Auto</option>
-      <option value="a4">A4</option>
-      <option value="square">Square</option>
-      <option value="story">Story (1080x1920)</option>
-    </select>
-  </label>
 
   <button id="exportCloudBtn">☁ Cloud</button>
   <button id="exportPDFBtn">📄 PDF</button>
   <button id="exportImagesBtn">🖼 ZIP Images</button>
-  <button id="exportFlipbookBtn">📘 Flipbook ZIP</button>
+  <button id="exportFlipbookBtn">📘 Flipbook</button>
 </aside>
 
-  
+<!-- ================= MAIN CANVAS ================= -->
+<main id="editorMain">
+  <div id="canvas-wrapper">
+    <canvas id="canvas"></canvas>
+  </div>
 
-  
+  <div id="pageControls">
+    <button id="prevPageBtn">⟵</button>
+    <span id="pageInfo">1 / 1</span>
+    <button id="nextPageBtn">⟶</button>
+  </div>
+</main>
+
+<!-- ================= SCRIPTS ================= -->
+<script type="module" src="./firebase-init.js"></script>
+<script type="module" src="./js/core.js"></script>
+<script type="module" src="./js/tools.js"></script>
+<script type="module" src="./js/export.js"></script>
+<script type="module" src="./js/ui.js"></script>
+
+<!-- ================= UI BINDINGS ================= -->
+<script type="module">
+  import { fabricCanvas, pages } from "./js/core.js";
+  import { exportAsZip, exportAsPDF, exportAsFlipbook, exportToCloud } from "./js/export.js";
+  import { bringForward, sendBackward, removeBackground } from "./js/tools.js";
+
+  /* ---------- Sidebar logic ---------- */
+  const sideBtns = document.querySelectorAll(".side-btn");
+  const drawer = document.getElementById("leftDrawer");
+  const panels = document.querySelectorAll(".drawer-panel");
+
+  sideBtns.forEach(btn => {
+    btn.onclick = () => {
+      const target = btn.dataset.panel;
+
+      if (btn.classList.contains("active")) {
+        btn.classList.remove("active");
+        drawer.classList.remove("open");
+        panels.forEach(p => p.classList.remove("active"));
+        return;
+      }
+
+      sideBtns.forEach(b => b.classList.remove("active"));
+      panels.forEach(p => p.classList.remove("active"));
+
+      btn.classList.add("active");
+      drawer.classList.add("open");
+      document.getElementById("panel-" + target)?.classList.add("active");
+    };
+  });
+
+  /* ---------- Import Image ---------- */
+  const imgBtn = document.getElementById("btnUploadImage");
+  const imgInput = document.getElementById("imageInput");
+
+  imgBtn.onclick = () => imgInput.click();
+  imgInput.onchange = e => {
+    const file = e.target.files[0];
+    if (!file || !fabricCanvas) return;
+
+    const url = URL.createObjectURL(file);
+    fabric.Image.fromURL(url, img => {
+      img.scaleToWidth(fabricCanvas.width * 0.6);
+      fabricCanvas.add(img).setActiveObject(img);
+    });
+  };
+
+  /* ---------- Import PDF (images only for now) ---------- */
+  document.getElementById("btnUploadPDF").onclick = () =>
+    document.getElementById("pdfInput").click();
+
+  /* ---------- Layer order ---------- */
+  document.getElementById("bringForwardBtn").onclick = bringForward;
+  document.getElementById("sendBackwardBtn").onclick = sendBackward;
+
+  /* ---------- Remove background ---------- */
+  document.getElementById("removeBgBtn").onclick = removeBackground;
+
+  /* ---------- Export drawer ---------- */
+  const exportDrawer = document.getElementById("exportDrawer");
+  document.getElementById("exportFab").onclick = () => exportDrawer.classList.add("open");
+  document.getElementById("exportCloseBtn").onclick = () => exportDrawer.classList.remove("open");
+
+  function collectPages() {
+    return pages.map(p => p.image).filter(Boolean);
+  }
+
+  document.getElementById("exportImagesBtn").onclick = () =>
+    exportAsZip(collectPages());
+
+  document.getElementById("exportPDFBtn").onclick = () =>
+    exportAsPDF(collectPages());
+
+  document.getElementById("exportFlipbookBtn").onclick = () =>
+    exportAsFlipbook(collectPages());
+
+  document.getElementById("exportCloudBtn").onclick = async () => {
+    const id = await exportToCloud(collectPages(), "My Photobook");
+    if (id) alert("Uploaded! ID: " + id);
+  };
+
+  /* ---------- Canvas Zoom ---------- */
+  let zoom = 1;
+  const zoomLbl = document.getElementById("zoomLabel");
+
+  function applyZoom() {
+    fabricCanvas.setZoom(zoom);
+    zoomLbl.textContent = Math.round(zoom * 100) + "%";
+    fabricCanvas.requestRenderAll();
+  }
+
+  document.getElementById("zoomInBtn").onclick = () => {
+    zoom = Math.min(3, zoom + 0.1);
+    applyZoom();
+  };
+  document.getElementById("zoomOutBtn").onclick = () => {
+    zoom = Math.max(0.3, zoom - 0.1);
+    applyZoom();
+  };
+</script>
+
 </body>
 </html>
