@@ -14,6 +14,23 @@ export let fabricCanvas = null;
 export let pages = []; // [{json, image}]
 export let currentPage = 0;
 
+export function addImageFromFile(file) {
+  if (!fabricCanvas || !file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
+      img.scaleToWidth(fabricCanvas.getWidth() * 0.4);
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      saveHistory();
+      saveCurrentPage();
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+
 const DRAFT_KEY = "pbs_draft_v3";
 
 let undoStack = [];
