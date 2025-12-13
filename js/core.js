@@ -1,19 +1,13 @@
 // js/core.js
 // ============================================================
-// Core: canvas, zoom (single source of truth), pan, pages,
-// history, draft, deep sanitize for Fabric warnings
+// Core: canvas, CORRECT zoom (center zoom), pan, pages, thumbnails,
+// draft save + deep sanitize to kill "alphabetical" warnings.
 // ============================================================
-
-if (window.fabric && fabric.Textbox) {
-  fabric.Textbox.prototype.textBaseline = "top";
-}
 
 export let fabricCanvas = null;
 
-export let pages = [];
+export let pages = []; // [{json, image}]
 export let currentPage = 0;
-
-// -------------------- GLOBAL STATE --------------------
 
 const DRAFT_KEY = "pbs_draft_v3";
 
@@ -21,17 +15,41 @@ let undoStack = [];
 let redoStack = [];
 let restoring = false;
 
-let zoom = 1;                 // ✅ SINGLE zoom state
+let zoom = 1;
 let panMode = false;
 let isPanning = false;
 let panLast = { x: 0, y: 0 };
 
-// -------------------- INIT --------------------
+// ============================================================
+// FABRIC FIX — Kill baseline warnings
+// ============================================================
+(function fixFabricTextBaseline() {
+  if (typeof fabric === "undefined") return;
 
+  // Force valid baseline (Fabric expects canvas baseline enums)
+  // We'll use "top" consistently.
+  const patch = (proto) => {
+    if (!proto) return;
+    try {
+      Object.defineProperty(proto, "textBaseline", {
+        get() { return "top"; },
+        set() { /* ignore */ }
+      });
+    } catch {}
+  };
+
+  patch(fabric.Textbox?.prototype);
+  patch(fabric.IText?.prototype);
+})();
+
+// ============================================================
+// INIT
+// ============================================================
 window.addEventListener("DOMContentLoaded", () => {
-  if (!document.getElementById("canvas") || typeof fabric === "undefined") return;
+  // ✅ HTML έχει <canvas id="c">
+  if (!document.getElementById("c") || typeof fabric === "undefined") return;
 
-  fabricCanvas = new fabric.Canvas("canvas", {
+  fabricCanvas = new fabric.Canvas("c", {
     preserveObjectStacking: true,
     selection: true
   });
@@ -40,21 +58,47 @@ window.addEventListener("DOMContentLoaded", () => {
   bindHistory();
   bindPanZoom();
 
+  // initial page
   addPage(true);
+
+  // load draft AFTER basic init
   loadDraft();
 
-  setInterval(saveDraft, 2500);
+  // autosave
+  setInterval(() => saveDraft(), 2500);
 });
 
-// -------------------- ZOOM (CORRECT) --------------------
+// ============================================================
+// IMAGES
+// ============================================================
+export function addImageFromFile(file) {
+  if (!fabricCanvas || !file) return;
 
+  const reader = new FileReader();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
+      img.scaleToWidth(fabricCanvas.getWidth() * 0.4);
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      saveHistory();
+      saveCurrentPage();
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// ZOOM
+// ============================================================
 export function getZoom() {
   return zoom;
 }
 
+/**
+ * Correct zoom: zoom around canvas CENTER, not top-left.
+ */
 export function setZoom(value) {
   if (!fabricCanvas) return;
-
   zoom = Math.max(0.2, Math.min(4, Number(value) || 1));
 
   const center = new fabric.Point(
@@ -80,13 +124,15 @@ export function resetZoom() {
 }
 
 export function fitToScreen() {
-  const host = document.getElementById("canvasHost");
+  // ✅ HTML έχει id="canvasWrap" (όχι canvasHost)
+  const host = document.getElementById("canvasWrap") || document.querySelector(".canvasArea");
   if (!host || !fabricCanvas) return;
 
   const pad = 28;
   const availW = host.clientWidth - pad;
   const availH = host.clientHeight - pad;
 
+  // Reset transforms first
   resetZoom();
 
   const s = Math.min(
@@ -94,64 +140,18 @@ export function fitToScreen() {
     availH / fabricCanvas.getHeight()
   );
 
+  // Zoom around center
   setZoom(s);
 
+  // Center inside host by shifting viewport transform
   const vt = fabricCanvas.viewportTransform;
-  vt[4] = (availW - fabricCanvas.getWidth() * s) / 2;
-  vt[5] = (availH - fabricCanvas.getHeight() * s) / 2;
-
+  const cx = (availW - fabricCanvas.getWidth() * s) / 2;
+  const cy = (availH - fabricCanvas.getHeight() * s) / 2;
+  vt[4] = cx;
+  vt[5] = cy;
   fabricCanvas.setViewportTransform(vt);
   fabricCanvas.requestRenderAll();
 }
-
-// -------------------- PAN + WHEEL ZOOM --------------------
-
-function bindPanZoom() {
-  document.addEventListener("keydown", e => {
-    if (e.code === "Space") panMode = true;
-  });
-
-  document.addEventListener("keyup", e => {
-    if (e.code === "Space") panMode = false;
-  });
-
-  fabricCanvas.on("mouse:down", opt => {
-    if (!panMode) return;
-    isPanning = true;
-    panLast = { x: opt.e.clientX, y: opt.e.clientY };
-  });
-
-  fabricCanvas.on("mouse:move", opt => {
-    if (!isPanning) return;
-    const e = opt.e;
-    const vpt = fabricCanvas.viewportTransform;
-    vpt[4] += e.clientX - panLast.x;
-    vpt[5] += e.clientY - panLast.y;
-    fabricCanvas.setViewportTransform(vpt);
-    panLast = { x: e.clientX, y: e.clientY };
-  });
-
-  fabricCanvas.on("mouse:up", () => {
-    isPanning = false;
-  });
-
-  fabricCanvas.on("mouse:wheel", opt => {
-    const e = opt.e;
-    if (!e.ctrlKey) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const factor = e.deltaY > 0 ? 0.95 : 1.05;
-    zoom = Math.max(0.2, Math.min(4, zoom * factor));
-
-    const pt = new fabric.Point(e.offsetX, e.offsetY);
-    fabricCanvas.zoomToPoint(pt, zoom);
-    fabricCanvas.requestRenderAll();
-  });
-}
-
-// -------------------- CANVAS SIZE --------------------
 
 export function setCanvasSizePreset(preset) {
   const presets = {
@@ -169,27 +169,28 @@ export function setCanvasSizePreset(preset) {
   fabricCanvas.setHeight(p.h);
   fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
 
+  resetZoom();
   fitToScreen();
+
   saveHistory();
   saveCurrentPage();
 }
 
-// -------------------- IMAGES --------------------
+export function setCanvasCustom(w, h) {
+  if (!fabricCanvas) return;
 
-export function addImageFromFile(file) {
-  if (!fabricCanvas || !file) return;
+  const W = Math.max(200, Math.min(4000, Number(w)));
+  const H = Math.max(200, Math.min(4000, Number(h)));
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.scaleToWidth(fabricCanvas.getWidth() * 0.4);
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      saveHistory();
-      saveCurrentPage();
-    });
-  };
-  reader.readAsDataURL(file);
+  fabricCanvas.setWidth(W);
+  fabricCanvas.setHeight(H);
+  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
+
+  resetZoom();
+  fitToScreen();
+
+  saveHistory();
+  saveCurrentPage();
 }
 
 // -------------------- PAGES --------------------
@@ -208,6 +209,38 @@ export function addPage(isInitial = false) {
   updatePageInfo();
 }
 
+export function duplicatePage() {
+  saveCurrentPage();
+  const src = pages[currentPage];
+  const clone = src?.json ? structuredClone(src) : { json: null, image: null };
+  pages.splice(currentPage + 1, 0, clone);
+  currentPage++;
+  loadPageToCanvas();
+  refreshThumbnails();
+  updatePageInfo();
+  saveHistory();
+}
+
+export function deletePage() {
+  if (pages.length <= 1) return alert("Πρέπει να υπάρχει τουλάχιστον 1 σελίδα.");
+  pages.splice(currentPage, 1);
+  currentPage = Math.max(0, currentPage - 1);
+  loadPageToCanvas();
+  refreshThumbnails();
+  updatePageInfo();
+  saveHistory();
+}
+
+export function nextPage() {
+  if (currentPage >= pages.length - 1) return;
+  switchPage(currentPage + 1);
+}
+
+export function prevPage() {
+  if (currentPage <= 0) return;
+  switchPage(currentPage - 1);
+}
+
 export function switchPage(index) {
   if (index < 0 || index >= pages.length) return;
   saveCurrentPage();
@@ -215,21 +248,31 @@ export function switchPage(index) {
   loadPageToCanvas();
   refreshThumbnails();
   updatePageInfo();
+  saveHistory();
 }
 
-// -------------------- SAVE / LOAD --------------------
+export function updatePageInfo() {
+  const el = document.getElementById("pageLabel") || document.getElementById("pageInfo");
+  if (el) el.textContent = `Page ${currentPage + 1} / ${pages.length}`;
+}
 
 export function saveCurrentPage() {
   if (!pages[currentPage] || !fabricCanvas) return;
+
   const json = fabricCanvas.toJSON();
   sanitizeJSON(json);
+
   pages[currentPage].json = json;
   pages[currentPage].image = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
 }
 
 export function loadPageToCanvas() {
   const pg = pages[currentPage];
-  if (!pg || !pg.json) return;
+  if (!pg || !pg.json) {
+    fabricCanvas.clear();
+    fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
+    return;
+  }
 
   restoring = true;
   const clean = structuredClone(pg.json);
@@ -241,31 +284,143 @@ export function loadPageToCanvas() {
   });
 }
 
+export function refreshThumbnails() {
+  const strip = document.getElementById("thumbStrip");
+  if (!strip) return;
+
+  strip.innerHTML = "";
+  pages.forEach((p, i) => {
+    const d = document.createElement("div");
+    d.className = "thumb" + (i === currentPage ? " active" : "");
+
+    const img = document.createElement("img");
+    img.src = p.image || "";
+    img.alt = `page ${i + 1}`;
+    d.appendChild(img);
+
+    d.onclick = () => switchPage(i);
+    strip.appendChild(d);
+  });
+}
+
 // -------------------- HISTORY --------------------
 
 function bindHistory() {
   saveHistory();
+
   ["object:added", "object:modified", "object:removed"].forEach(ev => {
     fabricCanvas.on(ev, () => {
-      if (!restoring) saveHistory();
+      if (restoring) return;
+      saveHistory();
     });
   });
 }
 
 function saveHistory() {
+  if (!fabricCanvas) return;
+
   const json = fabricCanvas.toJSON();
   sanitizeJSON(json);
+
   undoStack.push(json);
   if (undoStack.length > 60) undoStack.shift();
   redoStack = [];
 }
 
+export function undo() {
+  if (undoStack.length < 2) return;
+
+  const cur = undoStack.pop();
+  redoStack.push(cur);
+  const prev = undoStack[undoStack.length - 1];
+
+  restoring = true;
+  const clean = structuredClone(prev);
+  sanitizeJSON(clean);
+
+  fabricCanvas.loadFromJSON(clean, () => {
+    fabricCanvas.renderAll();
+    restoring = false;
+    saveCurrentPage();
+    refreshThumbnails();
+  });
+}
+
+export function redo() {
+  if (!redoStack.length) return;
+
+  const next = redoStack.pop();
+  undoStack.push(next);
+
+  restoring = true;
+  const clean = structuredClone(next);
+  sanitizeJSON(clean);
+
+  fabricCanvas.loadFromJSON(clean, () => {
+    fabricCanvas.renderAll();
+    restoring = false;
+    saveCurrentPage();
+    refreshThumbnails();
+  });
+}
+
+// -------------------- PAN / ZOOM --------------------
+
+function bindPanZoom() {
+  // Space to pan
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space") panMode = true;
+  });
+  document.addEventListener("keyup", (e) => {
+    if (e.code === "Space") panMode = false;
+  });
+
+  fabricCanvas.on("mouse:down", (opt) => {
+    if (!panMode) return;
+    isPanning = true;
+    const evt = opt.e;
+    panLast = { x: evt.clientX, y: evt.clientY };
+  });
+
+  fabricCanvas.on("mouse:move", (opt) => {
+    if (!isPanning) return;
+    const evt = opt.e;
+    const vpt = fabricCanvas.viewportTransform;
+    vpt[4] += evt.clientX - panLast.x;
+    vpt[5] += evt.clientY - panLast.y;
+    fabricCanvas.setViewportTransform(vpt);
+    panLast = { x: evt.clientX, y: evt.clientY };
+  });
+
+  fabricCanvas.on("mouse:up", () => {
+    isPanning = false;
+  });
+
+  // Ctrl + wheel zoom (around pointer)
+  fabricCanvas.on("mouse:wheel", (opt) => {
+    const e = opt.e;
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const delta = e.deltaY;
+    const factor = delta > 0 ? 0.95 : 1.05;
+    const next = Math.max(0.2, Math.min(4, zoom * factor));
+    zoom = next;
+
+    const pt = new fabric.Point(e.offsetX, e.offsetY);
+    fabricCanvas.zoomToPoint(pt, zoom);
+    fabricCanvas.requestRenderAll();
+  });
+}
+
 // -------------------- DRAFT --------------------
 
-function saveDraft() {
+export function saveDraft() {
   try {
     saveCurrentPage();
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ pages, currentPage }));
+    const payload = { pages, currentPage };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
   } catch {}
 }
 
@@ -273,29 +428,40 @@ function loadDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
+
     const data = JSON.parse(raw);
     pages = data.pages || pages;
-    currentPage = data.currentPage || 0;
+    currentPage = Math.max(0, Math.min((data.currentPage ?? 0), pages.length - 1));
+
+    pages.forEach(p => p?.json && sanitizeJSON(p.json));
+
     loadPageToCanvas();
     refreshThumbnails();
     updatePageInfo();
   } catch {}
 }
 
-// -------------------- HELPERS --------------------
-
-function refreshThumbnails() {}
-function updatePageInfo() {}
-
+// -------------------- SANITIZE (DEEP) --------------------
 function sanitizeJSON(json) {
   if (!json) return;
-  const walk = n => {
-    if (!n || typeof n !== "object") return;
-    if (Array.isArray(n)) return n.forEach(walk);
-    for (const k in n) {
-      if (k === "textBaseline" && n[k] === "alphabetic") n[k] = "top";
-      walk(n[k]);
+
+  const walk = (node) => {
+    if (!node || typeof node !== "object") return;
+
+    // cover both variants just in case
+    if (node.textBaseline === "alphabetic" || node.textBaseline === "alphabetical") node.textBaseline = "top";
+
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+
+    for (const k of Object.keys(node)) {
+      const v = node[k];
+      if (k === "textBaseline" && (v === "alphabetic" || v === "alphabetical")) node[k] = "top";
+      walk(v);
     }
   };
+
   walk(json);
 }
