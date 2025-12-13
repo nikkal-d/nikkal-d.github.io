@@ -1,105 +1,60 @@
 // js/ui.js
 // ---------------------------------------------
-// UI CONTROLLER
+// UI CONTROLLER (aligned with photobook (3).html)
 // ---------------------------------------------
-import { setZoom, resetZoom, getZoom } from "./core.js";
-import { login, logout, onAuthChange } from "./auth.js";
-import { addImageFromFile } from "./core.js";
-
+import {
+  setZoom, resetZoom, getZoom,
+  addImageFromFile,
+  fitToScreen
+} from "./core.js";
 
 // -----------------------------
-// LEFT SIDEBAR (PANELS)
+// LEFT TOOLBAR -> LEFT PANELS
 // -----------------------------
+const toolButtons = document.querySelectorAll(".sidebar .toolbtn");
+const panels = document.querySelectorAll(".leftPanel .panel");
 
-document.querySelectorAll(".sidebar button").forEach(btn => {
+function showPanel(name) {
+  panels.forEach(p => {
+    const isMatch = p.dataset.panel === name;
+    p.style.display = isMatch ? "" : "none";
+  });
+
+  toolButtons.forEach(b => {
+    b.classList.toggle("active", b.dataset.tool === name);
+  });
+}
+
+// initial
+showPanel("images");
+
+toolButtons.forEach(btn => {
   btn.addEventListener("click", () => {
-    const panelName = btn.dataset.panel;
-    toggleLeftPanel(panelName);
+    showPanel(btn.dataset.tool);
   });
 });
 
-function toggleLeftPanel(panelName) {
-  const containers = document.querySelectorAll(".panel-container");
-
-  containers.forEach(c => {
-    if (c.id === `panel-${panelName}`) {
-      c.classList.toggle("open");
-    } else {
-      c.classList.remove("open");
-    }
-  });
-}
-
 // -----------------------------
-// RIGHT EXPORT PANEL
+// RIGHT EXPORT PANEL TOGGLE
 // -----------------------------
+const toggleRight = document.getElementById("toggleRight");
+const rightPanel = document.getElementById("rightPanel");
 
-const exportPanel = document.getElementById("exportPanel");
-const toggleExportBtn = document.getElementById("toggleExport");
-
-if (toggleExportBtn && exportPanel) {
-  toggleExportBtn.addEventListener("click", () => {
-    exportPanel.classList.toggle("open");
-  });
-}
-
-// -----------------------------
-// AUTH UI
-// -----------------------------
-
-document.addEventListener("DOMContentLoaded", () => {
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const userInfo = document.getElementById("userInfo");
-
-  // προσωρινό demo login
-  loginBtn?.addEventListener("click", async () => {
-    try {
-      await login("demo@test.com", "123456");
-    } catch (e) {
-      alert("Login error (demo account)");
-      console.error(e);
-    }
-  });
-
-  logoutBtn?.addEventListener("click", async () => {
-    await logout();
-  });
-
-  onAuthChange(user => {
-    if (!loginBtn || !logoutBtn || !userInfo) return;
-
-    if (user) {
-      userInfo.textContent = user.displayName || user.email;
-      loginBtn.style.display = "none";
-      logoutBtn.style.display = "inline-flex";
-    } else {
-      userInfo.textContent = "";
-      loginBtn.style.display = "inline-flex";
-      logoutBtn.style.display = "none";
-    }
-  });
+toggleRight?.addEventListener("click", () => {
+  rightPanel?.classList.toggle("open");
 });
 
-import { addImageFromFile } from "./core.js";
-
-document.getElementById("imageInput")?.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (file) addImageFromFile(file);
-});
-
-// ===============================
-// ZOOM CONTROLS (SYNC WITH CORE)
-// ===============================
-
-const zoomInBtn = document.getElementById("zoomInBtn");
-const zoomOutBtn = document.getElementById("zoomOutBtn");
-const zoomResetBtn = document.getElementById("zoomResetBtn");
-const zoomValue = document.getElementById("zoomValue");
+// -----------------------------
+// ZOOM CONTROLS (REAL IDs in HTML)
+// -----------------------------
+const zoomInBtn = document.getElementById("zoomIn");
+const zoomOutBtn = document.getElementById("zoomOut");
+const zoomResetBtn = document.getElementById("zoomReset");
+const zoomLabel = document.getElementById("zoomLabel");
 
 function updateZoomLabel() {
-  if (!zoomValue) return;
-  zoomValue.textContent = Math.round(getZoom() * 100) + "%";
+  if (!zoomLabel) return;
+  zoomLabel.textContent = `${Math.round(getZoom() * 100)}%`;
 }
 
 zoomInBtn?.addEventListener("click", () => {
@@ -117,6 +72,26 @@ zoomResetBtn?.addEventListener("click", () => {
   updateZoomLabel();
 });
 
-// αρχικο sync
 updateZoomLabel();
 
+// -----------------------------
+// IMAGE INPUT (REAL id="imgInput")
+// -----------------------------
+document.getElementById("imgInput")?.addEventListener("change", e => {
+  const file = e.target.files?.[0];
+  if (file) addImageFromFile(file);
+  e.target.value = ""; // allow re-upload same file
+});
+
+// Fit to page button (exists in your HTML)
+document.getElementById("fitToPage")?.addEventListener("click", () => {
+  fitToScreen();
+  updateZoomLabel();
+});
+
+// -----------------------------
+// LOGIN BUTTON (don’t break UI if auth not wired yet)
+// -----------------------------
+document.getElementById("loginBtn")?.addEventListener("click", () => {
+  alert("Σύνδεση: θα κουμπώσει με Firebase όταν φτιάξουμε auth.js exports.");
+});
