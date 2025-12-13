@@ -79,3 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+import { addImageFromFile } from "./core.js";
+
+document.getElementById("imageInput")?.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (file) addImageFromFile(file);
+});
+
