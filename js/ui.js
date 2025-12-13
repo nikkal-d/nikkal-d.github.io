@@ -95,7 +95,8 @@ if (langBtn) {
 }
 
 // ================= LOGIN (AUTH HOOK) =================
-import { auth } from "../firebase-init.js";
+import { initAuthUI } from "./auth.js";
+
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -128,4 +129,8 @@ onAuthStateChanged(auth, user => {
 // ================= INIT =================
 document.addEventListener("DOMContentLoaded", () => {
   applyLanguage(UIState.language);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  initAuthUI();
 });
