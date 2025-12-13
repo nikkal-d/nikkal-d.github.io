@@ -95,7 +95,7 @@ if (langBtn) {
 }
 
 // ================= LOGIN (AUTH HOOK) =================
-import { initAuthUI } from "./auth.js";
+import { login, register, logout, onAuthChange } from "./auth.js";
 
 import {
   onAuthStateChanged,
@@ -126,11 +126,29 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// ================= INIT =================
 document.addEventListener("DOMContentLoaded", () => {
-  applyLanguage(UIState.language);
-});
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const userInfo = document.getElementById("userInfo");
 
-document.addEventListener("DOMContentLoaded", () => {
-  initAuthUI();
+  loginBtn?.addEventListener("click", async () => {
+    // προσωρινό demo
+    await login("demo@test.com", "123456");
+  });
+
+  logoutBtn?.addEventListener("click", async () => {
+    await logout();
+  });
+
+  onAuthChange(user => {
+    if (user) {
+      userInfo.textContent = user.displayName || user.email;
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-flex";
+    } else {
+      userInfo.textContent = "";
+      loginBtn.style.display = "inline-flex";
+      logoutBtn.style.display = "none";
+    }
+  });
 });
