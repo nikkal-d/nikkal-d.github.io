@@ -3,8 +3,9 @@
 // UI CONTROLLER
 // ---------------------------------------------
 import { setZoom, resetZoom, getZoom } from "./core.js";
-
 import { login, logout, onAuthChange } from "./auth.js";
+import { addImageFromFile } from "./core.js";
+
 
 // -----------------------------
 // LEFT SIDEBAR (PANELS)
@@ -90,8 +91,6 @@ document.getElementById("imageInput")?.addEventListener("change", e => {
 // ===============================
 // ZOOM CONTROLS (SYNC WITH CORE)
 // ===============================
-
-import { setZoom, getZoom, resetZoom } from "./core.js";
 
 const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomOutBtn = document.getElementById("zoomOutBtn");
