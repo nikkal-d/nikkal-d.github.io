@@ -4,6 +4,11 @@
 // draft save + deep sanitize to kill "alphabetical" warnings.
 // ============================================================
 
+if (fabric && fabric.Textbox) {
+  fabric.Textbox.prototype.textBaseline = 'alphabetic';
+}
+
+
 export let fabricCanvas = null;
 
 export let pages = []; // [{json, image}]
