@@ -87,3 +87,37 @@ document.getElementById("imageInput")?.addEventListener("change", e => {
   if (file) addImageFromFile(file);
 });
 
+// ===============================
+// ZOOM CONTROLS (SYNC WITH CORE)
+// ===============================
+
+import { setZoom, getZoom, resetZoom } from "./core.js";
+
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+const zoomResetBtn = document.getElementById("zoomResetBtn");
+const zoomValue = document.getElementById("zoomValue");
+
+function updateZoomLabel() {
+  if (!zoomValue) return;
+  zoomValue.textContent = Math.round(getZoom() * 100) + "%";
+}
+
+zoomInBtn?.addEventListener("click", () => {
+  setZoom(getZoom() + 0.1);
+  updateZoomLabel();
+});
+
+zoomOutBtn?.addEventListener("click", () => {
+  setZoom(getZoom() - 0.1);
+  updateZoomLabel();
+});
+
+zoomResetBtn?.addEventListener("click", () => {
+  resetZoom();
+  updateZoomLabel();
+});
+
+// αρχικο sync
+updateZoomLabel();
+
