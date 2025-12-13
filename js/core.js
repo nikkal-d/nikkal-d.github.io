@@ -419,27 +419,25 @@ function bindPanZoom() {
 export function saveDraft() {
   try {
     saveCurrentPage();
-    const payload = { pages, currentPage };
+
+    // ❌ ΜΗΝ αποθηκεύεις thumbnails (base64)
+    const slimPages = pages.map(p => ({
+      json: p.json,
+      image: null // <-- ΚΟΨΙΜΟ
+    }));
+
+    const payload = {
+      pages: slimPages,
+      currentPage
+    };
+
     localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-  } catch {}
+  } catch (e) {
+    console.warn("Draft not saved (quota reached)");
+    // αν γεμίσει, απλά σταματάμε να γράφουμε
+  }
 }
 
-function loadDraft() {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return;
-
-    const data = JSON.parse(raw);
-    pages = data.pages || pages;
-    currentPage = Math.max(0, Math.min((data.currentPage ?? 0), pages.length - 1));
-
-    pages.forEach(p => p?.json && sanitizeJSON(p.json));
-
-    loadPageToCanvas();
-    refreshThumbnails();
-    updatePageInfo();
-  } catch {}
-}
 
 // -------------------- SANITIZE (DEEP) --------------------
 function sanitizeJSON(json) {
