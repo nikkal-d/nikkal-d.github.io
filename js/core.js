@@ -434,7 +434,7 @@ function sanitizeJSON(json) {
     if (!node || typeof node !== "object") return;
 
     // If this node has textBaseline
-    if (node.textBaseline === "alphabetical") node.textBaseline = "top";
+    if (node.textBaseline === "alphabetic") node.textBaseline = "top";
 
     // Walk arrays
     if (Array.isArray(node)) {
@@ -445,7 +445,7 @@ function sanitizeJSON(json) {
     // Walk object keys
     for (const k of Object.keys(node)) {
       const v = node[k];
-      if (k === "textBaseline" && v === "alphabetical") node[k] = "top";
+      if (k === "textBaseline" && v === "alphabetic") node[k] = "top";
       walk(v);
     }
   };
