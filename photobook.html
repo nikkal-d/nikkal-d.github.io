@@ -1,346 +1,1275 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Photobook Editor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Photobook Editor</title>
 
-<!-- Fabric.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <!-- Fabric -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-<style>
-/* ================= RESET ================= */
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Arial, Helvetica, sans-serif;
-}
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-/* ================= ROOT ================= */
-body{
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  background:#f4f4f4;
-  overflow:hidden;
-}
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-/* ================= TOP BAR ================= */
-.topbar{
-  height:50px;
-  background:#222;
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 12px;
-  flex-shrink:0;
-}
+  <!-- FileSaver -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-.topbar .left,
-.topbar .right{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
+  <style>
+    :root{
+      --bg:#0f1115;
+      --panel:#141823;
+      --panel2:#10131b;
+      --card:#1b2130;
+      --muted:#9aa4b2;
+      --text:#e8edf5;
+      --border:rgba(255,255,255,.08);
+      --accent:#6b5cff;
+      --accent2:#22c55e;
+      --danger:#ef4444;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(107,92,255,.18), transparent 60%),
+                  radial-gradient(900px 500px at 80% 20%, rgba(34,197,94,.12), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      height:100vh;
+      overflow:hidden;
+    }
 
-.topbar button{
-  background:#333;
-  color:#fff;
-  border:none;
-  padding:6px 10px;
-  cursor:pointer;
-  border-radius:4px;
-}
+    /* TOPBAR */
+    .topbar{
+      position:fixed;
+      top:0; left:0; right:0;
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 12px;
+      background: linear-gradient(to bottom, rgba(20,24,35,.92), rgba(20,24,35,.70));
+      border-bottom:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      z-index:50;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .badge{
+      font-size:12px;
+      padding:4px 8px;
+      background:rgba(107,92,255,.12);
+      border:1px solid rgba(107,92,255,.25);
+      border-radius:999px;
+      color:#cfd2ff;
+    }
+    .topbar .group{display:flex; align-items:center; gap:8px;}
+    .btn{
+      height:36px;
+      padding:0 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition:.15s;
+      user-select:none;
+    }
+    .btn:hover{background:rgba(255,255,255,.07)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      background:rgba(107,92,255,.16);
+      border:1px solid rgba(107,92,255,.32);
+    }
+    .btn.primary:hover{background:rgba(107,92,255,.22)}
+    .btn.success{
+      background:rgba(34,197,94,.14);
+      border:1px solid rgba(34,197,94,.30);
+    }
+    .btn.danger{
+      background:rgba(239,68,68,.14);
+      border:1px solid rgba(239,68,68,.30);
+    }
+    .btn.icon{width:36px; justify-content:center; padding:0}
+    .hint{font-size:12px; color:var(--muted);}
 
-.topbar button:hover{
-  background:#444;
-}
+    /* APP LAYOUT */
+    .app{
+      position:absolute;
+      top:56px; left:0; right:0; bottom:0;
+      display:flex;
+      height:calc(100vh - 56px);
+    }
 
-/* ================= EDITOR ================= */
-.editor{
-  flex:1;
-  display:flex;
-  overflow:hidden;
-}
+    /* LEFT ICON BAR */
+    .sidebar{
+      width:72px;
+      background: linear-gradient(to bottom, rgba(20,24,35,.95), rgba(16,19,27,.92));
+      border-right:1px solid var(--border);
+      padding:10px 8px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .toolbtn{
+      width:100%;
+      height:54px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      transition:.15s;
+      position:relative;
+    }
+    .toolbtn:hover{background:rgba(255,255,255,.06)}
+    .toolbtn.active{
+      border-color:rgba(107,92,255,.55);
+      background:rgba(107,92,255,.14);
+    }
+    .toolbtn .i{font-size:18px; line-height:18px}
+    .toolbtn .t{font-size:10px; color:var(--muted)}
+    .toolbtn:hover::after{
+      content:attr(data-tip);
+      position:absolute;
+      left:76px;
+      white-space:nowrap;
+      top:50%;
+      transform:translateY(-50%);
+      background:#0c0f16;
+      border:1px solid var(--border);
+      padding:6px 8px;
+      border-radius:10px;
+      color:var(--text);
+      font-size:12px;
+      box-shadow:var(--shadow);
+      z-index:100;
+    }
 
-/* ================= PANELS ================= */
-.sidebar{
-  width:250px;
-  background:#fff;
-  border-right:1px solid #ddd;
-  padding:10px;
-  overflow:auto;
-  flex-shrink:0;
-}
+    /* LEFT PANEL */
+    .leftPanel{
+      width:0;
+      overflow:hidden;
+      background: linear-gradient(to bottom, rgba(20,24,35,.98), rgba(16,19,27,.95));
+      border-right:1px solid var(--border);
+      transition: width .2s ease;
+    }
+    .leftPanel.open{width:320px;}
+    .panelInner{
+      width:320px;
+      height:100%;
+      padding:12px;
+      overflow:auto;
+    }
+    .card{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.18);
+      margin-bottom:12px;
+    }
+    .card h3{
+      margin:0 0 10px 0;
+      font-size:13px;
+      color:#dbe3f2;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .row{display:flex; gap:8px; flex-wrap:wrap;}
+    .field{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:10px;
+    }
+    label{font-size:12px; color:var(--muted)}
+    input[type="text"], input[type="number"], select{
+      height:38px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:0 10px;
+      outline:none;
+    }
+    input[type="file"]{color:var(--muted)}
+    .small{font-size:12px;color:var(--muted)}
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--border);
+      cursor:pointer;
+      user-select:none;
+    }
+    .pill:hover{background:rgba(255,255,255,.08)}
+    .sep{height:1px;background:var(--border);margin:10px 0}
 
-.rightbar{
-  width:280px;
-  background:#fff;
-  border-left:1px solid #ddd;
-  padding:10px;
-  overflow:auto;
-  flex-shrink:0;
-}
+    /* CANVAS AREA */
+    .canvasArea{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(600px 300px at 50% 10%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(to bottom, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      position:relative;
+    }
+    .canvasWrap{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    canvas{background:white; border-radius:10px;}
 
-.sidebar.hidden,
-.rightbar.hidden{
-  display:none;
-}
+    /* RIGHT EXPORT PANEL */
+    .rightPanel{
+      width:0;
+      overflow:hidden;
+      background: linear-gradient(to bottom, rgba(20,24,35,.98), rgba(16,19,27,.95));
+      border-left:1px solid var(--border);
+      transition: width .2s ease;
+    }
+    .rightPanel.open{width:320px;}
+    .rightInner{
+      width:320px;
+      height:100%;
+      padding:12px;
+      overflow:auto;
+    }
 
-.sidebar h3,
-.rightbar h3{
-  margin-bottom:10px;
-}
+    /* BOTTOM HUD */
+    .hud{
+      position:absolute;
+      left:18px; bottom:16px;
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      font-size:12px;
+      color:#dbe3f2;
+    }
 
-/* ================= CANVAS AREA ================= */
-.canvasArea{
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:auto;
-  background:#e6e6e6;
-  position:relative;
-}
-
-.canvasWrap{
-  margin:auto;
-  padding:40px;
-}
-
-canvas{
-  background:#fff;
-  border:1px solid #bbb;
-}
-
-/* ================= BUTTONS ================= */
-.tool-btn{
-  width:100%;
-  padding:8px;
-  margin-bottom:8px;
-  border:1px solid #ddd;
-  background:#fafafa;
-  cursor:pointer;
-  border-radius:4px;
-  text-align:left;
-}
-
-.tool-btn:hover{
-  background:#f0f0f0;
-}
-
-/* ================= DARK MODE (ready) ================= */
-body.dark{
-  background:#1e1e1e;
-}
-
-body.dark .sidebar,
-body.dark .rightbar{
-  background:#2a2a2a;
-  color:#fff;
-}
-
-body.dark canvas{
-  background:#fff;
-}
-</style>
+    /* MODAL (Flipbook preview) */
+    .modal{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:200;
+    }
+    .modal.open{display:flex;}
+    .modalBox{
+      width:min(980px, 92vw);
+      height:min(640px, 86vh);
+      background:#0c0f16;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .modalTop{
+      height:50px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 12px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+    }
+    .modalBody{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px;
+    }
+    .modalBody img{
+      max-width:100%;
+      max-height:100%;
+      border-radius:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.45);
+      background:#fff;
+    }
+  </style>
 </head>
 
 <body>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <span>📘 Photobook</span>
+      <span class="badge">Editor</span>
+      <span class="hint" id="saveState">• ready</span>
+    </div>
 
-<!-- ================= TOP BAR ================= -->
-<div class="topbar">
-  <div class="left">
-    <button id="toggleLeft">☰</button>
-    <button id="toggleLang">EL / EN</button>
-  </div>
+    <div class="group">
+      <button class="btn icon" id="zoomOut" title="Zoom out">−</button>
+      <button class="btn" id="zoomReset" title="Reset zoom">100%</button>
+      <button class="btn icon" id="zoomIn" title="Zoom in">+</button>
 
-  <div class="right">
-    <button id="zoomOut">−</button>
-    <button id="zoomReset">100%</button>
-    <button id="zoomIn">+</button>
-    <button id="toggleRight" data-i18n="export">Export</button>
-    <button id="loginBtn" data-i18n="login">Σύνδεση</button>
-  </div>
-</div>
+      <div class="sep" style="width:1px;height:24px;background:var(--border);margin:0 2px;"></div>
 
-<!-- ================= EDITOR ================= -->
-<div class="editor">
-
-  <!-- LEFT PANEL -->
-  <div class="sidebar" id="leftPanel">
-    <h3 data-i18n="tools">Εργαλεία</h3>
-
-    <button class="tool-btn" data-i18n="images">🖼️ Εικόνες</button>
-    <button class="tool-btn" data-i18n="text">🔤 Κείμενο</button>
-    <button class="tool-btn" data-i18n="shapes">⬛ Σχήματα</button>
-    <button class="tool-btn" data-i18n="stickers">😀 Stickers</button>
-    <button class="tool-btn" data-i18n="pages">📄 Σελίδες</button>
-  </div>
-
-  <!-- CANVAS -->
-  <div class="canvasArea">
-    <div class="canvasWrap">
-      <canvas id="editorCanvas" width="1000" height="700"></canvas>
+      <button class="btn primary" id="toggleRight">📤 Export</button>
+      <button class="btn" id="toggleLang">🌐 EL/EN</button>
+      <button class="btn" id="loginBtn" title="Σύνδεση (θα κουμπώσει με Firebase μετά)">🔐 Σύνδεση</button>
     </div>
   </div>
 
-  <!-- RIGHT PANEL -->
-  <div class="rightbar hidden" id="rightPanel">
-    <h3 data-i18n="export">Export</h3>
-    <button class="tool-btn">PNG</button>
-    <button class="tool-btn">PDF</button>
-    <button class="tool-btn">Flipbook</button>
-    <button class="tool-btn">Cloud</button>
+  <div class="app">
+    <!-- LEFT ICON BAR -->
+    <div class="sidebar">
+      <button class="toolbtn active" data-tool="images" data-tip="Εισαγωγή εικόνων">
+        <div class="i">🖼️</div><div class="t">Images</div>
+      </button>
+      <button class="toolbtn" data-tool="text" data-tip="Κείμενα & γραμματοσειρές">
+        <div class="i">🔤</div><div class="t">Text</div>
+      </button>
+      <button class="toolbtn" data-tool="shapes" data-tip="Σχήματα & χρώματα">
+        <div class="i">⬛</div><div class="t">Shapes</div>
+      </button>
+      <button class="toolbtn" data-tool="pdf" data-tip="Εισαγωγή PDF (demo)">
+        <div class="i">📄</div><div class="t">PDF</div>
+      </button>
+      <button class="toolbtn" data-tool="layers" data-tip="Επίπεδα αντικειμένων">
+        <div class="i">🧱</div><div class="t">Layers</div>
+      </button>
+      <button class="toolbtn" data-tool="pages" data-tip="Σελίδες photobook">
+        <div class="i">📚</div><div class="t">Pages</div>
+      </button>
+    </div>
+
+    <!-- LEFT PANEL -->
+    <div class="leftPanel open" id="leftPanel">
+      <div class="panelInner">
+        <!-- IMAGES -->
+        <div class="card panel" data-panel="images">
+          <h3>🖼️ Εικόνες</h3>
+          <div class="field">
+            <label>Ανέβασε εικόνα</label>
+            <input type="file" id="imgInput" accept="image/*" />
+            <div class="small">Tip: drag / resize / rotate πάνω στον καμβά.</div>
+          </div>
+          <div class="row">
+            <span class="pill" id="addSample1">+ Sample</span>
+            <span class="pill" id="fitToPage">Fit to page</span>
+          </div>
+        </div>
+
+        <!-- TEXT -->
+        <div class="card panel" data-panel="text" style="display:none">
+          <h3>🔤 Κείμενο</h3>
+          <div class="field">
+            <label>Κείμενο</label>
+            <input type="text" id="textValue" value="Γεια σου!" />
+          </div>
+          <div class="row">
+            <button class="btn success" id="addText">➕ Add text</button>
+            <button class="btn" id="textBold">B</button>
+            <button class="btn" id="textItalic">I</button>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
+            <div class="field" style="width:calc(50% - 4px)">
+              <label>Size</label>
+              <input type="number" id="textSize" value="48" min="8" max="200" />
+            </div>
+            <div class="field" style="width:calc(50% - 4px)">
+              <label>Color</label>
+              <input type="text" id="textColor" value="#111111" />
+            </div>
+          </div>
+          <div class="small">Baseline fix: χρησιμοποιεί πάντα <b>top</b> (όχι alphabetical).</div>
+        </div>
+
+        <!-- SHAPES -->
+        <div class="card panel" data-panel="shapes" style="display:none">
+          <h3>⬛ Σχήματα</h3>
+          <div class="row">
+            <button class="btn" id="addRect">▭ Rectangle</button>
+            <button class="btn" id="addCircle">◯ Circle</button>
+            <button class="btn" id="addLine">／ Line</button>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
+            <div class="field" style="width:calc(50% - 4px)">
+              <label>Fill</label>
+              <input type="text" id="shapeFill" value="#6b5cff" />
+            </div>
+            <div class="field" style="width:calc(50% - 4px)">
+              <label>Stroke</label>
+              <input type="text" id="shapeStroke" value="#111111" />
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn" id="applyStyle">Apply to selected</button>
+          </div>
+        </div>
+
+        <!-- PDF -->
+        <div class="card panel" data-panel="pdf" style="display:none">
+          <h3>📄 PDF</h3>
+          <div class="small">
+            Προς το παρόν: εισαγωγή PDF ως “placeholder” κάρτα (demo).
+            Για πραγματικό PDF->εικόνα/κείμενο θέλει pdf.js + OCR/parse (θα το κάνουμε μετά).
+          </div>
+          <div class="sep"></div>
+          <input type="file" id="pdfInput" accept="application/pdf" />
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="addPdfPlaceholder">Add PDF placeholder</button>
+          </div>
+        </div>
+
+        <!-- LAYERS -->
+        <div class="card panel" data-panel="layers" style="display:none">
+          <h3>🧱 Layers</h3>
+          <div class="row" style="margin-bottom:8px">
+            <button class="btn" id="bringForward">⬆️ Front</button>
+            <button class="btn" id="sendBack">⬇️ Back</button>
+            <button class="btn" id="duplicate">📄 Duplicate</button>
+            <button class="btn danger" id="deleteObj">🗑️ Delete</button>
+          </div>
+          <div class="row" style="margin-bottom:10px">
+            <button class="btn" id="toggleLock">🔒 Lock/Unlock</button>
+            <button class="btn" id="centerObj">🎯 Center</button>
+          </div>
+          <div class="sep"></div>
+          <div id="layersList" class="small">No objects</div>
+        </div>
+
+        <!-- PAGES -->
+        <div class="card panel" data-panel="pages" style="display:none">
+          <h3>📚 Σελίδες</h3>
+          <div class="row" style="margin-bottom:8px">
+            <button class="btn" id="prevPage">⬅ Prev</button>
+            <button class="btn" id="nextPage">Next ➡</button>
+          </div>
+          <div class="row" style="margin-bottom:8px">
+            <button class="btn success" id="addPage">➕ Add page</button>
+            <button class="btn" id="clearPage">🧹 Clear page</button>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
+            <div class="field" style="width:100%">
+              <label>Canvas size</label>
+              <select id="sizePreset">
+                <option value="1200x800">Landscape (1200×800)</option>
+                <option value="900x1200">Portrait (900×1200)</option>
+                <option value="1080x1080">Square (1080×1080)</option>
+                <option value="2480x3508">A4 @300dpi (2480×3508)</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+            <div class="row" id="customSizeRow" style="display:none;width:100%">
+              <div class="field" style="width:calc(50% - 4px)">
+                <label>W</label><input type="number" id="customW" value="1200" />
+              </div>
+              <div class="field" style="width:calc(50% - 4px)">
+                <label>H</label><input type="number" id="customH" value="800" />
+              </div>
+              <button class="btn" id="applySize" style="width:100%">Apply size</button>
+            </div>
+          </div>
+          <div class="sep"></div>
+          <div class="small">Autosave: αποθηκεύει draft στο browser (localStorage).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANVAS AREA -->
+    <div class="canvasArea">
+      <div class="canvasWrap" id="canvasWrap">
+        <canvas id="c" width="1200" height="800"></canvas>
+      </div>
+
+      <div class="hud">
+        <span id="pageLabel">Page 1 / 1</span>
+        <span style="opacity:.55">•</span>
+        <span id="zoomLabel">100%</span>
+        <span style="opacity:.55">•</span>
+        <span class="hint">Wheel=zoom • Space+drag=pan</span>
+      </div>
+    </div>
+
+    <!-- RIGHT EXPORT PANEL -->
+    <div class="rightPanel" id="rightPanel">
+      <div class="rightInner">
+        <div class="card">
+          <h3>📤 Export</h3>
+          <div class="row">
+            <button class="btn success" id="exportPNG">PNG (this page)</button>
+            <button class="btn" id="exportPDF">PDF (all pages)</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn primary" id="exportZIP">ZIP (all PNG)</button>
+            <button class="btn" id="previewFlipbook">Flipbook preview</button>
+          </div>
+          <div class="sep"></div>
+          <div class="small">
+            Cloud export: θα μπει όταν κουμπώσουμε Firebase Storage (μετά).
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>⚙️ Canvas</h3>
+          <div class="row">
+            <button class="btn" id="bgWhite">BG White</button>
+            <button class="btn" id="bgLight">BG Light</button>
+            <button class="btn" id="bgDark">BG Dark</button>
+          </div>
+          <div class="sep"></div>
+          <div class="small">Το background είναι “page background”, δεν επηρεάζει export PDF/PNG αν θες διαφάνεια (θα το ρυθμίσουμε μετά).</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-</div>
-<script>
-/* ================= CANVAS INIT ================= */
-const canvas = new fabric.Canvas("editorCanvas", {
-  preserveObjectStacking: true,
-  selection: true
-});
+  <!-- FLIPBOOK MODAL -->
+  <div class="modal" id="flipModal">
+    <div class="modalBox">
+      <div class="modalTop">
+        <div class="brand">
+          <span>📖 Preview</span>
+          <span class="badge" id="flipCounter">1 / 1</span>
+        </div>
+        <div class="group">
+          <button class="btn" id="flipPrev">⬅</button>
+          <button class="btn" id="flipNext">➡</button>
+          <button class="btn danger" id="flipClose">✕</button>
+        </div>
+      </div>
+      <div class="modalBody">
+        <img id="flipImg" alt="preview" />
+      </div>
+    </div>
+  </div>
 
-/* ⚠️ FIX for CanvasTextBaseline warning */
-fabric.Textbox.prototype.textBaseline = "alphabetic";
+  <script>
+    // =========================
+    // BASIC STATE
+    // =========================
+    const canvas = new fabric.Canvas("c", {
+      preserveObjectStacking: true
+    });
 
-/* ================= ZOOM ================= */
-let zoom = 1;
-const ZOOM_STEP = 0.1;
-const MIN_ZOOM = 0.2;
-const MAX_ZOOM = 4;
+    let zoomLevel = 1;
+    const MIN_ZOOM = 0.2;
+    const MAX_ZOOM = 4;
+    const ZOOM_STEP = 0.1;
 
-function setZoom(value){
-  zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
-  const center = canvas.getCenter();
-  canvas.zoomToPoint(
-    new fabric.Point(center.left, center.top),
-    zoom
-  );
-}
+    const STORAGE_KEY = "photobook_draft_v1";
 
-document.getElementById("zoomIn").onclick = () => setZoom(zoom + ZOOM_STEP);
-document.getElementById("zoomOut").onclick = () => setZoom(zoom - ZOOM_STEP);
-document.getElementById("zoomReset").onclick = () => {
-  zoom = 1;
-  canvas.setViewportTransform([1,0,0,1,0,0]);
-};
+    // Pages as Fabric JSON
+    let pages = [];
+    let currentPageIndex = 0;
 
-/* Mouse wheel zoom */
-canvas.on("mouse:wheel", opt => {
-  const delta = opt.e.deltaY;
-  setZoom(zoom + (delta > 0 ? -ZOOM_STEP : ZOOM_STEP));
-  opt.e.preventDefault();
-  opt.e.stopPropagation();
-});
+    const saveStateEl = document.getElementById("saveState");
+    const pageLabelEl = document.getElementById("pageLabel");
+    const zoomLabelEl = document.getElementById("zoomLabel");
 
-/* ================= PAN (SPACE) ================= */
-let isPanning = false;
+    // =========================
+    // UI - Left panel switching
+    // =========================
+    const leftPanel = document.getElementById("leftPanel");
+    const toolButtons = Array.from(document.querySelectorAll(".toolbtn"));
+    const panels = Array.from(document.querySelectorAll(".panel"));
 
-document.addEventListener("keydown", e => {
-  if (e.code === "Space") {
-    isPanning = true;
-    canvas.selection = false;
-  }
-});
-
-document.addEventListener("keyup", e => {
-  if (e.code === "Space") {
-    isPanning = false;
-    canvas.selection = true;
-  }
-});
-
-canvas.on("mouse:down", opt => {
-  if (isPanning) {
-    canvas.isDragging = true;
-    canvas.lastPosX = opt.e.clientX;
-    canvas.lastPosY = opt.e.clientY;
-  }
-});
-
-canvas.on("mouse:move", opt => {
-  if (canvas.isDragging) {
-    const vpt = canvas.viewportTransform;
-    vpt[4] += opt.e.clientX - canvas.lastPosX;
-    vpt[5] += opt.e.clientY - canvas.lastPosY;
-    canvas.requestRenderAll();
-    canvas.lastPosX = opt.e.clientX;
-    canvas.lastPosY = opt.e.clientY;
-  }
-});
-
-canvas.on("mouse:up", () => {
-  canvas.isDragging = false;
-});
-
-/* ================= PANELS ================= */
-const leftPanel = document.getElementById("leftPanel");
-const rightPanel = document.getElementById("rightPanel");
-
-document.getElementById("toggleLeft").onclick = () => {
-  leftPanel.classList.toggle("hidden");
-};
-
-document.getElementById("toggleRight").onclick = () => {
-  rightPanel.classList.toggle("hidden");
-};
-
-/* ================= I18N ================= */
-let lang = "el";
-
-const i18n = {
-  el: {
-    login: "Σύνδεση",
-    export: "Εξαγωγή",
-    tools: "Εργαλεία",
-    images: "Εικόνες",
-    text: "Κείμενο",
-    shapes: "Σχήματα",
-    stickers: "Stickers",
-    pages: "Σελίδες"
-  },
-  en: {
-    login: "Login",
-    export: "Export",
-    tools: "Tools",
-    images: "Images",
-    text: "Text",
-    shapes: "Shapes",
-    stickers: "Stickers",
-    pages: "Pages"
-  }
-};
-
-function applyLanguage(){
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.dataset.i18n;
-    if (i18n[lang][key]) {
-      el.textContent = i18n[lang][key];
+    function showPanel(name){
+      toolButtons.forEach(b => b.classList.toggle("active", b.dataset.tool === name));
+      panels.forEach(p => p.style.display = (p.dataset.panel === name ? "block" : "none"));
+      if (!leftPanel.classList.contains("open")) leftPanel.classList.add("open");
     }
-  });
-}
+    toolButtons.forEach(btn => btn.addEventListener("click", () => showPanel(btn.dataset.tool)));
 
-document.getElementById("toggleLang").onclick = () => {
-  lang = lang === "el" ? "en" : "el";
-  applyLanguage();
-};
+    // =========================
+    // Right panel toggle
+    // =========================
+    const rightPanel = document.getElementById("rightPanel");
+    document.getElementById("toggleRight").addEventListener("click", () => {
+      rightPanel.classList.toggle("open");
+    });
 
-applyLanguage();
+    // =========================
+    // Language toggle (simple)
+    // =========================
+    let lang = "el";
+    const dict = {
+      el: { login: "🔐 Σύνδεση" },
+      en: { login: "🔐 Login" }
+    };
+    document.getElementById("toggleLang").addEventListener("click", () => {
+      lang = (lang === "el") ? "en" : "el";
+      document.getElementById("loginBtn").textContent = dict[lang].login;
+    });
 
-/* ================= DEMO CONTENT ================= */
-canvas.add(new fabric.Textbox("Photobook", {
-  left: 200,
-  top: 200,
-  fontSize: 48,
-  fill: "#222",
-  textAlign: "center"
-}));
+    // =========================
+    // ZOOM + PAN (Canva-like)
+    // =========================
+    function setZoom(z){
+      zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+      const vpt = canvas.viewportTransform;
+      if (!vpt) canvas.setViewportTransform([1,0,0,1,0,0]);
+      canvas.setZoom(zoomLevel);
+      canvas.requestRenderAll();
+      zoomLabelEl.textContent = Math.round(zoomLevel * 100) + "%";
+    }
 
-</script>
+    document.getElementById("zoomIn").addEventListener("click", () => setZoom(zoomLevel + ZOOM_STEP));
+    document.getElementById("zoomOut").addEventListener("click", () => setZoom(zoomLevel - ZOOM_STEP));
+    document.getElementById("zoomReset").addEventListener("click", () => {
+      canvas.setViewportTransform([1,0,0,1,0,0]);
+      setZoom(1);
+    });
 
+    canvas.on("mouse:wheel", (opt) => {
+      const delta = opt.e.deltaY;
+      const next = zoomLevel + (delta > 0 ? -ZOOM_STEP : ZOOM_STEP);
+      // zoom to pointer
+      const p = canvas.getPointer(opt.e);
+      zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
+      canvas.zoomToPoint(new fabric.Point(p.x, p.y), zoomLevel);
+      canvas.requestRenderAll();
+      zoomLabelEl.textContent = Math.round(zoomLevel * 100) + "%";
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+
+    let isPanning = false;
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        isPanning = true;
+        canvas.defaultCursor = "grab";
+        canvas.selection = false;
+      }
+    });
+    document.addEventListener("keyup", (e) => {
+      if (e.code === "Space") {
+        isPanning = false;
+        canvas.defaultCursor = "default";
+        canvas.selection = true;
+      }
+    });
+
+    canvas.on("mouse:down", (opt) => {
+      if (!isPanning) return;
+      canvas.isDragging = true;
+      canvas.lastPosX = opt.e.clientX;
+      canvas.lastPosY = opt.e.clientY;
+    });
+
+    canvas.on("mouse:move", (opt) => {
+      if (!canvas.isDragging) return;
+      const e = opt.e;
+      const vpt = canvas.viewportTransform;
+      vpt[4] += e.clientX - canvas.lastPosX;
+      vpt[5] += e.clientY - canvas.lastPosY;
+      canvas.requestRenderAll();
+      canvas.lastPosX = e.clientX;
+      canvas.lastPosY = e.clientY;
+    });
+
+    canvas.on("mouse:up", () => {
+      canvas.isDragging = false;
+    });
+
+    // =========================
+    // Helpers: Save/Load page
+    // =========================
+    function markSaving(txt){
+      saveStateEl.textContent = "• " + txt;
+    }
+
+    function updatePageLabel(){
+      pageLabelEl.textContent = `Page ${currentPageIndex + 1} / ${pages.length}`;
+    }
+
+    function snapshotCurrentPage(){
+      // store Fabric JSON
+      pages[currentPageIndex] = canvas.toJSON(["selectable","evented","lockMovementX","lockMovementY","lockScalingX","lockScalingY","lockRotation"]);
+    }
+
+    function loadPage(index){
+      snapshotCurrentPage();
+      currentPageIndex = Math.max(0, Math.min(pages.length - 1, index));
+      canvas.clear();
+      canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+
+      const data = pages[currentPageIndex] || { objects: [] };
+      canvas.loadFromJSON(data, () => {
+        // baseline fix guard (no "alphabetical")
+        canvas.getObjects().forEach(obj => {
+          if (obj.type === "i-text" || obj.type === "textbox" || obj.type === "text") {
+            obj.textBaseline = "top";
+          }
+        });
+        canvas.requestRenderAll();
+        refreshLayers();
+        updatePageLabel();
+        markSaving("ready");
+      });
+    }
+
+    function saveDraft(){
+      snapshotCurrentPage();
+      const draft = {
+        pages,
+        currentPageIndex,
+        zoomLevel,
+        bg: canvas.backgroundColor || "#ffffff",
+        size: { w: canvas.getWidth(), h: canvas.getHeight() }
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+      markSaving("saved");
+      setTimeout(() => markSaving("ready"), 700);
+    }
+
+    function loadDraft(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      try{
+        const draft = JSON.parse(raw);
+        pages = Array.isArray(draft.pages) && draft.pages.length ? draft.pages : [];
+        if (!pages.length) return false;
+        const size = draft.size || { w: 1200, h: 800 };
+        resizeCanvas(size.w, size.h, false);
+        currentPageIndex = draft.currentPageIndex || 0;
+        loadPage(currentPageIndex);
+        // restore zoom (soft)
+        setTimeout(() => {
+          canvas.setViewportTransform([1,0,0,1,0,0]);
+          setZoom(draft.zoomLevel || 1);
+        }, 50);
+        return true;
+      }catch(e){
+        console.warn("Draft load failed", e);
+        return false;
+      }
+    }
+
+    // autosave on changes (debounced)
+    let saveTimer = null;
+    function scheduleSave(){
+      markSaving("saving…");
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveDraft, 450);
+    }
+    canvas.on("object:added", scheduleSave);
+    canvas.on("object:modified", scheduleSave);
+    canvas.on("object:removed", scheduleSave);
+
+    // =========================
+    // Canvas size
+    // =========================
+    function resizeCanvas(w, h, keepObjects=true){
+      const oldW = canvas.getWidth(), oldH = canvas.getHeight();
+      canvas.setWidth(w);
+      canvas.setHeight(h);
+
+      // optionally scale objects to fit (simple strategy)
+      if (keepObjects && oldW && oldH){
+        const sx = w / oldW;
+        const sy = h / oldH;
+        const s = Math.min(sx, sy);
+        canvas.getObjects().forEach(o => {
+          o.scaleX *= s;
+          o.scaleY *= s;
+          o.left *= sx;
+          o.top *= sy;
+          o.setCoords();
+        });
+      }
+      canvas.requestRenderAll();
+      scheduleSave();
+    }
+
+    const sizePreset = document.getElementById("sizePreset");
+    const customRow = document.getElementById("customSizeRow");
+
+    sizePreset.addEventListener("change", () => {
+      if (sizePreset.value === "custom"){
+        customRow.style.display = "flex";
+      }else{
+        customRow.style.display = "none";
+        const [w,h] = sizePreset.value.split("x").map(n => parseInt(n,10));
+        resizeCanvas(w,h,true);
+      }
+    });
+
+    document.getElementById("applySize").addEventListener("click", () => {
+      const w = parseInt(document.getElementById("customW").value,10);
+      const h = parseInt(document.getElementById("customH").value,10);
+      if (!w || !h) return;
+      resizeCanvas(w,h,true);
+    });
+
+    // =========================
+    // Add content
+    // =========================
+    function addText(){
+      const v = document.getElementById("textValue").value || "Text";
+      const size = parseInt(document.getElementById("textSize").value,10) || 48;
+      const color = document.getElementById("textColor").value || "#111111";
+      const t = new fabric.IText(v, {
+        left: 120,
+        top: 120,
+        fontSize: size,
+        fill: color,
+        textBaseline: "top"
+      });
+      canvas.add(t);
+      canvas.setActiveObject(t);
+      refreshLayers();
+    }
+    document.getElementById("addText").addEventListener("click", addText);
+
+    function activeText(){
+      const obj = canvas.getActiveObject();
+      if (!obj) return null;
+      if (obj.type === "i-text" || obj.type === "textbox" || obj.type === "text") return obj;
+      return null;
+    }
+    document.getElementById("textBold").addEventListener("click", () => {
+      const t = activeText();
+      if (!t) return;
+      t.fontWeight = (t.fontWeight === "bold" ? "normal" : "bold");
+      canvas.requestRenderAll();
+      scheduleSave();
+    });
+    document.getElementById("textItalic").addEventListener("click", () => {
+      const t = activeText();
+      if (!t) return;
+      t.fontStyle = (t.fontStyle === "italic" ? "normal" : "italic");
+      canvas.requestRenderAll();
+      scheduleSave();
+    });
+
+    // images
+    document.getElementById("imgInput").addEventListener("change", (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        fabric.Image.fromURL(reader.result, (img) => {
+          img.set({ left: 140, top: 140 });
+          img.scaleToWidth(Math.min(600, canvas.getWidth() * 0.6));
+          canvas.add(img);
+          canvas.setActiveObject(img);
+          refreshLayers();
+        }, { crossOrigin: "anonymous" });
+      };
+      reader.readAsDataURL(f);
+      e.target.value = "";
+    });
+
+    // sample image (no assets needed)
+    document.getElementById("addSample1").addEventListener("click", () => {
+      const url = "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=60";
+      fabric.Image.fromURL(url, (img) => {
+        img.set({ left: 140, top: 140 });
+        img.scaleToWidth(Math.min(650, canvas.getWidth() * 0.65));
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        refreshLayers();
+      }, { crossOrigin: "anonymous" });
+    });
+
+    document.getElementById("fitToPage").addEventListener("click", () => {
+      const obj = canvas.getActiveObject();
+      if (!obj || obj.type !== "image") return;
+      obj.scaleToWidth(canvas.getWidth());
+      obj.scaleToHeight(canvas.getHeight());
+      obj.set({ left: 0, top: 0 });
+      obj.setCoords();
+      canvas.requestRenderAll();
+      scheduleSave();
+    });
+
+    // shapes
+    function shapeStyle(){
+      return {
+        fill: document.getElementById("shapeFill").value || "#6b5cff",
+        stroke: document.getElementById("shapeStroke").value || "#111111",
+        strokeWidth: 3
+      };
+    }
+    document.getElementById("addRect").addEventListener("click", () => {
+      const s = shapeStyle();
+      const r = new fabric.Rect({
+        left: 160, top: 160, width: 320, height: 200,
+        rx: 14, ry: 14, ...s
+      });
+      canvas.add(r); canvas.setActiveObject(r);
+      refreshLayers();
+    });
+    document.getElementById("addCircle").addEventListener("click", () => {
+      const s = shapeStyle();
+      const c = new fabric.Circle({ left: 200, top: 200, radius: 120, ...s });
+      canvas.add(c); canvas.setActiveObject(c);
+      refreshLayers();
+    });
+    document.getElementById("addLine").addEventListener("click", () => {
+      const s = shapeStyle();
+      const l = new fabric.Line([100, 100, 520, 220], { left: 160, top: 220, ...s });
+      canvas.add(l); canvas.setActiveObject(l);
+      refreshLayers();
+    });
+
+    document.getElementById("applyStyle").addEventListener("click", () => {
+      const obj = canvas.getActiveObject();
+      if (!obj) return;
+      const s = shapeStyle();
+      obj.set({ fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth });
+      canvas.requestRenderAll();
+      scheduleSave();
+    });
+
+    // PDF placeholder (demo)
+    document.getElementById("addPdfPlaceholder").addEventListener("click", () => {
+      const rect = new fabric.Rect({
+        left: 180, top: 180, width: 520, height: 320,
+        rx: 16, ry: 16,
+        fill: "#f8fafc",
+        stroke: "#111111",
+        strokeWidth: 2
+      });
+      const label = new fabric.Text("PDF (demo)", {
+        left: 200, top: 200, fontSize: 34, fill: "#111111", textBaseline: "top"
+      });
+      const group = new fabric.Group([rect, label], { left: 180, top: 180 });
+      canvas.add(group);
+      canvas.setActiveObject(group);
+      refreshLayers();
+    });
+
+    // =========================
+    // Layers
+    // =========================
+    const layersList = document.getElementById("layersList");
+
+    function objectName(o, idx){
+      if (o.type === "i-text" || o.type === "textbox" || o.type === "text") return `Text: "${(o.text||"").slice(0,18)}"`;
+      if (o.type === "image") return "Image";
+      if (o.type === "group") return "Group";
+      return o.type ? o.type.toUpperCase() : ("Object " + idx);
+    }
+
+    function refreshLayers(){
+      const objs = canvas.getObjects();
+      if (!objs.length){
+        layersList.innerHTML = "No objects";
+        return;
+      }
+      // show top-most first
+      const html = objs.map((o, i) => ({ o, i }))
+        .reverse()
+        .map(({o,i}, rIndex) => {
+          const active = (canvas.getActiveObject() === o);
+          const locked = !!(o.lockMovementX || o.lockMovementY || o.lockScalingX || o.lockScalingY || o.lockRotation);
+          return `
+            <div class="pill" data-layer="${i}" style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:6px;${active?'border-color:rgba(107,92,255,.55);background:rgba(107,92,255,.14);':''}">
+              <span>${objectName(o,i)}</span>
+              <span style="opacity:.7">${locked ? "🔒" : ""}</span>
+            </div>
+          `;
+        }).join("");
+      layersList.innerHTML = html;
+
+      layersList.querySelectorAll("[data-layer]").forEach(el => {
+        el.addEventListener("click", () => {
+          const idx = parseInt(el.getAttribute("data-layer"),10);
+          const obj = canvas.item(idx);
+          if (!obj) return;
+          canvas.setActiveObject(obj);
+          canvas.requestRenderAll();
+          refreshLayers();
+        });
+      });
+    }
+
+    canvas.on("selection:created", refreshLayers);
+    canvas.on("selection:updated", refreshLayers);
+    canvas.on("selection:cleared", refreshLayers);
+
+    function activeObj(){ return canvas.getActiveObject(); }
+
+    document.getElementById("bringForward").addEventListener("click", () => {
+      const o = activeObj(); if (!o) return;
+      canvas.bringForward(o);
+      canvas.requestRenderAll();
+      refreshLayers();
+      scheduleSave();
+    });
+
+    document.getElementById("sendBack").addEventListener("click", () => {
+      const o = activeObj(); if (!o) return;
+      canvas.sendBackwards(o);
+      canvas.requestRenderAll();
+      refreshLayers();
+      scheduleSave();
+    });
+
+    document.getElementById("deleteObj").addEventListener("click", () => {
+      const o = activeObj(); if (!o) return;
+      canvas.remove(o);
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+      refreshLayers();
+      scheduleSave();
+    });
+
+    document.getElementById("duplicate").addEventListener("click", () => {
+      const o = activeObj(); if (!o) return;
+      o.clone((cl) => {
+        cl.set({ left: (o.left||0)+20, top: (o.top||0)+20 });
+        canvas.add(cl);
+        canvas.setActiveObject(cl);
+        canvas.requestRenderAll();
+        refreshLayers();
+        scheduleSave();
+      });
+    });
+
+    document.getElementById("toggleLock").addEventListener("click", () => {
+      const o = activeObj(); if (!o) return;
+      const locked = !!(o.lockMovementX || o.lockScalingX || o.lockRotation);
+      o.set({
+        lockMovementX: !locked,
+        lockMovementY: !locked,
+        lockScalingX: !locked,
+        lockScalingY: !locked,
+        lockRotation: !locked,
+        selectable: true
+      });
+      canvas.requestRenderAll();
+      refreshLayers();
+      scheduleSave();
+    });
+
+    document.getElementById("centerObj").addEventListener("click", () => {
+      const o = activeObj(); if (!o) return;
+      o.set({
+        left: (canvas.getWidth() - (o.getScaledWidth?.() || 0)) / 2,
+        top: (canvas.getHeight() - (o.getScaledHeight?.() || 0)) / 2
+      });
+      o.setCoords();
+      canvas.requestRenderAll();
+      scheduleSave();
+    });
+
+    // =========================
+    // Pages
+    // =========================
+    document.getElementById("addPage").addEventListener("click", () => {
+      snapshotCurrentPage();
+      pages.push({ objects: [] });
+      loadPage(pages.length - 1);
+      scheduleSave();
+    });
+
+    document.getElementById("prevPage").addEventListener("click", () => {
+      if (currentPageIndex <= 0) return;
+      loadPage(currentPageIndex - 1);
+      scheduleSave();
+    });
+
+    document.getElementById("nextPage").addEventListener("click", () => {
+      if (currentPageIndex >= pages.length - 1) return;
+      loadPage(currentPageIndex + 1);
+      scheduleSave();
+    });
+
+    document.getElementById("clearPage").addEventListener("click", () => {
+      canvas.getObjects().forEach(o => canvas.remove(o));
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+      refreshLayers();
+      scheduleSave();
+    });
+
+    // =========================
+    // Export
+    // =========================
+    function pageToPNGDataURL(pageIndex){
+      return new Promise((resolve) => {
+        // save current, load page, render, export, restore
+        const prev = currentPageIndex;
+        snapshotCurrentPage();
+        const data = pages[pageIndex] || { objects: [] };
+
+        canvas.loadFromJSON(data, () => {
+          canvas.getObjects().forEach(obj => {
+            if (obj.type === "i-text" || obj.type === "textbox" || obj.type === "text") obj.textBaseline = "top";
+          });
+          canvas.requestRenderAll();
+          const url = canvas.toDataURL({ format:"png", quality:1, multiplier: 2 });
+          // restore previous
+          canvas.loadFromJSON(pages[prev], () => {
+            canvas.requestRenderAll();
+            refreshLayers();
+            resolve(url);
+          });
+        });
+      });
+    }
+
+    document.getElementById("exportPNG").addEventListener("click", () => {
+      const url = canvas.toDataURL({ format:"png", quality:1, multiplier: 2 });
+      saveAs(dataURLToBlob(url), `page_${currentPageIndex+1}.png`);
+    });
+
+    function dataURLToBlob(dataURL){
+      const parts = dataURL.split(",");
+      const byteString = atob(parts[1]);
+      const mimeString = parts[0].split(":")[1].split(";")[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i=0; i<byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      return new Blob([ab], { type: mimeString });
+    }
+
+    document.getElementById("exportZIP").addEventListener("click", async () => {
+      snapshotCurrentPage();
+      const zip = new JSZip();
+      for (let i=0;i<pages.length;i++){
+        const url = await pageToPNGDataURL(i);
+        zip.file(`page_${i+1}.png`, dataURLToBlob(url));
+      }
+      const blob = await zip.generateAsync({ type:"blob" });
+      saveAs(blob, "photobook_pages.zip");
+    });
+
+    document.getElementById("exportPDF").addEventListener("click", async () => {
+      snapshotCurrentPage();
+      const { jsPDF } = window.jspdf;
+      // create PDF with page size matching canvas pixels (rough)
+      const pdf = new jsPDF({
+        orientation: canvas.getWidth() >= canvas.getHeight() ? "landscape" : "portrait",
+        unit: "pt",
+        format: [canvas.getWidth(), canvas.getHeight()]
+      });
+
+      for (let i=0;i<pages.length;i++){
+        const url = await pageToPNGDataURL(i);
+        if (i>0){
+          pdf.addPage([canvas.getWidth(), canvas.getHeight()], canvas.getWidth() >= canvas.getHeight() ? "landscape" : "portrait");
+        }
+        pdf.addImage(url, "PNG", 0, 0, canvas.getWidth(), canvas.getHeight());
+      }
+      pdf.save("photobook.pdf");
+    });
+
+    // =========================
+    // Flipbook Preview
+    // =========================
+    const flipModal = document.getElementById("flipModal");
+    const flipImg = document.getElementById("flipImg");
+    const flipCounter = document.getElementById("flipCounter");
+    let flipIndex = 0;
+    let flipUrls = [];
+
+    async function openFlipbook(){
+      snapshotCurrentPage();
+      flipUrls = [];
+      for (let i=0;i<pages.length;i++){
+        flipUrls.push(await pageToPNGDataURL(i));
+      }
+      flipIndex = 0;
+      flipImg.src = flipUrls[0];
+      flipCounter.textContent = `${flipIndex+1} / ${flipUrls.length}`;
+      flipModal.classList.add("open");
+    }
+
+    document.getElementById("previewFlipbook").addEventListener("click", openFlipbook);
+    document.getElementById("flipClose").addEventListener("click", () => flipModal.classList.remove("open"));
+    document.getElementById("flipPrev").addEventListener("click", () => {
+      if (!flipUrls.length) return;
+      flipIndex = Math.max(0, flipIndex - 1);
+      flipImg.src = flipUrls[flipIndex];
+      flipCounter.textContent = `${flipIndex+1} / ${flipUrls.length}`;
+    });
+    document.getElementById("flipNext").addEventListener("click", () => {
+      if (!flipUrls.length) return;
+      flipIndex = Math.min(flipUrls.length - 1, flipIndex + 1);
+      flipImg.src = flipUrls[flipIndex];
+      flipCounter.textContent = `${flipIndex+1} / ${flipUrls.length}`;
+    });
+    flipModal.addEventListener("click", (e) => {
+      if (e.target === flipModal) flipModal.classList.remove("open");
+    });
+
+    // =========================
+    // Background buttons
+    // =========================
+    document.getElementById("bgWhite").addEventListener("click", () => {
+      canvas.setBackgroundColor("#ffffff", canvas.requestRenderAll.bind(canvas));
+      scheduleSave();
+    });
+    document.getElementById("bgLight").addEventListener("click", () => {
+      canvas.setBackgroundColor("#f5f5f5", canvas.requestRenderAll.bind(canvas));
+      scheduleSave();
+    });
+    document.getElementById("bgDark").addEventListener("click", () => {
+      canvas.setBackgroundColor("#111827", canvas.requestRenderAll.bind(canvas));
+      scheduleSave();
+    });
+
+    // =========================
+    // Init
+    // =========================
+    function initFresh(){
+      pages = [ canvas.toJSON() ];
+      currentPageIndex = 0;
+      updatePageLabel();
+      setZoom(1);
+      refreshLayers();
+      saveDraft();
+    }
+
+    // try load draft
+    const loaded = loadDraft();
+    if (!loaded){
+      canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+      initFresh();
+    } else {
+      updatePageLabel();
+      refreshLayers();
+    }
+
+    // default open panel
+    showPanel("images");
+
+    // login demo
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      alert("Auth/Firebase θα κουμπώσει στο επόμενο βήμα (τώρα δουλεύει 100% offline editor).");
+    });
+  </script>
 </body>
 </html>
