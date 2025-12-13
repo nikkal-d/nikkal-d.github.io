@@ -95,7 +95,7 @@ if (langBtn) {
 }
 
 // ================= LOGIN (AUTH HOOK) =================
-import { auth } from "./firebase-init.js";
+import { auth } from "../firebase-init.js";
 import {
   onAuthStateChanged,
   signInWithPopup,
