@@ -2,18 +2,19 @@
 // ---------------------------------------------
 // AUTH CORE (Firebase Modular v10)
 // ---------------------------------------------
+
 import { auth } from "../firebase-init.js";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// ---------------------------------------------
-// API (EXPORTS)
-// ---------------------------------------------
+// -----------------------------
+// AUTH ACTIONS
+// -----------------------------
 
 export async function login(email, password) {
   return signInWithEmailAndPassword(auth, email, password);
