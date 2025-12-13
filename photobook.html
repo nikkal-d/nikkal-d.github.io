@@ -5,24 +5,20 @@
   <title>Photobook Editor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="./css/photobook.css" />
-
-  <!-- Fabric.js -->
+  <!-- Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
   <style>
-    /* ====== BASIC LAYOUT ====== */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
       height: 100vh;
       display: flex;
       overflow: hidden;
+      background: #f0f0f0;
     }
 
-    /* LEFT SIDEBAR */
+    /* LEFT ICON BAR */
     .sidebar {
       width: 70px;
       background: #111;
@@ -39,7 +35,7 @@
       color: #fff;
       margin: 10px 0;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
     }
 
     /* LEFT PANELS */
@@ -56,20 +52,21 @@
     }
 
     .panel {
-      padding: 12px;
+      padding: 15px;
+      border-bottom: 1px solid #eee;
     }
 
-    /* MAIN CANVAS */
+    /* MAIN */
     .editor-main {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #eaeaea;
+      background: #e5e5e5;
     }
 
     #canvas-wrapper {
-      background: #fff;
+      background: white;
       padding: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,.2);
     }
@@ -80,12 +77,12 @@
       overflow: hidden;
       background: #fff;
       border-left: 1px solid #ddd;
-      transition: width .25s ease;
+      transition: width .3s ease;
     }
 
     .export-panel.open {
       width: 260px;
-      padding: 12px;
+      padding: 15px;
     }
 
     /* TOP BAR */
@@ -98,86 +95,119 @@
       background: #fff;
       border-bottom: 1px solid #ddd;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       padding: 0 15px;
-      z-index: 10;
-    }
-
-    .topbar button {
-      margin-left: 10px;
+      z-index: 100;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- LEFT ICON BAR -->
-  <div class="sidebar">
-    <button data-panel="elements">Στοιχεία</button>
-    <button data-panel="text">Κείμενο</button>
-    <button data-panel="images">Εικόνες</button>
-    <button data-panel="pdf">PDF</button>
-    <button data-panel="layers">Layers</button>
-  </div>
+<!-- LEFT ICON BAR -->
+<div class="sidebar">
+  <button data-panel="elements">Στοιχεία</button>
+  <button data-panel="text">Κείμενο</button>
+  <button data-panel="images">Εικόνες</button>
+  <button data-panel="pdf">PDF</button>
+  <button data-panel="layers">Layers</button>
+</div>
 
-  <!-- LEFT PANELS -->
-  <div id="panel-elements" class="panel-container">
-    <div class="panel">📐 Σχήματα / Stickers (coming)</div>
-  </div>
+<!-- LEFT PANELS -->
+<div id="panel-elements" class="panel-container">
+  <div class="panel">📐 Σχήματα / Stickers (next)</div>
+</div>
 
-  <div id="panel-text" class="panel-container">
-    <div class="panel">🔤 Προσθήκη Κειμένου</div>
+<div id="panel-text" class="panel-container">
+  <div class="panel">
+    <button id="addText">➕ Κείμενο</button>
   </div>
+</div>
 
-  <div id="panel-images" class="panel-container">
-    <div class="panel">
-      🖼️ Εισαγωγή Εικόνας  
-      <input type="file" id="imageInput" accept="image/*" />
-    </div>
+<div id="panel-images" class="panel-container">
+  <div class="panel">
+    <input type="file" id="imageInput" accept="image/*">
   </div>
+</div>
 
-  <div id="panel-pdf" class="panel-container">
-    <div class="panel">
-      📄 Εισαγωγή PDF  
-      <input type="file" id="pdfInput" accept="application/pdf" />
-    </div>
+<div id="panel-pdf" class="panel-container">
+  <div class="panel">
+    <input type="file" id="pdfInput" accept="application/pdf">
   </div>
+</div>
 
-  <div id="panel-layers" class="panel-container">
-    <div class="panel">🧱 Layers (coming)</div>
+<div id="panel-layers" class="panel-container">
+  <div class="panel">🧱 Layers (coming)</div>
+</div>
+
+<!-- MAIN -->
+<div class="editor-main">
+  <div id="canvas-wrapper">
+    <canvas id="editorCanvas" width="1200" height="800"></canvas>
   </div>
+</div>
 
-  <!-- MAIN -->
-  <div class="editor-main">
-    <div id="canvas-wrapper">
-      <canvas id="editorCanvas" width="900" height="600"></canvas>
-    </div>
+<!-- RIGHT EXPORT -->
+<div id="exportPanel" class="export-panel">
+  <h3>📤 Export</h3>
+  <button>PNG</button><br><br>
+  <button>PDF</button><br><br>
+  <button>Flipbook</button>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <strong>Photobook Editor</strong>
+  <div>
+    <button id="toggleExport">Export</button>
+    <button id="loginBtn">Σύνδεση</button>
   </div>
+</div>
 
-  <!-- RIGHT EXPORT PANEL -->
-  <div id="exportPanel" class="export-panel">
-    <h3>📤 Export</h3>
-    <button id="exportPNG">PNG</button><br><br>
-    <button id="exportPDF">PDF</button><br><br>
-    <button id="exportFlipbook">Flipbook</button>
-  </div>
+<script>
+  const canvas = new fabric.Canvas('editorCanvas');
 
-  <!-- TOP BAR -->
-  <div class="topbar">
-    <div>
-      <strong>Photobook Editor</strong>
-    </div>
-    <div>
-      <button id="toggleExport">Export</button>
-      <button id="loginBtn">Σύνδεση</button>
-    </div>
-  </div>
+  // left panels toggle
+  document.querySelectorAll('.sidebar button').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.panel-container').forEach(p => p.classList.remove('open'));
+      const panel = document.getElementById('panel-' + btn.dataset.panel);
+      panel?.classList.add('open');
+    };
+  });
 
-  <!-- SCRIPTS -->
-  <script type="module" src="./js/core.js"></script>
-  <script type="module" src="./js/ui.js"></script>
-  <script type="module" src="./js/export.js"></script>
+  // export panel toggle
+  document.getElementById('toggleExport').onclick = () => {
+    document.getElementById('exportPanel').classList.toggle('open');
+  };
+
+  // add text
+  document.getElementById('addText').onclick = () => {
+    const text = new fabric.IText('Κείμενο', {
+      left: 100,
+      top: 100,
+      fontSize: 40,
+      fill: '#000',
+      textBaseline: 'top'
+    });
+    canvas.add(text);
+  };
+
+  // add image
+  document.getElementById('imageInput').onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = f => {
+      fabric.Image.fromURL(f.target.result, img => {
+        img.scaleToWidth(400);
+        canvas.add(img);
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+</script>
 
 </body>
 </html>
