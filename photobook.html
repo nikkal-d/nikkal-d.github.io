@@ -207,6 +207,83 @@
     };
     reader.readAsDataURL(file);
   };
+
+<script>
+/* ===============================
+   ZOOM & PAN (Canva-like)
+================================ */
+
+let zoom = 1;
+const ZOOM_STEP = 0.1;
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 4;
+
+// Mouse wheel zoom
+canvas.on('mouse:wheel', function(opt) {
+  const delta = opt.e.deltaY;
+  zoom = zoom + (delta > 0 ? -ZOOM_STEP : ZOOM_STEP);
+  zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+
+  canvas.zoomToPoint(
+    { x: opt.e.offsetX, y: opt.e.offsetY },
+    zoom
+  );
+
+  opt.e.preventDefault();
+  opt.e.stopPropagation();
+});
+
+// PAN with SPACE
+let isPanning = false;
+
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    isPanning = true;
+    canvas.selection = false;
+  }
+});
+
+document.addEventListener("keyup", e => {
+  if (e.code === "Space") {
+    isPanning = false;
+    canvas.selection = true;
+  }
+});
+
+canvas.on("mouse:down", function(opt) {
+  if (isPanning) {
+    canvas.setCursor("grab");
+    this.isDragging = true;
+    this.lastPosX = opt.e.clientX;
+    this.lastPosY = opt.e.clientY;
+  }
+});
+
+canvas.on("mouse:move", function(opt) {
+  if (this.isDragging) {
+    const e = opt.e;
+    const vpt = this.viewportTransform;
+    vpt[4] += e.clientX - this.lastPosX;
+    vpt[5] += e.clientY - this.lastPosY;
+    this.requestRenderAll();
+    this.lastPosX = e.clientX;
+    this.lastPosY = e.clientY;
+  }
+});
+
+canvas.on("mouse:up", function() {
+  this.isDragging = false;
+  canvas.setCursor("default");
+});
+
+// Reset zoom helper
+function resetZoom() {
+  zoom = 1;
+  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+}
+</script>
+
+  
 </script>
 
 </body>
