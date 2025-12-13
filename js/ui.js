@@ -2,6 +2,7 @@
 // ---------------------------------------------
 // UI CONTROLLER
 // ---------------------------------------------
+import { setZoom, resetZoom, getZoom } from "./core.js";
 
 import { login, logout, onAuthChange } from "./auth.js";
 
