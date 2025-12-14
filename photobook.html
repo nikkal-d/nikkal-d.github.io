@@ -44,17 +44,6 @@
       overflow:hidden;
     }
 
-    #canvasHost {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-
     /* TOPBAR */
     .topbar{
       position:fixed;
@@ -121,6 +110,7 @@
       top:56px; left:0; right:0; bottom:0;
       display:flex;
       height:calc(100vh - 56px);
+      min-width: 0;
     }
 
     /* LEFT ICON BAR */
@@ -132,6 +122,7 @@
       display:flex;
       flex-direction:column;
       gap:8px;
+      flex: 0 0 auto;
     }
     .toolbtn{
       width:100%;
@@ -180,6 +171,7 @@
       background: linear-gradient(to bottom, rgba(20,24,35,.98), rgba(16,19,27,.95));
       border-right:1px solid var(--border);
       transition: width .2s ease;
+      flex: 0 0 auto;
     }
     .leftPanel.open{width:320px;}
     .panelInner{
@@ -238,13 +230,15 @@
 
     /* CANVAS AREA */
     .canvasArea{
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;         /* σημαντικό */
-  position: relative;
-}
+      flex: 1 1 auto;
+      min-width: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:auto;
+      position:relative;
+      padding: 18px;
+    }
 
     .canvasWrap{
       background: rgba(255,255,255,.06);
@@ -252,16 +246,17 @@
       border-radius:18px;
       padding:18px;
       box-shadow:var(--shadow);
-      margin: auto;           /* σημαντικό */
-      max-width: 100%;        /* σημαντικό */
+      margin:auto;
+      max-width: 100%;
       max-height: 100%;
     }
     canvas{
       background:white;
       border-radius:10px;
-  max-width: 100%;
-  max-height: 100%;
-}
+      max-width: 100%;
+      max-height: 100%;
+      display:block;
+    }
 
     /* RIGHT EXPORT PANEL */
     .rightPanel{
@@ -270,6 +265,7 @@
       background: linear-gradient(to bottom, rgba(20,24,35,.98), rgba(16,19,27,.95));
       border-left:1px solid var(--border);
       transition: width .2s ease;
+      flex: 0 0 auto;
     }
     .rightPanel.open{width:320px;}
     .rightInner{
@@ -291,6 +287,7 @@
       backdrop-filter: blur(10px);
       font-size:12px;
       color:#dbe3f2;
+      pointer-events:none;
     }
 
     /* MODAL (Flipbook preview) */
@@ -517,7 +514,9 @@
             </div>
           </div>
           <div class="sep"></div>
-          <div class="small">Autosave: αποθηκεύει draft στο browser (localStorage).</div>
+          <div class="small">
+            Autosave/localStorage: <b>OFF</b> (γιατί γέμιζε από εικόνες και “κρέμαγε” όλο το app).
+          </div>
         </div>
       </div>
     </div>
@@ -564,7 +563,7 @@
             <button class="btn" id="bgDark">BG Dark</button>
           </div>
           <div class="sep"></div>
-          <div class="small">Το background είναι “page background”, δεν επηρεάζει export PDF/PNG αν θες διαφάνεια (θα το ρυθμίσουμε μετά).</div>
+          <div class="small">Το background είναι “page background”.</div>
         </div>
       </div>
     </div>
@@ -591,19 +590,32 @@
   </div>
 
   <script>
+    // =========================================================
+    // IMPORTANT: Draft/Autosave OFF (prevents total app freeze)
+    // =========================================================
+    const ENABLE_DRAFT = false; // <-- όταν το κάνουμε IndexedDB/Firebase, το ξανανοίγουμε
+    const STORAGE_KEY = "photobook_draft_v1";
+
     // =========================
     // BASIC STATE
     // =========================
-    const canvas = new fabric.Canvas("c", {
-      preserveObjectStacking: true
-    });
+    const canvas = new fabric.Canvas("c", { preserveObjectStacking: true });
+
+    // Fix for old JSON that may contain invalid textBaseline ("alphabetical")
+    function deepSanitize(obj){
+      if (!obj || typeof obj !== "object") return;
+      if (Array.isArray(obj)) { obj.forEach(deepSanitize); return; }
+      for (const k of Object.keys(obj)){
+        const v = obj[k];
+        if (k === "textBaseline" && (v === "alphabetical" || v === "alphabetic")) obj[k] = "top";
+        deepSanitize(v);
+      }
+    }
 
     let zoomLevel = 1;
     const MIN_ZOOM = 0.2;
     const MAX_ZOOM = 4;
     const ZOOM_STEP = 0.1;
-
-    const STORAGE_KEY = "photobook_draft_v1";
 
     // Pages as Fabric JSON
     let pages = [];
@@ -636,7 +648,7 @@
     });
 
     // =========================
-    // Language toggle (simple)
+    // Language toggle (simple demo)
     // =========================
     let lang = "el";
     const dict = {
@@ -651,13 +663,16 @@
     // =========================
     // ZOOM + PAN (Canva-like)
     // =========================
+    function mark(txt){
+      saveStateEl.textContent = "• " + txt;
+    }
+
     function setZoom(z){
       zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
-      const vpt = canvas.viewportTransform;
-      if (!vpt) canvas.setViewportTransform([1,0,0,1,0,0]);
       canvas.setZoom(zoomLevel);
       canvas.requestRenderAll();
       zoomLabelEl.textContent = Math.round(zoomLevel * 100) + "%";
+      document.getElementById("zoomReset").textContent = Math.round(zoomLevel * 100) + "%";
     }
 
     document.getElementById("zoomIn").addEventListener("click", () => setZoom(zoomLevel + ZOOM_STEP));
@@ -670,12 +685,12 @@
     canvas.on("mouse:wheel", (opt) => {
       const delta = opt.e.deltaY;
       const next = zoomLevel + (delta > 0 ? -ZOOM_STEP : ZOOM_STEP);
-      // zoom to pointer
       const p = canvas.getPointer(opt.e);
       zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
       canvas.zoomToPoint(new fabric.Point(p.x, p.y), zoomLevel);
       canvas.requestRenderAll();
       zoomLabelEl.textContent = Math.round(zoomLevel * 100) + "%";
+      document.getElementById("zoomReset").textContent = Math.round(zoomLevel * 100) + "%";
       opt.e.preventDefault();
       opt.e.stopPropagation();
     });
@@ -721,17 +736,16 @@
     // =========================
     // Helpers: Save/Load page
     // =========================
-    function markSaving(txt){
-      saveStateEl.textContent = "• " + txt;
-    }
-
     function updatePageLabel(){
       pageLabelEl.textContent = `Page ${currentPageIndex + 1} / ${pages.length}`;
     }
 
     function snapshotCurrentPage(){
-      // store Fabric JSON
-      pages[currentPageIndex] = canvas.toJSON(["selectable","evented","lockMovementX","lockMovementY","lockScalingX","lockScalingY","lockRotation"]);
+      pages[currentPageIndex] = canvas.toJSON([
+        "selectable","evented","lockMovementX","lockMovementY",
+        "lockScalingX","lockScalingY","lockRotation"
+      ]);
+      deepSanitize(pages[currentPageIndex]);
     }
 
     function loadPage(index){
@@ -741,8 +755,9 @@
       canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
 
       const data = pages[currentPageIndex] || { objects: [] };
+      deepSanitize(data);
+
       canvas.loadFromJSON(data, () => {
-        // baseline fix guard (no "alphabetical")
         canvas.getObjects().forEach(obj => {
           if (obj.type === "i-text" || obj.type === "textbox" || obj.type === "text") {
             obj.textBaseline = "top";
@@ -751,40 +766,52 @@
         canvas.requestRenderAll();
         refreshLayers();
         updatePageLabel();
-        markSaving("ready");
+        mark("ready");
       });
     }
 
     function saveDraft(){
-      snapshotCurrentPage();
-      const draft = {
-        pages,
-        currentPageIndex,
-        zoomLevel,
-        bg: canvas.backgroundColor || "#ffffff",
-        size: { w: canvas.getWidth(), h: canvas.getHeight() }
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-      markSaving("saved");
-      setTimeout(() => markSaving("ready"), 700);
+      if (!ENABLE_DRAFT) return; // OFF
+      try{
+        snapshotCurrentPage();
+        const draft = {
+          pages,
+          currentPageIndex,
+          zoomLevel,
+          bg: canvas.backgroundColor || "#ffffff",
+          size: { w: canvas.getWidth(), h: canvas.getHeight() }
+        };
+        // WARNING: this can overflow when images are dataURL.
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+        mark("saved");
+        setTimeout(() => mark("ready"), 700);
+      }catch(e){
+        console.warn("Draft not saved (storage full). Disabling draft.", e);
+        mark("ready");
+      }
     }
 
     function loadDraft(){
+      if (!ENABLE_DRAFT) return false;
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
       try{
         const draft = JSON.parse(raw);
         pages = Array.isArray(draft.pages) && draft.pages.length ? draft.pages : [];
         if (!pages.length) return false;
+        pages.forEach(deepSanitize);
+
         const size = draft.size || { w: 1200, h: 800 };
         resizeCanvas(size.w, size.h, false);
+
         currentPageIndex = draft.currentPageIndex || 0;
         loadPage(currentPageIndex);
-        // restore zoom (soft)
+
         setTimeout(() => {
           canvas.setViewportTransform([1,0,0,1,0,0]);
           setZoom(draft.zoomLevel || 1);
         }, 50);
+
         return true;
       }catch(e){
         console.warn("Draft load failed", e);
@@ -792,16 +819,13 @@
       }
     }
 
-    // autosave on changes (debounced)
+    // debounced “save” indicator (safe even with draft OFF)
     let saveTimer = null;
     function scheduleSave(){
-      markSaving("saving…");
+      mark("edited");
       clearTimeout(saveTimer);
-      saveTimer = setTimeout(saveDraft, 450);
+      saveTimer = setTimeout(() => saveDraft(), 450);
     }
-    //canvas.on("object:added", scheduleSave);
-   // canvas.on("object:modified", scheduleSave);
-   // canvas.on("object:removed", scheduleSave);
 
     // =========================
     // Canvas size
@@ -811,7 +835,6 @@
       canvas.setWidth(w);
       canvas.setHeight(h);
 
-      // optionally scale objects to fit (simple strategy)
       if (keepObjects && oldW && oldH){
         const sx = w / oldW;
         const sy = h / oldH;
@@ -856,8 +879,7 @@
       const size = parseInt(document.getElementById("textSize").value,10) || 48;
       const color = document.getElementById("textColor").value || "#111111";
       const t = new fabric.IText(v, {
-        left: 120,
-        top: 120,
+        left: 120, top: 120,
         fontSize: size,
         fill: color,
         textBaseline: "top"
@@ -865,6 +887,7 @@
       canvas.add(t);
       canvas.setActiveObject(t);
       refreshLayers();
+      scheduleSave();
     }
     document.getElementById("addText").addEventListener("click", addText);
 
@@ -875,15 +898,13 @@
       return null;
     }
     document.getElementById("textBold").addEventListener("click", () => {
-      const t = activeText();
-      if (!t) return;
+      const t = activeText(); if (!t) return;
       t.fontWeight = (t.fontWeight === "bold" ? "normal" : "bold");
       canvas.requestRenderAll();
       scheduleSave();
     });
     document.getElementById("textItalic").addEventListener("click", () => {
-      const t = activeText();
-      if (!t) return;
+      const t = activeText(); if (!t) return;
       t.fontStyle = (t.fontStyle === "italic" ? "normal" : "italic");
       canvas.requestRenderAll();
       scheduleSave();
@@ -901,13 +922,13 @@
           canvas.add(img);
           canvas.setActiveObject(img);
           refreshLayers();
+          scheduleSave();
         }, { crossOrigin: "anonymous" });
       };
       reader.readAsDataURL(f);
       e.target.value = "";
     });
 
-    // sample image (no assets needed)
     document.getElementById("addSample1").addEventListener("click", () => {
       const url = "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=60";
       fabric.Image.fromURL(url, (img) => {
@@ -916,6 +937,7 @@
         canvas.add(img);
         canvas.setActiveObject(img);
         refreshLayers();
+        scheduleSave();
       }, { crossOrigin: "anonymous" });
     });
 
@@ -940,31 +962,31 @@
     }
     document.getElementById("addRect").addEventListener("click", () => {
       const s = shapeStyle();
-      const r = new fabric.Rect({
-        left: 160, top: 160, width: 320, height: 200,
-        rx: 14, ry: 14, ...s
-      });
+      const r = new fabric.Rect({ left:160, top:160, width:320, height:200, rx:14, ry:14, ...s });
       canvas.add(r); canvas.setActiveObject(r);
       refreshLayers();
+      scheduleSave();
     });
     document.getElementById("addCircle").addEventListener("click", () => {
       const s = shapeStyle();
-      const c = new fabric.Circle({ left: 200, top: 200, radius: 120, ...s });
+      const c = new fabric.Circle({ left:200, top:200, radius:120, ...s });
       canvas.add(c); canvas.setActiveObject(c);
       refreshLayers();
+      scheduleSave();
     });
     document.getElementById("addLine").addEventListener("click", () => {
       const s = shapeStyle();
-      const l = new fabric.Line([100, 100, 520, 220], { left: 160, top: 220, ...s });
+      const l = new fabric.Line([100, 100, 520, 220], { left:160, top:220, ...s });
       canvas.add(l); canvas.setActiveObject(l);
       refreshLayers();
+      scheduleSave();
     });
 
     document.getElementById("applyStyle").addEventListener("click", () => {
       const obj = canvas.getActiveObject();
       if (!obj) return;
       const s = shapeStyle();
-      obj.set({ fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth });
+      obj.set({ fill:s.fill, stroke:s.stroke, strokeWidth:s.strokeWidth });
       canvas.requestRenderAll();
       scheduleSave();
     });
@@ -972,19 +994,18 @@
     // PDF placeholder (demo)
     document.getElementById("addPdfPlaceholder").addEventListener("click", () => {
       const rect = new fabric.Rect({
-        left: 180, top: 180, width: 520, height: 320,
-        rx: 16, ry: 16,
-        fill: "#f8fafc",
-        stroke: "#111111",
-        strokeWidth: 2
+        left:180, top:180, width:520, height:320,
+        rx:16, ry:16,
+        fill:"#f8fafc",
+        stroke:"#111111",
+        strokeWidth:2
       });
-      const label = new fabric.Text("PDF (demo)", {
-        left: 200, top: 200, fontSize: 34, fill: "#111111", textBaseline: "top"
-      });
-      const group = new fabric.Group([rect, label], { left: 180, top: 180 });
+      const label = new fabric.Text("PDF (demo)", { left:200, top:200, fontSize:34, fill:"#111111", textBaseline:"top" });
+      const group = new fabric.Group([rect, label], { left:180, top:180 });
       canvas.add(group);
       canvas.setActiveObject(group);
       refreshLayers();
+      scheduleSave();
     });
 
     // =========================
@@ -1001,14 +1022,10 @@
 
     function refreshLayers(){
       const objs = canvas.getObjects();
-      if (!objs.length){
-        layersList.innerHTML = "No objects";
-        return;
-      }
-      // show top-most first
+      if (!objs.length){ layersList.innerHTML = "No objects"; return; }
       const html = objs.map((o, i) => ({ o, i }))
         .reverse()
-        .map(({o,i}, rIndex) => {
+        .map(({o,i}) => {
           const active = (canvas.getActiveObject() === o);
           const locked = !!(o.lockMovementX || o.lockMovementY || o.lockScalingX || o.lockScalingY || o.lockRotation);
           return `
@@ -1135,12 +1152,22 @@
     // =========================
     // Export
     // =========================
+    function dataURLToBlob(dataURL){
+      const parts = dataURL.split(",");
+      const byteString = atob(parts[1]);
+      const mimeString = parts[0].split(":")[1].split(";")[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i=0; i<byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      return new Blob([ab], { type: mimeString });
+    }
+
     function pageToPNGDataURL(pageIndex){
       return new Promise((resolve) => {
-        // save current, load page, render, export, restore
         const prev = currentPageIndex;
         snapshotCurrentPage();
         const data = pages[pageIndex] || { objects: [] };
+        deepSanitize(data);
 
         canvas.loadFromJSON(data, () => {
           canvas.getObjects().forEach(obj => {
@@ -1148,7 +1175,7 @@
           });
           canvas.requestRenderAll();
           const url = canvas.toDataURL({ format:"png", quality:1, multiplier: 2 });
-          // restore previous
+
           canvas.loadFromJSON(pages[prev], () => {
             canvas.requestRenderAll();
             refreshLayers();
@@ -1162,16 +1189,6 @@
       const url = canvas.toDataURL({ format:"png", quality:1, multiplier: 2 });
       saveAs(dataURLToBlob(url), `page_${currentPageIndex+1}.png`);
     });
-
-    function dataURLToBlob(dataURL){
-      const parts = dataURL.split(",");
-      const byteString = atob(parts[1]);
-      const mimeString = parts[0].split(":")[1].split(";")[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i=0; i<byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      return new Blob([ab], { type: mimeString });
-    }
 
     document.getElementById("exportZIP").addEventListener("click", async () => {
       snapshotCurrentPage();
@@ -1187,17 +1204,13 @@
     document.getElementById("exportPDF").addEventListener("click", async () => {
       snapshotCurrentPage();
       const { jsPDF } = window.jspdf;
-      // create PDF with page size matching canvas pixels (rough)
-      const pdf = new jsPDF({
-        orientation: canvas.getWidth() >= canvas.getHeight() ? "landscape" : "portrait",
-        unit: "pt",
-        format: [canvas.getWidth(), canvas.getHeight()]
-      });
+      const orient = canvas.getWidth() >= canvas.getHeight() ? "landscape" : "portrait";
+      const pdf = new jsPDF({ orientation: orient, unit: "pt", format: [canvas.getWidth(), canvas.getHeight()] });
 
       for (let i=0;i<pages.length;i++){
         const url = await pageToPNGDataURL(i);
         if (i>0){
-          pdf.addPage([canvas.getWidth(), canvas.getHeight()], canvas.getWidth() >= canvas.getHeight() ? "landscape" : "portrait");
+          pdf.addPage([canvas.getWidth(), canvas.getHeight()], orient);
         }
         pdf.addImage(url, "PNG", 0, 0, canvas.getWidth(), canvas.getHeight());
       }
@@ -1262,30 +1275,27 @@
     // =========================
     // Init
     // =========================
-   function initFresh(){
-  pages = [ canvas.toJSON() ];
-  currentPageIndex = 0;
-  updatePageLabel();
-  setZoom(1);
-  refreshLayers();
-  // saveDraft(); ❌ απενεργοποιημένο
-}
+    function initFresh(){
+      pages = [ canvas.toJSON() ];
+      deepSanitize(pages[0]);
+      currentPageIndex = 0;
+      updatePageLabel();
+      canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+      setZoom(1);
+      refreshLayers();
+      mark("ready");
+    }
 
-
-    // try load draft
     const loaded = loadDraft();
     if (!loaded){
-      canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
       initFresh();
     } else {
       updatePageLabel();
       refreshLayers();
     }
 
-    // default open panel
     showPanel("images");
 
-    // login demo
     document.getElementById("loginBtn").addEventListener("click", () => {
       alert("Auth/Firebase θα κουμπώσει στο επόμενο βήμα (τώρα δουλεύει 100% offline editor).");
     });
