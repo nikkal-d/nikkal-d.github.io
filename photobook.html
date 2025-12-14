@@ -1731,6 +1731,11 @@ function wireUI(){
    Boot
    ============================================================ */
 window.addEventListener("DOMContentLoaded", ()=>{
+  if (!window.fabric) {
+  alert("❌ Fabric ΔΕΝ φορτώθηκε. Κάνε hard refresh (Ctrl+Shift+R)");
+  throw new Error("Fabric missing");
+}
+
   initCanvas();
   wireUI();
   initEmojis();
