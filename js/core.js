@@ -1,453 +1,283 @@
-// js/core.js
-// ============================================================
-// Core: canvas, CORRECT zoom (center zoom), pan, pages, thumbnails,
-// draft save + deep sanitize to kill "alphabetical" warnings.
-// ============================================================
+/* js/core.js
+   Σταθερός “single-canvas” πυρήνας:
+   - Εικόνα / Κείμενο / Emoji δουλεύουν
+   - Zoom (+/-/reset/fit) δουλεύει
+   - Pages (basic) δουλεύουν
+   - Fix baseline warning (alphabetical -> alphabetic) ήδη από HTML patch
+*/
 
-export let fabricCanvas = null;
+(function () {
+  const statusPill = () => document.getElementById("statusPill");
+  const setStatus = (t) => { const el = statusPill(); if (el) el.textContent = t; };
 
-export let pages = []; // [{json, image}]
-export let currentPage = 0;
+  // ---------- Guard ----------
+  function ensureFabric() {
+    if (typeof window.fabric === "undefined") {
+      setStatus("Fabric missing");
+      alert("❌ Δεν φορτώθηκε το Fabric. Κάνε hard refresh (Ctrl+Shift+R).");
+      return false;
+    }
+    return true;
+  }
 
-const DRAFT_KEY = "pbs_draft_v3";
+  // ---------- State ----------
+  let canvas = null;
+  let zoom = 1;
 
-let undoStack = [];
-let redoStack = [];
-let restoring = false;
+  let pages = [{ json: null }];
+  let currentPage = 0;
+  let restoring = false;
 
-let zoom = 1;
-let panMode = false;
-let isPanning = false;
-let panLast = { x: 0, y: 0 };
+  function $(id) { return document.getElementById(id); }
 
-// ============================================================
-// FABRIC FIX — Kill baseline warnings
-// ============================================================
-(function fixFabricTextBaseline() {
-  if (typeof fabric === "undefined") return;
+  // ---------- Init ----------
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!ensureFabric()) return;
 
-  // Force valid baseline (Fabric expects canvas baseline enums)
-  // We'll use "top" consistently.
-  const patch = (proto) => {
-    if (!proto) return;
-    try {
-      Object.defineProperty(proto, "textBaseline", {
-        get() { return "top"; },
-        set() { /* ignore */ }
+    canvas = new fabric.Canvas("canvas", {
+      preserveObjectStacking: true,
+      selection: true
+    });
+    window.canvas = canvas;
+
+    // Canvas defaults
+    canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+    setStatus("Canvas OK");
+
+    bindUI();
+    updatePageInfo();
+    applyZoom(1);
+    fitToScreen();
+  });
+
+  // ---------- UI wiring ----------
+  function bindUI() {
+    // Left rail quick buttons
+    $("railText")?.addEventListener("click", addText);
+    $("railImage")?.addEventListener("click", () => $("imageInput")?.click());
+    $("railEmoji")?.addEventListener("click", () => addEmoji("😀"));
+
+    // Main buttons
+    $("addTextBtn")?.addEventListener("click", addText);
+    $("addEmojiBtn")?.addEventListener("click", () => addEmoji("😀"));
+    $("addImageBtn")?.addEventListener("click", () => $("imageInput")?.click());
+
+    // File input
+    $("imageInput")?.addEventListener("change", onImagePicked);
+
+    // Zoom buttons
+    $("zoomInBtn")?.addEventListener("click", () => applyZoom(zoom + 0.1));
+    $("zoomOutBtn")?.addEventListener("click", () => applyZoom(zoom - 0.1));
+    $("zoomResetBtn")?.addEventListener("click", () => applyZoom(1));
+    $("fitBtn")?.addEventListener("click", fitToScreen);
+
+    // Right panel toggle
+    $("toggleRight")?.addEventListener("click", () => {
+      $("rightPanel")?.classList.toggle("open");
+    });
+
+    // Pages
+    $("nextPageBtn")?.addEventListener("click", nextPage);
+    $("prevPageBtn")?.addEventListener("click", prevPage);
+
+    // Pan: Space
+    bindPanZoom();
+  }
+
+  // ---------- Tools ----------
+  function addText() {
+    if (!canvas) return;
+
+    const t = new fabric.Textbox("Text", {
+      left: 140,
+      top: 140,
+      fontSize: 44,
+      fill: "#111",
+      fontFamily: "Arial"
+    });
+
+    canvas.add(t);
+    canvas.setActiveObject(t);
+    canvas.requestRenderAll();
+    saveCurrentPage();
+    setStatus("Text added");
+  }
+
+  function addEmoji(emoji) {
+    if (!canvas) return;
+
+    const t = new fabric.Textbox(emoji, {
+      left: 180,
+      top: 180,
+      fontSize: 90,
+      fill: "#111"
+    });
+
+    canvas.add(t);
+    canvas.setActiveObject(t);
+    canvas.requestRenderAll();
+    saveCurrentPage();
+    setStatus("Emoji added");
+  }
+
+  function onImagePicked(e) {
+    const file = e.target.files?.[0];
+    if (!file || !canvas) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      fabric.Image.fromURL(reader.result, (img) => {
+        img.set({ left: 120, top: 120 });
+        img.scaleToWidth(canvas.getWidth() * 0.45);
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.requestRenderAll();
+        saveCurrentPage();
+        setStatus("Image added");
       });
-    } catch {}
-  };
+    };
+    reader.readAsDataURL(file);
 
-  patch(fabric.Textbox?.prototype);
-  patch(fabric.IText?.prototype);
-})();
+    // reset input so selecting same file again works
+    e.target.value = "";
+  }
 
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener("DOMContentLoaded", () => {
-  // ✅ HTML έχει <canvas id="c">
-  if (!document.getElementById("c") || typeof fabric === "undefined") return;
+  // ---------- Zoom ----------
+  function applyZoom(z) {
+    if (!canvas) return;
+    zoom = Math.max(0.2, Math.min(4, Number(z) || 1));
 
-  fabricCanvas = new fabric.Canvas("c", {
-    preserveObjectStacking: true,
-    selection: true
-  });
+    const center = new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
+    canvas.zoomToPoint(center, zoom);
+    canvas.requestRenderAll();
 
-  setCanvasSizePreset("A4P");
-  bindHistory();
-  bindPanZoom();
+    const label = $("zoomValue");
+    if (label) label.textContent = Math.round(zoom * 100) + "%";
+  }
 
-  // initial page
-  addPage(true);
+  function fitToScreen() {
+    const host = $("canvasHost");
+    if (!host || !canvas) return;
 
-  // load draft AFTER basic init
-  loadDraft();
+    // reset
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    zoom = 1;
 
-  // autosave
-  setInterval(() => saveDraft(), 2500);
-});
+    const pad = 80;
+    const availW = host.clientWidth - pad;
+    const availH = host.clientHeight - pad;
 
-// ============================================================
-// IMAGES
-// ============================================================
-export function addImageFromFile(file) {
-  if (!fabricCanvas || !file) return;
+    const s = Math.min(availW / canvas.getWidth(), availH / canvas.getHeight());
+    applyZoom(s);
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.scaleToWidth(fabricCanvas.getWidth() * 0.4);
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      saveHistory();
-      saveCurrentPage();
+    // center by shifting viewport transform
+    const vt = canvas.viewportTransform;
+    vt[4] = (availW - canvas.getWidth() * s) / 2;
+    vt[5] = (availH - canvas.getHeight() * s) / 2;
+    canvas.setViewportTransform(vt);
+    canvas.requestRenderAll();
+    setStatus("Fit");
+  }
+
+  // ---------- Pan + Ctrl wheel zoom ----------
+  function bindPanZoom() {
+    let panMode = false;
+    let isPanning = false;
+    let last = { x: 0, y: 0 };
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") panMode = true;
     });
-  };
-  reader.readAsDataURL(file);
-}
-
-// ============================================================
-// ZOOM
-// ============================================================
-export function getZoom() {
-  return zoom;
-}
-
-/**
- * Correct zoom: zoom around canvas CENTER, not top-left.
- */
-export function setZoom(value) {
-  if (!fabricCanvas) return;
-  zoom = Math.max(0.2, Math.min(4, Number(value) || 1));
-
-  const center = new fabric.Point(
-    fabricCanvas.getWidth() / 2,
-    fabricCanvas.getHeight() / 2
-  );
-
-  fabricCanvas.zoomToPoint(center, zoom);
-  fabricCanvas.requestRenderAll();
-}
-
-export function resetZoom() {
-  if (!fabricCanvas) return;
-  zoom = 1;
-
-  const center = new fabric.Point(
-    fabricCanvas.getWidth() / 2,
-    fabricCanvas.getHeight() / 2
-  );
-
-  fabricCanvas.zoomToPoint(center, zoom);
-  fabricCanvas.requestRenderAll();
-}
-
-export function fitToScreen() {
-  // ✅ HTML έχει id="canvasWrap" (όχι canvasHost)
-  const host = document.getElementById("canvasWrap") || document.querySelector(".canvasArea");
-  if (!host || !fabricCanvas) return;
-
-  const pad = 28;
-  const availW = host.clientWidth - pad;
-  const availH = host.clientHeight - pad;
-
-  // Reset transforms first
-  resetZoom();
-
-  const s = Math.min(
-    availW / fabricCanvas.getWidth(),
-    availH / fabricCanvas.getHeight()
-  );
-
-  // Zoom around center
-  setZoom(s);
-
-  // Center inside host by shifting viewport transform
-  const vt = fabricCanvas.viewportTransform;
-  const cx = (availW - fabricCanvas.getWidth() * s) / 2;
-  const cy = (availH - fabricCanvas.getHeight() * s) / 2;
-  vt[4] = cx;
-  vt[5] = cy;
-  fabricCanvas.setViewportTransform(vt);
-  fabricCanvas.requestRenderAll();
-}
-
-export function setCanvasSizePreset(preset) {
-  const presets = {
-    A4P: { w: 1240, h: 1754 },
-    A4L: { w: 1754, h: 1240 },
-    SQUARE: { w: 1400, h: 1400 },
-    STORY: { w: 1080, h: 1920 },
-    HD: { w: 1920, h: 1080 }
-  };
-
-  const p = presets[preset];
-  if (!p || !fabricCanvas) return;
-
-  fabricCanvas.setWidth(p.w);
-  fabricCanvas.setHeight(p.h);
-  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
-
-  resetZoom();
-  fitToScreen();
-
-  saveHistory();
-  saveCurrentPage();
-}
-
-export function setCanvasCustom(w, h) {
-  if (!fabricCanvas) return;
-
-  const W = Math.max(200, Math.min(4000, Number(w)));
-  const H = Math.max(200, Math.min(4000, Number(h)));
-
-  fabricCanvas.setWidth(W);
-  fabricCanvas.setHeight(H);
-  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
-
-  resetZoom();
-  fitToScreen();
-
-  saveHistory();
-  saveCurrentPage();
-}
-
-// -------------------- PAGES --------------------
-
-export function addPage(isInitial = false) {
-  pages.push({ json: null, image: null });
-  currentPage = pages.length - 1;
-
-  if (!isInitial) {
-    fabricCanvas.clear();
-    fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
-  }
-
-  saveHistory();
-  refreshThumbnails();
-  updatePageInfo();
-}
-
-export function duplicatePage() {
-  saveCurrentPage();
-  const src = pages[currentPage];
-  const clone = src?.json ? structuredClone(src) : { json: null, image: null };
-  pages.splice(currentPage + 1, 0, clone);
-  currentPage++;
-  loadPageToCanvas();
-  refreshThumbnails();
-  updatePageInfo();
-  saveHistory();
-}
-
-export function deletePage() {
-  if (pages.length <= 1) return alert("Πρέπει να υπάρχει τουλάχιστον 1 σελίδα.");
-  pages.splice(currentPage, 1);
-  currentPage = Math.max(0, currentPage - 1);
-  loadPageToCanvas();
-  refreshThumbnails();
-  updatePageInfo();
-  saveHistory();
-}
-
-export function nextPage() {
-  if (currentPage >= pages.length - 1) return;
-  switchPage(currentPage + 1);
-}
-
-export function prevPage() {
-  if (currentPage <= 0) return;
-  switchPage(currentPage - 1);
-}
-
-export function switchPage(index) {
-  if (index < 0 || index >= pages.length) return;
-  saveCurrentPage();
-  currentPage = index;
-  loadPageToCanvas();
-  refreshThumbnails();
-  updatePageInfo();
-  saveHistory();
-}
-
-export function updatePageInfo() {
-  const el = document.getElementById("pageLabel") || document.getElementById("pageInfo");
-  if (el) el.textContent = `Page ${currentPage + 1} / ${pages.length}`;
-}
-
-export function saveCurrentPage() {
-  if (!pages[currentPage] || !fabricCanvas) return;
-
-  const json = fabricCanvas.toJSON();
-  sanitizeJSON(json);
-
-  pages[currentPage].json = json;
- // pages[currentPage].image = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
-}
-
-export function loadPageToCanvas() {
-  const pg = pages[currentPage];
-  if (!pg || !pg.json) {
-    fabricCanvas.clear();
-    fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
-    return;
-  }
-
-  restoring = true;
-  const clean = structuredClone(pg.json);
-  sanitizeJSON(clean);
-
-  fabricCanvas.loadFromJSON(clean, () => {
-    fabricCanvas.renderAll();
-    restoring = false;
-  });
-}
-
-export function refreshThumbnails() {
-  const strip = document.getElementById("thumbStrip");
-  if (!strip) return;
-
-  strip.innerHTML = "";
-  pages.forEach((p, i) => {
-    const d = document.createElement("div");
-    d.className = "thumb" + (i === currentPage ? " active" : "");
-
-    const img = document.createElement("img");
-    img.src = p.image || "";
-    img.alt = `page ${i + 1}`;
-    d.appendChild(img);
-
-    d.onclick = () => switchPage(i);
-    strip.appendChild(d);
-  });
-}
-
-// -------------------- HISTORY --------------------
-
-function bindHistory() {
-  saveHistory();
-
-  ["object:added", "object:modified", "object:removed"].forEach(ev => {
-    fabricCanvas.on(ev, () => {
-      if (restoring) return;
-      saveHistory();
+    document.addEventListener("keyup", (e) => {
+      if (e.code === "Space") panMode = false;
     });
-  });
-}
 
-function saveHistory() {
-  if (!fabricCanvas) return;
+    canvas.on("mouse:down", (opt) => {
+      if (!panMode) return;
+      isPanning = true;
+      last = { x: opt.e.clientX, y: opt.e.clientY };
+    });
 
-  const json = fabricCanvas.toJSON();
-  sanitizeJSON(json);
+    canvas.on("mouse:move", (opt) => {
+      if (!isPanning) return;
+      const vpt = canvas.viewportTransform;
+      vpt[4] += opt.e.clientX - last.x;
+      vpt[5] += opt.e.clientY - last.y;
+      canvas.setViewportTransform(vpt);
+      last = { x: opt.e.clientX, y: opt.e.clientY };
+    });
 
-  undoStack.push(json);
-  if (undoStack.length > 60) undoStack.shift();
-  redoStack = [];
-}
+    canvas.on("mouse:up", () => { isPanning = false; });
 
-export function undo() {
-  if (undoStack.length < 2) return;
+    canvas.on("mouse:wheel", (opt) => {
+      const e = opt.e;
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-  const cur = undoStack.pop();
-  redoStack.push(cur);
-  const prev = undoStack[undoStack.length - 1];
+      const factor = e.deltaY > 0 ? 0.95 : 1.05;
+      zoom = Math.max(0.2, Math.min(4, zoom * factor));
+      const pt = new fabric.Point(e.offsetX, e.offsetY);
+      canvas.zoomToPoint(pt, zoom);
+      canvas.requestRenderAll();
 
-  restoring = true;
-  const clean = structuredClone(prev);
-  sanitizeJSON(clean);
-
-  fabricCanvas.loadFromJSON(clean, () => {
-    fabricCanvas.renderAll();
-    restoring = false;
-    saveCurrentPage();
-    refreshThumbnails();
-  });
-}
-
-export function redo() {
-  if (!redoStack.length) return;
-
-  const next = redoStack.pop();
-  undoStack.push(next);
-
-  restoring = true;
-  const clean = structuredClone(next);
-  sanitizeJSON(clean);
-
-  fabricCanvas.loadFromJSON(clean, () => {
-    fabricCanvas.renderAll();
-    restoring = false;
-    saveCurrentPage();
-    refreshThumbnails();
-  });
-}
-
-// -------------------- PAN / ZOOM --------------------
-
-function bindPanZoom() {
-  // Space to pan
-  document.addEventListener("keydown", (e) => {
-    if (e.code === "Space") panMode = true;
-  });
-  document.addEventListener("keyup", (e) => {
-    if (e.code === "Space") panMode = false;
-  });
-
-  fabricCanvas.on("mouse:down", (opt) => {
-    if (!panMode) return;
-    isPanning = true;
-    const evt = opt.e;
-    panLast = { x: evt.clientX, y: evt.clientY };
-  });
-
-  fabricCanvas.on("mouse:move", (opt) => {
-    if (!isPanning) return;
-    const evt = opt.e;
-    const vpt = fabricCanvas.viewportTransform;
-    vpt[4] += evt.clientX - panLast.x;
-    vpt[5] += evt.clientY - panLast.y;
-    fabricCanvas.setViewportTransform(vpt);
-    panLast = { x: evt.clientX, y: evt.clientY };
-  });
-
-  fabricCanvas.on("mouse:up", () => {
-    isPanning = false;
-  });
-
-  // Ctrl + wheel zoom (around pointer)
-  fabricCanvas.on("mouse:wheel", (opt) => {
-    const e = opt.e;
-    if (!e.ctrlKey) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const delta = e.deltaY;
-    const factor = delta > 0 ? 0.95 : 1.05;
-    const next = Math.max(0.2, Math.min(4, zoom * factor));
-    zoom = next;
-
-    const pt = new fabric.Point(e.offsetX, e.offsetY);
-    fabricCanvas.zoomToPoint(pt, zoom);
-    fabricCanvas.requestRenderAll();
-  });
-}
-
-// -------------------- DRAFT --------------------
-
-export function saveDraft() {
-  try {
-    saveCurrentPage();
-    const payload = { pages, currentPage };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-  } catch (e) {
-    console.warn("Draft not saved (storage full)");
+      const label = $("zoomValue");
+      if (label) label.textContent = Math.round(zoom * 100) + "%";
+    });
   }
-}
 
+  // ---------- Pages (basic) ----------
+  function saveCurrentPage() {
+    if (!canvas) return;
+    if (restoring) return;
+    pages[currentPage].json = canvas.toJSON();
+  }
 
-// -------------------- SANITIZE (DEEP) --------------------
-function sanitizeJSON(json) {
-  if (!json) return;
+  function loadCurrentPage() {
+    if (!canvas) return;
+    const data = pages[currentPage]?.json;
+    restoring = true;
 
-  const walk = (node) => {
-    if (!node || typeof node !== "object") return;
-
-    // cover both variants just in case
-    if (node.textBaseline === "alphabetic" || node.textBaseline === "alphabetical") node.textBaseline = "top";
-
-    if (Array.isArray(node)) {
-      node.forEach(walk);
+    if (!data) {
+      canvas.clear();
+      canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+      restoring = false;
       return;
     }
 
-    for (const k of Object.keys(node)) {
-      const v = node[k];
-      if (k === "textBaseline" && (v === "alphabetic" || v === "alphabetical")) node[k] = "top";
-      walk(v);
-    }
-  };
+    canvas.loadFromJSON(data, () => {
+      canvas.requestRenderAll();
+      restoring = false;
+    });
+  }
 
-  walk(json);
-}
+  function nextPage() {
+    saveCurrentPage();
+    if (currentPage === pages.length - 1) {
+      pages.push({ json: null });
+      currentPage++;
+      canvas.clear();
+      canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+    } else {
+      currentPage++;
+      loadCurrentPage();
+    }
+    updatePageInfo();
+    setStatus("Page " + (currentPage + 1));
+  }
+
+  function prevPage() {
+    if (currentPage === 0) return;
+    saveCurrentPage();
+    currentPage--;
+    loadCurrentPage();
+    updatePageInfo();
+    setStatus("Page " + (currentPage + 1));
+  }
+
+  function updatePageInfo() {
+    const el = $("pageInfo");
+    if (el) el.textContent = `${currentPage + 1} / ${pages.length}`;
+  }
+
+})();
