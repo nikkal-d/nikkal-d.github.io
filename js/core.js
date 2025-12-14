@@ -263,7 +263,7 @@ export function saveCurrentPage() {
   sanitizeJSON(json);
 
   pages[currentPage].json = json;
-  pages[currentPage].image = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
+ // pages[currentPage].image = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
 }
 
 export function loadPageToCanvas() {
@@ -419,22 +419,10 @@ function bindPanZoom() {
 export function saveDraft() {
   try {
     saveCurrentPage();
-
-    // ❌ ΜΗΝ αποθηκεύεις thumbnails (base64)
-    const slimPages = pages.map(p => ({
-      json: p.json,
-      image: null // <-- ΚΟΨΙΜΟ
-    }));
-
-    const payload = {
-      pages: slimPages,
-      currentPage
-    };
-
+    const payload = { pages, currentPage };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
   } catch (e) {
-    console.warn("Draft not saved (quota reached)");
-    // αν γεμίσει, απλά σταματάμε να γράφουμε
+    console.warn("Draft not saved (storage full)");
   }
 }
 
