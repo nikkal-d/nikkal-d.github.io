@@ -1,136 +1,151 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8" />
-  <title>Photobook Editor</title>
+<meta charset="UTF-8">
+<title>Photobook Editor – SAFE</title>
 
-  <!-- FABRIC -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<!-- FABRIC (σταθερό CDN) -->
+<script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      overflow: hidden;
-    }
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #121212;
+    font-family: Arial, sans-serif;
+    color: #fff;
+  }
 
-    #topbar {
-      height: 56px;
-      background: #1e1e1e;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 10px;
-    }
+  #topbar {
+    height: 56px;
+    background: #1e1e1e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border-bottom: 1px solid #333;
+  }
 
-    button {
-      background: #2b2b2b;
-      color: #fff;
-      border: 0;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+  button {
+    background: #2c2c2c;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
 
-    button:hover {
-      background: #3a3a3a;
-    }
+  button:hover {
+    background: #3a3a3a;
+  }
 
-    #workspace {
-      display: flex;
-      height: calc(100vh - 56px);
-    }
+  #zoomValue {
+    min-width: 60px;
+    text-align: center;
+  }
 
-    #canvasHost {
-      flex: 1;
-      background: #333;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  #workspace {
+    height: calc(100% - 56px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2b2b2b;
+  }
 
-    canvas {
-      background: white;
-      box-shadow: 0 0 20px rgba(0,0,0,.5);
-    }
+  #canvasWrapper {
+    background: #666;
+    padding: 20px;
+    border-radius: 10px;
+  }
 
-    #zoomValue {
-      min-width: 60px;
-      text-align: center;
-    }
-  </style>
+  canvas {
+    background: #ffffff;
+    border: 2px solid #000;
+  }
+</style>
 </head>
 
 <body>
 
-<!-- ================= TOP BAR ================= -->
 <div id="topbar">
   <button id="addImageBtn">🖼 Image</button>
   <button id="addTextBtn">✏️ Text</button>
-  <button id="emojiBtn">😀 Emoji</button>
+  <button id="addEmojiBtn">😀 Emoji</button>
 
-  <span style="margin-left:20px">Zoom:</span>
+  <span style="margin-left:20px">Zoom</span>
   <button id="zoomOutBtn">−</button>
   <span id="zoomValue">100%</span>
   <button id="zoomInBtn">+</button>
   <button id="zoomResetBtn">Reset</button>
 </div>
 
-<!-- ================= WORKSPACE ================= -->
 <div id="workspace">
-  <div id="canvasHost">
+  <div id="canvasWrapper">
     <canvas id="canvas" width="1240" height="1754"></canvas>
   </div>
 </div>
 
-<!-- hidden file input -->
-<input type="file" id="imageInput" accept="image/*" style="display:none">
+<input type="file" id="imageInput" accept="image/*" hidden>
 
 <script>
-/* ======================================================
-   CANVAS INIT (SAFE)
-====================================================== */
+/* ===========================
+   SAFETY CHECK
+=========================== */
+if (typeof fabric === "undefined") {
+  alert("❌ Fabric ΔΕΝ φορτώθηκε. Έλεγξε internet / CDN.");
+  throw new Error("Fabric missing");
+}
+
+/* ===========================
+   CANVAS INIT
+=========================== */
 const canvas = new fabric.Canvas("canvas", {
   preserveObjectStacking: true,
   selection: true
 });
 window.canvas = canvas;
 
-/* FIX alphabetical forever */
+// FIX baseline
 fabric.Textbox.prototype.textBaseline = "top";
 fabric.IText.prototype.textBaseline = "top";
 
-/* ======================================================
+/* ===========================
    ZOOM
-====================================================== */
+=========================== */
 let zoom = 1;
+const zoomValue = document.getElementById("zoomValue");
 
-function updateZoom() {
-  document.getElementById("zoomValue").textContent =
-    Math.round(zoom * 100) + "%";
-}
-
-function setZoom(z) {
-  zoom = Math.min(4, Math.max(0.2, z));
+function applyZoom() {
   const center = new fabric.Point(
     canvas.getWidth() / 2,
     canvas.getHeight() / 2
   );
   canvas.zoomToPoint(center, zoom);
+  zoomValue.textContent = Math.round(zoom * 100) + "%";
   canvas.requestRenderAll();
-  updateZoom();
 }
 
-document.getElementById("zoomInBtn").onclick = () => setZoom(zoom + 0.1);
-document.getElementById("zoomOutBtn").onclick = () => setZoom(zoom - 0.1);
-document.getElementById("zoomResetBtn").onclick = () => setZoom(1);
-updateZoom();
+document.getElementById("zoomInBtn").onclick = () => {
+  zoom = Math.min(4, zoom + 0.1);
+  applyZoom();
+};
 
-/* ======================================================
+document.getElementById("zoomOutBtn").onclick = () => {
+  zoom = Math.max(0.2, zoom - 0.1);
+  applyZoom();
+};
+
+document.getElementById("zoomResetBtn").onclick = () => {
+  zoom = 1;
+  applyZoom();
+};
+
+applyZoom();
+
+/* ===========================
    IMAGE
-====================================================== */
+=========================== */
 document.getElementById("addImageBtn").onclick = () => {
   document.getElementById("imageInput").click();
 };
@@ -151,32 +166,28 @@ document.getElementById("imageInput").onchange = e => {
   reader.readAsDataURL(file);
 };
 
-/* ======================================================
+/* ===========================
    TEXT
-====================================================== */
-function addText() {
+=========================== */
+document.getElementById("addTextBtn").onclick = () => {
   const t = new fabric.Textbox("Text", {
     left: 150,
     top: 150,
     fontSize: 40,
-    fill: "#000",
-    textBaseline: "top"
+    fill: "#000"
   });
   canvas.add(t);
   canvas.setActiveObject(t);
-}
+};
 
-document.getElementById("addTextBtn").onclick = addText;
-
-/* ======================================================
+/* ===========================
    EMOJI
-====================================================== */
-document.getElementById("emojiBtn").onclick = () => {
+=========================== */
+document.getElementById("addEmojiBtn").onclick = () => {
   const e = new fabric.Textbox("😀", {
     left: 200,
     top: 200,
-    fontSize: 80,
-    textBaseline: "top"
+    fontSize: 80
   });
   canvas.add(e);
   canvas.setActiveObject(e);
