@@ -799,9 +799,9 @@
       clearTimeout(saveTimer);
       saveTimer = setTimeout(saveDraft, 450);
     }
-    canvas.on("object:added", scheduleSave);
-    canvas.on("object:modified", scheduleSave);
-    canvas.on("object:removed", scheduleSave);
+    //canvas.on("object:added", scheduleSave);
+   // canvas.on("object:modified", scheduleSave);
+   // canvas.on("object:removed", scheduleSave);
 
     // =========================
     // Canvas size
@@ -1262,14 +1262,15 @@
     // =========================
     // Init
     // =========================
-    function initFresh(){
-      pages = [ canvas.toJSON() ];
-      currentPageIndex = 0;
-      updatePageLabel();
-      setZoom(1);
-      refreshLayers();
-      saveDraft();
-    }
+   function initFresh(){
+  pages = [ canvas.toJSON() ];
+  currentPageIndex = 0;
+  updatePageLabel();
+  setZoom(1);
+  refreshLayers();
+  // saveDraft(); ❌ απενεργοποιημένο
+}
+
 
     // try load draft
     const loaded = loadDraft();
