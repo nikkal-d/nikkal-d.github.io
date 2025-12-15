@@ -1,851 +1,243 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Photobook Editor</title>
+<meta charset="UTF-8" />
+<title>Photobook Editor</title>
 
-  <style>
-    :root{
-      --bg:#0f1115; --panel:#151924; --panel2:#10131b; --border:#232a3a;
-      --text:#e9eefc; --muted:#a9b3cf; --btn:#1f2636; --btn2:#2a3550;
-      --accent:#7aa2ff; --danger:#ff6b6b; --ok:#3ddc97;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Arial;}
-    button,input,select{font:inherit}
+<!-- FABRIC -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-    .app{height:100%;display:grid;grid-template-columns:72px 320px 1fr 360px;grid-template-rows:56px 1fr}
-    header{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--panel2)}
-    header .title{font-weight:800}
-    header .sp{flex:1}
-    header .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);display:flex;gap:8px;align-items:center}
-    header .pill b{color:var(--text)}
-    #statusDot{width:9px;height:9px;border-radius:999px;background:var(--ok);display:inline-block}
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #1e1e1e;
+  color: #eee;
+  font-family: Arial, sans-serif;
+}
 
-    .rail{grid-row:2;grid-column:1;background:var(--panel2);border-right:1px solid var(--border);
-      display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px}
-    .rail button{width:48px;height:48px;border-radius:12px;border:1px solid var(--border);background:var(--btn);color:var(--text);cursor:pointer}
-    .rail button:hover{background:var(--btn2)}
-    .rail button.active{outline:2px solid var(--accent)}
-    .rail .hint{font-size:11px;color:var(--muted);text-align:center}
+#app {
+  display: flex;
+  height: 100%;
+}
 
-    .left{grid-row:2;grid-column:2;background:var(--panel);border-right:1px solid var(--border);overflow:auto}
-    .leftHead{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--border);padding:12px;z-index:2}
-    .leftHead .row{display:flex;gap:8px;align-items:center}
-    .leftHead h3{margin:0;font-size:14px;color:var(--muted);font-weight:800}
-    .leftBody{padding:12px}
-    .group{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-    .btn{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--btn);color:var(--text);cursor:pointer;text-align:left}
-    .btn:hover{background:var(--btn2)}
-    .btn.small{padding:8px 10px;font-size:13px}
-    .btn.danger{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.35)}
-    .btn.danger:hover{background:rgba(255,107,107,.18)}
-    .row{display:flex;gap:8px;align-items:center}
-    .row .btn{flex:1}
-    .small{font-size:12px;color:var(--muted);line-height:1.3}
-    .label{font-size:12px;color:var(--muted);font-weight:700}
+/* LEFT BAR */
+#leftBar {
+  width: 220px;
+  background: #2a2a2a;
+  padding: 12px;
+  box-sizing: border-box;
+}
 
-    .stage{grid-row:2;grid-column:3;display:flex;align-items:center;justify-content:center;padding:18px;overflow:hidden}
-    .canvasHost{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-      background:#1a1f2d;border:1px solid var(--border);border-radius:16px;position:relative;overflow:hidden}
-    #canvasWrap{padding:18px;border-radius:14px;background:#0b0e14;border:1px solid var(--border)}
-    canvas{background:#fff;border-radius:6px;box-shadow:0 14px 40px rgba(0,0,0,.35);}
+#leftBar button {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px;
+  background: #3a3a3a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+#leftBar button:hover { background:#555; }
 
-    .thumbStrip{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:10px;overflow:auto;padding:10px;
-      background:rgba(10,12,18,.6);border:1px solid var(--border);border-radius:14px;backdrop-filter: blur(6px);}
-    .thumb{width:90px;flex:0 0 auto;border:1px solid var(--border);border-radius:12px;background:#0b0e14;cursor:pointer;overflow:hidden}
-    .thumb.active{outline:2px solid var(--accent)}
-    .thumb img{display:block;width:100%;height:60px;object-fit:cover;background:#fff}
+/* CANVAS AREA */
+#center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #111;
+}
 
-    .right{grid-row:2;grid-column:4;background:var(--panel);border-left:1px solid var(--border);overflow:auto}
-    .rightHead{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--border);padding:12px;z-index:2;
-      display:flex;align-items:center;justify-content:space-between}
-    .rightHead h3{margin:0;font-size:14px;color:var(--muted);font-weight:800}
-    .toggle{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--btn);color:var(--text);cursor:pointer}
-    .toggle:hover{background:var(--btn2)}
-    .panel{display:none;padding:12px}
-    .panel.open{display:block}
-    .kv{display:flex;align-items:center;justify-content:space-between;padding:10px;border:1px solid var(--border);
-      border-radius:12px;background:var(--btn);margin-bottom:10px;gap:10px}
-    .kv strong{font-size:12px;color:var(--muted)}
-    .zoomBox{display:flex;gap:8px;align-items:center}
-    .zoomBox button{width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--btn2);color:var(--text);cursor:pointer}
-    .zoomBox button:hover{filter:brightness(1.08)}
-    #zoomValue{min-width:64px;text-align:center;font-weight:800}
+#topBar {
+  padding: 8px;
+  background: #222;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
-    .layerList{display:flex;flex-direction:column;gap:8px}
-    .layerItem{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px;border:1px solid var(--border);border-radius:12px;background:#0f1320;cursor:pointer}
-    .layerItem.active{outline:2px solid var(--accent)}
-    .layerItem .name{font-size:13px}
-    .layerItem .type{font-size:11px;color:var(--muted)}
-    .miniBtn{padding:7px 9px;border-radius:10px;border:1px solid var(--border);background:var(--btn);color:var(--text);cursor:pointer}
-    .miniBtn:hover{background:var(--btn2)}
+#topBar button {
+  padding: 6px 10px;
+  background: #444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
 
-    /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
-    .modal.open{display:flex}
-    .modalCard{width:min(1000px,100%);height:min(720px,100%);background:#0b0e14;border:1px solid var(--border);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
-    .modalTop{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-    .modalTop .sp{flex:1}
-    .modalBody{flex:1;display:flex;align-items:center;justify-content:center;background:#111827;position:relative}
-    .modalBody img{max-width:100%;max-height:100%;object-fit:contain;background:#fff;border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
-    .modalNav{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:10px;justify-content:center}
-    .kbd{font-size:12px;color:var(--muted)}
-  </style>
+#canvasWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
 
-  <!-- Fix για "alphabetical" πριν φορτώσει το Fabric -->
-  <script>
-    (function(){
-      const proto = CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
-      if (!proto) return;
-      const desc = Object.getOwnPropertyDescriptor(proto, "textBaseline");
-      if (!desc || !desc.set) return;
-      Object.defineProperty(proto, "textBaseline", {
-        get: desc.get,
-        set: function(v){
-          if (v === "alphabetical") v = "alphabetic";
-          return desc.set.call(this, v);
-        }
-      });
-    })();
-  </script>
-
-  <!-- Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+canvas {
+  background: #fff;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+}
+</style>
 </head>
 
 <body>
-  <div class="app">
-    <header>
-      <div class="title">Photobook Editor</div>
-      <div class="pill"><span id="statusDot"></span><b id="statusText">Ready</b></div>
-      <div class="sp"></div>
-      <div class="pill"><span class="kbd">Space</span> Pan · <span class="kbd">Ctrl+Wheel</span> Zoom</div>
-    </header>
+<div id="app">
 
-    <!-- Left rail -->
-    <div class="rail">
-      <button id="railTools" class="active" title="Tools">🧰</button>
-      <button id="railPages" title="Pages">📄</button>
-      <button id="railTemplates" title="Templates">✨</button>
-      <button id="railStickers" title="Stickers">😀</button>
-      <div class="hint">Panels</div>
-    </div>
+  <!-- LEFT -->
+  <div id="leftBar">
+    <button onclick="addText()">➕ Text</button>
 
-    <!-- Left panels -->
-    <aside class="left">
-      <div class="leftHead">
-        <div class="row">
-          <h3 id="leftTitle">Tools</h3>
-        </div>
-        <div class="small">Πρώτα σταθεροποιούμε λειτουργίες. Μετά AI / export cloud.</div>
-      </div>
+    <button onclick="imageInput.click()">🖼 Image</button>
+    <input id="imageInput" type="file" accept="image/*" hidden>
 
-      <div class="leftBody">
-        <!-- TOOLS -->
-        <div class="panelLeft" data-panel="tools">
-          <div class="group">
-            <button class="btn" id="addTextBtn">➕ Text</button>
-            <div class="row">
-              <button class="btn" id="addEmojiBtn">😀 Emoji</button>
-              <button class="btn" id="addImageBtn">🖼 Image</button>
-            </div>
-            <div class="small">Tip: Κάνε click σε object → layers δεξιά.</div>
-          </div>
+    <hr style="border:0;border-top:1px solid #444;margin:10px 0">
 
-          <div class="group">
-            <div class="label">Canvas size</div>
-            <div class="row">
-              <select class="btn small" id="sizePreset">
-                <option value="A4P">A4 Portrait</option>
-                <option value="A4L">A4 Landscape</option>
-                <option value="SQUARE">Square</option>
-                <option value="STORY">Story</option>
-                <option value="HD">HD</option>
-              </select>
-              <button class="btn small" id="applyPreset">Apply</button>
-            </div>
-            <div class="row">
-              <input class="btn small" id="customW" type="number" min="200" max="4000" placeholder="W (px)">
-              <input class="btn small" id="customH" type="number" min="200" max="4000" placeholder="H (px)">
-              <button class="btn small" id="applyCustom">Set</button>
-            </div>
-          </div>
-
-          <div class="group">
-            <div class="label">Draft</div>
-            <div class="row">
-              <button class="btn small" id="saveDraftBtn">Save draft</button>
-              <button class="btn small" id="loadDraftBtn">Load draft</button>
-            </div>
-            <button class="btn danger" id="clearDraftBtn">Clear draft</button>
-            <div class="small">Σώζουμε ΜΟΝΟ JSON (όχι εικόνες) για να μην γεμίζει το localStorage.</div>
-          </div>
-        </div>
-
-        <!-- PAGES -->
-        <div class="panelLeft" data-panel="pages" style="display:none">
-          <div class="group">
-            <div class="row">
-              <button class="btn" id="prevPageBtn">⟵ Prev</button>
-              <button class="btn" id="nextPageBtn">Next ⟶</button>
-            </div>
-            <div class="row">
-              <button class="btn small" id="dupPageBtn">Duplicate</button>
-              <button class="btn small danger" id="delPageBtn">Delete</button>
-            </div>
-            <div class="small" id="pageInfo">1 / 1</div>
-          </div>
-        </div>
-
-        <!-- TEMPLATES -->
-        <div class="panelLeft" data-panel="templates" style="display:none">
-          <div class="group">
-            <div class="small">Templates demo (2). Θα κουμπώσουν αργότερα με real assets.</div>
-            <button class="btn" id="tpl1">Template 1 (title + photo)</button>
-            <button class="btn" id="tpl2">Template 2 (2 photos)</button>
-          </div>
-        </div>
-
-        <!-- STICKERS -->
-        <div class="panelLeft" data-panel="stickers" style="display:none">
-          <div class="group">
-            <div class="small">Sticker emojis (demo). Αργότερα θα τα κάνουμε load από assets JSON.</div>
-            <div class="row">
-              <button class="btn" data-emoji="😀">😀</button>
-              <button class="btn" data-emoji="😍">😍</button>
-            </div>
-            <div class="row">
-              <button class="btn" data-emoji="🔥">🔥</button>
-              <button class="btn" data-emoji="⭐">⭐</button>
-            </div>
-            <div class="row">
-              <button class="btn" data-emoji="🎁">🎁</button>
-              <button class="btn" data-emoji="📌">📌</button>
-            </div>
-          </div>
-        </div>
-
-        <input type="file" id="imageInput" accept="image/*" hidden />
-      </div>
-    </aside>
-
-    <!-- Stage -->
-    <main class="stage">
-      <div class="canvasHost" id="canvasHost">
-        <div id="canvasWrap">
-          <canvas id="canvas" width="1240" height="1754"></canvas>
-        </div>
-        <div class="thumbStrip" id="thumbStrip"></div>
-      </div>
-    </main>
-
-    <!-- Right -->
-    <aside class="right">
-      <div class="rightHead">
-        <h3>View / Layers / Export</h3>
-        <button class="toggle" id="toggleRight">Open/Close</button>
-      </div>
-
-      <div class="panel open" id="rightPanel">
-        <div class="kv">
-          <strong>Zoom</strong>
-          <div class="zoomBox">
-            <button id="zoomOutBtn">−</button>
-            <div id="zoomValue">100%</div>
-            <button id="zoomInBtn">+</button>
-            <button id="zoomResetBtn" title="Reset">⟲</button>
-          </div>
-        </div>
-
-        <div class="kv">
-          <strong>Fit</strong>
-          <button class="toggle" id="fitBtn">Fit to Screen</button>
-        </div>
-
-        <div class="group">
-          <div class="label">Layers</div>
-          <div class="row">
-            <button class="miniBtn" id="bringFwd">Bring +</button>
-            <button class="miniBtn" id="sendBack">Send −</button>
-            <button class="miniBtn" id="delObj">Delete</button>
-          </div>
-          <div class="layerList" id="layerList"></div>
-        </div>
-
-        <div class="group">
-          <div class="label">Preview</div>
-          <button class="btn" id="previewFlipBtn">Flipbook Preview</button>
-        </div>
-
-        <div class="group">
-          <div class="label">Export</div>
-          <button class="btn" id="exportPNG">Export PNG</button>
-          <button class="btn" id="exportPDF">Export PDF</button>
-          <button class="btn" id="exportJSON">Export JSON</button>
-        </div>
-
-        <div class="small">Σημείωση: Cloud export / AI features θα μπουν μετά, αφού είναι σταθερά αυτά.</div>
-      </div>
-    </aside>
+    <button onclick="undo()">↩ Undo</button>
+    <button onclick="redo()">↪ Redo</button>
   </div>
 
-  <!-- Preview Modal -->
-  <div class="modal" id="previewModal">
-    <div class="modalCard">
-      <div class="modalTop">
-        <b>Flipbook Preview</b>
-        <div class="sp"></div>
-        <button class="toggle" id="prevPrev">⟵</button>
-        <button class="toggle" id="nextPrev">⟶</button>
-        <button class="toggle" id="closePreview">Close</button>
-      </div>
-      <div class="modalBody">
-        <img id="previewImg" alt="preview">
-        <div class="modalNav">
-          <div class="pill"><b id="previewLabel">1 / 1</b></div>
-        </div>
-      </div>
+  <!-- CENTER -->
+  <div id="center">
+    <div id="topBar">
+      <button onclick="zoomIn()">＋</button>
+      <button onclick="zoomOut()">－</button>
+      <button onclick="resetZoom()">100%</button>
+      <span id="zoomLabel">100%</span>
+    </div>
+
+    <div id="canvasWrap">
+      <canvas id="canvas" width="1240" height="1754"></canvas>
     </div>
   </div>
 
-  <script>
-    // --------------------------
-    // FULL PACK APP (single-file)
-    // --------------------------
-    const App = {
-      canvas: null,
-      zoom: 1,
-      pages: [{ json: null, thumb: null }],
-      current: 0,
-      restoring: false,
-      draftKey: "pbs_draft_json_only_v1",
-      previewIndex: 0,
-      presets: {
-        A4P:{w:1240,h:1754}, A4L:{w:1754,h:1240}, SQUARE:{w:1400,h:1400},
-        STORY:{w:1080,h:1920}, HD:{w:1920,h:1080}
-      }
-    };
+</div>
 
-    const $ = (id) => document.getElementById(id);
-    const status = (t, ok=true) => {
-      $("statusText").textContent = t;
-      $("statusDot").style.background = ok ? "var(--ok)" : "var(--danger)";
-    };
+<script>
+/* =====================================================
+   FABRIC FIX — ΣΚΟΤΩΝΕΙ ΤΟ "alphabetical" ΓΙΑ ΠΑΝΤΑ
+===================================================== */
+fabric.Textbox.prototype.textBaseline = "alphabetic";
+fabric.Text.prototype.textBaseline = "alphabetic";
+fabric.IText.prototype.textBaseline = "alphabetic";
 
-    function ensureFabric(){
-      if (typeof window.fabric === "undefined") {
-        status("Fabric missing", false);
-        alert("Δεν φόρτωσε το Fabric (CDN). Κάνε Ctrl+Shift+R.");
-        return false;
-      }
-      return true;
-    }
+/* =====================================================
+   APP
+===================================================== */
+const App = {};
+App.canvas = new fabric.Canvas("canvas", {
+  preserveObjectStacking: true,
+  selection: true
+});
 
-    function init(){
-      if (!ensureFabric()) return;
+/* =====================================================
+   ZOOM
+===================================================== */
+let zoom = 1;
 
-      App.canvas = new fabric.Canvas("canvas", { preserveObjectStacking:true, selection:true });
-      App.canvas.setBackgroundColor("#ffffff", App.canvas.renderAll.bind(App.canvas));
+function updateZoomLabel(){
+  document.getElementById("zoomLabel").textContent =
+    Math.round(zoom * 100) + "%";
+}
 
-      bindUI();
-      bindCanvasEvents();
+function setZoom(z){
+  zoom = Math.max(0.2, Math.min(4, z));
+  const center = new fabric.Point(
+    App.canvas.getWidth()/2,
+    App.canvas.getHeight()/2
+  );
+  App.canvas.zoomToPoint(center, zoom);
+  App.canvas.requestRenderAll();
+  updateZoomLabel();
+}
 
-      // init first thumb
-      savePage();
-      refreshThumbs();
-      refreshLayers();
-      fitToScreen();
+function zoomIn(){ setZoom(zoom + 0.1); }
+function zoomOut(){ setZoom(zoom - 0.1); }
+function resetZoom(){
+  zoom = 1;
+  App.canvas.setViewportTransform([1,0,0,1,0,0]);
+  App.canvas.setZoom(1);
+  updateZoomLabel();
+}
 
-      status("Ready");
-    }
+/* =====================================================
+   HISTORY
+===================================================== */
+let undoStack = [];
+let redoStack = [];
+let restoring = false;
 
-    // ---------------- UI ----------------
-    function bindUI(){
-      // rail
-      const railMap = {
-        railTools: ["tools","Tools"],
-        railPages: ["pages","Pages"],
-        railTemplates: ["templates","Templates"],
-        railStickers: ["stickers","Stickers"],
-      };
-      Object.keys(railMap).forEach(id=>{
-        $(id).addEventListener("click", ()=>{
-          document.querySelectorAll(".rail button").forEach(b=>b.classList.remove("active"));
-          $(id).classList.add("active");
-          const [p,title] = railMap[id];
-          $("leftTitle").textContent = title;
-          document.querySelectorAll(".panelLeft").forEach(el=>{
-            el.style.display = (el.dataset.panel === p) ? "" : "none";
-          });
-        });
-      });
+function saveHistory(){
+  if(restoring) return;
+  undoStack.push(JSON.stringify(App.canvas.toJSON()));
+  if(undoStack.length > 50) undoStack.shift();
+  redoStack = [];
+}
 
-      // tools
-      $("addTextBtn").addEventListener("click", addText);
-      $("addEmojiBtn").addEventListener("click", ()=> addEmoji("😀"));
-      $("addImageBtn").addEventListener("click", ()=> $("imageInput").click());
-      $("imageInput").addEventListener("change", onImagePicked);
+App.canvas.on("object:added", saveHistory);
+App.canvas.on("object:modified", saveHistory);
+App.canvas.on("object:removed", saveHistory);
 
-      // stickers
-      document.querySelectorAll('[data-emoji]').forEach(btn=>{
-        btn.addEventListener("click", ()=> addEmoji(btn.dataset.emoji));
-      });
+function undo(){
+  if(undoStack.length < 2) return;
+  restoring = true;
+  redoStack.push(undoStack.pop());
+  const prev = undoStack[undoStack.length-1];
+  App.canvas.loadFromJSON(prev, ()=>{
+    App.canvas.renderAll();
+    restoring = false;
+  });
+}
 
-      // pages
-      $("nextPageBtn").addEventListener("click", nextPage);
-      $("prevPageBtn").addEventListener("click", prevPage);
-      $("dupPageBtn").addEventListener("click", duplicatePage);
-      $("delPageBtn").addEventListener("click", deletePage);
+function redo(){
+  if(!redoStack.length) return;
+  restoring = true;
+  const next = redoStack.pop();
+  undoStack.push(next);
+  App.canvas.loadFromJSON(next, ()=>{
+    App.canvas.renderAll();
+    restoring = false;
+  });
+}
 
-      // size
-      $("applyPreset").addEventListener("click", ()=>{
-        setCanvasSize(App.presets[$("sizePreset").value]);
-      });
-      $("applyCustom").addEventListener("click", ()=>{
-        const w = Number($("customW").value), h = Number($("customH").value);
-        if (!w || !h) return alert("Βάλε W/H.");
-        setCanvasSize({w: Math.max(200,Math.min(4000,w)), h: Math.max(200,Math.min(4000,h))});
-      });
+/* =====================================================
+   TOOLS
+===================================================== */
+function addText(){
+  const t = new fabric.Textbox("Text", {
+    left: 150,
+    top: 150,
+    fontSize: 48,
+    fill: "#111",
+    fontFamily: "Arial",
+    textBaseline: "alphabetic"
+  });
+  App.canvas.add(t);
+  App.canvas.setActiveObject(t);
+  App.canvas.requestRenderAll();
+}
 
-      // draft (JSON only)
-      $("saveDraftBtn").addEventListener("click", saveDraft);
-      $("loadDraftBtn").addEventListener("click", loadDraft);
-      $("clearDraftBtn").addEventListener("click", ()=>{
-        localStorage.removeItem(App.draftKey);
-        status("Draft cleared");
-      });
+const imageInput = document.getElementById("imageInput");
+imageInput.onchange = e => {
+  const file = e.target.files[0];
+  if(!file) return;
 
-      // right panel
-      $("toggleRight").addEventListener("click", ()=> $("rightPanel").classList.toggle("open"));
-
-      // zoom
-      $("zoomInBtn").addEventListener("click", ()=> setZoom(App.zoom + 0.1));
-      $("zoomOutBtn").addEventListener("click", ()=> setZoom(App.zoom - 0.1));
-      $("zoomResetBtn").addEventListener("click", ()=> setZoom(1));
-      $("fitBtn").addEventListener("click", fitToScreen);
-
-      // layers buttons
-      $("bringFwd").addEventListener("click", ()=> { const o=App.canvas.getActiveObject(); if(!o)return; App.canvas.bringForward(o); App.canvas.requestRenderAll(); refreshLayers(); savePage(); });
-      $("sendBack").addEventListener("click", ()=> { const o=App.canvas.getActiveObject(); if(!o)return; App.canvas.sendBackwards(o); App.canvas.requestRenderAll(); refreshLayers(); savePage(); });
-      $("delObj").addEventListener("click", ()=> { const o=App.canvas.getActiveObject(); if(!o)return; App.canvas.remove(o); App.canvas.requestRenderAll(); refreshLayers(); savePage(); });
-
-      // templates demo
-      $("tpl1").addEventListener("click", ()=>{
-        clearCanvas();
-        addTextbox("My Title", 100, 80, 64);
-        addRect(100, 220, 900, 520);
-        savePage(); refreshThumbs(); refreshLayers(); status("Template 1");
-      });
-      $("tpl2").addEventListener("click", ()=>{
-        clearCanvas();
-        addRect(100, 120, 460, 680);
-        addRect(620, 120, 460, 680);
-        savePage(); refreshThumbs(); refreshLayers(); status("Template 2");
-      });
-
-      // preview
-      $("previewFlipBtn").addEventListener("click", openPreview);
-      $("closePreview").addEventListener("click", closePreview);
-      $("prevPrev").addEventListener("click", ()=> previewStep(-1));
-      $("nextPrev").addEventListener("click", ()=> previewStep(1));
-      $("previewModal").addEventListener("click", (e)=> { if(e.target.id==="previewModal") closePreview(); });
-
-      // export
-      $("exportPNG").addEventListener("click", exportPNG);
-      $("exportJSON").addEventListener("click", exportJSON);
-      $("exportPDF").addEventListener("click", exportPDF);
-    }
-
-    function bindCanvasEvents(){
-      // update layers on selection change
-      App.canvas.on("selection:created", refreshLayers);
-      App.canvas.on("selection:updated", refreshLayers);
-      App.canvas.on("selection:cleared", refreshLayers);
-
-      // autosave current page JSON only (throttle)
-      let t=null;
-      const schedule = ()=>{
-        if (App.restoring) return;
-        clearTimeout(t);
-        t=setTimeout(()=> { savePage(); refreshThumbs(); }, 450);
-      };
-      App.canvas.on("object:added", schedule);
-      App.canvas.on("object:modified", schedule);
-      App.canvas.on("object:removed", schedule);
-
-      // Pan with Space + CtrlWheel zoom
-      let panMode=false, isPanning=false, last={x:0,y:0};
-      document.addEventListener("keydown",(e)=>{ if(e.code==="Space") panMode=true; });
-      document.addEventListener("keyup",(e)=>{ if(e.code==="Space") panMode=false; });
-
-      App.canvas.on("mouse:down",(opt)=>{
-        if(!panMode) return;
-        isPanning=true;
-        last={x:opt.e.clientX,y:opt.e.clientY};
-      });
-      App.canvas.on("mouse:move",(opt)=>{
-        if(!isPanning) return;
-        const vpt=App.canvas.viewportTransform;
-        vpt[4]+= opt.e.clientX-last.x;
-        vpt[5]+= opt.e.clientY-last.y;
-        App.canvas.setViewportTransform(vpt);
-        last={x:opt.e.clientX,y:opt.e.clientY};
-      });
-      App.canvas.on("mouse:up",()=> isPanning=false);
-
-      App.canvas.on("mouse:wheel",(opt)=>{
-        const e=opt.e;
-        if(!e.ctrlKey) return;
-        e.preventDefault(); e.stopPropagation();
-        const factor = e.deltaY>0 ? 0.95 : 1.05;
-        const next = Math.max(0.2, Math.min(4, App.zoom*factor));
-        App.zoom = next;
-        const pt = new fabric.Point(e.offsetX, e.offsetY);
-        App.canvas.zoomToPoint(pt, App.zoom);
-        App.canvas.requestRenderAll();
-        updateZoomLabel();
-      });
-    }
-
-    // ---------------- Tools ----------------
-    function addText(){
-      const t = new fabric.Textbox("Text", { left:140, top:140, fontSize:44, fill:"#111", fontFamily:"Arial" });
-      App.canvas.add(t); App.canvas.setActiveObject(t); App.canvas.requestRenderAll();
-      savePage(); refreshThumbs(); refreshLayers(); status("Text added");
-    }
-    function addTextbox(text,x,y,size){
-      const t = new fabric.Textbox(text, { left:x, top:y, fontSize:size, fill:"#111", fontFamily:"Arial", width:900 });
-      App.canvas.add(t);
-    }
-    function addEmoji(emoji){
-      const t = new fabric.Textbox(emoji, { left:180, top:180, fontSize:90, fill:"#111" });
-      App.canvas.add(t); App.canvas.setActiveObject(t); App.canvas.requestRenderAll();
-      savePage(); refreshThumbs(); refreshLayers(); status("Emoji added");
-    }
-    function onImagePicked(e){
-      const file = e.target.files?.[0];
-      if(!file) return;
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        fabric.Image.fromURL(reader.result, (img)=>{
-          img.set({ left:120, top:120 });
-          img.scaleToWidth(App.canvas.getWidth()*0.45);
-          App.canvas.add(img); App.canvas.setActiveObject(img); App.canvas.requestRenderAll();
-          savePage(); refreshThumbs(); refreshLayers(); status("Image added");
-        });
-      };
-      reader.readAsDataURL(file);
-      e.target.value="";
-    }
-    function addRect(x,y,w,h){
-      const r = new fabric.Rect({ left:x, top:y, width:w, height:h, fill:"#ffffff", stroke:"#111", strokeWidth:3, rx:14, ry:14 });
-      App.canvas.add(r);
-    }
-
-    // ---------------- Zoom / Fit ----------------
-    function updateZoomLabel(){ $("zoomValue").textContent = Math.round(App.zoom*100) + "%"; }
-    function setZoom(z){
-      App.zoom = Math.max(0.2, Math.min(4, Number(z)||1));
-      const center = new fabric.Point(App.canvas.getWidth()/2, App.canvas.getHeight()/2);
-      App.canvas.zoomToPoint(center, App.zoom);
+  const reader = new FileReader();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img=>{
+      img.scaleToWidth(App.canvas.getWidth()*0.4);
+      img.left = 200;
+      img.top = 200;
+      App.canvas.add(img);
+      App.canvas.setActiveObject(img);
       App.canvas.requestRenderAll();
-      updateZoomLabel();
-    }
-    function fitToScreen(){
-      const host = $("canvasHost");
-      const pad = 120;
-      const availW = host.clientWidth - pad;
-      const availH = host.clientHeight - pad;
+    });
+  };
+  reader.readAsDataURL(file);
+};
 
-      App.canvas.setViewportTransform([1,0,0,1,0,0]);
-      App.zoom = 1;
-
-      const s = Math.min(availW / App.canvas.getWidth(), availH / App.canvas.getHeight());
-      setZoom(s);
-
-      const vt = App.canvas.viewportTransform;
-      vt[4] = (availW - App.canvas.getWidth()*s)/2;
-      vt[5] = (availH - App.canvas.getHeight()*s)/2;
-      App.canvas.setViewportTransform(vt);
-      App.canvas.requestRenderAll();
-      updateZoomLabel();
-      status("Fit");
-    }
-    function setCanvasSize({w,h}){
-      savePage();
-      App.canvas.setWidth(w);
-      App.canvas.setHeight(h);
-      App.canvas.setBackgroundColor("#ffffff", App.canvas.renderAll.bind(App.canvas));
-      fitToScreen();
-      savePage(); refreshThumbs(); refreshLayers();
-      status(`Size ${w}x${h}`);
-    }
-
-    // ---------------- Pages ----------------
-    function savePage(){
-      if (App.restoring) return;
-      App.pages[App.current].json = sanitizeJSON(App.canvas.toJSON());
-      // thumb
-      try{
-        App.pages[App.current].thumb = App.canvas.toDataURL({format:"png",quality:0.7,multiplier:0.2});
-      }catch{}
-      updatePageInfo();
-    }
-    function loadPage(i){
-      if (i<0 || i>=App.pages.length) return;
-      savePage();
-      App.current = i;
-      const data = App.pages[App.current].json;
-      App.restoring = true;
-      App.canvas.clear();
-      App.canvas.setBackgroundColor("#ffffff", App.canvas.renderAll.bind(App.canvas));
-      if (!data){
-        App.restoring = false;
-        refreshThumbs(); refreshLayers(); updatePageInfo();
-        return;
-      }
-      App.canvas.loadFromJSON(data, ()=>{
-        App.canvas.requestRenderAll();
-        App.restoring = false;
-        refreshThumbs(); refreshLayers(); updatePageInfo();
-      });
-    }
-    function nextPage(){
-      if (App.current === App.pages.length-1){
-        savePage();
-        App.pages.push({json:null,thumb:null});
-        loadPage(App.pages.length-1);
-      } else loadPage(App.current+1);
-      status("Next page");
-    }
-    function prevPage(){
-      if (App.current===0) return;
-      loadPage(App.current-1);
-      status("Prev page");
-    }
-    function duplicatePage(){
-      savePage();
-      const clone = structuredClone(App.pages[App.current]);
-      App.pages.splice(App.current+1,0,clone);
-      loadPage(App.current+1);
-      status("Duplicated");
-    }
-    function deletePage(){
-      if (App.pages.length<=1) return alert("Πρέπει να υπάρχει 1 σελίδα.");
-      savePage();
-      App.pages.splice(App.current,1);
-      loadPage(Math.max(0, App.current-1));
-      status("Deleted page");
-    }
-    function updatePageInfo(){
-      $("pageInfo").textContent = `${App.current+1} / ${App.pages.length}`;
-    }
-    function refreshThumbs(){
-      const strip = $("thumbStrip");
-      strip.innerHTML = "";
-      App.pages.forEach((p,idx)=>{
-        const d = document.createElement("div");
-        d.className = "thumb" + (idx===App.current ? " active" : "");
-        const img = document.createElement("img");
-        img.src = p.thumb || "";
-        img.alt = "page " + (idx+1);
-        d.appendChild(img);
-        d.addEventListener("click", ()=> loadPage(idx));
-        strip.appendChild(d);
-      });
-    }
-
-    // ---------------- Layers ----------------
-    function refreshLayers(){
-      const list = $("layerList");
-      list.innerHTML = "";
-      const objs = App.canvas.getObjects().slice().reverse(); // top first
-      const active = App.canvas.getActiveObject();
-
-      objs.forEach((o, idx)=>{
-        const item = document.createElement("div");
-        item.className = "layerItem" + (o===active ? " active" : "");
-        const left = document.createElement("div");
-        const type = o.type || "object";
-        const name = (type==="textbox") ? (o.text?.slice(0,18) || "Text") :
-                     (type==="image") ? "Image" :
-                     (type==="rect") ? "Shape" : type;
-        left.innerHTML = `<div class="name">${name}</div><div class="type">${type}</div>`;
-        const btn = document.createElement("button");
-        btn.className = "miniBtn";
-        btn.textContent = "Select";
-        btn.addEventListener("click",(e)=>{
-          e.stopPropagation();
-          App.canvas.setActiveObject(o);
-          App.canvas.requestRenderAll();
-          refreshLayers();
-        });
-        item.appendChild(left);
-        item.appendChild(btn);
-        item.addEventListener("click", ()=>{
-          App.canvas.setActiveObject(o);
-          App.canvas.requestRenderAll();
-          refreshLayers();
-        });
-        list.appendChild(item);
-      });
-    }
-
-    // ---------------- Draft (JSON only, no quota) ----------------
-    function saveDraft(){
-      savePage();
-      const payload = { pages: App.pages.map(p=>({json:p.json})), current: App.current, size:{w:App.canvas.getWidth(),h:App.canvas.getHeight()} };
-      localStorage.setItem(App.draftKey, JSON.stringify(payload));
-      status("Draft saved");
-    }
-    function loadDraft(){
-      const raw = localStorage.getItem(App.draftKey);
-      if(!raw) return alert("Δεν υπάρχει draft.");
-      const data = JSON.parse(raw);
-      App.pages = (data.pages||[{json:null}]).map(p=>({json:p.json, thumb:null}));
-      if (data.size?.w && data.size?.h){
-        App.canvas.setWidth(data.size.w);
-        App.canvas.setHeight(data.size.h);
-      }
-      App.current = Math.max(0, Math.min(data.current||0, App.pages.length-1));
-      loadPage(App.current);
-      setTimeout(()=> { refreshThumbs(); refreshLayers(); fitToScreen(); }, 50);
-      status("Draft loaded");
-    }
-
-    // ---------------- Preview ----------------
-    function openPreview(){
-      savePage();
-      App.previewIndex = App.current;
-      $("previewModal").classList.add("open");
-      renderPreview();
-    }
-    function closePreview(){ $("previewModal").classList.remove("open"); }
-    function previewStep(dir){
-      const n = App.pages.length;
-      App.previewIndex = (App.previewIndex + dir + n) % n;
-      renderPreview();
-    }
-    function renderPreview(){
-      // make image for preview on demand
-      const idx = App.previewIndex;
-      const cur = App.current;
-      if (idx === cur){
-        const url = App.canvas.toDataURL({format:"png",quality:0.9});
-        $("previewImg").src = url;
-      } else {
-        // render offscreen quickly by loading JSON into temp canvas
-        const tmp = new fabric.StaticCanvas(null, { width: App.canvas.getWidth(), height: App.canvas.getHeight() });
-        tmp.setBackgroundColor("#ffffff", tmp.renderAll.bind(tmp));
-        const data = App.pages[idx].json;
-        if (!data) {
-          const blank = document.createElement("canvas");
-          blank.width = tmp.getWidth(); blank.height = tmp.getHeight();
-          const ctx = blank.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,blank.width,blank.height);
-          $("previewImg").src = blank.toDataURL("image/png");
-        } else {
-          tmp.loadFromJSON(data, ()=>{
-            tmp.renderAll();
-            $("previewImg").src = tmp.toDataURL({format:"png",quality:0.9});
-            tmp.dispose();
-          });
-        }
-      }
-      $("previewLabel").textContent = `${idx+1} / ${App.pages.length}`;
-    }
-
-    // ---------------- Export ----------------
-    function exportPNG(){
-      savePage();
-      const url = App.canvas.toDataURL({format:"png",quality:0.95});
-      downloadData(url, `page-${App.current+1}.png`);
-      status("PNG exported");
-    }
-    function exportJSON(){
-      savePage();
-      const payload = { pages: App.pages.map(p=>p.json), current: App.current, size:{w:App.canvas.getWidth(),h:App.canvas.getHeight()} };
-      const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-      downloadBlob(blob, "photobook.json");
-      status("JSON exported");
-    }
-    async function exportPDF(){
-      savePage();
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ unit:"px", format:[App.canvas.getWidth(), App.canvas.getHeight()] });
-
-      for (let i=0;i<App.pages.length;i++){
-        // render each page as image
-        let dataUrl = null;
-        if (i === App.current){
-          dataUrl = App.canvas.toDataURL({format:"png",quality:0.95});
-        } else {
-          const tmp = new fabric.StaticCanvas(null, { width: App.canvas.getWidth(), height: App.canvas.getHeight() });
-          tmp.setBackgroundColor("#ffffff", tmp.renderAll.bind(tmp));
-          const data = App.pages[i].json;
-          if (data){
-            await new Promise(res=> tmp.loadFromJSON(data, ()=>{ tmp.renderAll(); res(); }));
-          } else {
-            const ctx = tmp.getContext();
-            ctx.fillStyle="#fff"; ctx.fillRect(0,0,tmp.getWidth(),tmp.getHeight());
-          }
-          dataUrl = tmp.toDataURL({format:"png",quality:0.95});
-          tmp.dispose();
-        }
-
-        if (i>0) pdf.addPage([App.canvas.getWidth(), App.canvas.getHeight()]);
-        pdf.addImage(dataUrl, "PNG", 0, 0, App.canvas.getWidth(), App.canvas.getHeight());
-      }
-
-      pdf.save("photobook.pdf");
-      status("PDF exported");
-    }
-
-    function downloadData(dataUrl, filename){
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-    function downloadBlob(blob, filename){
-      const url = URL.createObjectURL(blob);
-      downloadData(url, filename);
-      setTimeout(()=> URL.revokeObjectURL(url), 1500);
-    }
-
-    // ---------------- Helpers ----------------
-    function clearCanvas(){
-      App.canvas.clear();
-      App.canvas.setBackgroundColor("#ffffff", App.canvas.renderAll.bind(App.canvas));
-    }
-
-    // sanitize baseline if any legacy JSON contains it
-    function sanitizeJSON(json){
-      const walk=(n)=>{
-        if(!n || typeof n!=="object") return;
-        if (n.textBaseline === "alphabetical") n.textBaseline = "alphabetic";
-        if (Array.isArray(n)) return n.forEach(walk);
-        for (const k of Object.keys(n)){
-          if (k==="textBaseline" && n[k]==="alphabetical") n[k]="alphabetic";
-          walk(n[k]);
-        }
-      };
-      walk(json);
-      return json;
-    }
-
-    // boot
-    window.addEventListener("DOMContentLoaded", init);
-
-    // expose for UI buttons
-window.addText = addText;
-window.addEmoji = addEmoji;
-window.setZoom = setZoom;
-
-  </script>
+/* INIT */
+saveHistory();
+updateZoomLabel();
+</script>
 </body>
 </html>
