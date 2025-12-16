@@ -1,235 +1,137 @@
 // js/tools.js
 // ============================================================
-// Tools: images, pdf, text, shapes, colors, filters, layers
+// Tools layer (safe, optional).
+// This file MUST NOT break the app if an element is missing.
+// It adds extra actions: shapes, layers, colors (basic stubs).
 // ============================================================
 
 import { fabricCanvas, saveCurrentPage, refreshThumbnails } from "./core.js";
 
-/* --------------------------------------------------
-  HELPERS
--------------------------------------------------- */
+const $ = (id) => document.getElementById(id);
+
 function commit() {
+  if (!fabricCanvas) return;
   fabricCanvas.requestRenderAll();
   saveCurrentPage();
   refreshThumbnails();
 }
 
-function center(obj) {
-  obj.center();
-  obj.setCoords();
-}
-
-/* --------------------------------------------------
-  IMAGE IMPORT
--------------------------------------------------- */
-export function importImage(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.set({
-        left: fabricCanvas.getWidth() / 2,
-        top: fabricCanvas.getHeight() / 2,
-        originX: "center",
-        originY: "center",
-        selectable: true
-      });
-      img.scaleToWidth(fabricCanvas.getWidth() * 0.5);
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      commit();
-    }, { crossOrigin: "anonymous" });
-  };
-  reader.readAsDataURL(file);
-}
-
-/* --------------------------------------------------
-  PDF IMPORT (pages -> images)
--------------------------------------------------- */
-export async function importPDF(file) {
-  if (!file) return alert("PDF not supported yet without pdf.js");
-
-  // Placeholder: treat pdf as image for now
-  alert("PDF import είναι σε βάση – text/OCR έρχεται σε επόμενο βήμα.");
-}
-
-/* --------------------------------------------------
-  TEXT
--------------------------------------------------- */
-export function addHeading() {
-  addText("Heading", 64, "bold");
-}
-
-export function addBody() {
-  addText("Body text", 32, "normal");
-}
-
-export function addCustomText(text = "Text") {
-  addText(text, 28, "normal");
-}
-
-function addText(text, size, weight) {
-  const t = new fabric.IText(text, {
-    fontFamily: "Arial",
-    fontSize: size,
-    fontWeight: weight,
-    fill: "#000000",
-    left: fabricCanvas.getWidth() / 2,
-    top: fabricCanvas.getHeight() / 2,
-    originX: "center",
-    originY: "center"
-  });
-  fabricCanvas.add(t);
-  fabricCanvas.setActiveObject(t);
-  commit();
-}
-
-/* --------------------------------------------------
-  SHAPES
--------------------------------------------------- */
-export function addRect() {
-  const r = new fabric.Rect({
-    width: 300,
-    height: 200,
-    rx: 20,
-    ry: 20,
-    fill: "#4f46e5",
-    left: fabricCanvas.getWidth() / 2,
-    top: fabricCanvas.getHeight() / 2,
-    originX: "center",
-    originY: "center"
-  });
+// -------- Shapes (basic) --------
+function addRect() {
+  if (!fabricCanvas) return;
+  const r = new fabric.Rect({ left: 140, top: 140, width: 260, height: 180, fill: "#ff4d4d", rx: 8, ry: 8 });
   fabricCanvas.add(r);
   fabricCanvas.setActiveObject(r);
   commit();
 }
-
-export function addCircle() {
-  const c = new fabric.Circle({
-    radius: 120,
-    fill: "#22c55e",
-    left: fabricCanvas.getWidth() / 2,
-    top: fabricCanvas.getHeight() / 2,
-    originX: "center",
-    originY: "center"
-  });
+function addCircle() {
+  if (!fabricCanvas) return;
+  const c = new fabric.Circle({ left: 180, top: 180, radius: 90, fill: "#4d7cff" });
   fabricCanvas.add(c);
   fabricCanvas.setActiveObject(c);
   commit();
 }
 
-export function addLine() {
-  const l = new fabric.Line([0, 0, 300, 0], {
-    stroke: "#000000",
-    strokeWidth: 6,
-    left: fabricCanvas.getWidth() / 2 - 150,
-    top: fabricCanvas.getHeight() / 2
+// -------- Layers (basic) --------
+function bringForward() {
+  const obj = fabricCanvas?.getActiveObject();
+  if (!obj) return;
+  fabricCanvas.bringForward(obj);
+  commit();
+}
+function sendBackward() {
+  const obj = fabricCanvas?.getActiveObject();
+  if (!obj) return;
+  fabricCanvas.sendBackwards(obj);
+  commit();
+}
+function bringToFront() {
+  const obj = fabricCanvas?.getActiveObject();
+  if (!obj) return;
+  fabricCanvas.bringToFront(obj);
+  commit();
+}
+function sendToBack() {
+  const obj = fabricCanvas?.getActiveObject();
+  if (!obj) return;
+  fabricCanvas.sendToBack(obj);
+  commit();
+}
+
+// -------- Color (fill) --------
+function setFill(color) {
+  const obj = fabricCanvas?.getActiveObject();
+  if (!obj) return;
+  if (obj.set) obj.set("fill", color);
+  commit();
+}
+
+// Bind buttons if they exist
+document.addEventListener("DOMContentLoaded", () => {
+  $("addRectBtn")?.addEventListener("click", addRect);
+  $("addCircleBtn")?.addEventListener("click", addCircle);
+
+  $("layerUpBtn")?.addEventListener("click", bringForward);
+  $("layerDownBtn")?.addEventListener("click", sendBackward);
+  $("layerTopBtn")?.addEventListener("click", bringToFront);
+  $("layerBottomBtn")?.addEventListener("click", sendToBack);
+
+  $("fillColor")?.addEventListener("input", (e) => setFill(e.target.value));
+});
+
+
+// -------- Quick export (PNG/JSON) --------
+function downloadBlob(blob, filename) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 0);
+}
+
+function exportPNG() {
+  if (!fabricCanvas) return;
+  const dataUrl = fabricCanvas.toDataURL({ format: "png", quality: 0.92 });
+  fetch(dataUrl).then(r => r.blob()).then(b => downloadBlob(b, "page.png"));
+}
+
+function exportJSON() {
+  if (!fabricCanvas) return;
+  const json = fabricCanvas.toJSON();
+  const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
+  downloadBlob(blob, "canvas.json");
+}
+
+function importJSONFile(file) {
+  if (!fabricCanvas || !file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const json = JSON.parse(String(r.result || "{}"));
+      fabricCanvas.loadFromJSON(json, () => {
+        fabricCanvas.renderAll();
+        commit();
+      });
+    } catch (e) {
+      alert("Άκυρο JSON");
+      console.error(e);
+    }
+  };
+  r.readAsText(file);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  $("exportPngBtn")?.addEventListener("click", exportPNG);
+  $("exportJsonBtn")?.addEventListener("click", exportJSON);
+
+  $("importJsonBtn")?.addEventListener("click", () => $("importJsonInput")?.click());
+  $("importJsonInput")?.addEventListener("change", (e) => {
+    const f = e.target?.files?.[0];
+    if (f) importJSONFile(f);
+    e.target.value = "";
   });
-  fabricCanvas.add(l);
-  fabricCanvas.setActiveObject(l);
-  commit();
-}
-
-/* --------------------------------------------------
-  COLORS / OPACITY / SHADOW
--------------------------------------------------- */
-export function setOpacity(val) {
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj) return;
-  obj.set("opacity", Number(val));
-  commit();
-}
-
-export function toggleShadow(enabled) {
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj) return;
-  if (enabled) {
-    obj.set("shadow", new fabric.Shadow({
-      color: "rgba(0,0,0,0.35)",
-      blur: 20,
-      offsetX: 10,
-      offsetY: 10
-    }));
-  } else {
-    obj.set("shadow", null);
-  }
-  commit();
-}
-
-/* --------------------------------------------------
-  FILTERS (IMAGES ONLY)
--------------------------------------------------- */
-export function applyFilter(type, value = 0.5) {
-  const obj = fabricCanvas.getActiveObject();
-  if (!obj || obj.type !== "image") return;
-
-  let filter = null;
-
-  if (type === "brightness") {
-    filter = new fabric.Image.filters.Brightness({ brightness: value });
-  }
-  if (type === "contrast") {
-    filter = new fabric.Image.filters.Contrast({ contrast: value });
-  }
-  if (type === "blur") {
-    filter = new fabric.Image.filters.Blur({ blur: value });
-  }
-
-  if (!filter) return;
-
-  obj.filters = [filter];
-  obj.applyFilters();
-  commit();
-}
-
-/* --------------------------------------------------
-  LAYERS / ORDER
--------------------------------------------------- */
-export function bringForward() {
-  const o = fabricCanvas.getActiveObject();
-  if (o) {
-    fabricCanvas.bringForward(o);
-    commit();
-  }
-}
-
-export function sendBackward() {
-  const o = fabricCanvas.getActiveObject();
-  if (o) {
-    fabricCanvas.sendBackwards(o);
-    commit();
-  }
-}
-
-export function bringToFront() {
-  const o = fabricCanvas.getActiveObject();
-  if (o) {
-    fabricCanvas.bringToFront(o);
-    commit();
-  }
-}
-
-export function sendToBack() {
-  const o = fabricCanvas.getActiveObject();
-  if (o) {
-    fabricCanvas.sendToBack(o);
-    commit();
-  }
-}
-
-/* --------------------------------------------------
-  DELETE
--------------------------------------------------- */
-export function deleteSelected() {
-  const o = fabricCanvas.getActiveObject();
-  if (!o) return;
-  fabricCanvas.remove(o);
-  commit();
-}
-
-/* --------------------------------------------------
-  FUTURE HOOKS (AI)
--------------------------------------------------- */
-export async function removeBackground() {
-  alert("AI background removal θα ενεργοποιηθεί σε επόμενο στάδιο.");
-}
+});
