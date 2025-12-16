@@ -1,17 +1,16 @@
 // js/core.js
 // =====================================================
-// SINGLE SOURCE OF TRUTH FOR CANVAS
+// CORE CANVAS API – STABLE
 // =====================================================
 
 export let fabricCanvas = null;
-
 let zoom = 1;
 
-// ---------------- INIT ----------------
-export function initCanvas(canvasId = "canvas") {
+// ---------- INIT ----------
+export function initCanvas(id = "canvas") {
   if (fabricCanvas) return fabricCanvas;
 
-  fabricCanvas = new fabric.Canvas(canvasId, {
+  fabricCanvas = new fabric.Canvas(id, {
     backgroundColor: "#ffffff",
     preserveObjectStacking: true,
     selection: true
@@ -20,25 +19,25 @@ export function initCanvas(canvasId = "canvas") {
   return fabricCanvas;
 }
 
-// ---------------- TEXT ----------------
+// ---------- TEXT ----------
 export function addText() {
   if (!fabricCanvas) return;
 
-  const text = new fabric.Textbox("Text", {
+  const t = new fabric.Textbox("Text", {
     left: 150,
     top: 150,
     fontSize: 40,
     fill: "#111",
     fontFamily: "Arial",
-    textBaseline: "top" // ✅ IMPORTANT
+    textBaseline: "top" // ✅ FIX
   });
 
-  fabricCanvas.add(text);
-  fabricCanvas.setActiveObject(text);
+  fabricCanvas.add(t);
+  fabricCanvas.setActiveObject(t);
   fabricCanvas.requestRenderAll();
 }
 
-// ---------------- IMAGE ----------------
+// ---------- IMAGE ----------
 export function addImageFromFile(file) {
   if (!fabricCanvas || !file) return;
 
@@ -56,28 +55,28 @@ export function addImageFromFile(file) {
   reader.readAsDataURL(file);
 }
 
-// ---------------- EMOJI ----------------
+// ---------- EMOJI ----------
 export function addEmoji(char) {
   if (!fabricCanvas) return;
 
-  const emoji = new fabric.Text(char, {
+  const e = new fabric.Text(char, {
     left: 200,
     top: 200,
     fontSize: 64,
     textBaseline: "top"
   });
 
-  fabricCanvas.add(emoji);
-  fabricCanvas.setActiveObject(emoji);
+  fabricCanvas.add(e);
+  fabricCanvas.setActiveObject(e);
   fabricCanvas.requestRenderAll();
 }
 
-// ---------------- ZOOM ----------------
+// ---------- ZOOM ----------
 export function getZoom() {
   return zoom;
 }
 
-export function setZoom(value) {
+export function applyZoom(value) {
   if (!fabricCanvas) return;
 
   zoom = Math.min(4, Math.max(0.2, value));
@@ -90,9 +89,12 @@ export function setZoom(value) {
 }
 
 export function resetZoom() {
-  if (!fabricCanvas) return;
-
   zoom = 1;
   fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
   fabricCanvas.requestRenderAll();
+}
+
+// ---------- PLACEHOLDERS (για tools.js) ----------
+export function refreshThumbnails() {
+  // θα μπει κανονικά αργότερα
 }
