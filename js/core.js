@@ -98,3 +98,18 @@ export function resetZoom() {
 export function refreshThumbnails() {
   // θα μπει κανονικά αργότερα
 }
+
+// =====================================================
+// COMPAT EXPORTS (για ui.js & tools.js)
+// ΜΗΝ τα σβήσεις
+// =====================================================
+
+// tools.js τα ζητάει
+export function refreshThumbnails() {
+  // προσωρινό stub – θα υλοποιηθεί σωστά μετά
+}
+
+// ui.js το ζητάει
+export function applyZoom(value) {
+  setZoom(value);
+}
