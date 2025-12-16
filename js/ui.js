@@ -1,97 +1,58 @@
 // js/ui.js
-// ---------------------------------------------
-// UI CONTROLLER (aligned with photobook (3).html)
-// ---------------------------------------------
-import {
-  setZoom, resetZoom, getZoom,
-  addImageFromFile,
-  fitToScreen
-} from "./core.js";
+// ============================================================
+// UI glue for Photobook Studio
+// - Left panel open/close (optional panels)
+// - Keeps core isolated: UI only calls exported core functions
+// ============================================================
 
-// -----------------------------
-// LEFT TOOLBAR -> LEFT PANELS
-// -----------------------------
-const toolButtons = document.querySelectorAll(".sidebar .toolbtn");
-const panels = document.querySelectorAll(".leftPanel .panel");
+import { applyZoom, getZoom, resetZoom, fitToScreen } from "./core.js";
 
-function showPanel(name) {
-  panels.forEach(p => {
-    const isMatch = p.dataset.panel === name;
-    p.style.display = isMatch ? "" : "none";
-  });
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const $ = (id) => document.getElementById(id);
 
-  toolButtons.forEach(b => {
-    b.classList.toggle("active", b.dataset.tool === name);
+// LEFT PANEL TOGGLE (buttons with data-panel="name")
+function initLeftPanels() {
+  $$(".sidebar button[data-panel]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const name = btn.dataset.panel;
+      toggleLeftPanel(name);
+    });
   });
 }
 
-// initial
-showPanel("images");
-
-toolButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    showPanel(btn.dataset.tool);
+function toggleLeftPanel(name) {
+  const panels = $$(".panel-container");
+  panels.forEach((p) => {
+    if (p.id === `panel-${name}`) p.classList.toggle("open");
+    else p.classList.remove("open");
   });
-});
-
-// -----------------------------
-// RIGHT EXPORT PANEL TOGGLE
-// -----------------------------
-const toggleRight = document.getElementById("toggleRight");
-const rightPanel = document.getElementById("rightPanel");
-
-toggleRight?.addEventListener("click", () => {
-  rightPanel?.classList.toggle("open");
-});
-
-// -----------------------------
-// ZOOM CONTROLS (REAL IDs in HTML)
-// -----------------------------
-const zoomInBtn = document.getElementById("zoomIn");
-const zoomOutBtn = document.getElementById("zoomOut");
-const zoomResetBtn = document.getElementById("zoomReset");
-const zoomLabel = document.getElementById("zoomLabel");
-
-function updateZoomLabel() {
-  if (!zoomLabel) return;
-  zoomLabel.textContent = `${Math.round(getZoom() * 100)}%`;
 }
 
-zoomInBtn?.addEventListener("click", () => {
-  setZoom(getZoom() + 0.1);
-  updateZoomLabel();
-});
+// ZOOM LABEL SYNC (optional)
+function initZoomUi() {
+  const lbl = $("zoomValue");
+  if (!lbl) return;
 
-zoomOutBtn?.addEventListener("click", () => {
-  setZoom(getZoom() - 0.1);
-  updateZoomLabel();
-});
+  const sync = () => { lbl.textContent = Math.round(getZoom() * 100) + "%"; };
 
-zoomResetBtn?.addEventListener("click", () => {
-  resetZoom();
-  updateZoomLabel();
-});
+  $("zoomInBtn")?.addEventListener("click", sync);
+  $("zoomOutBtn")?.addEventListener("click", sync);
+  $("zoomResetBtn")?.addEventListener("click", () => { resetZoom(); sync(); });
+  $("fitBtn")?.addEventListener("click", () => { fitToScreen(); sync(); });
 
-updateZoomLabel();
+  sync();
+}
 
-// -----------------------------
-// IMAGE INPUT (REAL id="imgInput")
-// -----------------------------
-document.getElementById("imgInput")?.addEventListener("change", e => {
-  const file = e.target.files?.[0];
-  if (file) addImageFromFile(file);
-  e.target.value = ""; // allow re-upload same file
-});
+// Right panel toggle (if not already bound by core – safe duplicate guard)
+function initRightPanel() {
+  const btn = $("toggleRight");
+  const panel = $("rightPanel");
+  if (!btn || !panel) return;
+  btn.addEventListener("click", () => panel.classList.toggle("open"));
+}
 
-// Fit to page button (exists in your HTML)
-document.getElementById("fitToPage")?.addEventListener("click", () => {
-  fitToScreen();
-  updateZoomLabel();
-});
-
-// -----------------------------
-// LOGIN BUTTON (don’t break UI if auth not wired yet)
-// -----------------------------
-document.getElementById("loginBtn")?.addEventListener("click", () => {
-  alert("Σύνδεση: θα κουμπώσει με Firebase όταν φτιάξουμε auth.js exports.");
+document.addEventListener("DOMContentLoaded", () => {
+  initLeftPanels();
+  initZoomUi();
+  initRightPanel();
 });
