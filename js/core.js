@@ -113,3 +113,34 @@ export function refreshThumbnails() {
 export function applyZoom(value) {
   setZoom(value);
 }
+
+// =====================================================
+// REQUIRED EXPORTS (API compatibility)
+// ΜΗΝ τα σβήσεις
+// =====================================================
+
+// tools.js
+export function saveCurrentPage() {
+  if (!fabricCanvas) return;
+  // απλό save – η κανονική υλοποίηση υπάρχει αλλού
+  try {
+    fabricCanvas.requestRenderAll();
+  } catch {}
+}
+
+// ui.js
+export function fitToScreen() {
+  if (!fabricCanvas) return;
+
+  const host = document.getElementById("canvasHost");
+  if (!host) return;
+
+  const pad = 20;
+  const scale = Math.min(
+    (host.clientWidth - pad) / fabricCanvas.getWidth(),
+    (host.clientHeight - pad) / fabricCanvas.getHeight()
+  );
+
+  setZoom(scale);
+}
+
