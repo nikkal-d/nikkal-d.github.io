@@ -1,12 +1,31 @@
 // js/core.js
 // =====================================================
-// CORE CANVAS API – STABLE
+// CORE CANVAS API – STABLE & COMPATIBLE
 // =====================================================
 
 export let fabricCanvas = null;
 let zoom = 1;
 
-// ---------- INIT ----------
+// -----------------------------------------------------
+// FABRIC FIX – kill "alphabetical" warning forever
+// -----------------------------------------------------
+(function fixFabricBaseline() {
+  if (typeof fabric === "undefined") return;
+
+  const patch = proto => {
+    Object.defineProperty(proto, "textBaseline", {
+      get() { return "top"; },
+      set() {}
+    });
+  };
+
+  if (fabric.Textbox) patch(fabric.Textbox.prototype);
+  if (fabric.IText) patch(fabric.IText.prototype);
+})();
+
+// -----------------------------------------------------
+// INIT
+// -----------------------------------------------------
 export function initCanvas(id = "canvas") {
   if (fabricCanvas) return fabricCanvas;
 
@@ -19,7 +38,9 @@ export function initCanvas(id = "canvas") {
   return fabricCanvas;
 }
 
-// ---------- TEXT ----------
+// -----------------------------------------------------
+// TEXT
+// -----------------------------------------------------
 export function addText() {
   if (!fabricCanvas) return;
 
@@ -29,7 +50,7 @@ export function addText() {
     fontSize: 40,
     fill: "#111",
     fontFamily: "Arial",
-    textBaseline: "top" // ✅ FIX
+    textBaseline: "top"
   });
 
   fabricCanvas.add(t);
@@ -37,16 +58,21 @@ export function addText() {
   fabricCanvas.requestRenderAll();
 }
 
-// ---------- IMAGE ----------
+// -----------------------------------------------------
+// IMAGE
+// -----------------------------------------------------
 export function addImageFromFile(file) {
   if (!fabricCanvas || !file) return;
 
   const reader = new FileReader();
   reader.onload = e => {
     fabric.Image.fromURL(e.target.result, img => {
-      img.scaleToWidth(300);
-      img.left = 150;
-      img.top = 150;
+      img.set({
+        left: 150,
+        top: 150,
+        scaleX: 0.5,
+        scaleY: 0.5
+      });
       fabricCanvas.add(img);
       fabricCanvas.setActiveObject(img);
       fabricCanvas.requestRenderAll();
@@ -55,7 +81,9 @@ export function addImageFromFile(file) {
   reader.readAsDataURL(file);
 }
 
-// ---------- EMOJI ----------
+// -----------------------------------------------------
+// EMOJI
+// -----------------------------------------------------
 export function addEmoji(char) {
   if (!fabricCanvas) return;
 
@@ -71,7 +99,9 @@ export function addEmoji(char) {
   fabricCanvas.requestRenderAll();
 }
 
-// ---------- ZOOM ----------
+// -----------------------------------------------------
+// ZOOM
+// -----------------------------------------------------
 export function getZoom() {
   return zoom;
 }
@@ -79,7 +109,7 @@ export function getZoom() {
 export function applyZoom(value) {
   if (!fabricCanvas) return;
 
-  zoom = Math.min(4, Math.max(0.2, value));
+  zoom = Math.max(0.2, Math.min(4, Number(value)));
   const center = fabricCanvas.getCenter();
   fabricCanvas.zoomToPoint(
     new fabric.Point(center.left, center.top),
@@ -94,41 +124,6 @@ export function resetZoom() {
   fabricCanvas.requestRenderAll();
 }
 
-// ---------- PLACEHOLDERS (για tools.js) ----------
-export function refreshThumbnails() {
-  // θα μπει κανονικά αργότερα
-}
-
-// =====================================================
-// COMPAT EXPORTS (για ui.js & tools.js)
-// ΜΗΝ τα σβήσεις
-// =====================================================
-
-// tools.js τα ζητάει
-export function refreshThumbnails() {
-  // προσωρινό stub – θα υλοποιηθεί σωστά μετά
-}
-
-// ui.js το ζητάει
-export function applyZoom(value) {
-  setZoom(value);
-}
-
-// =====================================================
-// REQUIRED EXPORTS (API compatibility)
-// ΜΗΝ τα σβήσεις
-// =====================================================
-
-// tools.js
-export function saveCurrentPage() {
-  if (!fabricCanvas) return;
-  // απλό save – η κανονική υλοποίηση υπάρχει αλλού
-  try {
-    fabricCanvas.requestRenderAll();
-  } catch {}
-}
-
-// ui.js
 export function fitToScreen() {
   if (!fabricCanvas) return;
 
@@ -141,6 +136,19 @@ export function fitToScreen() {
     (host.clientHeight - pad) / fabricCanvas.getHeight()
   );
 
-  setZoom(scale);
+  applyZoom(scale);
 }
 
+// -----------------------------------------------------
+// REQUIRED STUBS (για tools.js / ui.js)
+// -----------------------------------------------------
+export function refreshThumbnails() {
+  // θα υλοποιηθεί κανονικά αργότερα
+}
+
+export function saveCurrentPage() {
+  if (!fabricCanvas) return;
+  try {
+    fabricCanvas.requestRenderAll();
+  } catch {}
+}
