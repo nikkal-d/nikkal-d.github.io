@@ -222,3 +222,38 @@ export function saveCurrentPage() {
   if (!fabricCanvas) return;
   try { fabricCanvas.requestRenderAll(); } catch {}
 }
+
+// ====== EXPOSE CORE TO GLOBAL ======
+window.App = window.App || {};
+
+window.App.canvas = fabricCanvas;
+
+window.App.addText = function () {
+  const t = new fabric.Textbox("Text", {
+    left: 200,
+    top: 200,
+    fontSize: 40,
+    fill: "#111",
+    fontFamily: "Arial",
+  });
+  fabricCanvas.add(t);
+  fabricCanvas.setActiveObject(t);
+  fabricCanvas.requestRenderAll();
+};
+
+window.App.addImageFromFile = function (file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
+      img.scaleToWidth(fabricCanvas.getWidth() * 0.4);
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.requestRenderAll();
+    });
+  };
+  reader.readAsDataURL(file);
+};
+
+window.App.setZoom = setZoom;
+window.App.getZoom = () => zoom;
+window.App.resetZoom = resetZoom;
