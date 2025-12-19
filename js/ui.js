@@ -8,7 +8,7 @@ import {
 } from "./core.js";
 
 // TEXT
-document.getElementById("railText")?.addEventListener("click", addText);
+document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
 // IMAGE
 document.getElementById("railImage")?.addEventListener("click", () => {
