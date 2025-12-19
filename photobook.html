@@ -2,49 +2,88 @@
 <html lang="el">
 <head>
 <meta charset="UTF-8">
-<title>Photobook Studio</title>
+<title>Photobook Editor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Fabric -->
+<!-- Fabric.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
 <style>
+:root{
+  --bg:#0f1115;
+  --panel:#151823;
+  --panel2:#1b2030;
+  --btn:#242b3e;
+  --border:#2a3147;
+}
+
+*{box-sizing:border-box}
 body{
   margin:0;
-  background:#0f1115;
+  background:var(--bg);
   color:#eee;
   font-family:system-ui,Arial;
+  height:100vh;
   overflow:hidden;
 }
+
 #top{
   height:48px;
-  background:#151823;
+  background:var(--panel);
   display:flex;
   align-items:center;
-  padding:0 12px;
+  padding:0 14px;
+  border-bottom:1px solid var(--border);
 }
-#main{
+
+#app{
   display:grid;
-  grid-template-columns:260px 1fr;
+  grid-template-columns:260px 1fr 300px;
   height:calc(100vh - 48px);
 }
-#left{
-  background:#151823;
+
+/* PANELS */
+.panel{
+  background:var(--panel);
   padding:10px;
-  border-right:1px solid #2a3147;
+  border-right:1px solid var(--border);
 }
+.panel.right{
+  border-right:none;
+  border-left:1px solid var(--border);
+}
+
+.panel h3{margin-top:0}
+
+button{
+  width:100%;
+  margin-bottom:8px;
+  padding:8px;
+  background:var(--btn);
+  color:#fff;
+  border:1px solid var(--border);
+  border-radius:6px;
+  cursor:pointer;
+}
+button:hover{background:#2c3550}
+
+/* STAGE */
 #stage{
   position:relative;
   background:#111;
+  overflow:hidden;
 }
+
 #toolbar{
   height:46px;
-  background:#1b2030;
+  background:var(--panel2);
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:6px;
+  gap:10px;
+  border-bottom:1px solid var(--border);
 }
+
 #canvasHost{
   position:absolute;
   inset:46px 0 0 0;
@@ -52,35 +91,30 @@ body{
   align-items:center;
   justify-content:center;
 }
+
 canvas{
-  background:white;
+  background:#fff;
   border-radius:8px;
 }
-button{
-  background:#242b3e;
-  color:white;
-  border:1px solid #333;
-  padding:6px 10px;
-  border-radius:6px;
-  cursor:pointer;
-}
-button:hover{background:#2c3550}
 </style>
 </head>
 
 <body>
 
-<div id="top">📘 Photobook Studio</div>
+<div id="top">📘 Photobook Editor</div>
 
-<div id="main">
-  <div id="left">
-    <h3>Tools</h3>
-    <button onclick="addText()">Text</button><br><br>
-    <button onclick="addRect()">Rect</button><br><br>
-    <button onclick="addImage()">Image</button><br><br>
+<div id="app">
+
+  <!-- LEFT -->
+  <div class="panel">
+    <h3>Elements</h3>
+    <button onclick="addText()">Add Text</button>
+    <button onclick="addRect()">Add Shape</button>
+    <button onclick="triggerImage()">Add Image</button>
     <input type="file" id="imageInput" accept="image/*" hidden>
   </div>
 
+  <!-- CENTER -->
   <div id="stage">
     <div id="toolbar">
       <button onclick="zoomOut()">−</button>
@@ -88,29 +122,38 @@ button:hover{background:#2c3550}
       <button onclick="zoomIn()">+</button>
       <button onclick="fit()">Fit</button>
     </div>
-
     <div id="canvasHost">
       <canvas id="canvas"></canvas>
     </div>
   </div>
+
+  <!-- RIGHT -->
+  <div class="panel right">
+    <h3>Export (placeholder)</h3>
+    <button disabled>PDF</button>
+    <button disabled>Image</button>
+    <button disabled>Flipbook</button>
+  </div>
+
 </div>
 
 <script>
-/* =======================
+/* =====================
    CANVAS INIT
-======================= */
+===================== */
 const canvas = new fabric.Canvas("canvas",{selection:true});
 canvas.setWidth(1240);
 canvas.setHeight(1754);
-canvas.setBackgroundColor("#fff",canvas.renderAll.bind(canvas));
+canvas.setBackgroundColor("#ffffff",canvas.renderAll.bind(canvas));
 canvas.setViewportTransform([1,0,0,1,0,0]);
 canvas.setZoom(1);
+
 console.log("✅ Canvas initialized");
 
-/* =======================
+/* =====================
    HELPERS
-======================= */
-function centerObj(obj){
+===================== */
+function centerObject(obj){
   const c = canvas.getCenter();
   obj.set({
     left:c.left,
@@ -120,17 +163,17 @@ function centerObj(obj){
   });
 }
 
-/* =======================
+/* =====================
    ADD OBJECTS
-======================= */
+===================== */
 function addText(){
   const t = new fabric.Textbox("Text",{
     fontSize:48,
     fill:"#111",
     fontFamily:"Arial",
-    textBaseline:"alphabetic" // 👈 ΣΩΣΤΟ
+    textBaseline:"alphabetic"
   });
-  centerObj(t);
+  centerObject(t);
   canvas.add(t);
   canvas.setActiveObject(t);
 }
@@ -139,58 +182,69 @@ function addRect(){
   const r = new fabric.Rect({
     width:300,
     height:200,
-    fill:"#111",
+    fill:"#222",
     stroke:"#fff",
     strokeWidth:2
   });
-  centerObj(r);
+  centerObject(r);
   canvas.add(r);
 }
 
-function addImage(){
+function triggerImage(){
   document.getElementById("imageInput").click();
 }
 
 document.getElementById("imageInput").addEventListener("change",e=>{
-  const f=e.target.files[0];
-  if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{
-    fabric.Image.fromURL(r.result,img=>{
-      const maxW=canvas.getWidth()*0.6;
-      const maxH=canvas.getHeight()*0.6;
-      const s=Math.min(maxW/img.width,maxH/img.height,1);
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    fabric.Image.fromURL(reader.result,img=>{
+      const maxW = canvas.getWidth()*0.6;
+      const maxH = canvas.getHeight()*0.6;
+      const s = Math.min(maxW/img.width,maxH/img.height,1);
       img.scale(s);
-      centerObj(img);
+      centerObject(img);
       canvas.add(img);
     });
   };
-  r.readAsDataURL(f);
+  reader.readAsDataURL(file);
 });
 
-/* =======================
+/* =====================
    ZOOM
-======================= */
-let zoom=1;
-function updateZoom(){document.getElementById("zoomLabel").textContent=Math.round(zoom*100)+"%";}
-function zoomIn(){zoom=Math.min(4,zoom+0.1);applyZoom();}
-function zoomOut(){zoom=Math.max(0.2,zoom-0.1);applyZoom();}
+===================== */
+let zoom = 1;
+function updateZoom(){
+  document.getElementById("zoomLabel").textContent =
+    Math.round(zoom*100)+"%";
+}
+function zoomIn(){
+  zoom=Math.min(4,zoom+0.1);
+  applyZoom();
+}
+function zoomOut(){
+  zoom=Math.max(0.2,zoom-0.1);
+  applyZoom();
+}
 function applyZoom(){
-  const c=canvas.getCenter();
+  const c = canvas.getCenter();
   canvas.zoomToPoint(new fabric.Point(c.left,c.top),zoom);
   updateZoom();
 }
 function fit(){
-  const host=document.getElementById("canvasHost");
-  const s=Math.min(
-    host.clientWidth/canvas.getWidth(),
-    host.clientHeight/canvas.getHeight()
+  const host = document.getElementById("canvasHost");
+  const s = Math.min(
+    host.clientWidth / canvas.getWidth(),
+    host.clientHeight / canvas.getHeight()
   );
-  zoom=s;
+  zoom = s;
   canvas.setViewportTransform([1,0,0,1,0,0]);
   applyZoom();
 }
 fit();
 </script>
+
 </body>
 </html>
