@@ -1,25 +1,33 @@
 // js/core.js
-// =====================================================
-// SINGLE SOURCE OF TRUTH FOR CANVAS
-// =====================================================
+// =================================================
+// SINGLE SOURCE OF TRUTH – CANVAS
+// =================================================
 
 export let fabricCanvas = null;
 let zoom = 1;
 
+// --------- FIX FABRIC WARNING (alphabetical) ----------
+(function fixFabricBaseline() {
+  if (!window.fabric) return;
+  const proto = fabric.Textbox.prototype;
+  proto.textBaseline = "top";
+})();
+
 // ---------------- INIT ----------------
-export function initCanvas(canvasId) {
+export function initCanvas(canvasId = "canvas") {
   fabricCanvas = new fabric.Canvas(canvasId, {
     preserveObjectStacking: true,
     selection: true
   });
 
+  fabricCanvas.setWidth(1240);
+  fabricCanvas.setHeight(1754);
   fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
 
   console.log("✅ Canvas initialized");
 
-  // expose for debug & UI
-window.fabricCanvas = fabricCanvas;
-
+  // expose for debugging ONLY
+  window.fabricCanvas = fabricCanvas;
 }
 
 // ---------------- TEXT ----------------
@@ -39,9 +47,6 @@ export function addText() {
   fabricCanvas.requestRenderAll();
 }
 
-window.addText = addText;
-
-
 // ---------------- IMAGE ----------------
 export function addImageFromFile(file) {
   if (!fabricCanvas || !file) return;
@@ -59,15 +64,6 @@ export function addImageFromFile(file) {
 }
 
 // ---------------- ZOOM ----------------
-export function applyZoom(value) {
-  if (!fabricCanvas) return;
-
-  zoom = Math.max(0.2, Math.min(4, value));
-  const center = fabricCanvas.getCenter();
-  fabricCanvas.zoomToPoint(new fabric.Point(center.left, center.top), zoom);
-  fabricCanvas.requestRenderAll();
-}
-
 export function zoomIn() {
   applyZoom(zoom + 0.1);
 }
@@ -84,4 +80,16 @@ export function resetZoom() {
 
 export function fitToScreen() {
   resetZoom();
+}
+
+function applyZoom(value) {
+  if (!fabricCanvas) return;
+
+  zoom = Math.max(0.2, Math.min(4, value));
+  const center = fabricCanvas.getCenter();
+  fabricCanvas.zoomToPoint(
+    new fabric.Point(center.left, center.top),
+    zoom
+  );
+  fabricCanvas.requestRenderAll();
 }
