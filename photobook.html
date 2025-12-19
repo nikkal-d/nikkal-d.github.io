@@ -10,43 +10,8 @@
 <!-- CSS (κρατάς το δικό σου αν θες) -->
 <link rel="stylesheet" href="./css/photobook.css" />
 
-<script>
-/* -------------------------------------------------------------
-  Chrome DevTools εμφανίζει warning όταν κάποιος θέτει
-  ctx.textBaseline = "alphabetical". Κάνουμε map σε "alphabetic"
-  ΠΡΙΝ φορτώσει το Fabric.
-------------------------------------------------------------- */
-(function () {
-  try {
-    const proto = CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
-    if (!proto) return;
-    const desc = Object.getOwnPropertyDescriptor(proto, "textBaseline");
-    if (!desc || !desc.set || !desc.get) return;
-
-    Object.defineProperty(proto, "textBaseline", {
-      get: desc.get,
-      set: function (v) {
-        if (v === "alphabetical") v = "alphabetic";
-        return desc.set.call(this, v);
-      }
-    });
-  } catch (e) {}
-})();
-</script>
-
 <!-- FABRIC (global) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-
-<script>
-/* Extra safety patch for Fabric textBaseline props (JSON / objects) */
-if (window.fabric) {
-  ["Textbox","IText","Text"].forEach((t) => {
-    const p = fabric[t]?.prototype;
-    if (!p) return;
-    Object.defineProperty(p, "textBaseline", { get(){ return "alphabetic"; }, set(){} });
-  });
-}
-</script>
 
 <style>
 /* Minimal layout in case photobook.css είναι άδειο/σπασμένο */
@@ -181,14 +146,6 @@ body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
 </div>
 
 <!-- Load app modules -->
-<script type="module">
-  import { initCanvas } from "./js/core.js";
-
-  window.addEventListener("DOMContentLoaded", () => {
-    initCanvas("canvas");
-  });
-</script>
-
 <script type="module" src="./js/tools.js"></script>
 <script type="module" src="./js/ui.js"></script>
 
