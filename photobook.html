@@ -1,154 +1,211 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Photobook Studio – Editor</title>
+  <meta charset="UTF-8" />
+  <title>Photobook Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="icon" href="./favicon.ico" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-<!-- CSS (κρατάς το δικό σου αν θες) -->
-<link rel="stylesheet" href="./css/photobook.css" />
+    #sidebar {
+      width: 220px;
+      background: #1e1e1e;
+      color: #fff;
+      padding: 12px;
+      box-sizing: border-box;
+    }
 
-<!-- FABRIC (global) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    #sidebar button {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 10px;
+      background: #e53935;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
 
-<style>
-/* Minimal layout in case photobook.css είναι άδειο/σπασμένο */
-:root { color-scheme: light dark; }
-body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0f1115; color:#e9eef7; }
-.app { display:grid; grid-template-columns: 64px 1fr 340px; height:100vh; }
-.sidebar { background:#151a22; display:flex; flex-direction:column; gap:10px; padding:10px; border-right:1px solid #232b3a; }
-.sidebar button { background:#1c2433; border:1px solid #2b3550; color:#e9eef7; border-radius:12px; padding:10px; cursor:pointer; }
-.sidebar button:hover { filter:brightness(1.1); }
+    #sidebar button:hover {
+      background: #c62828;
+    }
 
-.main { display:flex; flex-direction:column; min-width:0; }
-.topbar { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#151a22; border-bottom:1px solid #232b3a; }
-.topbar .group { display:flex; gap:8px; align-items:center; }
-.pill { padding:6px 10px; border-radius:999px; background:#1c2433; border:1px solid #2b3550; font-size:13px; }
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #ddd;
+    }
 
-.canvasHost { position:relative; flex:1; display:flex; align-items:center; justify-content:center; background:#0f1115; overflow:hidden; }
-.canvasFrame { background:#0b0d12; border:1px solid #232b3a; border-radius:16px; padding:12px; }
-#canvas { background:#fff; border-radius:8px; }
+    #topbar {
+      width: 100%;
+      background: #fff;
+      padding: 8px;
+      box-sizing: border-box;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      border-bottom: 1px solid #ccc;
+    }
 
-.bottom { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#151a22; border-top:1px solid #232b3a; }
-#thumbStrip { display:flex; gap:8px; overflow:auto; padding:4px; }
-.thumb { border:1px solid #2b3550; background:#1c2433; border-radius:10px; padding:6px; cursor:pointer; }
-.thumb.active { outline:2px solid #6ea8ff; }
-.thumb img { width:64px; height:46px; object-fit:cover; background:#fff; border-radius:6px; display:block; }
+    #topbar button {
+      padding: 6px 10px;
+      cursor: pointer;
+    }
 
-.rightPanel { background:#151a22; border-left:1px solid #232b3a; padding:12px; overflow:auto; transform:translateX(0); transition:transform .2s ease; }
-.rightPanel:not(.open) { transform:translateX(340px); }
-.rightPanel h3 { margin:6px 0 10px; font-size:16px; }
-.field { display:flex; gap:10px; align-items:center; margin:10px 0; }
-.field label { font-size:13px; opacity:.9; min-width:120px; }
-.field input[type="color"]{ width:44px; height:32px; border:none; background:transparent; }
+    #canvasWrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
 
-@media (max-width: 980px){
-  .app{ grid-template-columns:64px 1fr; }
-  .rightPanel{ position:fixed; right:0; top:0; height:100vh; width:340px; z-index:50; }
-}
-</style>
+    canvas {
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,.3);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+  </style>
+
+  <!-- 🔒 HARD FIX: kill Fabric alphabetical internally -->
+  <script>
+    (function () {
+      const d = Object.getOwnPropertyDescriptor(
+        CanvasRenderingContext2D.prototype,
+        "textBaseline"
+      );
+      if (!d || !d.set) return;
+      Object.defineProperty(CanvasRenderingContext2D.prototype, "textBaseline", {
+        get: d.get,
+        set(v) {
+          d.set.call(this, v === "alphabetical" ? "alphabetic" : v);
+        },
+        configurable: true
+      });
+    })();
+  </script>
+
+  <!-- Fabric -->
+  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 </head>
 
 <body>
-<div class="app">
 
-  <!-- LEFT RAIL -->
-  <aside class="sidebar">
-   <button id="addTextBtn">Text</button>
+  <div id="sidebar">
+    <button onclick="addText()">➕ Text</button>
+    <button onclick="openImage()">🖼 Image</button>
+    <button onclick="zoomIn()">➕ Zoom</button>
+    <button onclick="zoomOut()">➖ Zoom</button>
+    <button onclick="resetZoom()">⤾ Reset Zoom</button>
+    <input type="file" id="imageInput" accept="image/*">
+  </div>
 
-    <button id="railImage" title="Εικόνα">Image</button>
-    <button id="railEmoji" title="Emoji">Emoji</button>
-    <button id="toggleRight" title="Export / Ρυθμίσεις">☰</button>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-    <header class="topbar">
-      <div class="group">
-        <span class="pill" id="statusPill">Loading…</span>
-        <span class="pill" id="pageInfo">1 / 1</span>
-      </div>
-
-      <div class="group" style="margin-left:auto">
-        <button id="prevPageBtn" class="pill" type="button">◀</button>
-        <button id="nextPageBtn" class="pill" type="button">▶</button>
-        <button id="addPageBtn" class="pill" type="button">＋ Page</button>
-      </div>
-
-      <div class="group">
-        <button id="zoomOutBtn" class="pill" type="button">－</button>
-        <span class="pill" id="zoomValue">100%</span>
-        <button id="zoomInBtn" class="pill" type="button">＋</button>
-        <button id="zoomResetBtn" class="pill" type="button">Reset</button>
-        <button id="fitBtn" class="pill" type="button">Fit</button>
-      </div>
-    </header>
-
-    <section class="canvasHost" id="canvasHost">
-      <div class="canvasFrame">
-        <canvas id="canvas" width="1240" height="1754"></canvas>
-      </div>
-      <input id="imageInput" type="file" accept="image/*" hidden />
-    </section>
-
-    <footer class="bottom">
-      <div class="pill">Thumbnails</div>
-      <div id="thumbStrip"></div>
-    </footer>
-  </main>
-
-  <!-- RIGHT PANEL -->
-  <aside class="rightPanel open" id="rightPanel">
-    <h3>Tools</h3>
-
-    <div class="field">
-      <label>Fill color</label>
-      <input id="fillColor" type="color" value="#ff4d4d">
+  <div id="main">
+    <div id="topbar">
+      <strong>Photobook Editor (Working Base)</strong>
     </div>
 
-    <div class="field">
-      <label>Shapes</label>
-      <button id="addRectBtn" class="pill" type="button">Rect</button>
-      <button id="addCircleBtn" class="pill" type="button">Circle</button>
+    <div id="canvasWrap">
+      <canvas id="canvas" width="1240" height="1754"></canvas>
     </div>
+  </div>
 
-    <div class="field">
-      <label>Layers</label>
-      <button id="layerUpBtn" class="pill" type="button">Up</button>
-      <button id="layerDownBtn" class="pill" type="button">Down</button>
-    </div>
+<script>
+  // =====================
+  // CORE
+  // =====================
+  const canvas = new fabric.Canvas("canvas", {
+    preserveObjectStacking: true,
+    selection: true
+  });
 
-    <div class="field">
-      <label></label>
-      <button id="layerTopBtn" class="pill" type="button">Top</button>
-      <button id="layerBottomBtn" class="pill" type="button">Bottom</button>
-    </div>
+  let zoom = 1;
 
-    <hr style="border:0;border-top:1px solid #232b3a;margin:16px 0">
+  console.log("✅ Canvas initialized");
 
-    <h3>Export</h3>
-    <p style="opacity:.8;margin:0 0 10px">Γρήγορο export για έλεγχο. (PDF/ZIP/Flipbook θα κουμπώσουν στο export.js στο επόμενο βήμα.)</p>
-    <div class="field">
-      <label>Export</label>
-      <button id="exportPngBtn" class="pill" type="button">PNG</button>
-      <button id="exportJsonBtn" class="pill" type="button">JSON</button>
-    </div>
-    <div class="field">
-      <label>Import</label>
-      <button id="importJsonBtn" class="pill" type="button">Load JSON</button>
-      <input id="importJsonInput" type="file" accept="application/json" hidden />
-    </div>
+  // =====================
+  // TEXT
+  // =====================
+  function addText() {
+    const text = new fabric.Textbox("Text", {
+      left: 150,
+      top: 150,
+      fontSize: 48,
+      fill: "#111",
+      fontFamily: "Arial",
+      textBaseline: "alphabetic"
+    });
+    canvas.add(text);
+    canvas.setActiveObject(text);
+    canvas.requestRenderAll();
+  }
 
-  </aside>
+  // =====================
+  // IMAGE
+  // =====================
+  function openImage() {
+    document.getElementById("imageInput").click();
+  }
 
-</div>
+  document.getElementById("imageInput").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-<!-- Load app modules -->
-<script type="module" src="./js/tools.js"></script>
-<script type="module" src="./js/ui.js"></script>
+    const reader = new FileReader();
+    reader.onload = () => {
+      fabric.Image.fromURL(reader.result, img => {
+        img.scaleToWidth(canvas.getWidth() * 0.4);
+        img.set({ left: 200, top: 200 });
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.requestRenderAll();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
 
+  // =====================
+  // ZOOM
+  // =====================
+  function zoomIn() {
+    zoom = Math.min(4, zoom + 0.1);
+    applyZoom();
+  }
+
+  function zoomOut() {
+    zoom = Math.max(0.2, zoom - 0.1);
+    applyZoom();
+  }
+
+  function resetZoom() {
+    zoom = 1;
+    canvas.setViewportTransform([1,0,0,1,0,0]);
+    canvas.requestRenderAll();
+  }
+
+  function applyZoom() {
+    const center = new fabric.Point(
+      canvas.getWidth() / 2,
+      canvas.getHeight() / 2
+    );
+    canvas.zoomToPoint(center, zoom);
+    canvas.requestRenderAll();
+  }
+</script>
 
 </body>
 </html>
