@@ -1,4 +1,6 @@
+// js/ui.js
 import {
+  initCanvas,
   addText,
   addImageFromFile,
   zoomIn,
@@ -7,21 +9,25 @@ import {
   fitToScreen
 } from "./core.js";
 
-// TEXT
-document.getElementById("addTextBtn")?.addEventListener("click", addText);
+document.addEventListener("DOMContentLoaded", () => {
+  initCanvas("canvas");
 
-// IMAGE
-document.getElementById("railImage")?.addEventListener("click", () => {
-  document.getElementById("imageInput")?.click();
+  // TEXT
+  document.getElementById("addTextBtn")?.addEventListener("click", addText);
+
+  // IMAGE
+  document.getElementById("addImageBtn")?.addEventListener("click", () => {
+    document.getElementById("imageInput")?.click();
+  });
+
+  document.getElementById("imageInput")?.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (file) addImageFromFile(file);
+  });
+
+  // ZOOM
+  document.getElementById("zoomInBtn")?.addEventListener("click", zoomIn);
+  document.getElementById("zoomOutBtn")?.addEventListener("click", zoomOut);
+  document.getElementById("zoomResetBtn")?.addEventListener("click", resetZoom);
+  document.getElementById("fitBtn")?.addEventListener("click", fitToScreen);
 });
-
-document.getElementById("imageInput")?.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (file) addImageFromFile(file);
-});
-
-// ZOOM
-document.getElementById("zoomInBtn")?.addEventListener("click", zoomIn);
-document.getElementById("zoomOutBtn")?.addEventListener("click", zoomOut);
-document.getElementById("zoomResetBtn")?.addEventListener("click", resetZoom);
-document.getElementById("fitBtn")?.addEventListener("click", fitToScreen);
