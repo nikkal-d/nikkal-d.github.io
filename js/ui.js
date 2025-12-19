@@ -1,58 +1,45 @@
 // js/ui.js
-// ============================================================
-// UI glue for Photobook Studio
-// - Left panel open/close (optional panels)
-// - Keeps core isolated: UI only calls exported core functions
-// ============================================================
+import {
+  addText,
+  addImageFromFile,
+  applyZoom,
+  resetZoom,
+  fitToScreen
+} from "./core.js";
 
-import { applyZoom, getZoom, resetZoom, fitToScreen } from "./core.js";
-
-const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-const $ = (id) => document.getElementById(id);
-
-// LEFT PANEL TOGGLE (buttons with data-panel="name")
-function initLeftPanels() {
-  $$(".sidebar button[data-panel]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const name = btn.dataset.panel;
-      toggleLeftPanel(name);
-    });
+/* ======================
+   TEXT
+====================== */
+const addTextBtn = document.getElementById("addTextBtn");
+if (addTextBtn) {
+  addTextBtn.addEventListener("click", () => {
+    addText();
   });
 }
 
-function toggleLeftPanel(name) {
-  const panels = $$(".panel-container");
-  panels.forEach((p) => {
-    if (p.id === `panel-${name}`) p.classList.toggle("open");
-    else p.classList.remove("open");
+/* ======================
+   IMAGE
+====================== */
+const imageInput = document.getElementById("imageInput");
+if (imageInput) {
+  imageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) addImageFromFile(file);
+    e.target.value = "";
   });
 }
 
-// ZOOM LABEL SYNC (optional)
-function initZoomUi() {
-  const lbl = $("zoomValue");
-  if (!lbl) return;
+/* ======================
+   ZOOM
+====================== */
+document.getElementById("zoomInBtn")
+  ?.addEventListener("click", () => applyZoom(1.1));
 
-  const sync = () => { lbl.textContent = Math.round(getZoom() * 100) + "%"; };
+document.getElementById("zoomOutBtn")
+  ?.addEventListener("click", () => applyZoom(0.9));
 
-  $("zoomInBtn")?.addEventListener("click", sync);
-  $("zoomOutBtn")?.addEventListener("click", sync);
-  $("zoomResetBtn")?.addEventListener("click", () => { resetZoom(); sync(); });
-  $("fitBtn")?.addEventListener("click", () => { fitToScreen(); sync(); });
+document.getElementById("zoomResetBtn")
+  ?.addEventListener("click", () => resetZoom());
 
-  sync();
-}
-
-// Right panel toggle (if not already bound by core – safe duplicate guard)
-function initRightPanel() {
-  const btn = $("toggleRight");
-  const panel = $("rightPanel");
-  if (!btn || !panel) return;
-  btn.addEventListener("click", () => panel.classList.toggle("open"));
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  initLeftPanels();
-  initZoomUi();
-  initRightPanel();
-});
+document.getElementById("fitBtn")
+  ?.addEventListener("click", () => fitToScreen());
