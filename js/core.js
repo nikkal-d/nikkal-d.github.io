@@ -53,17 +53,21 @@ export function addText() {
   const t = new fabric.Textbox("Text", {
     left: 150,
     top: 150,
-    fontSize: 42,
+    fontSize: 44,
     fill: "#111",
     fontFamily: "Arial",
-    // IMPORTANT: valid baseline values are: top, hanging, middle, alphabetic, ideographic, bottom
-    textBaseline: "alphabetic"
+
+    // 🔥 ΤΟ ΚΛΕΙΔΙ
+    textBaseline: "top",
+    originX: "left",
+    originY: "top"
   });
 
   fabricCanvas.add(t);
   fabricCanvas.setActiveObject(t);
   fabricCanvas.requestRenderAll();
 }
+
 
 // ---------------- IMAGE ----------------
 export function addImageFromFile(file) {
