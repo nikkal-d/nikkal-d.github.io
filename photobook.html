@@ -2,256 +2,1394 @@
 <html lang="el">
 <head>
 <meta charset="UTF-8" />
-<title>Photobook Editor</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Photobook Studio</title>
 
-<!-- FABRIC -->
+<!-- Hard patch: stop Canvas textBaseline="alphabetical" warnings (browser-level) -->
+<script>
+(() => {
+  const desc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "textBaseline");
+  if (!desc || !desc.set) return;
+  Object.defineProperty(CanvasRenderingContext2D.prototype, "textBaseline", {
+    get: desc.get,
+    set(v){ desc.set.call(this, v === "alphabetical" ? "alphabetic" : v); },
+    configurable: true
+  });
+})();
+</script>
+
+<!-- Fabric -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
 <style>
-/* =======================
-   THEME
-======================= */
-:root {
-  --bg: #111;
-  --panel: #1e1e1e;
-  --btn: #2b2b2b;
-  --btn-hover: #3a3a3a;
-  --accent: #e10600;
-  --text: #eee;
+:root{
+  --bg:#0f1115;
+  --panel:#151823;
+  --panel2:#1b2030;
+  --text:#e9ecf3;
+  --muted:#9aa3b2;
+  --btn:#242b3e;
+  --btn2:#2c3550;
+  --accent:#e10600;
+  --line:#2a3147;
+  --shadow: 0 12px 35px rgba(0,0,0,.35);
 }
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Arial, sans-serif;
-  overflow: hidden;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
 }
 
-/* =======================
-   LAYOUT
-======================= */
-#app {
-  display: flex;
-  height: 100vh;
+#app{
+  height:100%;
+  display:grid;
+  grid-template-rows: 54px 1fr;
 }
 
-#leftBar {
-  width: 72px;
-  background: var(--panel);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-}
-
-#leftBar button {
-  background: var(--btn);
-  border: none;
-  color: var(--text);
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-#leftBar button:hover {
-  background: var(--btn-hover);
-}
-
-/* =======================
-   CANVAS AREA
-======================= */
-#center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-#topBar {
-  height: 48px;
-  background: var(--panel);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+#topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   padding: 0 12px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0));
 }
 
-#topBar button {
-  background: var(--btn);
-  border: none;
-  color: var(--text);
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+.brand{
+  display:flex; align-items:center; gap:10px;
+  font-weight:700;
+}
+.badge{
+  font-size:12px;
+  color:var(--muted);
+  padding:4px 8px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:999px;
 }
 
-#topBar button:hover {
-  background: var(--btn-hover);
+.toolbar{
+  display:flex; align-items:center; gap:8px;
 }
 
-#zoomLabel {
-  min-width: 50px;
-  text-align: center;
+.btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.10);
+  background:var(--btn);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:13px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.btn:hover{ background:var(--btn2); }
+.btn.accent{
+  background:var(--accent);
+  border-color: rgba(255,255,255,.14);
+}
+.btn.accent:hover{ filter:brightness(.95); }
+
+.iconbtn{
+  width:40px; height:40px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:12px;
 }
 
-#canvasHost {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #888;
+.sep{ width:1px; height:26px; background:var(--line); margin:0 6px; }
+
+#main{
+  height:100%;
+  display:grid;
+  grid-template-columns: 72px 320px 1fr 360px;
 }
 
-/* =======================
-   CANVAS
-======================= */
-.canvas-container {
-  background: #fff;
-  box-shadow: 0 0 20px rgba(0,0,0,.6);
+/* Left rail */
+#rail{
+  background:var(--panel);
+  border-right:1px solid var(--line);
+  padding:10px 8px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.railbtn{
+  width:56px; height:56px;
+  border-radius:16px;
+  background:var(--btn);
+  border:1px solid rgba(255,255,255,.10);
+  color:var(--text);
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  font-size:11px;
+}
+.railbtn:hover{ background:var(--btn2); }
+.railbtn.active{ outline:2px solid rgba(225,6,0,.5); }
+
+/* Left panel */
+#leftPanel{
+  background:var(--panel);
+  border-right:1px solid var(--line);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#leftHeader{
+  padding:12px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+#leftTitle{
+  font-weight:700;
+}
+#leftBody{
+  padding:12px;
+  overflow:auto;
+}
+
+.panel{
+  display:none;
+}
+.panel.open{ display:block; }
+
+.field{
+  display:flex; flex-direction:column; gap:6px;
+  margin-bottom:10px;
+}
+.label{ font-size:12px; color:var(--muted); }
+.input, select{
+  width:100%;
+  background:var(--panel2);
+  border:1px solid rgba(255,255,255,.10);
+  color:var(--text);
+  padding:10px 10px;
+  border-radius:10px;
+  outline:none;
+}
+.row{
+  display:flex; gap:8px;
+}
+.row > * { flex:1; }
+
+.card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:10px;
+  margin-bottom:10px;
+}
+.cardtitle{ font-weight:700; margin-bottom:6px; }
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.listitem{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+}
+.listitem .name{ font-size:13px; }
+.pill{
+  font-size:11px;
+  color:var(--muted);
+  padding:3px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+}
+
+/* Canvas area */
+#stage{
+  position:relative;
+  background: radial-gradient(1200px 600px at 50% 20%, rgba(255,255,255,.06), rgba(0,0,0,0));
+  overflow:hidden;
+}
+#stageTop{
+  height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-bottom:1px solid var(--line);
+  background:rgba(0,0,0,.10);
+}
+#zoomLabel{
+  min-width:64px;
+  text-align:center;
+  font-weight:700;
+  color:var(--text);
+  opacity:.95;
+}
+#canvasHost{
+  position:absolute;
+  inset:54px 0 0 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.canvasShell{
+  background:#fff;
+  border-radius:14px;
+  box-shadow: var(--shadow);
+  padding:10px;
+}
+.canvasWrap{
+  position:relative;
+}
+canvas{ display:block; background:#fff; border-radius:10px; }
+
+/* Right export panel */
+#rightPanel{
+  background:var(--panel);
+  border-left:1px solid var(--line);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+#rightHeader{
+  padding:12px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+#rightBody{ padding:12px; overflow:auto; }
+
+.toggleCollapsed #rightPanel{ width:0; border-left:none; }
+.toggleCollapsed #rightPanel *{ display:none !important; }
+.toggleCollapsed #main{ grid-template-columns:72px 320px 1fr 0px; }
+
+.toggleLeftCollapsed #leftPanel{ width:0; border-right:none; }
+.toggleLeftCollapsed #leftPanel *{ display:none !important; }
+.toggleLeftCollapsed #main{ grid-template-columns:72px 0px 1fr 360px; }
+
+/* Pages strip (bottom thumbnails inside left panel page panel) */
+.thumbGrid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:8px;
+}
+.thumb{
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  cursor:pointer;
+  position:relative;
+}
+.thumb img{ width:100%; height:78px; object-fit:cover; display:block; }
+.thumb.active{ outline:2px solid rgba(225,6,0,.6); }
+.thumb .idx{
+  position:absolute; top:6px; left:6px;
+  font-size:11px;
+  color:var(--text);
+  background:rgba(0,0,0,.45);
+  padding:2px 6px;
+  border-radius:999px;
+}
+
+/* Modal */
+#modalMask{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:50;
+}
+#modal{
+  width:min(980px, 96vw);
+  max-height: 90vh;
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow: var(--shadow);
+  display:flex;
+  flex-direction:column;
+}
+#modalHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+}
+#modalBody{
+  padding:14px;
+  overflow:auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#flipImg{
+  max-width:100%;
+  max-height: 70vh;
+  border-radius:12px;
+  box-shadow: var(--shadow);
+  background:#fff;
+}
+.modalNav{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  padding:10px;
+  border-top:1px solid var(--line);
+}
+kbd{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  padding:2px 6px;
+  border-radius:6px;
+  font-size:12px;
+  color:var(--text);
 }
 </style>
 </head>
 
 <body>
-
 <div id="app">
 
-  <!-- LEFT BAR -->
-  <div id="leftBar">
-    <button onclick="addText()">🅣</button>
-    <button onclick="openImage()">🖼</button>
-  </div>
-
-  <!-- CENTER -->
-  <div id="center">
-    <div id="topBar">
-      <button onclick="zoomOut()">−</button>
-      <div id="zoomLabel">100%</div>
-      <button onclick="zoomIn()">+</button>
-      <button onclick="resetZoom()">Reset</button>
+  <div id="topbar">
+    <div class="brand">
+      <div>Photobook Studio</div>
+      <div class="badge" id="pageBadge">Page 1 / 1</div>
     </div>
 
-    <div id="canvasHost">
-      <canvas id="canvas"></canvas>
+    <div class="toolbar">
+      <button class="btn iconbtn" id="toggleLeftBtn" title="Toggle left panel">⟷</button>
+      <button class="btn iconbtn" id="toggleRightBtn" title="Toggle export panel">⇆</button>
+      <div class="sep"></div>
+      <button class="btn" id="langBtn" title="Εναλλαγή γλώσσας">🇬🇷/🇺🇸</button>
+      <button class="btn accent" id="loginBtn" title="Σύνδεση">Σύνδεση</button>
     </div>
   </div>
 
+  <div id="main">
+    <!-- Left rail -->
+    <div id="rail">
+      <button class="railbtn active" data-panel="elements" title="Elements">
+        <div>➕</div><div data-i18n="Elements">Tools</div>
+      </button>
+      <button class="railbtn" data-panel="pages" title="Pages">
+        <div>📄</div><div data-i18n="Pages">Pages</div>
+      </button>
+      <button class="railbtn" data-panel="layers" title="Layers">
+        <div>🧩</div><div data-i18n="Layers">Layers</div>
+      </button>
+      <button class="railbtn" data-panel="styles" title="Styles">
+        <div>🎨</div><div data-i18n="Styles">Styles</div>
+      </button>
+      <button class="railbtn" data-panel="ai" title="AI">
+        <div>🤖</div><div data-i18n="AI">AI</div>
+      </button>
+    </div>
+
+    <!-- Left panel -->
+    <div id="leftPanel">
+      <div id="leftHeader">
+        <div id="leftTitle">Tools</div>
+        <div class="pill" id="leftHint"><span data-i18n="HintSpace">Hold</span> <kbd>Space</kbd> <span data-i18n="HintPan">to pan</span></div>
+      </div>
+      <div id="leftBody">
+
+        <!-- Elements -->
+        <div class="panel open" id="panel-elements">
+          <div class="card">
+            <div class="cardtitle" data-i18n="Add">Add</div>
+            <div class="row">
+              <button class="btn" id="addTextBtn" title="Add text">🅣 <span data-i18n="Text">Text</span></button>
+              <button class="btn" id="addRectBtn" title="Add rectangle">▭ <span data-i18n="Rect">Rect</span></button>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="addCircleBtn" title="Add circle">◯ <span data-i18n="Circle">Circle</span></button>
+              <button class="btn" id="addLineBtn" title="Add line">／ <span data-i18n="Line">Line</span></button>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="addImageBtn" title="Import image">🖼 <span data-i18n="Image">Image</span></button>
+              <button class="btn" id="deleteObjBtn" title="Delete selected">🗑 <span data-i18n="Delete">Delete</span></button>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" hidden>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle" data-i18n="CanvasSize">Canvas size</div>
+            <div class="field">
+              <label class="label" data-i18n="Preset">Preset</label>
+              <select id="sizePreset">
+                <option value="A4P">A4 Portrait</option>
+                <option value="A4L">A4 Landscape</option>
+                <option value="SQUARE">Square</option>
+                <option value="STORY">Story (1080×1920)</option>
+                <option value="HD">HD (1920×1080)</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label class="label" data-i18n="Width">Width</label>
+                <input class="input" id="customW" type="number" min="200" max="5000" value="1240">
+              </div>
+              <div class="field">
+                <label class="label" data-i18n="Height">Height</label>
+                <input class="input" id="customH" type="number" min="200" max="5000" value="1754">
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn" id="applySizeBtn" title="Apply custom size"><span data-i18n="Apply">Apply</span></button>
+              <button class="btn" id="fitBtn" title="Fit to screen"><span data-i18n="Fit">Fit</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pages -->
+        <div class="panel" id="panel-pages">
+          <div class="card">
+            <div class="cardtitle" data-i18n="Pages">Pages</div>
+            <div class="row">
+              <button class="btn" id="addPageBtn">➕ <span data-i18n="AddPage">Add</span></button>
+              <button class="btn" id="dupPageBtn">⎘ <span data-i18n="Duplicate">Dup</span></button>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="delPageBtn">🗑 <span data-i18n="Delete">Delete</span></button>
+              <button class="btn" id="flipPreviewBtn">📖 <span data-i18n="FlipPreview">Preview</span></button>
+            </div>
+            <div class="small" style="margin-top:8px">
+              <span data-i18n="PagesHint">Click a thumbnail to switch page.</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle" data-i18n="Thumbnails">Thumbnails</div>
+            <div class="thumbGrid" id="thumbGrid"></div>
+          </div>
+        </div>
+
+        <!-- Layers -->
+        <div class="panel" id="panel-layers">
+          <div class="card">
+            <div class="cardtitle" data-i18n="Layers">Layers</div>
+            <div class="small" data-i18n="LayersHint">Select an object to see it here.</div>
+          </div>
+
+          <div class="card">
+            <div class="row">
+              <button class="btn" id="bringFwdBtn">⬆ <span data-i18n="Forward">Forward</span></button>
+              <button class="btn" id="sendBackBtn">⬇ <span data-i18n="Backward">Back</span></button>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="toggleLockBtn">🔒 <span data-i18n="Lock">Lock</span></button>
+              <button class="btn" id="deleteLayerBtn">🗑 <span data-i18n="Delete">Delete</span></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle" data-i18n="Objects">Objects</div>
+            <div class="list" id="layersList"></div>
+          </div>
+        </div>
+
+        <!-- Styles -->
+        <div class="panel" id="panel-styles">
+          <div class="card">
+            <div class="cardtitle" data-i18n="Colors">Colors</div>
+            <div class="row">
+              <div class="field">
+                <label class="label" data-i18n="Fill">Fill</label>
+                <input class="input" id="fillColor" type="color" value="#111111">
+              </div>
+              <div class="field">
+                <label class="label" data-i18n="Stroke">Stroke</label>
+                <input class="input" id="strokeColor" type="color" value="#ffffff">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" data-i18n="StrokeWidth">Stroke width</label>
+              <input class="input" id="strokeWidth" type="number" min="0" max="80" value="2">
+            </div>
+            <div class="row">
+              <button class="btn" id="applyStyleBtn"><span data-i18n="ApplyToSelected">Apply</span></button>
+              <button class="btn" id="bgWhiteBtn"><span data-i18n="WhiteBg">White BG</span></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle" data-i18n="TextStyles">Text styles</div>
+            <div class="row">
+              <button class="btn" id="boldBtn">B</button>
+              <button class="btn" id="italicBtn"><em>I</em></button>
+              <button class="btn" id="underlineBtn"><u>U</u></button>
+            </div>
+            <div class="field" style="margin-top:8px">
+              <label class="label" data-i18n="FontSize">Font size</label>
+              <input class="input" id="fontSize" type="number" min="6" max="220" value="48">
+            </div>
+            <button class="btn" id="applyTextStyleBtn"><span data-i18n="ApplyToSelected">Apply</span></button>
+          </div>
+        </div>
+
+        <!-- AI -->
+        <div class="panel" id="panel-ai">
+          <div class="card">
+            <div class="cardtitle">AI</div>
+            <div class="small" data-i18n="AIHint">Client-side tools now. API-based AI can be added later.</div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle" data-i18n="RemoveBg">Remove background</div>
+            <div class="small" data-i18n="RemoveBgHint">Select an image, then remove white background (threshold).</div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="removeBgBtn">🧼 <span data-i18n="Remove">Remove</span></button>
+              <input class="input" id="bgThreshold" type="number" min="0" max="255" value="240" title="Threshold">
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardtitle" data-i18n="Vector">Vector extract</div>
+            <div class="small" data-i18n="VectorHint">Needs real vectorization engine/API. UI placeholder added.</div>
+            <button class="btn" id="vectorBtn">🧩 <span data-i18n="ComingSoon">Coming soon</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Stage -->
+    <div id="stage">
+      <div id="stageTop">
+        <button class="btn" id="zoomOutBtn" title="Zoom out">−</button>
+        <div id="zoomLabel">100%</div>
+        <button class="btn" id="zoomInBtn" title="Zoom in">+</button>
+        <button class="btn" id="zoomResetBtn" title="Reset zoom">Reset</button>
+        <button class="btn" id="zoomFitBtn" title="Fit">Fit</button>
+      </div>
+
+      <div id="canvasHost">
+        <div class="canvasShell">
+          <div class="canvasWrap">
+            <canvas id="canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div id="rightPanel">
+      <div id="rightHeader">
+        <div style="font-weight:700" data-i18n="Export">Export</div>
+        <div class="pill" id="exportHint"><span data-i18n="HintCtrlWheel">Ctrl+Wheel</span> <span data-i18n="HintZoom">zoom</span></div>
+      </div>
+      <div id="rightBody">
+
+        <div class="card">
+          <div class="cardtitle" data-i18n="ExportPreview">Preview</div>
+          <button class="btn" id="flipPreviewBtn2">📖 <span data-i18n="FlipPreview">Flip preview</span></button>
+          <div class="small" style="margin-top:8px" data-i18n="PreviewHint">Preview pages before exporting.</div>
+        </div>
+
+        <div class="card">
+          <div class="cardtitle" data-i18n="ExportAs">Export as</div>
+          <div class="row">
+            <button class="btn" id="exportPngBtn">🖼 PNG</button>
+            <button class="btn" id="exportJsonBtn">🧾 JSON</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn" id="exportAllPngBtn">📦 <span data-i18n="AllPagesZip">All pages</span></button>
+            <button class="btn" id="exportPdfBtn">📄 PDF</button>
+          </div>
+          <div class="small" style="margin-top:8px" data-i18n="ExportHint2">PNG/JSON are client-side. PDF is simple image-based.</div>
+        </div>
+
+        <div class="card">
+          <div class="cardtitle" data-i18n="Cloud">Cloud</div>
+          <div class="small" data-i18n="CloudHint">Cloud export needs Firebase Storage/Firestore wiring.</div>
+          <button class="btn" id="cloudBtn">☁ <span data-i18n="ComingSoon">Coming soon</span></button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<input type="file" id="imageInput" accept="image/*" hidden />
+<!-- Flipbook modal -->
+<div id="modalMask">
+  <div id="modal">
+    <div id="modalHead">
+      <div style="font-weight:700" id="modalTitle">Flipbook Preview</div>
+      <button class="btn" id="closeModalBtn">✕</button>
+    </div>
+    <div id="modalBody">
+      <img id="flipImg" alt="preview"/>
+    </div>
+    <div class="modalNav">
+      <button class="btn" id="flipPrevBtn">⟵</button>
+      <div class="pill" id="flipLabel">1 / 1</div>
+      <button class="btn" id="flipNextBtn">⟶</button>
+    </div>
+  </div>
+</div>
+
+<!-- libs for export zip/pdf -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-/* =======================
-   FIX FABRIC WARNING
-======================= */
-(function () {
-  if (!window.fabric) return;
-  const patch = proto => {
-    try {
-      Object.defineProperty(proto, "textBaseline", {
-        get() { return "top"; },
-        set() {}
-      });
-    } catch {}
-  };
-  patch(fabric.Textbox.prototype);
-  patch(fabric.IText.prototype);
-})();
+/* ============================
+   i18n (basic)
+============================ */
+let LANG = "el";
+const I18N = {
+  el: {
+    Elements:"Εργαλεία", Pages:"Σελίδες", Layers:"Επίπεδα", Styles:"Στυλ", AI:"AI",
+    HintSpace:"Κράτα", HintPan:"για μετακίνηση", HintCtrlWheel:"Ctrl+Ροδέλα", HintZoom:"ζουμ",
+    Add:"Προσθήκη", Text:"Κείμενο", Rect:"Ορθογ.", Circle:"Κύκλος", Line:"Γραμμή", Image:"Εικόνα", Delete:"Διαγραφή",
+    CanvasSize:"Διαστάσεις καμβά", Preset:"Preset", Width:"Πλάτος", Height:"Ύψος", Apply:"Εφαρμογή", Fit:"Προσαρμογή",
+    AddPage:"Νέα", Duplicate:"Αντιγραφή", FlipPreview:"Προεπισκόπηση", PagesHint:"Κλικ σε μικρογραφία για αλλαγή.",
+    Thumbnails:"Μικρογραφίες",
+    LayersHint:"Επίλεξε αντικείμενο για έλεγχο.", Forward:"Μπροστά", Backward:"Πίσω", Lock:"Κλείδωμα",
+    Objects:"Αντικείμενα",
+    Colors:"Χρώματα", Fill:"Γέμισμα", Stroke:"Περίγραμμα", StrokeWidth:"Πάχος", ApplyToSelected:"Εφαρμογή",
+    WhiteBg:"Λευκό φόντο", TextStyles:"Στυλ κειμένου", FontSize:"Μέγεθος",
+    AIHint:"Client-side τώρα. AI API αργότερα.", RemoveBg:"Αφαίρεση φόντου", RemoveBgHint:"Επίλεξε εικόνα → αφαίρεση λευκού background.",
+    Remove:"Αφαίρεση", Vector:"Vector από εικόνα", VectorHint:"Θέλει engine/API. Μπήκε placeholder UI.", ComingSoon:"Σύντομα",
+    Export:"Εξαγωγή", ExportPreview:"Προβολή", PreviewHint:"Δες τις σελίδες πριν export.",
+    ExportAs:"Εξαγωγή ως", AllPagesZip:"Όλες σε zip", ExportHint2:"PNG/JSON τοπικά. PDF σαν εικόνες.",
+    Cloud:"Cloud", CloudHint:"Θέλει σύνδεση Firebase Storage/Firestore."
+  },
+  en: {
+    Elements:"Tools", Pages:"Pages", Layers:"Layers", Styles:"Styles", AI:"AI",
+    HintSpace:"Hold", HintPan:"to pan", HintCtrlWheel:"Ctrl+Wheel", HintZoom:"zoom",
+    Add:"Add", Text:"Text", Rect:"Rect", Circle:"Circle", Line:"Line", Image:"Image", Delete:"Delete",
+    CanvasSize:"Canvas size", Preset:"Preset", Width:"Width", Height:"Height", Apply:"Apply", Fit:"Fit",
+    AddPage:"Add", Duplicate:"Duplicate", FlipPreview:"Preview", PagesHint:"Click a thumbnail to switch.",
+    Thumbnails:"Thumbnails",
+    LayersHint:"Select an object to control it.", Forward:"Forward", Backward:"Backward", Lock:"Lock",
+    Objects:"Objects",
+    Colors:"Colors", Fill:"Fill", Stroke:"Stroke", StrokeWidth:"Stroke width", ApplyToSelected:"Apply",
+    WhiteBg:"White BG", TextStyles:"Text styles", FontSize:"Font size",
+    AIHint:"Client-side now. API-based AI later.", RemoveBg:"Remove background", RemoveBgHint:"Select an image → remove white bg.",
+    Remove:"Remove", Vector:"Vector extract", VectorHint:"Needs engine/API. Placeholder UI.", ComingSoon:"Coming soon",
+    Export:"Export", ExportPreview:"Preview", PreviewHint:"Preview pages before export.",
+    ExportAs:"Export as", AllPagesZip:"All pages zip", ExportHint2:"PNG/JSON local. PDF is image-based.",
+    Cloud:"Cloud", CloudHint:"Needs Firebase Storage/Firestore wiring."
+  }
+};
 
-/* =======================
-   CANVAS INIT
-======================= */
-const canvas = new fabric.Canvas("canvas", {
-  preserveObjectStacking: true,
-  selection: true
-});
+function applyI18N(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k = el.getAttribute("data-i18n");
+    if (I18N[LANG] && I18N[LANG][k]) el.textContent = I18N[LANG][k];
+  });
+}
+applyI18N();
 
-canvas.setWidth(1240);
-canvas.setHeight(1754);
-canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+/* ============================
+   UI toggles
+============================ */
+const app = document.getElementById("app");
+document.getElementById("toggleLeftBtn").onclick = () => app.classList.toggle("toggleLeftCollapsed");
+document.getElementById("toggleRightBtn").onclick = () => app.classList.toggle("toggleCollapsed");
+document.getElementById("langBtn").onclick = () => {
+  LANG = (LANG === "el") ? "en" : "el";
+  applyI18N();
+};
+
+/* left rail panel switching */
+const railBtns = [...document.querySelectorAll(".railbtn")];
+const panels = {
+  elements: document.getElementById("panel-elements"),
+  pages: document.getElementById("panel-pages"),
+  layers: document.getElementById("panel-layers"),
+  styles: document.getElementById("panel-styles"),
+  ai: document.getElementById("panel-ai"),
+};
+const leftTitle = document.getElementById("leftTitle");
+
+function openPanel(name){
+  railBtns.forEach(b=>b.classList.toggle("active", b.dataset.panel === name));
+  Object.entries(panels).forEach(([k,el])=> el.classList.toggle("open", k===name));
+  leftTitle.textContent = (LANG==="el")
+    ? ({elements:"Εργαλεία", pages:"Σελίδες", layers:"Επίπεδα", styles:"Στυλ", ai:"AI"}[name] || "Εργαλεία")
+    : ({elements:"Tools", pages:"Pages", layers:"Layers", styles:"Styles", ai:"AI"}[name] || "Tools");
+}
+railBtns.forEach(b=> b.onclick = () => openPanel(b.dataset.panel));
+
+/* ============================
+   Canvas + Pages core
+============================ */
+const canvas = new fabric.Canvas("canvas", { preserveObjectStacking:true, selection:true });
+console.log("✅ Canvas initialized");
+
+const PRESETS = {
+  A4P:{w:1240,h:1754},
+  A4L:{w:1754,h:1240},
+  SQUARE:{w:1400,h:1400},
+  STORY:{w:1080,h:1920},
+  HD:{w:1920,h:1080},
+};
+
+let zoom = 1;
+let pages = []; // [{ json, thumb }]
+let currentPage = 0;
+let restoring = false;
+
+/* Always start clean transform so objects show */
 canvas.setViewportTransform([1,0,0,1,0,0]);
 canvas.setZoom(1);
 
-let zoom = 1;
-
-/* =======================
-   ZOOM
-======================= */
-function updateZoomLabel() {
-  document.getElementById("zoomLabel").textContent =
-    Math.round(zoom * 100) + "%";
+function setCanvasSize(w,h){
+  canvas.setWidth(w);
+  canvas.setHeight(h);
+  canvas.setBackgroundColor("#ffffff", canvas.requestRenderAll.bind(canvas));
+  document.getElementById("customW").value = w;
+  document.getElementById("customH").value = h;
+  fitToScreen();
 }
 
-function zoomIn() {
-  zoom = Math.min(4, zoom + 0.1);
-  canvas.setZoom(zoom);
+function updatePageBadge(){
+  document.getElementById("pageBadge").textContent = `Page ${currentPage+1} / ${pages.length}`;
+}
+
+function snapshotThumb(){
+  return canvas.toDataURL({ format:"png", quality:0.7, multiplier:0.2 });
+}
+
+function saveCurrentPage(){
+  if (!pages[currentPage]) return;
+  const json = canvas.toJSON();
+  pages[currentPage].json = json;
+  pages[currentPage].thumb = snapshotThumb();
+}
+
+function loadPage(index){
+  if (index<0 || index>=pages.length) return;
+  saveCurrentPage();
+  currentPage = index;
+  const pg = pages[currentPage];
+
+  restoring = true;
+  canvas.clear();
+  canvas.setBackgroundColor("#ffffff", canvas.requestRenderAll.bind(canvas));
+
+  if (!pg.json){
+    restoring = false;
+    refreshThumbs();
+    updatePageBadge();
+    return;
+  }
+
+  canvas.loadFromJSON(pg.json, () => {
+    restoring = false;
+    canvas.requestRenderAll();
+    refreshThumbs();
+    updatePageBadge();
+    refreshLayers();
+  });
+}
+
+function addPage(){
+  saveCurrentPage();
+  pages.push({ json:null, thumb:null });
+  currentPage = pages.length - 1;
+  canvas.clear();
+  canvas.setBackgroundColor("#ffffff", canvas.requestRenderAll.bind(canvas));
+  refreshThumbs();
+  updatePageBadge();
+  refreshLayers();
+}
+
+function duplicatePage(){
+  saveCurrentPage();
+  const src = pages[currentPage];
+  const clone = { json: src.json ? structuredClone(src.json) : null, thumb: src.thumb || null };
+  pages.splice(currentPage+1, 0, clone);
+  currentPage++;
+  loadPage(currentPage);
+}
+
+function deletePage(){
+  if (pages.length <= 1) return alert(LANG==="el" ? "Πρέπει να υπάρχει τουλάχιστον 1 σελίδα." : "At least 1 page required.");
+  pages.splice(currentPage,1);
+  currentPage = Math.max(0, currentPage-1);
+  loadPage(currentPage);
+}
+
+function refreshThumbs(){
+  const grid = document.getElementById("thumbGrid");
+  grid.innerHTML = "";
+  pages.forEach((p,i)=>{
+    const d = document.createElement("div");
+    d.className = "thumb" + (i===currentPage ? " active" : "");
+    const img = document.createElement("img");
+    img.src = p.thumb || "";
+    const idx = document.createElement("div");
+    idx.className = "idx";
+    idx.textContent = (i+1);
+    d.appendChild(img);
+    d.appendChild(idx);
+    d.onclick = () => loadPage(i);
+    grid.appendChild(d);
+  });
+}
+
+/* Init first page & size */
+setCanvasSize(PRESETS.A4P.w, PRESETS.A4P.h);
+pages = [{ json:null, thumb:null }];
+currentPage = 0;
+updatePageBadge();
+refreshThumbs();
+
+/* Autosave thumbs on changes */
+["object:added","object:modified","object:removed"].forEach(ev=>{
+  canvas.on(ev, ()=>{
+    if (restoring) return;
+    saveCurrentPage();
+    refreshThumbs();
+    refreshLayers();
+  });
+});
+
+/* ============================
+   Zoom + Fit + Pan
+============================ */
+function updateZoomLabel(){
+  document.getElementById("zoomLabel").textContent = `${Math.round(zoom*100)}%`;
+}
+function applyZoomToCenter(){
+  const center = new fabric.Point(canvas.getWidth()/2, canvas.getHeight()/2);
+  canvas.zoomToPoint(center, zoom);
+  canvas.requestRenderAll();
   updateZoomLabel();
 }
-
-function zoomOut() {
-  zoom = Math.max(0.2, zoom - 0.1);
-  canvas.setZoom(zoom);
-  updateZoomLabel();
+function setZoom(v){
+  zoom = Math.max(0.2, Math.min(4, v));
+  // keep centered
+  canvas.setViewportTransform([1,0,0,1,0,0]);
+  applyZoomToCenter();
 }
-
-function resetZoom() {
+function resetZoom(){
   zoom = 1;
   canvas.setViewportTransform([1,0,0,1,0,0]);
   canvas.setZoom(1);
+  canvas.requestRenderAll();
   updateZoomLabel();
+  fitToScreen();
+}
+function fitToScreen(){
+  const host = document.getElementById("canvasHost");
+  const pad = 40;
+  const availW = host.clientWidth - pad;
+  const availH = host.clientHeight - pad;
+  const s = Math.min(availW / canvas.getWidth(), availH / canvas.getHeight());
+  zoom = Math.max(0.2, Math.min(1.6, s)); // clamp for sanity
+  canvas.setViewportTransform([1,0,0,1,0,0]);
+  applyZoomToCenter();
+}
+updateZoomLabel();
+fitToScreen();
+
+document.getElementById("zoomInBtn").onclick = ()=> setZoom(zoom + 0.1);
+document.getElementById("zoomOutBtn").onclick = ()=> setZoom(zoom - 0.1);
+document.getElementById("zoomResetBtn").onclick = ()=> resetZoom();
+document.getElementById("zoomFitBtn").onclick = ()=> fitToScreen();
+
+/* Ctrl+wheel zoom around pointer */
+canvas.on("mouse:wheel", (opt)=>{
+  const e = opt.e;
+  if (!e.ctrlKey) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const factor = e.deltaY > 0 ? 0.95 : 1.05;
+  zoom = Math.max(0.2, Math.min(4, zoom * factor));
+  const pt = new fabric.Point(e.offsetX, e.offsetY);
+  canvas.zoomToPoint(pt, zoom);
+  canvas.requestRenderAll();
+  updateZoomLabel();
+});
+
+/* Space-pan */
+let panMode = false, isPanning=false, panLast={x:0,y:0};
+document.addEventListener("keydown",(e)=>{ if(e.code==="Space") panMode=true; });
+document.addEventListener("keyup",(e)=>{ if(e.code==="Space") panMode=false; });
+
+canvas.on("mouse:down",(opt)=>{
+  if(!panMode) return;
+  isPanning = true;
+  panLast = { x: opt.e.clientX, y: opt.e.clientY };
+});
+canvas.on("mouse:move",(opt)=>{
+  if(!isPanning) return;
+  const vpt = canvas.viewportTransform;
+  vpt[4] += opt.e.clientX - panLast.x;
+  vpt[5] += opt.e.clientY - panLast.y;
+  canvas.setViewportTransform(vpt);
+  panLast = { x: opt.e.clientX, y: opt.e.clientY };
+});
+canvas.on("mouse:up", ()=>{ isPanning=false; });
+
+window.addEventListener("resize", ()=> fitToScreen());
+
+/* ============================
+   Add elements
+============================ */
+function centerObj(obj){
+  obj.set({
+    left: canvas.getWidth()/2,
+    top: canvas.getHeight()/2,
+    originX:"center",
+    originY:"center"
+  });
 }
 
-/* =======================
-   TEXT
-======================= */
-function addText() {
+function addText(){
   const t = new fabric.Textbox("Text", {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2,
-    originX: "center",
-    originY: "center",
     fontSize: 48,
     fill: "#111",
-    fontFamily: "Arial"
+    fontFamily:"Arial",
+    editable:true
   });
+  centerObj(t);
   canvas.add(t);
   canvas.setActiveObject(t);
   canvas.requestRenderAll();
 }
-
-/* =======================
-   IMAGE
-======================= */
-const imageInput = document.getElementById("imageInput");
-
-function openImage() {
-  imageInput.click();
+function addRect(){
+  const r = new fabric.Rect({ width: 360, height: 220, fill:"#111111", stroke:"#ffffff", strokeWidth:2, rx:18, ry:18 });
+  centerObj(r);
+  canvas.add(r);
+  canvas.setActiveObject(r);
+  canvas.requestRenderAll();
+}
+function addCircle(){
+  const c = new fabric.Circle({ radius: 140, fill:"#111111", stroke:"#ffffff", strokeWidth:2 });
+  centerObj(c);
+  canvas.add(c);
+  canvas.setActiveObject(c);
+  canvas.requestRenderAll();
+}
+function addLine(){
+  const l = new fabric.Line([0,0,420,0], { stroke:"#111111", strokeWidth:6, strokeLineCap:"round" });
+  centerObj(l);
+  canvas.add(l);
+  canvas.setActiveObject(l);
+  canvas.requestRenderAll();
+}
+function deleteSelected(){
+  const a = canvas.getActiveObject();
+  if (!a) return;
+  canvas.remove(a);
+  canvas.requestRenderAll();
 }
 
-imageInput.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
+document.getElementById("addTextBtn").onclick = addText;
+document.getElementById("addRectBtn").onclick = addRect;
+document.getElementById("addCircleBtn").onclick = addCircle;
+document.getElementById("addLineBtn").onclick = addLine;
+document.getElementById("deleteObjBtn").onclick = deleteSelected;
 
+/* Image import */
+const imageInput = document.getElementById("imageInput");
+document.getElementById("addImageBtn").onclick = ()=> imageInput.click();
+imageInput.addEventListener("change",(e)=>{
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.set({
-        left: canvas.getWidth() / 2,
-        top: canvas.getHeight() / 2,
-        originX: "center",
-        originY: "center"
-      });
-      img.scale(0.5);
+  reader.onload = ()=>{
+    fabric.Image.fromURL(reader.result, (img)=>{
+      img.set({ originX:"center", originY:"center" });
+      centerObj(img);
+      // scale into canvas nicely
+      const maxW = canvas.getWidth()*0.65;
+      const maxH = canvas.getHeight()*0.65;
+      const s = Math.min(maxW / img.width, maxH / img.height, 1);
+      img.scale(s);
       canvas.add(img);
       canvas.setActiveObject(img);
       canvas.requestRenderAll();
-    });
+    }, { crossOrigin: "anonymous" });
   };
   reader.readAsDataURL(file);
+  e.target.value = "";
 });
-</script>
 
+/* ============================
+   Size controls
+============================ */
+document.getElementById("sizePreset").onchange = (e)=>{
+  const p = PRESETS[e.target.value];
+  if (!p) return;
+  setCanvasSize(p.w, p.h);
+  saveCurrentPage(); refreshThumbs();
+};
+document.getElementById("applySizeBtn").onclick = ()=>{
+  const w = Math.max(200, Math.min(5000, Number(document.getElementById("customW").value)||1240));
+  const h = Math.max(200, Math.min(5000, Number(document.getElementById("customH").value)||1754));
+  setCanvasSize(w,h);
+  saveCurrentPage(); refreshThumbs();
+};
+document.getElementById("fitBtn").onclick = ()=> fitToScreen();
+
+/* ============================
+   Pages controls
+============================ */
+document.getElementById("addPageBtn").onclick = ()=> addPage();
+document.getElementById("dupPageBtn").onclick = ()=> duplicatePage();
+document.getElementById("delPageBtn").onclick = ()=> deletePage();
+
+/* ============================
+   Layers
+============================ */
+function objLabel(o, idx){
+  const t = o.type || "object";
+  if (t === "textbox") return `Text ${idx}`;
+  if (t === "image") return `Image ${idx}`;
+  if (t === "rect") return `Rect ${idx}`;
+  if (t === "circle") return `Circle ${idx}`;
+  if (t === "line") return `Line ${idx}`;
+  return `${t} ${idx}`;
+}
+function refreshLayers(){
+  const list = document.getElementById("layersList");
+  if (!list) return;
+  list.innerHTML = "";
+  const objs = canvas.getObjects().slice().reverse(); // top-first
+  if (!objs.length){
+    const empty = document.createElement("div");
+    empty.className = "small";
+    empty.textContent = LANG==="el" ? "Δεν υπάρχουν αντικείμενα." : "No objects.";
+    list.appendChild(empty);
+    return;
+  }
+  objs.forEach((o,i)=>{
+    const item = document.createElement("div");
+    item.className = "listitem";
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = objLabel(o, objs.length - i);
+    const right = document.createElement("div");
+    right.className = "pill";
+    right.textContent = o.selectable === false ? (LANG==="el" ? "Κλειδωμένο" : "Locked") : (LANG==="el" ? "Ενεργό" : "Active");
+    item.appendChild(name);
+    item.appendChild(right);
+    item.onclick = ()=>{
+      canvas.setActiveObject(o);
+      canvas.requestRenderAll();
+    };
+    list.appendChild(item);
+  });
+}
+canvas.on("selection:created", refreshLayers);
+canvas.on("selection:updated", refreshLayers);
+canvas.on("selection:cleared", refreshLayers);
+
+document.getElementById("bringFwdBtn").onclick = ()=>{
+  const a = canvas.getActiveObject(); if(!a) return;
+  canvas.bringForward(a); canvas.requestRenderAll(); refreshLayers();
+};
+document.getElementById("sendBackBtn").onclick = ()=>{
+  const a = canvas.getActiveObject(); if(!a) return;
+  canvas.sendBackwards(a); canvas.requestRenderAll(); refreshLayers();
+};
+document.getElementById("toggleLockBtn").onclick = ()=>{
+  const a = canvas.getActiveObject(); if(!a) return;
+  const locked = (a.selectable === false);
+  a.selectable = locked;
+  a.evented = locked;
+  if (!locked) canvas.discardActiveObject();
+  canvas.requestRenderAll(); refreshLayers();
+};
+document.getElementById("deleteLayerBtn").onclick = deleteSelected;
+
+/* ============================
+   Styles
+============================ */
+document.getElementById("bgWhiteBtn").onclick = ()=>{
+  canvas.setBackgroundColor("#ffffff", canvas.requestRenderAll.bind(canvas));
+};
+document.getElementById("applyStyleBtn").onclick = ()=>{
+  const a = canvas.getActiveObject();
+  if (!a) return;
+  const fill = document.getElementById("fillColor").value;
+  const stroke = document.getElementById("strokeColor").value;
+  const sw = Number(document.getElementById("strokeWidth").value)||0;
+
+  // apply only if supported
+  if ("fill" in a) a.set("fill", fill);
+  if ("stroke" in a) a.set("stroke", stroke);
+  if ("strokeWidth" in a) a.set("strokeWidth", sw);
+
+  canvas.requestRenderAll();
+  saveCurrentPage(); refreshThumbs(); refreshLayers();
+};
+
+document.getElementById("applyTextStyleBtn").onclick = ()=>{
+  const a = canvas.getActiveObject();
+  if (!a || a.type !== "textbox") return;
+  a.set("fontSize", Number(document.getElementById("fontSize").value)||48);
+  canvas.requestRenderAll();
+  saveCurrentPage(); refreshThumbs();
+};
+document.getElementById("boldBtn").onclick = ()=>{
+  const a = canvas.getActiveObject();
+  if (!a || a.type !== "textbox") return;
+  a.set("fontWeight", a.fontWeight === "bold" ? "normal" : "bold");
+  canvas.requestRenderAll(); saveCurrentPage(); refreshThumbs();
+};
+document.getElementById("italicBtn").onclick = ()=>{
+  const a = canvas.getActiveObject();
+  if (!a || a.type !== "textbox") return;
+  a.set("fontStyle", a.fontStyle === "italic" ? "normal" : "italic");
+  canvas.requestRenderAll(); saveCurrentPage(); refreshThumbs();
+};
+document.getElementById("underlineBtn").onclick = ()=>{
+  const a = canvas.getActiveObject();
+  if (!a || a.type !== "textbox") return;
+  a.set("underline", !a.underline);
+  canvas.requestRenderAll(); saveCurrentPage(); refreshThumbs();
+};
+
+/* ============================
+   Flipbook preview
+============================ */
+const modalMask = document.getElementById("modalMask");
+const flipImg = document.getElementById("flipImg");
+const flipLabel = document.getElementById("flipLabel");
+let flipIndex = 0;
+
+function openFlipPreview(){
+  saveCurrentPage();
+  const imgs = pages.map(p=> p.thumb || "");
+  if (!imgs.length) return;
+
+  flipIndex = Math.max(0, Math.min(flipIndex, imgs.length-1));
+  flipImg.src = imgs[flipIndex] || "";
+  flipLabel.textContent = `${flipIndex+1} / ${imgs.length}`;
+  modalMask.style.display = "flex";
+}
+function closeFlipPreview(){
+  modalMask.style.display = "none";
+}
+function flipTo(dir){
+  saveCurrentPage();
+  const imgs = pages.map(p=> p.thumb || "");
+  if (!imgs.length) return;
+  flipIndex = dir==="next" ? Math.min(imgs.length-1, flipIndex+1) : Math.max(0, flipIndex-1);
+  flipImg.src = imgs[flipIndex] || "";
+  flipLabel.textContent = `${flipIndex+1} / ${imgs.length}`;
+}
+
+document.getElementById("flipPreviewBtn").onclick = openFlipPreview;
+document.getElementById("flipPreviewBtn2").onclick = openFlipPreview;
+document.getElementById("closeModalBtn").onclick = closeFlipPreview;
+document.getElementById("flipPrevBtn").onclick = ()=> flipTo("prev");
+document.getElementById("flipNextBtn").onclick = ()=> flipTo("next");
+modalMask.addEventListener("click",(e)=>{ if(e.target===modalMask) closeFlipPreview(); });
+
+document.addEventListener("keydown",(e)=>{
+  if (modalMask.style.display !== "flex") return;
+  if (e.key==="ArrowLeft") flipTo("prev");
+  if (e.key==="ArrowRight") flipTo("next");
+  if (e.key==="Escape") closeFlipPreview();
+});
+
+/* ============================
+   Export
+============================ */
+function downloadDataUrl(filename, dataUrl){
+  const a = document.createElement("a");
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+document.getElementById("exportPngBtn").onclick = ()=>{
+  saveCurrentPage();
+  const data = canvas.toDataURL({ format:"png", quality: 0.95, multiplier: 1 });
+  downloadDataUrl(`page_${currentPage+1}.png`, data);
+};
+
+document.getElementById("exportJsonBtn").onclick = ()=>{
+  saveCurrentPage();
+  const payload = {
+    meta: { w: canvas.getWidth(), h: canvas.getHeight(), pages: pages.length },
+    pages: pages.map(p=>p.json || null),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+  saveAs(blob, "photobook.json");
+};
+
+document.getElementById("exportAllPngBtn").onclick = async ()=>{
+  saveCurrentPage();
+  const zip = new JSZip();
+  // render each page to PNG from its json
+  const temp = new fabric.StaticCanvas(null, { width: canvas.getWidth(), height: canvas.getHeight() });
+  for (let i=0;i<pages.length;i++){
+    const pg = pages[i];
+    if (!pg.json){
+      // blank
+      const blank = document.createElement("canvas");
+      blank.width = canvas.getWidth(); blank.height = canvas.getHeight();
+      const ctx = blank.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0,0,blank.width,blank.height);
+      const b64 = blank.toDataURL("image/png").split(",")[1];
+      zip.file(`page_${i+1}.png`, b64, {base64:true});
+      continue;
+    }
+    await new Promise((resolve)=>{
+      temp.loadFromJSON(pg.json, ()=>{
+        temp.setBackgroundColor("#fff", ()=>{});
+        const png = temp.toDataURL({ format:"png", quality: 0.95, multiplier: 1 }).split(",")[1];
+        zip.file(`page_${i+1}.png`, png, {base64:true});
+        resolve();
+      });
+    });
+  }
+  const blob = await zip.generateAsync({type:"blob"});
+  saveAs(blob, "photobook_pages.zip");
+};
+
+document.getElementById("exportPdfBtn").onclick = async ()=>{
+  saveCurrentPage();
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [canvas.getWidth(), canvas.getHeight()] });
+
+  const temp = new fabric.StaticCanvas(null, { width: canvas.getWidth(), height: canvas.getHeight() });
+
+  for (let i=0;i<pages.length;i++){
+    if (i>0) pdf.addPage([canvas.getWidth(), canvas.getHeight()], "portrait");
+
+    const pg = pages[i];
+    if (!pg.json){
+      // blank
+      pdf.setFillColor(255,255,255);
+      pdf.rect(0,0,canvas.getWidth(), canvas.getHeight(), "F");
+      continue;
+    }
+
+    await new Promise((resolve)=>{
+      temp.loadFromJSON(pg.json, ()=>{
+        temp.setBackgroundColor("#fff", ()=>{});
+        const data = temp.toDataURL({ format:"png", quality: 0.95, multiplier: 1 });
+        pdf.addImage(data, "PNG", 0, 0, canvas.getWidth(), canvas.getHeight());
+        resolve();
+      });
+    });
+  }
+
+  pdf.save("photobook.pdf");
+};
+
+document.getElementById("cloudBtn").onclick = ()=> alert(LANG==="el"
+  ? "Cloud export: θα το συνδέσουμε με Firebase Storage/Firestore στο επόμενο βήμα."
+  : "Cloud export: we will wire it to Firebase Storage/Firestore next."
+);
+
+/* ============================
+   Background removal (basic)
+   Remove near-white pixels from selected image
+============================ */
+async function removeWhiteBackgroundFromActive(threshold=240){
+  const a = canvas.getActiveObject();
+  if (!a || a.type !== "image") {
+    alert(LANG==="el" ? "Επίλεξε πρώτα μια εικόνα." : "Select an image first.");
+    return;
+  }
+
+  // render active image to offscreen canvas
+  const src = a.toDataURL({ format:"png", multiplier: 1 });
+  const imgEl = await new Promise((resolve)=>{
+    const im = new Image();
+    im.onload = ()=> resolve(im);
+    im.src = src;
+  });
+
+  const off = document.createElement("canvas");
+  off.width = imgEl.width;
+  off.height = imgEl.height;
+  const ctx = off.getContext("2d");
+  ctx.drawImage(imgEl,0,0);
+
+  const imd = ctx.getImageData(0,0,off.width,off.height);
+  const d = imd.data;
+
+  for (let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], b=d[i+2];
+    if (r>=threshold && g>=threshold && b>=threshold){
+      d[i+3]=0;
+    }
+  }
+  ctx.putImageData(imd,0,0);
+
+  const out = off.toDataURL("image/png");
+  const left=a.left, top=a.top, angle=a.angle, scaleX=a.scaleX, scaleY=a.scaleY, flipX=a.flipX, flipY=a.flipY;
+
+  fabric.Image.fromURL(out, (newImg)=>{
+    newImg.set({
+      left, top, angle, scaleX, scaleY, flipX, flipY,
+      originX: a.originX, originY: a.originY
+    });
+    canvas.remove(a);
+    canvas.add(newImg);
+    canvas.setActiveObject(newImg);
+    canvas.requestRenderAll();
+  }, { crossOrigin:"anonymous" });
+}
+
+document.getElementById("removeBgBtn").onclick = ()=>{
+  const thr = Number(document.getElementById("bgThreshold").value)||240;
+  removeWhiteBackgroundFromActive(thr);
+};
+document.getElementById("vectorBtn").onclick = ()=> alert(LANG==="el"
+  ? "Vector extract: χρειάζεται engine/API (π.χ. potrace server-side). Το UI είναι έτοιμο για να κουμπώσουμε."
+  : "Vector extract: needs an engine/API (e.g. potrace server-side). UI is ready to wire."
+);
+
+/* ============================
+   Login (placeholder panel)
+============================ */
+document.getElementById("loginBtn").onclick = ()=>{
+  alert(LANG==="el"
+    ? "Σύνδεση: Θα τη συνδέσουμε με Firebase Auth στο επόμενο βήμα (modal + email/password)."
+    : "Login: We'll wire Firebase Auth next (modal + email/password)."
+  );
+};
+
+/* quick bindings */
+document.getElementById("flipPreviewBtn2").title = "Flipbook Preview";
+
+/* keep thumbs fresh initially */
+saveCurrentPage(); refreshThumbs(); refreshLayers();
+</script>
 </body>
 </html>
