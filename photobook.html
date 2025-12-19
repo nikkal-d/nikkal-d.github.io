@@ -1,210 +1,256 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8" />
-  <title>Photobook Editor</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<title>Photobook Editor</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+<!-- FABRIC -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-    #sidebar {
-      width: 220px;
-      background: #1e1e1e;
-      color: #fff;
-      padding: 12px;
-      box-sizing: border-box;
-    }
+<style>
+/* =======================
+   THEME
+======================= */
+:root {
+  --bg: #111;
+  --panel: #1e1e1e;
+  --btn: #2b2b2b;
+  --btn-hover: #3a3a3a;
+  --accent: #e10600;
+  --text: #eee;
+}
 
-    #sidebar button {
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 10px;
-      background: #e53935;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-    }
+* { box-sizing: border-box; }
 
-    #sidebar button:hover {
-      background: #c62828;
-    }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
 
-    #main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #ddd;
-    }
+/* =======================
+   LAYOUT
+======================= */
+#app {
+  display: flex;
+  height: 100vh;
+}
 
-    #topbar {
-      width: 100%;
-      background: #fff;
-      padding: 8px;
-      box-sizing: border-box;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      border-bottom: 1px solid #ccc;
-    }
+#leftBar {
+  width: 72px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
 
-    #topbar button {
-      padding: 6px 10px;
-      cursor: pointer;
-    }
+#leftBar button {
+  background: var(--btn);
+  border: none;
+  color: var(--text);
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 6px;
+}
 
-    #canvasWrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-    }
+#leftBar button:hover {
+  background: var(--btn-hover);
+}
 
-    canvas {
-      background: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,.3);
-    }
+/* =======================
+   CANVAS AREA
+======================= */
+#center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 
-    input[type="file"] {
-      display: none;
-    }
-  </style>
+#topBar {
+  height: 48px;
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+}
 
-  <!-- 🔒 HARD FIX: kill Fabric alphabetical internally -->
-  <script>
-    (function () {
-      const d = Object.getOwnPropertyDescriptor(
-        CanvasRenderingContext2D.prototype,
-        "textBaseline"
-      );
-      if (!d || !d.set) return;
-      Object.defineProperty(CanvasRenderingContext2D.prototype, "textBaseline", {
-        get: d.get,
-        set(v) {
-          d.set.call(this, v === "alphabetical" ? "alphabetic" : v);
-        },
-        configurable: true
-      });
-    })();
-  </script>
+#topBar button {
+  background: var(--btn);
+  border: none;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-  <!-- Fabric -->
-  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+#topBar button:hover {
+  background: var(--btn-hover);
+}
+
+#zoomLabel {
+  min-width: 50px;
+  text-align: center;
+}
+
+#canvasHost {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #888;
+}
+
+/* =======================
+   CANVAS
+======================= */
+.canvas-container {
+  background: #fff;
+  box-shadow: 0 0 20px rgba(0,0,0,.6);
+}
+</style>
 </head>
 
 <body>
 
-  <div id="sidebar">
-    <button onclick="addText()">➕ Text</button>
-    <button onclick="openImage()">🖼 Image</button>
-    <button onclick="zoomIn()">➕ Zoom</button>
-    <button onclick="zoomOut()">➖ Zoom</button>
-    <button onclick="resetZoom()">⤾ Reset Zoom</button>
-    <input type="file" id="imageInput" accept="image/*">
+<div id="app">
+
+  <!-- LEFT BAR -->
+  <div id="leftBar">
+    <button onclick="addText()">🅣</button>
+    <button onclick="openImage()">🖼</button>
   </div>
 
-  <div id="main">
-    <div id="topbar">
-      <strong>Photobook Editor (Working Base)</strong>
+  <!-- CENTER -->
+  <div id="center">
+    <div id="topBar">
+      <button onclick="zoomOut()">−</button>
+      <div id="zoomLabel">100%</div>
+      <button onclick="zoomIn()">+</button>
+      <button onclick="resetZoom()">Reset</button>
     </div>
 
-    <div id="canvasWrap">
-      <canvas id="canvas" width="1240" height="1754"></canvas>
+    <div id="canvasHost">
+      <canvas id="canvas"></canvas>
     </div>
   </div>
+
+</div>
+
+<input type="file" id="imageInput" accept="image/*" hidden />
 
 <script>
-  // =====================
-  // CORE
-  // =====================
-  const canvas = new fabric.Canvas("canvas", {
-    preserveObjectStacking: true,
-    selection: true
-  });
-
-  let zoom = 1;
-
-  console.log("✅ Canvas initialized");
-
-  // =====================
-  // TEXT
-  // =====================
-  function addText() {
-    const text = new fabric.Textbox("Text", {
-      left: 150,
-      top: 150,
-      fontSize: 48,
-      fill: "#111",
-      fontFamily: "Arial",
-      textBaseline: "alphabetic"
-    });
-    canvas.add(text);
-    canvas.setActiveObject(text);
-    canvas.requestRenderAll();
-  }
-
-  // =====================
-  // IMAGE
-  // =====================
-  function openImage() {
-    document.getElementById("imageInput").click();
-  }
-
-  document.getElementById("imageInput").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      fabric.Image.fromURL(reader.result, img => {
-        img.scaleToWidth(canvas.getWidth() * 0.4);
-        img.set({ left: 200, top: 200 });
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.requestRenderAll();
+/* =======================
+   FIX FABRIC WARNING
+======================= */
+(function () {
+  if (!window.fabric) return;
+  const patch = proto => {
+    try {
+      Object.defineProperty(proto, "textBaseline", {
+        get() { return "top"; },
+        set() {}
       });
-    };
-    reader.readAsDataURL(file);
+    } catch {}
+  };
+  patch(fabric.Textbox.prototype);
+  patch(fabric.IText.prototype);
+})();
+
+/* =======================
+   CANVAS INIT
+======================= */
+const canvas = new fabric.Canvas("canvas", {
+  preserveObjectStacking: true,
+  selection: true
+});
+
+canvas.setWidth(1240);
+canvas.setHeight(1754);
+canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+canvas.setViewportTransform([1,0,0,1,0,0]);
+canvas.setZoom(1);
+
+let zoom = 1;
+
+/* =======================
+   ZOOM
+======================= */
+function updateZoomLabel() {
+  document.getElementById("zoomLabel").textContent =
+    Math.round(zoom * 100) + "%";
+}
+
+function zoomIn() {
+  zoom = Math.min(4, zoom + 0.1);
+  canvas.setZoom(zoom);
+  updateZoomLabel();
+}
+
+function zoomOut() {
+  zoom = Math.max(0.2, zoom - 0.1);
+  canvas.setZoom(zoom);
+  updateZoomLabel();
+}
+
+function resetZoom() {
+  zoom = 1;
+  canvas.setViewportTransform([1,0,0,1,0,0]);
+  canvas.setZoom(1);
+  updateZoomLabel();
+}
+
+/* =======================
+   TEXT
+======================= */
+function addText() {
+  const t = new fabric.Textbox("Text", {
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    originX: "center",
+    originY: "center",
+    fontSize: 48,
+    fill: "#111",
+    fontFamily: "Arial"
   });
+  canvas.add(t);
+  canvas.setActiveObject(t);
+  canvas.requestRenderAll();
+}
 
-  // =====================
-  // ZOOM
-  // =====================
-  function zoomIn() {
-    zoom = Math.min(4, zoom + 0.1);
-    applyZoom();
-  }
+/* =======================
+   IMAGE
+======================= */
+const imageInput = document.getElementById("imageInput");
 
-  function zoomOut() {
-    zoom = Math.max(0.2, zoom - 0.1);
-    applyZoom();
-  }
+function openImage() {
+  imageInput.click();
+}
 
-  function resetZoom() {
-    zoom = 1;
-    canvas.setViewportTransform([1,0,0,1,0,0]);
-    canvas.requestRenderAll();
-  }
+imageInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  function applyZoom() {
-    const center = new fabric.Point(
-      canvas.getWidth() / 2,
-      canvas.getHeight() / 2
-    );
-    canvas.zoomToPoint(center, zoom);
-    canvas.requestRenderAll();
-  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
+      img.set({
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        originX: "center",
+        originY: "center"
+      });
+      img.scale(0.5);
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.requestRenderAll();
+    });
+  };
+  reader.readAsDataURL(file);
+});
 </script>
 
 </body>
