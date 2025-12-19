@@ -1,259 +1,121 @@
 // js/core.js
 // =====================================================
-// CORE CANVAS API – STABLE & COMPATIBLE
-// Works with ui.js / tools.js imports
-// Fixes Fabric baseline issues safely (no redefine crash)
+// SINGLE SOURCE OF TRUTH FOR CANVAS
 // =====================================================
 
-export let fabricCanvas = null;
+export let App = {
+  canvas: null,
+  zoom: 1
+};
 
-let zoom = 1;
+// ================= INIT =================
 
-// -----------------------------------------------------
-// SAFE FABRIC PATCH (no "Cannot redefine property")
-// -----------------------------------------------------
-(function safeFixFabricBaseline() {
-  if (typeof window === "undefined") return;
-  const f = window.fabric;
-  if (!f) return;
+export function initCanvas(canvasId = "canvas") {
+  if (App.canvas) return; // ❗ init μόνο ΜΙΑ φορά
 
-  const safePatch = (proto) => {
-    if (!proto) return;
-    // mark guard to avoid running twice
-    if (proto.__pbsBaselineFixed) return;
-
-    try {
-      const desc = Object.getOwnPropertyDescriptor(proto, "textBaseline");
-      // If non-configurable, we cannot redefine. Just mark and exit.
-      if (desc && desc.configurable === false) {
-        proto.__pbsBaselineFixed = true;
-        return;
-      }
-
-      // Define a safe default value (Fabric may still override internally)
-      Object.defineProperty(proto, "textBaseline", {
-        value: "top",
-        writable: true,
-        configurable: true,
-        enumerable: true
-      });
-
-      proto.__pbsBaselineFixed = true;
-    } catch (e) {
-      // If something is locked, ignore (do NOT crash the app)
-      try { proto.__pbsBaselineFixed = true; } catch {}
-    }
-  };
-
-  safePatch(f.Textbox?.prototype);
-  safePatch(f.IText?.prototype);
-})();
-
-// -----------------------------------------------------
-// INIT
-// -----------------------------------------------------
-export function initCanvas(id = "canvas") {
-  if (fabricCanvas) return fabricCanvas;
-
-  if (typeof fabric === "undefined") {
-    console.error("Fabric not loaded. Make sure fabric.min.js loads BEFORE core.js");
-    return null;
+  const el = document.getElementById(canvasId);
+  if (!el || typeof fabric === "undefined") {
+    console.error("Canvas or Fabric missing");
+    return;
   }
 
-  fabricCanvas = new fabric.Canvas(id, {
-    backgroundColor: "#ffffff",
+  App.canvas = new fabric.Canvas(canvasId, {
     preserveObjectStacking: true,
     selection: true
   });
 
-  // Ensure zoom starts clean
-  zoom = 1;
-  fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-  fabricCanvas.requestRenderAll();
+  // default size
+  App.canvas.setWidth(1240);
+  App.canvas.setHeight(1754);
+  App.canvas.setBackgroundColor("#ffffff", App.canvas.renderAll.bind(App.canvas));
 
-  return fabricCanvas;
+  bindWheelZoom();
+
+  console.log("✅ Canvas initialized");
 }
 
-// -----------------------------------------------------
-// HELPERS
-// -----------------------------------------------------
-function ensureCanvas() {
-  if (!fabricCanvas) {
-    console.warn("Canvas not initialized. Call initCanvas() first.");
-    return false;
-  }
-  return true;
-}
+// ================= TEXT =================
 
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
+export function addText() {
+  if (!App.canvas) return;
 
-// -----------------------------------------------------
-// TEXT
-// -----------------------------------------------------
-export function addText(text = "Text") {
-  if (!ensureCanvas()) return;
-
-  const t = new fabric.Textbox(String(text), {
-    left: 160,
-    top: 160,
+  const text = new fabric.Textbox("Text", {
+    left: 150,
+    top: 150,
     fontSize: 40,
     fill: "#111",
     fontFamily: "Arial",
-    // prevent baseline warning
-    textBaseline: "top"
+    textBaseline: "top" // ✅ ΜΟΝΟ ΕΔΩ
   });
 
-  fabricCanvas.add(t);
-  fabricCanvas.setActiveObject(t);
-  fabricCanvas.requestRenderAll();
+  App.canvas.add(text);
+  App.canvas.setActiveObject(text);
+  App.canvas.requestRenderAll();
 }
 
-// -----------------------------------------------------
-// IMAGE
-// -----------------------------------------------------
+// ================= IMAGE =================
+
 export function addImageFromFile(file) {
-  if (!ensureCanvas() || !file) return;
+  if (!App.canvas || !file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    fabric.Image.fromURL(e.target.result, (img) => {
-      // reasonable default size
-      const targetW = Math.min(420, fabricCanvas.getWidth() * 0.45);
-      img.scaleToWidth(targetW);
-
-      img.set({
-        left: 160,
-        top: 160
-      });
-
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.requestRenderAll();
-    }, { crossOrigin: "anonymous" });
-  };
-  reader.readAsDataURL(file);
-}
-
-// -----------------------------------------------------
-// EMOJI
-// -----------------------------------------------------
-export function addEmoji(char = "😀") {
-  if (!ensureCanvas()) return;
-
-  const e = new fabric.Text(String(char), {
-    left: 200,
-    top: 200,
-    fontSize: 64,
-    // prevent baseline warning
-    textBaseline: "top"
-  });
-
-  fabricCanvas.add(e);
-  fabricCanvas.setActiveObject(e);
-  fabricCanvas.requestRenderAll();
-}
-
-// -----------------------------------------------------
-// ZOOM (API expected by ui.js)
-// -----------------------------------------------------
-export function getZoom() {
-  return zoom;
-}
-
-// ui.js expects applyZoom(value)
-export function applyZoom(value) {
-  if (!ensureCanvas()) return;
-
-  const next = clamp(Number(value) || 1, 0.2, 4);
-  zoom = next;
-
-  const center = fabricCanvas.getCenter();
-  fabricCanvas.zoomToPoint(
-    new fabric.Point(center.left, center.top),
-    zoom
-  );
-  fabricCanvas.requestRenderAll();
-}
-
-// Some code uses setZoom; keep alias
-export function setZoom(value) {
-  applyZoom(value);
-}
-
-export function resetZoom() {
-  if (!ensureCanvas()) return;
-
-  zoom = 1;
-  fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-  fabricCanvas.requestRenderAll();
-}
-
-export function fitToScreen() {
-  if (!ensureCanvas()) return;
-
-  const host = document.getElementById("canvasHost");
-  if (!host) return;
-
-  const pad = 20;
-  const cw = fabricCanvas.getWidth();
-  const ch = fabricCanvas.getHeight();
-
-  const scale = Math.min(
-    (host.clientWidth - pad) / cw,
-    (host.clientHeight - pad) / ch
-  );
-
-  applyZoom(scale);
-}
-
-// -----------------------------------------------------
-// REQUIRED EXPORTS expected by tools.js (stubs for now)
-// -----------------------------------------------------
-export function refreshThumbnails() {
-  // Αν το tools.js σου φτιάχνει thumbnails αλλού, αυτό είναι OK.
-  // Το κρατάμε για να ΜΗΝ σπάνε imports.
-}
-
-export function saveCurrentPage() {
-  // Το κρατάμε για να ΜΗΝ σπάνε imports.
-  // Αν έχεις pages σύστημα αλλού, θα το δέσουμε μετά σωστά.
-  if (!fabricCanvas) return;
-  try { fabricCanvas.requestRenderAll(); } catch {}
-}
-
-// ====== EXPOSE CORE TO GLOBAL ======
-window.App = window.App || {};
-
-window.App.canvas = fabricCanvas;
-
-window.App.addText = function () {
-  const t = new fabric.Textbox("Text", {
-    left: 200,
-    top: 200,
-    fontSize: 40,
-    fill: "#111",
-    fontFamily: "Arial",
-  });
-  fabricCanvas.add(t);
-  fabricCanvas.setActiveObject(t);
-  fabricCanvas.requestRenderAll();
-};
-
-window.App.addImageFromFile = function (file) {
   const reader = new FileReader();
   reader.onload = () => {
     fabric.Image.fromURL(reader.result, img => {
-      img.scaleToWidth(fabricCanvas.getWidth() * 0.4);
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.requestRenderAll();
+      img.scaleToWidth(App.canvas.getWidth() * 0.5);
+      img.left = 100;
+      img.top = 100;
+      App.canvas.add(img);
+      App.canvas.setActiveObject(img);
+      App.canvas.requestRenderAll();
     });
   };
   reader.readAsDataURL(file);
-};
+}
 
-window.App.setZoom = setZoom;
-window.App.getZoom = () => zoom;
-window.App.resetZoom = resetZoom;
+// ================= ZOOM =================
+
+export function applyZoom(value) {
+  if (!App.canvas) return;
+
+  App.zoom = Math.max(0.2, Math.min(4, value));
+
+  const center = new fabric.Point(
+    App.canvas.getWidth() / 2,
+    App.canvas.getHeight() / 2
+  );
+
+  App.canvas.zoomToPoint(center, App.zoom);
+  App.canvas.requestRenderAll();
+}
+
+export function resetZoom() {
+  if (!App.canvas) return;
+
+  App.zoom = 1;
+  App.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+  App.canvas.requestRenderAll();
+}
+
+export function fitToScreen() {
+  resetZoom();
+}
+
+// ================= INTERNAL =================
+
+function bindWheelZoom() {
+  App.canvas.on("mouse:wheel", opt => {
+    const e = opt.e;
+    if (!e.ctrlKey) return;
+
+    e.preventDefault();
+    const delta = e.deltaY;
+    const factor = delta > 0 ? 0.9 : 1.1;
+    applyZoom(App.zoom * factor);
+  });
+}
+
+// ================= SAFE STUBS =================
+// (για να ΜΗΝ σπάνε tools.js / ui.js)
+
+export function refreshThumbnails() {}
+export function saveCurrentPage() {}
