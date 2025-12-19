@@ -1,60 +1,48 @@
 // js/core.js
-import { fabric } from "https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.esm.min.js";
+// =====================================================
+// SINGLE SOURCE OF TRUTH FOR CANVAS
+// =====================================================
 
 export let fabricCanvas = null;
 let zoom = 1;
 
-// ==========================
-// INIT
-// ==========================
+// ---------------- INIT ----------------
 export function initCanvas(canvasId) {
-  const el = document.getElementById(canvasId);
-  if (!el) {
-    console.error("Canvas element not found");
-    return;
-  }
-
   fabricCanvas = new fabric.Canvas(canvasId, {
-    backgroundColor: "#ffffff",
     preserveObjectStacking: true,
-    selection: true,
+    selection: true
   });
 
-  fabricCanvas.renderAll();
+  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
+
   console.log("✅ Canvas initialized");
 }
 
-// ==========================
-// TEXT
-// ==========================
+// ---------------- TEXT ----------------
 export function addText() {
   if (!fabricCanvas) return;
 
-  const text = new fabric.Textbox("Text", {
+  const t = new fabric.Textbox("Text", {
     left: 150,
     top: 150,
-    fontSize: 40,
+    fontSize: 42,
     fill: "#111",
-    fontFamily: "Arial",
+    fontFamily: "Arial"
   });
 
-  fabricCanvas.add(text);
-  fabricCanvas.setActiveObject(text);
+  fabricCanvas.add(t);
+  fabricCanvas.setActiveObject(t);
   fabricCanvas.requestRenderAll();
 }
 
-// ==========================
-// IMAGE
-// ==========================
+// ---------------- IMAGE ----------------
 export function addImageFromFile(file) {
   if (!fabricCanvas || !file) return;
 
   const reader = new FileReader();
   reader.onload = () => {
-    fabric.Image.fromURL(reader.result, (img) => {
-      img.scaleToWidth(fabricCanvas.getWidth() * 0.4);
-      img.left = 100;
-      img.top = 100;
+    fabric.Image.fromURL(reader.result, img => {
+      img.scaleToWidth(fabricCanvas.getWidth() * 0.5);
       fabricCanvas.add(img);
       fabricCanvas.setActiveObject(img);
       fabricCanvas.requestRenderAll();
@@ -63,32 +51,30 @@ export function addImageFromFile(file) {
   reader.readAsDataURL(file);
 }
 
-// ==========================
-// ZOOM
-// ==========================
-export function applyZoom(factor) {
+// ---------------- ZOOM ----------------
+export function applyZoom(value) {
   if (!fabricCanvas) return;
 
-  zoom = Math.min(4, Math.max(0.2, zoom * factor));
-  fabricCanvas.setZoom(zoom);
+  zoom = Math.max(0.2, Math.min(4, value));
+  const center = fabricCanvas.getCenter();
+  fabricCanvas.zoomToPoint(new fabric.Point(center.left, center.top), zoom);
   fabricCanvas.requestRenderAll();
+}
 
-  const zv = document.getElementById("zoomValue");
-  if (zv) zv.textContent = Math.round(zoom * 100) + "%";
+export function zoomIn() {
+  applyZoom(zoom + 0.1);
+}
+
+export function zoomOut() {
+  applyZoom(zoom - 0.1);
 }
 
 export function resetZoom() {
-  if (!fabricCanvas) return;
   zoom = 1;
-  fabricCanvas.setZoom(1);
-  fabricCanvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+  fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
   fabricCanvas.requestRenderAll();
-
-  const zv = document.getElementById("zoomValue");
-  if (zv) zv.textContent = "100%";
 }
 
 export function fitToScreen() {
-  if (!fabricCanvas) return;
   resetZoom();
 }
