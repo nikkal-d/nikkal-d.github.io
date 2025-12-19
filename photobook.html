@@ -747,6 +747,9 @@ railBtns.forEach(b=> b.onclick = () => openPanel(b.dataset.panel));
    Canvas + Pages core
 ============================ */
 const canvas = new fabric.Canvas("canvas", { preserveObjectStacking:true, selection:true });
+  // 🔴 HARD RESET VIEWPORT (critical)
+canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+canvas.setZoom(1);
 console.log("✅ Canvas initialized");
 
 const PRESETS = {
@@ -892,10 +895,14 @@ function applyZoomToCenter(){
 }
 function setZoom(v){
   zoom = Math.max(0.2, Math.min(4, v));
-  // keep centered
-  canvas.setViewportTransform([1,0,0,1,0,0]);
-  applyZoomToCenter();
+  const center = canvas.getCenter();
+  canvas.zoomToPoint(
+    new fabric.Point(center.left, center.top),
+    zoom
+  );
+  canvas.requestRenderAll();
 }
+
 function resetZoom(){
   zoom = 1;
   canvas.setViewportTransform([1,0,0,1,0,0]);
@@ -963,8 +970,15 @@ window.addEventListener("resize", ()=> fitToScreen());
 ============================ */
 function centerObj(obj){
   obj.set({
-    left: canvas.getWidth()/2,
-    top: canvas.getHeight()/2,
+    function centerObj(obj){
+  const center = canvas.getCenter();
+  obj.set({
+    left: center.left,
+    top: center.top,
+    originX: "center",
+    originY: "center"
+  });
+}
     originX:"center",
     originY:"center"
   });
