@@ -13,8 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initCanvas("canvas");
 
   // TEXT
-  document.getElementById("addTextBtn")?.addEventListener("click", addText);
-
+document.getElementById("addTextBtn")?.addEventListener("click", () => {
+  addText();
   // IMAGE
   document.getElementById("addImageBtn")?.addEventListener("click", () => {
     document.getElementById("imageInput")?.click();
