@@ -16,6 +16,10 @@ export function initCanvas(canvasId) {
   fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
 
   console.log("✅ Canvas initialized");
+
+  // expose for debug & UI
+window.fabricCanvas = fabricCanvas;
+
 }
 
 // ---------------- TEXT ----------------
@@ -34,6 +38,9 @@ export function addText() {
   fabricCanvas.setActiveObject(t);
   fabricCanvas.requestRenderAll();
 }
+
+window.addText = addText;
+
 
 // ---------------- IMAGE ----------------
 export function addImageFromFile(file) {
