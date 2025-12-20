@@ -1,250 +1,154 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8">
-<title>Photobook Editor</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Photobook Studio – Editor</title>
 
-<!-- Fabric.js -->
+<link rel="icon" href="./favicon.ico" />
+
+<!-- CSS (κρατάς το δικό σου αν θες) -->
+<link rel="stylesheet" href="./css/photobook.css" />
+
+<!-- FABRIC (global) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
 <style>
-:root{
-  --bg:#0f1115;
-  --panel:#151823;
-  --panel2:#1b2030;
-  --btn:#242b3e;
-  --border:#2a3147;
-}
+/* Minimal layout in case photobook.css είναι άδειο/σπασμένο */
+:root { color-scheme: light dark; }
+body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0f1115; color:#e9eef7; }
+.app { display:grid; grid-template-columns: 64px 1fr 340px; height:100vh; }
+.sidebar { background:#151a22; display:flex; flex-direction:column; gap:10px; padding:10px; border-right:1px solid #232b3a; }
+.sidebar button { background:#1c2433; border:1px solid #2b3550; color:#e9eef7; border-radius:12px; padding:10px; cursor:pointer; }
+.sidebar button:hover { filter:brightness(1.1); }
 
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background:var(--bg);
-  color:#eee;
-  font-family:system-ui,Arial;
-  height:100vh;
-  overflow:hidden;
-}
+.main { display:flex; flex-direction:column; min-width:0; }
+.topbar { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#151a22; border-bottom:1px solid #232b3a; }
+.topbar .group { display:flex; gap:8px; align-items:center; }
+.pill { padding:6px 10px; border-radius:999px; background:#1c2433; border:1px solid #2b3550; font-size:13px; }
 
-#top{
-  height:48px;
-  background:var(--panel);
-  display:flex;
-  align-items:center;
-  padding:0 14px;
-  border-bottom:1px solid var(--border);
-}
+.canvasHost { position:relative; flex:1; display:flex; align-items:center; justify-content:center; background:#0f1115; overflow:hidden; }
+.canvasFrame { background:#0b0d12; border:1px solid #232b3a; border-radius:16px; padding:12px; }
+#canvas { background:#fff; border-radius:8px; }
 
-#app{
-  display:grid;
-  grid-template-columns:260px 1fr 300px;
-  height:calc(100vh - 48px);
-}
+.bottom { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#151a22; border-top:1px solid #232b3a; }
+#thumbStrip { display:flex; gap:8px; overflow:auto; padding:4px; }
+.thumb { border:1px solid #2b3550; background:#1c2433; border-radius:10px; padding:6px; cursor:pointer; }
+.thumb.active { outline:2px solid #6ea8ff; }
+.thumb img { width:64px; height:46px; object-fit:cover; background:#fff; border-radius:6px; display:block; }
 
-/* PANELS */
-.panel{
-  background:var(--panel);
-  padding:10px;
-  border-right:1px solid var(--border);
-}
-.panel.right{
-  border-right:none;
-  border-left:1px solid var(--border);
-}
+.rightPanel { background:#151a22; border-left:1px solid #232b3a; padding:12px; overflow:auto; transform:translateX(0); transition:transform .2s ease; }
+.rightPanel:not(.open) { transform:translateX(340px); }
+.rightPanel h3 { margin:6px 0 10px; font-size:16px; }
+.field { display:flex; gap:10px; align-items:center; margin:10px 0; }
+.field label { font-size:13px; opacity:.9; min-width:120px; }
+.field input[type="color"]{ width:44px; height:32px; border:none; background:transparent; }
 
-.panel h3{margin-top:0}
-
-button{
-  width:100%;
-  margin-bottom:8px;
-  padding:8px;
-  background:var(--btn);
-  color:#fff;
-  border:1px solid var(--border);
-  border-radius:6px;
-  cursor:pointer;
-}
-button:hover{background:#2c3550}
-
-/* STAGE */
-#stage{
-  position:relative;
-  background:#111;
-  overflow:hidden;
-}
-
-#toolbar{
-  height:46px;
-  background:var(--panel2);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  border-bottom:1px solid var(--border);
-}
-
-#canvasHost{
-  position:absolute;
-  inset:46px 0 0 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-canvas{
-  background:#fff;
-  border-radius:8px;
+@media (max-width: 980px){
+  .app{ grid-template-columns:64px 1fr; }
+  .rightPanel{ position:fixed; right:0; top:0; height:100vh; width:340px; z-index:50; }
 }
 </style>
 </head>
 
 <body>
+<div class="app">
 
-<div id="top">📘 Photobook Editor</div>
+  <!-- LEFT RAIL -->
+  <aside class="sidebar">
+   <button id="addTextBtn">Text</button>
 
-<div id="app">
+    <button id="railImage" title="Εικόνα">Image</button>
+    <button id="railEmoji" title="Emoji">Emoji</button>
+    <button id="toggleRight" title="Export / Ρυθμίσεις">☰</button>
+  </aside>
 
-  <!-- LEFT -->
-  <div class="panel">
-    <h3>Elements</h3>
-    <button onclick="addText()">Add Text</button>
-    <button onclick="addRect()">Add Shape</button>
-    <button onclick="triggerImage()">Add Image</button>
-    <input type="file" id="imageInput" accept="image/*" hidden>
-  </div>
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <div class="group">
+        <span class="pill" id="statusPill">Loading…</span>
+        <span class="pill" id="pageInfo">1 / 1</span>
+      </div>
 
-  <!-- CENTER -->
-  <div id="stage">
-    <div id="toolbar">
-      <button onclick="zoomOut()">−</button>
-      <span id="zoomLabel">100%</span>
-      <button onclick="zoomIn()">+</button>
-      <button onclick="fit()">Fit</button>
+      <div class="group" style="margin-left:auto">
+        <button id="prevPageBtn" class="pill" type="button">◀</button>
+        <button id="nextPageBtn" class="pill" type="button">▶</button>
+        <button id="addPageBtn" class="pill" type="button">＋ Page</button>
+      </div>
+
+      <div class="group">
+        <button id="zoomOutBtn" class="pill" type="button">－</button>
+        <span class="pill" id="zoomValue">100%</span>
+        <button id="zoomInBtn" class="pill" type="button">＋</button>
+        <button id="zoomResetBtn" class="pill" type="button">Reset</button>
+        <button id="fitBtn" class="pill" type="button">Fit</button>
+      </div>
+    </header>
+
+    <section class="canvasHost" id="canvasHost">
+      <div class="canvasFrame">
+        <canvas id="canvas" width="1240" height="1754"></canvas>
+      </div>
+      <input id="imageInput" type="file" accept="image/*" hidden />
+    </section>
+
+    <footer class="bottom">
+      <div class="pill">Thumbnails</div>
+      <div id="thumbStrip"></div>
+    </footer>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="rightPanel open" id="rightPanel">
+    <h3>Tools</h3>
+
+    <div class="field">
+      <label>Fill color</label>
+      <input id="fillColor" type="color" value="#ff4d4d">
     </div>
-    <div id="canvasHost">
-      <canvas id="canvas"></canvas>
-    </div>
-  </div>
 
-  <!-- RIGHT -->
-  <div class="panel right">
-    <h3>Export (placeholder)</h3>
-    <button disabled>PDF</button>
-    <button disabled>Image</button>
-    <button disabled>Flipbook</button>
-  </div>
+    <div class="field">
+      <label>Shapes</label>
+      <button id="addRectBtn" class="pill" type="button">Rect</button>
+      <button id="addCircleBtn" class="pill" type="button">Circle</button>
+    </div>
+
+    <div class="field">
+      <label>Layers</label>
+      <button id="layerUpBtn" class="pill" type="button">Up</button>
+      <button id="layerDownBtn" class="pill" type="button">Down</button>
+    </div>
+
+    <div class="field">
+      <label></label>
+      <button id="layerTopBtn" class="pill" type="button">Top</button>
+      <button id="layerBottomBtn" class="pill" type="button">Bottom</button>
+    </div>
+
+    <hr style="border:0;border-top:1px solid #232b3a;margin:16px 0">
+
+    <h3>Export</h3>
+    <p style="opacity:.8;margin:0 0 10px">Γρήγορο export για έλεγχο. (PDF/ZIP/Flipbook θα κουμπώσουν στο export.js στο επόμενο βήμα.)</p>
+    <div class="field">
+      <label>Export</label>
+      <button id="exportPngBtn" class="pill" type="button">PNG</button>
+      <button id="exportJsonBtn" class="pill" type="button">JSON</button>
+    </div>
+    <div class="field">
+      <label>Import</label>
+      <button id="importJsonBtn" class="pill" type="button">Load JSON</button>
+      <input id="importJsonInput" type="file" accept="application/json" hidden />
+    </div>
+
+  </aside>
 
 </div>
 
-<script>
-/* =====================
-   CANVAS INIT
-===================== */
-const canvas = new fabric.Canvas("canvas",{selection:true});
-canvas.setWidth(1240);
-canvas.setHeight(1754);
-canvas.setBackgroundColor("#ffffff",canvas.renderAll.bind(canvas));
-canvas.setViewportTransform([1,0,0,1,0,0]);
-canvas.setZoom(1);
+<!-- Load app modules -->
+<script type="module" src="./js/tools.js"></script>
+<script type="module" src="./js/ui.js"></script>
 
-console.log("✅ Canvas initialized");
-
-/* =====================
-   HELPERS
-===================== */
-function centerObject(obj){
-  const c = canvas.getCenter();
-  obj.set({
-    left:c.left,
-    top:c.top,
-    originX:"center",
-    originY:"center"
-  });
-}
-
-/* =====================
-   ADD OBJECTS
-===================== */
-function addText(){
-  const t = new fabric.Textbox("Text",{
-    fontSize:48,
-    fill:"#111",
-    fontFamily:"Arial",
-    textBaseline:"alphabetic"
-  });
-  centerObject(t);
-  canvas.add(t);
-  canvas.setActiveObject(t);
-}
-
-function addRect(){
-  const r = new fabric.Rect({
-    width:300,
-    height:200,
-    fill:"#222",
-    stroke:"#fff",
-    strokeWidth:2
-  });
-  centerObject(r);
-  canvas.add(r);
-}
-
-function triggerImage(){
-  document.getElementById("imageInput").click();
-}
-
-document.getElementById("imageInput").addEventListener("change",e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    fabric.Image.fromURL(reader.result,img=>{
-      const maxW = canvas.getWidth()*0.6;
-      const maxH = canvas.getHeight()*0.6;
-      const s = Math.min(maxW/img.width,maxH/img.height,1);
-      img.scale(s);
-      centerObject(img);
-      canvas.add(img);
-    });
-  };
-  reader.readAsDataURL(file);
-});
-
-/* =====================
-   ZOOM
-===================== */
-let zoom = 1;
-function updateZoom(){
-  document.getElementById("zoomLabel").textContent =
-    Math.round(zoom*100)+"%";
-}
-function zoomIn(){
-  zoom=Math.min(4,zoom+0.1);
-  applyZoom();
-}
-function zoomOut(){
-  zoom=Math.max(0.2,zoom-0.1);
-  applyZoom();
-}
-function applyZoom(){
-  const c = canvas.getCenter();
-  canvas.zoomToPoint(new fabric.Point(c.left,c.top),zoom);
-  updateZoom();
-}
-function fit(){
-  const host = document.getElementById("canvasHost");
-  const s = Math.min(
-    host.clientWidth / canvas.getWidth(),
-    host.clientHeight / canvas.getHeight()
-  );
-  zoom = s;
-  canvas.setViewportTransform([1,0,0,1,0,0]);
-  applyZoom();
-}
-fit();
-</script>
 
 </body>
 </html>
