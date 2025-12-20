@@ -1,21 +1,28 @@
-body {
+html, body {
   margin: 0;
+  height: 100%;
+}
+
+#app {
   display: flex;
   height: 100vh;
+  overflow: hidden;
   background: #f3f4f6;
   font-family: system-ui, sans-serif;
 }
 
-.sidebar {
+/* LEFT ICON BAR */
+#leftSidebar {
   width: 64px;
   background: #111;
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 8px;
+  flex-shrink: 0;
 }
 
-.sidebar button {
+#leftSidebar button {
   background: #222;
   color: #fff;
   border: none;
@@ -24,18 +31,39 @@ body {
   border-radius: 6px;
 }
 
-.panel {
-  position: fixed;
-  left: 64px;
-  top: 0;
-  bottom: 0;
-  width: 260px;
+/* LEFT PANELS */
+#leftPanels {
+  width: 280px;
   background: #fff;
   border-right: 1px solid #ddd;
-  padding: 12px;
   display: none;
+  flex-shrink: 0;
+}
+
+#leftPanels.open {
+  display: block;
+}
+
+.panel {
+  display: none;
+  padding: 16px;
 }
 
 .panel.open {
   display: block;
+}
+
+/* WORKSPACE */
+#workspace {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+  background: #e5e7eb;
+}
+
+#canvasHost {
+  background: #ccc;
+  padding: 40px;
 }
