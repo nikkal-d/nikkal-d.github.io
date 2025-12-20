@@ -20,3 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+import { addText } from "./core.js";
+
+document.getElementById("addTextBtn")?.addEventListener("click", () => {
+  addText();
+});
