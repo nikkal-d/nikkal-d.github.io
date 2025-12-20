@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Photobook Editor</title>
 
   <!-- Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
   <!-- CSS -->
-  <link rel="stylesheet" href="./css/photobook.css">
+  <link rel="stylesheet" href="./photobook.css" />
 </head>
 <body>
 
@@ -18,11 +18,13 @@
   <aside class="sidebar left">
     <button id="btnAddText">Text</button>
     <button id="btnAddImage">Image</button>
+    <hr>
     <button id="btnZoomIn">+</button>
     <button id="btnZoomOut">−</button>
+    <button id="btnFit">Fit</button>
   </aside>
 
-  <!-- CANVAS AREA -->
+  <!-- WORKSPACE -->
   <main id="workspace">
     <div id="canvasHost">
       <canvas id="canvas" width="1240" height="1754"></canvas>
@@ -32,15 +34,15 @@
   <!-- RIGHT BAR -->
   <aside class="sidebar right">
     <h3>Pages</h3>
-    <div id="thumbStrip"></div>
+    <div id="thumbStrip">(επόμενο βήμα)</div>
   </aside>
 
 </div>
 
-<input type="file" id="imageInput" accept="image/*" hidden>
+<input type="file" id="imageInput" accept="image/*" hidden />
 
-<script type="module" src="./js/core.js"></script>
-<script type="module" src="./js/ui.js"></script>
+<script type="module" src="./core.js"></script>
+<script type="module" src="./ui.js"></script>
 
 </body>
 </html>
