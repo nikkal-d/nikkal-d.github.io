@@ -1,25 +1,22 @@
-import {
-  addText,
-  addImageFromFile,
-  zoomIn,
-  zoomOut,
-  resetZoom
-} from "./core.js";
+// js/ui.js
 
-document.getElementById("addTextBtn").onclick = () => {
-  addText();
-};
+document.addEventListener("DOMContentLoaded", () => {
 
-document.getElementById("addImageBtn").onclick = () => {
-  document.getElementById("imageInput").click();
-};
+  const buttons = document.querySelectorAll("#leftSidebar button");
+  const panels  = document.querySelectorAll("#leftPanels .panel");
 
-document.getElementById("imageInput").onchange = (e) => {
-  const file = e.target.files[0];
-  addImageFromFile(file);
-  e.target.value = "";
-};
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.panel;
 
-document.getElementById("zoomInBtn").onclick = zoomIn;
-document.getElementById("zoomOutBtn").onclick = zoomOut;
-document.getElementById("zoomResetBtn").onclick = resetZoom;
+      panels.forEach(p => {
+        if (p.id === `panel-${target}`) {
+          p.classList.toggle("open");
+        } else {
+          p.classList.remove("open");
+        }
+      });
+    });
+  });
+
+});
