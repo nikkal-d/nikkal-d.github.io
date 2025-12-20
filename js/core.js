@@ -6,127 +6,107 @@ window.addEventListener("DOMContentLoaded", () => {
     selection: true
   });
 
-  // ⛔ ΣΗΜΑΝΤΙΚΟ: reset viewport
-  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-  canvas.setZoom(1);
-
   canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+  fitToScreen();
 
   console.log("✅ Canvas initialized");
 });
 
-/* =========================
-   ΒΟΗΘΗΤΙΚΑ
-========================= */
+/* ======================
+   VIEW HELPERS
+====================== */
 
-function resetView() {
-  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-  canvas.setZoom(1);
+export function fitToScreen() {
+  if (!canvas) return;
+
+  const host = document.getElementById("canvasHost");
+  const pad = 40;
+
+  const aw = host.clientWidth - pad;
+  const ah = host.clientHeight - pad;
+
+  const scale = Math.min(
+    aw / canvas.getWidth(),
+    ah / canvas.getHeight()
+  );
+
+  canvas.setViewportTransform([1,0,0,1,0,0]);
+  canvas.setZoom(scale);
+
+  const vt = canvas.viewportTransform;
+  vt[4] = (aw - canvas.getWidth() * scale) / 2;
+  vt[5] = (ah - canvas.getHeight() * scale) / 2;
+
+  canvas.setViewportTransform(vt);
+  canvas.requestRenderAll();
 }
 
-function centerCoords() {
+function centerPoint() {
   return {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2
+    x: canvas.getWidth() / 2,
+    y: canvas.getHeight() / 2
   };
 }
 
-/* =========================
+/* ======================
    TEXT
-========================= */
+====================== */
 
 export function addText() {
-  if (!canvas) return;
-
-  resetView();
-
-  const { left, top } = centerCoords();
+  const { x, y } = centerPoint();
 
   const t = new fabric.Textbox("Text", {
-    left,
-    top,
+    left: x,
+    top: y,
     originX: "center",
     originY: "center",
     fontSize: 48,
     fill: "#111",
-    fontFamily: "Arial",
-    textBaseline: "top" // 🔇 μειώνει warnings
+    fontFamily: "Arial"
   });
 
   canvas.add(t);
   canvas.setActiveObject(t);
-  canvas.requestRenderAll();
+  fitToScreen();
 }
 
-/* =========================
+/* ======================
    IMAGE
-========================= */
+====================== */
 
 export function addImageFromFile(file) {
-  if (!canvas || !file) return;
-
-  resetView();
-
   const reader = new FileReader();
   reader.onload = () => {
     fabric.Image.fromURL(reader.result, img => {
-      const { left, top } = centerCoords();
+      const { x, y } = centerPoint();
 
       img.scaleToWidth(canvas.getWidth() * 0.4);
       img.set({
-        left,
-        top,
+        left: x,
+        top: y,
         originX: "center",
         originY: "center"
       });
 
       canvas.add(img);
       canvas.setActiveObject(img);
-      canvas.requestRenderAll();
+      fitToScreen();
     });
   };
   reader.readAsDataURL(file);
 }
 
-/* =========================
-   ZOOM (ΑΠΛΟ, ΣΤΑΘΕΡΟ)
-========================= */
+/* ======================
+   ZOOM
+====================== */
 
 export function zoom(delta) {
   let z = canvas.getZoom();
   z = Math.max(0.2, Math.min(4, z + delta));
 
   canvas.zoomToPoint(
-    new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2),
+    new fabric.Point(canvas.getWidth()/2, canvas.getHeight()/2),
     z
   );
-
-  canvas.requestRenderAll();
-}
-
-export function fitCanvasToScreen() {
-  if (!canvas) return;
-
-  const wrapper = canvas.wrapperEl.parentElement;
-  if (!wrapper) return;
-
-  const padding = 40;
-
-  const availableWidth = wrapper.clientWidth - padding;
-  const availableHeight = wrapper.clientHeight - padding;
-
-  const scaleX = availableWidth / canvas.getWidth();
-  const scaleY = availableHeight / canvas.getHeight();
-
-  const scale = Math.min(scaleX, scaleY);
-
-  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-  canvas.setZoom(scale);
-
-  const vp = canvas.viewportTransform;
-  vp[4] = (availableWidth - canvas.getWidth() * scale) / 2;
-  vp[5] = (availableHeight - canvas.getHeight() * scale) / 2;
-
-  canvas.setViewportTransform(vp);
   canvas.requestRenderAll();
 }
