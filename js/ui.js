@@ -1,8 +1,6 @@
 import { addText, addImageFromFile, zoom } from "./core.js";
 
-document.getElementById("btnAddText").onclick = () => {
-  addText();
-};
+document.getElementById("btnAddText").onclick = () => addText();
 
 document.getElementById("btnAddImage").onclick = () => {
   document.getElementById("imageInput").click();
