@@ -1,144 +1,69 @@
-:root {
-  --bg-main: #f5f6f8;
-  --bg-panel: #ffffff;
-  --bg-canvas: #e0e0e0;
-  --border: #dcdcdc;
-  --primary: #6b5cff;
-  --text: #1f2937;
-  --icon: #4b5563;
-}
-
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Inter, Arial, sans-serif;
-  background: var(--bg-main);
-  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  background: #e5e5e5;
+  overflow: hidden;
 }
 
-/* ================= TOP BAR ================= */
-.topbar {
-  height: 48px;
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
+#app {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
+  height: 100vh;
+  width: 100vw;
 }
 
-.topbar button,
-.topbar select {
-  height: 32px;
-  margin-right: 6px;
-}
-
-/* ================= APP LAYOUT ================= */
-.app {
-  display: flex;
-  height: calc(100vh - 48px);
-}
-
-/* ================= LEFT ICON BAR ================= */
+/* SIDEBARS */
 .sidebar {
-  width: 56px;
-  background: var(--bg-panel);
-  border-right: 1px solid var(--border);
+  width: 72px;
+  background: #111;
+  color: #fff;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.sidebar.right {
+  width: 260px;
+  background: #fafafa;
+  color: #000;
+  border-left: 1px solid #ccc;
 }
 
 .sidebar button {
-  height: 56px;
+  margin: 8px 0;
+  padding: 6px;
+  background: #222;
+  color: #fff;
   border: none;
-  background: none;
   cursor: pointer;
-  font-size: 18px;
-  color: var(--icon);
 }
 
-.sidebar button:hover {
-  background: #f0f0f0;
+.sidebar.right h3 {
+  margin: 10px;
 }
 
-/* ================= LEFT PANELS ================= */
-.left-panels {
-  width: 0;
-  overflow: hidden;
-  background: var(--bg-panel);
-  border-right: 1px solid var(--border);
-  transition: width 0.25s ease;
-}
-
-.left-panels.open {
-  width: 260px;
-}
-
-.panel {
-  display: none;
-  padding: 12px;
-}
-
-.panel.active {
-  display: block;
-}
-
-.panel h3 {
-  margin-top: 0;
-}
-
-/* ================= CANVAS AREA ================= */
-.canvas-area {
+/* WORKSPACE */
+#workspace {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-canvas);
+  background: #cfcfcf;
+  overflow: hidden;
 }
 
+/* CANVAS */
 #canvasHost {
-  padding: 24px;
+  background: #999;
+  padding: 20px;
+  border-radius: 6px;
 }
 
 canvas {
-  background: #ffffff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-}
-
-/* ================= RIGHT EXPORT PANEL ================= */
-.export-panel {
-  width: 0;
-  overflow: hidden;
-  background: var(--bg-panel);
-  border-left: 1px solid var(--border);
-  transition: width 0.25s ease;
-  padding: 0;
-}
-
-.export-panel.open {
-  width: 260px;
-  padding: 12px;
-}
-
-.export-panel h3 {
-  margin-top: 0;
-}
-
-.btn {
-  display: block;
-  width: 100%;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border: 1px solid var(--border);
   background: #fff;
-  cursor: pointer;
-}
-
-.btn.primary {
-  background: var(--primary);
-  color: #fff;
-  border: none;
+  display: block;
 }
