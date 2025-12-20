@@ -1,112 +1,126 @@
-export let canvas = null;
+// js/core.js
+// =====================================================
+// SINGLE SOURCE OF TRUTH FOR CANVAS (Fabric.js)
+// - Initializes canvas
+// - Adds text & images
+// - Zoom controls
+// - Exposes App for debugging
+// =====================================================
 
-window.addEventListener("DOMContentLoaded", () => {
-  canvas = new fabric.Canvas("canvas", {
+export let fabricCanvas = null;
+
+let zoom = 1;
+
+// ---------------- INIT ----------------
+export function initCanvas(canvasId) {
+  if (fabricCanvas) return fabricCanvas; // guard (avoid double init)
+
+  if (typeof fabric === "undefined") {
+    console.error("Fabric.js not loaded. Check <script src=...fabric.min.js> order.");
+    return null;
+  }
+
+  fabricCanvas = new fabric.Canvas(canvasId, {
     preserveObjectStacking: true,
     selection: true
   });
 
-  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
-  fitToScreen();
+  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
 
   console.log("✅ Canvas initialized");
-});
 
-/* ======================
-   VIEW HELPERS
-====================== */
+  // Expose for console/debug + potential legacy onclick usage
+  window.App = window.App || {};
+  window.App.canvas = fabricCanvas;
+  window.App.addText = addText;
+  window.App.addImageFromFile = addImageFromFile;
+  window.App.zoomIn = zoomIn;
+  window.App.zoomOut = zoomOut;
+  window.App.resetZoom = resetZoom;
+  window.App.fitToScreen = fitToScreen;
 
-export function fitToScreen() {
-  if (!canvas) return;
+  // OPTIONAL: also expose direct globals so `addText()` in console works
+  window.addText = addText;
+  window.addImageFromFile = addImageFromFile;
 
-  const host = document.getElementById("canvasHost");
-  const pad = 40;
-
-  const aw = host.clientWidth - pad;
-  const ah = host.clientHeight - pad;
-
-  const scale = Math.min(
-    aw / canvas.getWidth(),
-    ah / canvas.getHeight()
-  );
-
-  canvas.setViewportTransform([1,0,0,1,0,0]);
-  canvas.setZoom(scale);
-
-  const vt = canvas.viewportTransform;
-  vt[4] = (aw - canvas.getWidth() * scale) / 2;
-  vt[5] = (ah - canvas.getHeight() * scale) / 2;
-
-  canvas.setViewportTransform(vt);
-  canvas.requestRenderAll();
+  return fabricCanvas;
 }
 
-function centerPoint() {
-  return {
-    x: canvas.getWidth() / 2,
-    y: canvas.getHeight() / 2
-  };
-}
-
-/* ======================
-   TEXT
-====================== */
-
+// ---------------- TEXT ----------------
 export function addText() {
-  const { x, y } = centerPoint();
+  if (!fabricCanvas) return;
 
   const t = new fabric.Textbox("Text", {
-    left: x,
-    top: y,
-    originX: "center",
-    originY: "center",
-    fontSize: 48,
+    left: 150,
+    top: 150,
+    fontSize: 42,
     fill: "#111",
-    fontFamily: "Arial"
+    fontFamily: "Arial",
+    // IMPORTANT: valid baseline values are: top, hanging, middle, alphabetic, ideographic, bottom
+    textBaseline: "alphabetic"
   });
 
-  canvas.add(t);
-  canvas.setActiveObject(t);
-  fitToScreen();
+  fabricCanvas.add(t);
+  fabricCanvas.setActiveObject(t);
+  fabricCanvas.requestRenderAll();
 }
 
-/* ======================
-   IMAGE
-====================== */
-
+// ---------------- IMAGE ----------------
 export function addImageFromFile(file) {
+  if (!fabricCanvas || !file) return;
+
   const reader = new FileReader();
   reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      const { x, y } = centerPoint();
+    fabric.Image.fromURL(reader.result, (img) => {
+      // fit image to 50% of canvas width
+      const targetW = fabricCanvas.getWidth() * 0.5;
+      img.scaleToWidth(targetW);
 
-      img.scaleToWidth(canvas.getWidth() * 0.4);
-      img.set({
-        left: x,
-        top: y,
-        originX: "center",
-        originY: "center"
-      });
+      // center
+      img.left = (fabricCanvas.getWidth() - img.getScaledWidth()) / 2;
+      img.top = (fabricCanvas.getHeight() - img.getScaledHeight()) / 2;
 
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      fitToScreen();
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.requestRenderAll();
     });
   };
   reader.readAsDataURL(file);
 }
 
-/* ======================
-   ZOOM
-====================== */
+// ---------------- ZOOM ----------------
+function applyZoom(value) {
+  if (!fabricCanvas) return;
+  zoom = Math.max(0.2, Math.min(4, Number(value) || 1));
 
-export function zoom(delta) {
-  let z = canvas.getZoom();
-  z = Math.max(0.2, Math.min(4, z + delta));
+  const center = new fabric.Point(fabricCanvas.getWidth() / 2, fabricCanvas.getHeight() / 2);
+  fabricCanvas.zoomToPoint(center, zoom);
+  fabricCanvas.requestRenderAll();
 
-  canvas.zoomToPoint(
-    new fabric.Point(canvas.getWidth()/2, canvas.getHeight()/2),
-    z
-  );
-  canvas.requestRenderAll();
+  // update label if exists
+  const el = document.getElementById("zoomValue");
+  if (el) el.textContent = Math.round(zoom * 100) + "%";
+}
+
+export function zoomIn() {
+  applyZoom(zoom + 0.1);
+}
+
+export function zoomOut() {
+  applyZoom(zoom - 0.1);
+}
+
+export function resetZoom() {
+  zoom = 1;
+  if (!fabricCanvas) return;
+  fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+  fabricCanvas.requestRenderAll();
+
+  const el = document.getElementById("zoomValue");
+  if (el) el.textContent = "100%";
+}
+
+export function fitToScreen() {
+  // Minimal fit: reset for now (later we can compute fit-to-host)
+  resetZoom();
 }
