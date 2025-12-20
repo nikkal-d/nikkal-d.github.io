@@ -1,4 +1,3 @@
-// js/core.js
 export let canvas;
 let zoom = 1;
 
@@ -13,6 +12,7 @@ window.addEventListener("DOMContentLoaded", () => {
   canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
 
   fitToScreen();
+
   console.log("✅ Canvas initialized");
 });
 
