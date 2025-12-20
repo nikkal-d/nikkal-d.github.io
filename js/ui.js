@@ -1,48 +1,23 @@
-// js/ui.js
-// ---------------------------------------------
-// UI CONTROLLER (binds buttons -> core)
-// ---------------------------------------------
 import {
-  initCanvas,
   addText,
   addImageFromFile,
   zoomIn,
   zoomOut,
-  resetZoom,
-  fitToScreen
+  resetZoom
 } from "./core.js";
 
-function bindUI() {
-  // Init canvas once
-  initCanvas("canvas");
+document.getElementById("addTextBtn").onclick = addText;
 
-  // TEXT
-  document.getElementById("addTextBtn")?.addEventListener("click", () => {
-    addText();
-  });
+document.getElementById("addImageBtn").onclick = () => {
+  document.getElementById("imageInput").click();
+};
 
-  // IMAGE (your HTML uses id="railImage")
-  const imgBtn = document.getElementById("railImage") || document.getElementById("addImageBtn");
-  imgBtn?.addEventListener("click", () => {
-    document.getElementById("imageInput")?.click();
-  });
+document.getElementById("imageInput").onchange = e => {
+  if (e.target.files[0]) {
+    addImageFromFile(e.target.files[0]);
+  }
+};
 
-  document.getElementById("imageInput")?.addEventListener("change", (e) => {
-    const file = e.target?.files?.[0];
-    if (file) addImageFromFile(file);
-    // allow re-selecting same file
-    if (e.target) e.target.value = "";
-  });
-
-  // ZOOM
-  document.getElementById("zoomInBtn")?.addEventListener("click", zoomIn);
-  document.getElementById("zoomOutBtn")?.addEventListener("click", zoomOut);
-  document.getElementById("zoomResetBtn")?.addEventListener("click", resetZoom);
-  document.getElementById("fitBtn")?.addEventListener("click", fitToScreen);
-}
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bindUI);
-} else {
-  bindUI();
-}
+document.getElementById("zoomIn").onclick = zoomIn;
+document.getElementById("zoomOut").onclick = zoomOut;
+document.getElementById("resetZoom").onclick = resetZoom;
