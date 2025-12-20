@@ -1,126 +1,87 @@
-// js/core.js
-// =====================================================
-// SINGLE SOURCE OF TRUTH FOR CANVAS (Fabric.js)
-// - Initializes canvas
-// - Adds text & images
-// - Zoom controls
-// - Exposes App for debugging
-// =====================================================
-
-export let fabricCanvas = null;
-
+export let canvas;
 let zoom = 1;
+let pages = [{}];
+let currentPage = 0;
 
-// ---------------- INIT ----------------
-export function initCanvas(canvasId) {
-  if (fabricCanvas) return fabricCanvas; // guard (avoid double init)
-
-  if (typeof fabric === "undefined") {
-    console.error("Fabric.js not loaded. Check <script src=...fabric.min.js> order.");
-    return null;
-  }
-
-  fabricCanvas = new fabric.Canvas(canvasId, {
+window.addEventListener("DOMContentLoaded", () => {
+  canvas = new fabric.Canvas("canvas", {
     preserveObjectStacking: true,
     selection: true
   });
 
-  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
+  // A4 PORTRAIT
+  canvas.setWidth(1240);
+  canvas.setHeight(1754);
+  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+
+  fitToScreen();
 
   console.log("✅ Canvas initialized");
+});
 
-  // Expose for console/debug + potential legacy onclick usage
-  window.App = window.App || {};
-  window.App.canvas = fabricCanvas;
-  window.App.addText = addText;
-  window.App.addImageFromFile = addImageFromFile;
-  window.App.zoomIn = zoomIn;
-  window.App.zoomOut = zoomOut;
-  window.App.resetZoom = resetZoom;
-  window.App.fitToScreen = fitToScreen;
-
-  // OPTIONAL: also expose direct globals so `addText()` in console works
-  window.addText = addText;
-  window.addImageFromFile = addImageFromFile;
-
-  return fabricCanvas;
-}
-
-// ---------------- TEXT ----------------
 export function addText() {
-  if (!fabricCanvas) return;
-
   const t = new fabric.Textbox("Text", {
-    left: 150,
-    top: 150,
-    fontSize: 42,
-    fill: "#111",
-    fontFamily: "Arial",
-    // IMPORTANT: valid baseline values are: top, hanging, middle, alphabetic, ideographic, bottom
-    textBaseline: "alphabetic"
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    originX: "center",
+    originY: "center",
+    fontSize: 48,
+    fill: "#111"
   });
-
-  fabricCanvas.add(t);
-  fabricCanvas.setActiveObject(t);
-  fabricCanvas.requestRenderAll();
+  canvas.add(t);
+  canvas.setActiveObject(t);
 }
 
-// ---------------- IMAGE ----------------
 export function addImageFromFile(file) {
-  if (!fabricCanvas || !file) return;
-
   const reader = new FileReader();
   reader.onload = () => {
-    fabric.Image.fromURL(reader.result, (img) => {
-      // fit image to 50% of canvas width
-      const targetW = fabricCanvas.getWidth() * 0.5;
-      img.scaleToWidth(targetW);
-
-      // center
-      img.left = (fabricCanvas.getWidth() - img.getScaledWidth()) / 2;
-      img.top = (fabricCanvas.getHeight() - img.getScaledHeight()) / 2;
-
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.requestRenderAll();
+    fabric.Image.fromURL(reader.result, img => {
+      img.scaleToWidth(canvas.getWidth() * 0.5);
+      img.set({
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        originX: "center",
+        originY: "center"
+      });
+      canvas.add(img);
+      canvas.setActiveObject(img);
     });
   };
   reader.readAsDataURL(file);
 }
 
-// ---------------- ZOOM ----------------
-function applyZoom(value) {
-  if (!fabricCanvas) return;
-  zoom = Math.max(0.2, Math.min(4, Number(value) || 1));
-
-  const center = new fabric.Point(fabricCanvas.getWidth() / 2, fabricCanvas.getHeight() / 2);
-  fabricCanvas.zoomToPoint(center, zoom);
-  fabricCanvas.requestRenderAll();
-
-  // update label if exists
-  const el = document.getElementById("zoomValue");
-  if (el) el.textContent = Math.round(zoom * 100) + "%";
-}
-
 export function zoomIn() {
-  applyZoom(zoom + 0.1);
+  setZoom(zoom + 0.1);
 }
 
 export function zoomOut() {
-  applyZoom(zoom - 0.1);
+  setZoom(zoom - 0.1);
 }
 
 export function resetZoom() {
   zoom = 1;
-  if (!fabricCanvas) return;
-  fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-  fabricCanvas.requestRenderAll();
-
-  const el = document.getElementById("zoomValue");
-  if (el) el.textContent = "100%";
+  canvas.setViewportTransform([1,0,0,1,0,0]);
+  fitToScreen();
 }
 
-export function fitToScreen() {
-  // Minimal fit: reset for now (later we can compute fit-to-host)
-  resetZoom();
+function setZoom(val) {
+  zoom = Math.min(3, Math.max(0.2, val));
+  const center = new fabric.Point(
+    canvas.getWidth() / 2,
+    canvas.getHeight() / 2
+  );
+  canvas.zoomToPoint(center, zoom);
+}
+
+function fitToScreen() {
+  const host = document.getElementById("canvasHost");
+  const scale = Math.min(
+    host.clientWidth / canvas.getWidth(),
+    host.clientHeight / canvas.getHeight()
+  );
+  zoom = scale;
+  canvas.zoomToPoint(
+    new fabric.Point(canvas.getWidth()/2, canvas.getHeight()/2),
+    zoom
+  );
 }
