@@ -4,53 +4,31 @@
   <meta charset="UTF-8" />
   <title>Photobook Editor</title>
 
-  <!-- CSS -->
   <link rel="stylesheet" href="./css/photobook.css" />
 
-  <!-- Fabric -->
+  <!-- FABRIC -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 </head>
-
 <body>
+
   <!-- TOP BAR -->
-  <header class="topbar">
-    <span class="logo">Photobook</span>
-    <div class="top-actions">
-      <button id="addTextBtn">Text</button>
-      <button id="addImageBtn">Image</button>
-      <button id="zoomIn">＋</button>
-      <button id="zoomOut">－</button>
-      <button id="resetZoom">100%</button>
-    </div>
-  </header>
+  <div class="topbar">
+    <button id="addTextBtn">Text</button>
+    <button id="addImageBtn">Image</button>
 
-  <!-- MAIN -->
-  <div class="app">
-    <!-- LEFT BAR -->
-    <aside class="sidebar left">
-      <button id="prevPage">◀</button>
-      <span id="pageInfo">1 / 1</span>
-      <button id="nextPage">▶</button>
-    </aside>
+    <button id="zoomInBtn">＋</button>
+    <button id="zoomOutBtn">－</button>
+    <button id="zoomResetBtn">100%</button>
 
-    <!-- CANVAS AREA -->
-    <main class="canvas-area">
-      <div id="canvasHost">
-        <canvas id="canvas"></canvas>
-      </div>
-    </main>
-
-    <!-- RIGHT BAR -->
-    <aside class="sidebar right">
-      <button>Export</button>
-      <button>Flipbook</button>
-    </aside>
+    <input type="file" id="imageInput" accept="image/*" hidden />
   </div>
 
-  <!-- HIDDEN INPUT -->
-  <input type="file" id="imageInput" accept="image/*" hidden />
+  <!-- CANVAS -->
+  <div id="canvasHost">
+    <canvas id="canvas"></canvas>
+  </div>
 
-  <!-- JS -->
+  <!-- SCRIPTS -->
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
 </body>
