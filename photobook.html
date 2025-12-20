@@ -1,102 +1,46 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Photobook Editor</title>
 
   <!-- Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-  <!-- Layout CSS (ΔΕΝ ΤΟ ΠΕΙΡΑΖΟΥΜΕ) -->
-  <link rel="stylesheet" href="layout.css">
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      overflow: hidden;
-    }
-
-    #app {
-      display: flex;
-      height: 100vh;
-      width: 100vw;
-    }
-
-    .sidebar {
-      width: 70px;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 10px;
-    }
-
-    .sidebar button {
-      background: none;
-      border: none;
-      color: #fff;
-      margin: 10px 0;
-      cursor: pointer;
-    }
-
-    #canvasWrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #ddd;
-      overflow: hidden;
-    }
-
-    #canvasHost {
-      background: #999;
-      padding: 20px;
-      border-radius: 6px;
-    }
-
-    .rightbar {
-      width: 260px;
-      background: #fafafa;
-      border-left: 1px solid #ccc;
-      padding: 10px;
-    }
-  </style>
+  <!-- CSS -->
+  <link rel="stylesheet" href="./css/photobook.css">
 </head>
-
 <body>
 
 <div id="app">
 
   <!-- LEFT BAR -->
-  <div class="sidebar">
+  <aside class="sidebar left">
     <button id="btnAddText">Text</button>
     <button id="btnAddImage">Image</button>
     <button id="btnZoomIn">+</button>
     <button id="btnZoomOut">−</button>
-  </div>
+  </aside>
 
-  <!-- CANVAS -->
-  <div id="canvasWrapper">
+  <!-- CANVAS AREA -->
+  <main id="workspace">
     <div id="canvasHost">
       <canvas id="canvas" width="1240" height="1754"></canvas>
     </div>
-  </div>
+  </main>
 
   <!-- RIGHT BAR -->
-  <div class="rightbar">
+  <aside class="sidebar right">
     <h3>Pages</h3>
     <div id="thumbStrip"></div>
-  </div>
+  </aside>
 
 </div>
 
 <input type="file" id="imageInput" accept="image/*" hidden>
 
-<script type="module" src="./core.js"></script>
-<script type="module" src="./ui.js"></script>
+<script type="module" src="./js/core.js"></script>
+<script type="module" src="./js/ui.js"></script>
 
 </body>
 </html>
