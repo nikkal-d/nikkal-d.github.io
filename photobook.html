@@ -1,257 +1,57 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8" />
-<title>Photobook Editor</title>
+  <meta charset="UTF-8" />
+  <title>Photobook Editor</title>
 
-<!-- FABRIC -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <!-- CSS -->
+  <link rel="stylesheet" href="./css/photobook.css" />
 
-<style>
-/* =======================
-   THEME
-======================= */
-:root {
-  --bg: #111;
-  --panel: #1e1e1e;
-  --btn: #2b2b2b;
-  --btn-hover: #3a3a3a;
-  --accent: #e10600;
-  --text: #eee;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Arial, sans-serif;
-  overflow: hidden;
-}
-
-/* =======================
-   LAYOUT
-======================= */
-#app {
-  display: flex;
-  height: 100vh;
-}
-
-#leftBar {
-  width: 72px;
-  background: var(--panel);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-}
-
-#leftBar button {
-  background: var(--btn);
-  border: none;
-  color: var(--text);
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-#leftBar button:hover {
-  background: var(--btn-hover);
-}
-
-/* =======================
-   CANVAS AREA
-======================= */
-#center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-#topBar {
-  height: 48px;
-  background: var(--panel);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 12px;
-}
-
-#topBar button {
-  background: var(--btn);
-  border: none;
-  color: var(--text);
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-#topBar button:hover {
-  background: var(--btn-hover);
-}
-
-#zoomLabel {
-  min-width: 50px;
-  text-align: center;
-}
-
-#canvasHost {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #888;
-}
-
-/* =======================
-   CANVAS
-======================= */
-.canvas-container {
-  background: #fff;
-  box-shadow: 0 0 20px rgba(0,0,0,.6);
-}
-</style>
+  <!-- Fabric -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 </head>
 
 <body>
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <span class="logo">Photobook</span>
+    <div class="top-actions">
+      <button id="addTextBtn">Text</button>
+      <button id="addImageBtn">Image</button>
+      <button id="zoomIn">＋</button>
+      <button id="zoomOut">－</button>
+      <button id="resetZoom">100%</button>
+    </div>
+  </header>
 
-<div id="app">
+  <!-- MAIN -->
+  <div class="app">
+    <!-- LEFT BAR -->
+    <aside class="sidebar left">
+      <button id="prevPage">◀</button>
+      <span id="pageInfo">1 / 1</span>
+      <button id="nextPage">▶</button>
+    </aside>
 
-  <!-- LEFT BAR -->
-  <div id="leftBar">
-    <button onclick="addText()">🅣</button>
-    <button onclick="openImage()">🖼</button>
+    <!-- CANVAS AREA -->
+    <main class="canvas-area">
+      <div id="canvasHost">
+        <canvas id="canvas"></canvas>
+      </div>
+    </main>
+
+    <!-- RIGHT BAR -->
+    <aside class="sidebar right">
+      <button>Export</button>
+      <button>Flipbook</button>
+    </aside>
   </div>
 
-  <!-- CENTER -->
-  <div id="center">
-    <div id="topBar">
-      <button onclick="zoomOut()">−</button>
-      <div id="zoomLabel">100%</div>
-      <button onclick="zoomIn()">+</button>
-      <button onclick="resetZoom()">Reset</button>
-    </div>
+  <!-- HIDDEN INPUT -->
+  <input type="file" id="imageInput" accept="image/*" hidden />
 
-    <div id="canvasHost">
-      <canvas id="canvas"></canvas>
-    </div>
-  </div>
-
-</div>
-
-<input type="file" id="imageInput" accept="image/*" hidden />
-
-<script>
-/* =======================
-   FIX FABRIC WARNING
-======================= */
-(function () {
-  if (!window.fabric) return;
-  const patch = proto => {
-    try {
-      Object.defineProperty(proto, "textBaseline", {
-        get() { return "top"; },
-        set() {}
-      });
-    } catch {}
-  };
-  patch(fabric.Textbox.prototype);
-  patch(fabric.IText.prototype);
-})();
-
-/* =======================
-   CANVAS INIT
-======================= */
-const canvas = new fabric.Canvas("canvas", {
-  preserveObjectStacking: true,
-  selection: true
-});
-
-canvas.setWidth(1240);
-canvas.setHeight(1754);
-canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
-canvas.setViewportTransform([1,0,0,1,0,0]);
-canvas.setZoom(1);
-
-let zoom = 1;
-
-/* =======================
-   ZOOM
-======================= */
-function updateZoomLabel() {
-  document.getElementById("zoomLabel").textContent =
-    Math.round(zoom * 100) + "%";
-}
-
-function zoomIn() {
-  zoom = Math.min(4, zoom + 0.1);
-  canvas.setZoom(zoom);
-  updateZoomLabel();
-}
-
-function zoomOut() {
-  zoom = Math.max(0.2, zoom - 0.1);
-  canvas.setZoom(zoom);
-  updateZoomLabel();
-}
-
-function resetZoom() {
-  zoom = 1;
-  canvas.setViewportTransform([1,0,0,1,0,0]);
-  canvas.setZoom(1);
-  updateZoomLabel();
-}
-
-/* =======================
-   TEXT
-======================= */
-function addText() {
-  const t = new fabric.Textbox("Text", {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2,
-    originX: "center",
-    originY: "center",
-    fontSize: 48,
-    fill: "#111",
-    fontFamily: "Arial"
-  });
-  canvas.add(t);
-  canvas.setActiveObject(t);
-  canvas.requestRenderAll();
-}
-
-/* =======================
-   IMAGE
-======================= */
-const imageInput = document.getElementById("imageInput");
-
-function openImage() {
-  imageInput.click();
-}
-
-imageInput.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.set({
-        left: canvas.getWidth() / 2,
-        top: canvas.getHeight() / 2,
-        originX: "center",
-        originY: "center"
-      });
-      img.scale(0.5);
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.requestRenderAll();
-    });
-  };
-  reader.readAsDataURL(file);
-});
-</script>
-
+  <!-- JS -->
+  <script type="module" src="./js/core.js"></script>
+  <script type="module" src="./js/ui.js"></script>
 </body>
 </html>
