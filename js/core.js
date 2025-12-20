@@ -103,3 +103,30 @@ export function zoom(delta) {
 
   canvas.requestRenderAll();
 }
+
+export function fitCanvasToScreen() {
+  if (!canvas) return;
+
+  const wrapper = canvas.wrapperEl.parentElement;
+  if (!wrapper) return;
+
+  const padding = 40;
+
+  const availableWidth = wrapper.clientWidth - padding;
+  const availableHeight = wrapper.clientHeight - padding;
+
+  const scaleX = availableWidth / canvas.getWidth();
+  const scaleY = availableHeight / canvas.getHeight();
+
+  const scale = Math.min(scaleX, scaleY);
+
+  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+  canvas.setZoom(scale);
+
+  const vp = canvas.viewportTransform;
+  vp[4] = (availableWidth - canvas.getWidth() * scale) / 2;
+  vp[5] = (availableHeight - canvas.getHeight() * scale) / 2;
+
+  canvas.setViewportTransform(vp);
+  canvas.requestRenderAll();
+}
