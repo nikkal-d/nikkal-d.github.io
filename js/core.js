@@ -11,8 +11,8 @@ window.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Canvas initialized");
 });
 
-/* 🔥 ΑΥΤΗ ΕΙΝΑΙ Η ΚΡΙΣΙΜΗ ΣΥΝΑΡΤΗΣΗ */
-export function centerInView(obj) {
+/* 🔴 ΚΕΝΤΡΑΡΙΣΜΑ ΣΤΟ VIEW */
+function centerObject(obj) {
   const vpt = canvas.viewportTransform;
   const zoom = canvas.getZoom();
 
@@ -35,7 +35,7 @@ export function addText() {
     fontFamily: "Arial"
   });
 
-  centerInView(t);
+  centerObject(t);
   canvas.add(t);
   canvas.setActiveObject(t);
   canvas.requestRenderAll();
@@ -47,7 +47,7 @@ export function addImageFromFile(file) {
   reader.onload = () => {
     fabric.Image.fromURL(reader.result, img => {
       img.scaleToWidth(canvas.getWidth() * 0.4);
-      centerInView(img);
+      centerObject(img);
       canvas.add(img);
       canvas.setActiveObject(img);
       canvas.requestRenderAll();
@@ -59,8 +59,8 @@ export function addImageFromFile(file) {
 /* ZOOM */
 export function zoom(delta) {
   let z = canvas.getZoom();
-  z += delta;
-  z = Math.max(0.2, Math.min(4, z));
+  z = Math.max(0.2, Math.min(4, z + delta));
+
   canvas.zoomToPoint(
     new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2),
     z
