@@ -9,8 +9,8 @@ window.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  btn.onclick = () => {
+  btn.addEventListener("click", () => {
     console.log("🟢 Add Text clicked");
     addText();
-  };
+  });
 });
