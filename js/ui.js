@@ -1,20 +1,16 @@
-import { addText, addImageFromFile } from "./core.js";
+// js/ui.js
+import { addText } from "./core.js";
 
-document.getElementById("addTextBtn")?.addEventListener("click", addText);
+window.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("addTextBtn");
 
-document.getElementById("imageInput")?.addEventListener("change", e => {
-  if (e.target.files[0]) {
-    addImageFromFile(e.target.files[0]);
-    e.target.value = "";
+  if (!btn) {
+    console.warn("❌ addTextBtn not found");
+    return;
   }
-});
 
-/* LEFT SIDEBAR */
-document.querySelectorAll("#leftSidebar button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const target = btn.dataset.panel;
-    document.querySelectorAll("#leftPanels .panel").forEach(p => {
-      p.classList.toggle("open", p.id === `panel-${target}`);
-    });
-  });
+  btn.onclick = () => {
+    console.log("🟢 Add Text clicked");
+    addText();
+  };
 });
