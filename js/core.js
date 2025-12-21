@@ -1,48 +1,82 @@
-export let canvas;
+// core.js
+console.log("🟢 core.js loaded");
 
-window.addEventListener("DOMContentLoaded", () => {
+export let canvas = null;
+
+export function initCanvas() {
+  if (!window.fabric) {
+    console.error("❌ Fabric not loaded");
+    return;
+  }
+
   canvas = new fabric.Canvas("canvas", {
-    backgroundColor: "#fff",
     preserveObjectStacking: true,
+    selection: true
   });
 
-  // Default μέγεθος σελίδας
+  // ΣΤΑΘΕΡΟ ΜΕΓΕΘΟΣ ΣΕΛΙΔΑΣ
   canvas.setWidth(1240);
   canvas.setHeight(1754);
+  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
 
-  fitToScreen();
+  fitCanvasToScreen();
 
   console.log("✅ Canvas initialized");
-});
+}
 
-export function fitToScreen() {
+export function fitCanvasToScreen() {
   const host = document.getElementById("canvasHost");
-  if (!host) return;
+  if (!host || !canvas) return;
 
   const scale = Math.min(
-    (host.clientWidth - 40) / canvas.getWidth(),
-    (host.clientHeight - 40) / canvas.getHeight()
+    host.clientWidth / canvas.getWidth(),
+    host.clientHeight / canvas.getHeight()
   );
 
-  canvas.setViewportTransform([scale, 0, 0, scale, 0, 0]);
+  canvas.setZoom(scale);
+  canvas.viewportTransform[4] = (host.clientWidth - canvas.getWidth() * scale) / 2;
+  canvas.viewportTransform[5] = (host.clientHeight - canvas.getHeight() * scale) / 2;
   canvas.requestRenderAll();
 }
 
 export function addText() {
+  if (!canvas) return;
+
   const center = canvas.getCenter();
 
-  const t = new fabric.Textbox("Text", {
+  const text = new fabric.Textbox("Text", {
     left: center.left,
     top: center.top,
     originX: "center",
     originY: "center",
     fontSize: 48,
-    fill: "#111",
+    fill: "#111"
   });
 
-  canvas.add(t);
-  canvas.setActiveObject(t);
+  canvas.add(text);
+  canvas.setActiveObject(text);
   canvas.requestRenderAll();
 
-  console.log("✅ Text added");
+  console.log("🟢 Text added");
+}
+
+export function addImageFromFile(file) {
+  if (!canvas) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
+      img.scaleToWidth(canvas.getWidth() * 0.5);
+      img.set({
+        left: canvas.getCenter().left,
+        top: canvas.getCenter().top,
+        originX: "center",
+        originY: "center"
+      });
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.requestRenderAll();
+    });
+  };
+  reader.readAsDataURL(file);
 }
