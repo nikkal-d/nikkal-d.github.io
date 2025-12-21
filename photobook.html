@@ -4,21 +4,18 @@
   <meta charset="UTF-8" />
   <title>Photobook Editor</title>
 
+  <!-- CSS -->
   <link rel="stylesheet" href="./css/photobook.css" />
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="./css/app.css" />
 
-
-  <!-- FABRIC -->
-<script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
-
-
+  <!-- FABRIC (ΜΙΑ ΦΟΡΑ ΜΟΝΟ) -->
+  <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
 </head>
+
 <body>
 
- <body>
 <div id="app">
 
- 
   <!-- LEFT BAR -->
   <div id="leftBar">
     <button id="btnText">T</button>
@@ -40,10 +37,10 @@
 
 </div>
 
-<!-- LEFT PANELS -->
+<!-- PANELS -->
 <div id="panel-text" class="panel">
   <h3>Text</h3>
-  <button id="addTextBtn" class="btn">Add Text</button>
+  <button id="addTextBtn">Add Text</button>
 </div>
 
 <div id="panel-image" class="panel">
@@ -51,19 +48,9 @@
   <input type="file" id="imageInput" accept="image/*">
 </div>
 
-  <!-- WORKSPACE -->
-  <main id="workspace">
-    <div id="canvasHost">
-      <canvas id="canvas"></canvas>
-    </div>
-  </main>
-
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<!-- APP SCRIPTS -->
 <script type="module" src="./js/core.js"></script>
 <script type="module" src="./js/ui.js"></script>
-</body>
 
 </body>
 </html>
