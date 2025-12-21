@@ -18,24 +18,38 @@
  <body>
 <div id="app">
 
-  <!-- LEFT SIDEBAR (ΚΑΘΕΤΗ) -->
-  <aside id="leftSidebar">
-    <button data-panel="text">Text</button>
-    <button data-panel="image">Image</button>
-    <button data-panel="shapes">Shapes</button>
-    <button data-panel="stickers">Stickers</button>
-  </aside>
+ 
+  <!-- LEFT BAR -->
+  <div id="leftBar">
+    <button id="btnText">T</button>
+    <button id="btnImage">🖼</button>
+    <button id="btnShapes">⬛</button>
+  </div>
 
-  <!-- LEFT PANELS -->
-  <div id="leftPanels">
-    <div id="panel-text" class="panel">
-  <button id="addTextBtn">➕ Add Text</button>
+  <!-- CANVAS AREA -->
+  <div id="canvasArea">
+    <div id="canvasHost">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- RIGHT BAR -->
+  <div id="rightBar">
+    <h3>Pages / Export</h3>
+  </div>
+
 </div>
 
-    <div id="panel-image" class="panel">Image panel</div>
-    <div id="panel-shapes" class="panel">Shapes panel</div>
-    <div id="panel-stickers" class="panel">Stickers panel</div>
-  </div>
+<!-- LEFT PANELS -->
+<div id="panel-text" class="panel">
+  <h3>Text</h3>
+  <button id="addTextBtn" class="btn">Add Text</button>
+</div>
+
+<div id="panel-image" class="panel">
+  <h3>Images</h3>
+  <input type="file" id="imageInput" accept="image/*">
+</div>
 
   <!-- WORKSPACE -->
   <main id="workspace">
