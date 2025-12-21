@@ -1,28 +1,74 @@
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #eee;
-}
-
-.topbar {
-  padding: 8px;
-  background: #222;
-  color: #fff;
+/* ===== SIDEBARS ===== */
+.sidebar {
+  width: 64px;
+  background: #181818;
+  border-right: 1px solid #333;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  padding: 8px 4px;
+  gap: 6px;
 }
 
-.topbar button {
-  padding: 6px 10px;
+.sidebar.right {
+  border-right: none;
+  border-left: 1px solid #333;
+}
+
+.sidebar button {
+  background: #2b2b2b;
+  color: #eee;
+  border: none;
+  padding: 10px 6px;
+  font-size: 11px;
   cursor: pointer;
+  border-radius: 4px;
 }
 
-#canvasHost {
-  width: 100vw;
-  height: calc(100vh - 48px);
+.sidebar button:hover {
+  background: #3a3a3a;
+}
+
+/* ===== PANELS ===== */
+#panels {
+  width: 260px;
+  background: #222;
+  border-right: 1px solid #333;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.panel h3 {
+  margin-top: 0;
+  font-size: 14px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 6px;
+}
+
+/* ===== WORKSPACE ===== */
+#workspace {
+  flex: 1;
+  background: #888;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  background: #ccc;
+  overflow: auto;
+}
+
+/* ===== CANVAS ===== */
+#canvasHost {
+  background: #bbb;
+  padding: 40px;
+}
+
+.canvas-container {
+  background: #fff;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
