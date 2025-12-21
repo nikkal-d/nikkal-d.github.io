@@ -1,27 +1,20 @@
-// js/ui.js
+import { addText, addImageFromFile } from "./core.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
-  const buttons = document.querySelectorAll("#leftSidebar button");
-  const panels  = document.querySelectorAll("#leftPanels .panel");
+document.getElementById("imageInput")?.addEventListener("change", e => {
+  if (e.target.files[0]) {
+    addImageFromFile(e.target.files[0]);
+    e.target.value = "";
+  }
+});
 
-  buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.panel;
-
-      panels.forEach(p => {
-        if (p.id === `panel-${target}`) {
-          p.classList.toggle("open");
-        } else {
-          p.classList.remove("open");
-        }
-      });
+/* LEFT SIDEBAR */
+document.querySelectorAll("#leftSidebar button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const target = btn.dataset.panel;
+    document.querySelectorAll("#leftPanels .panel").forEach(p => {
+      p.classList.toggle("open", p.id === `panel-${target}`);
     });
   });
-
-});
-import { addText } from "./core.js";
-
-document.getElementById("addTextBtn")?.addEventListener("click", () => {
-  addText();
 });
