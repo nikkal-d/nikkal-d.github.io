@@ -1,3 +1,4 @@
+// core.js
 export let canvas;
 let zoom = 1;
 
@@ -12,7 +13,6 @@ window.addEventListener("DOMContentLoaded", () => {
   canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
 
   fitToScreen();
-
   console.log("✅ Canvas initialized");
 });
 
@@ -21,9 +21,10 @@ window.addEventListener("DOMContentLoaded", () => {
 ========================= */
 function getViewportCenter() {
   const vpt = canvas.viewportTransform;
-  const cx = (canvas.width / 2 - vpt[4]) / vpt[0];
-  const cy = (canvas.height / 2 - vpt[5]) / vpt[3];
-  return { x: cx, y: cy };
+  return {
+    x: (canvas.width / 2 - vpt[4]) / vpt[0],
+    y: (canvas.height / 2 - vpt[5]) / vpt[3]
+  };
 }
 
 /* =========================
@@ -76,12 +77,9 @@ export function addImageFromFile(file) {
 /* =========================
    ZOOM
 ========================= */
-export function zoomIn() {
-  applyZoom(zoom + 0.1);
-}
-export function zoomOut() {
-  applyZoom(zoom - 0.1);
-}
+export function zoomIn() { applyZoom(zoom + 0.1); }
+export function zoomOut() { applyZoom(zoom - 0.1); }
+
 export function resetZoom() {
   zoom = 1;
   canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
