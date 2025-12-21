@@ -1,6 +1,21 @@
-import { addText } from "./core.js";
+// ui.js
+import { initCanvas, addText, addImageFromFile } from "./core.js";
 
-document.getElementById("addTextBtn")?.addEventListener("click", () => {
-  console.log("🟢 Add Text clicked");
-  addText();
+window.addEventListener("DOMContentLoaded", () => {
+  initCanvas();
+
+  const textBtn = document.getElementById("addTextBtn");
+  const imageInput = document.getElementById("imageInput");
+
+  textBtn?.addEventListener("click", () => {
+    console.log("🟢 Add Text clicked");
+    addText();
+  });
+
+  imageInput?.addEventListener("change", e => {
+    if (e.target.files[0]) {
+      addImageFromFile(e.target.files[0]);
+      e.target.value = "";
+    }
+  });
 });
