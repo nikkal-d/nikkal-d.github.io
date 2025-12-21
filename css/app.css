@@ -1,51 +1,43 @@
-html, body {
+/* ====== GLOBAL ====== */
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
   margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
   background: #1e1e1e;
-  font-family: Arial, sans-serif;
-}
-
-/* Κεντρικό layout */
-#app {
-  display: flex;
+  color: #eee;
   height: 100vh;
-  width: 100vw;
-}
-
-/* Αριστερή μπάρα */
-#sidebar-left {
-  width: 70px;
-  background: #111;
-  color: #fff;
-}
-
-/* Δεξιά μπάρα */
-#sidebar-right {
-  width: 300px;
-  background: #161616;
-  color: #fff;
-  display: none;
-}
-#sidebar-right.open {
-  display: block;
-}
-
-/* Κεντρική περιοχή */
-#workspace {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #2a2a2a;
   overflow: hidden;
 }
 
-/* Host του canvas */
-#canvasHost {
-  position: relative;
-  background: #999;
-  padding: 20px;
-  box-shadow: 0 0 30px rgba(0,0,0,.5);
+/* ====== TOP BAR ====== */
+#topBar {
+  height: 48px;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #333;
+}
+
+#topBar .logo {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+#topBar button {
+  background: #2a2a2a;
+  color: #eee;
+  border: 1px solid #444;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* ====== MAIN LAYOUT ====== */
+#main {
+  display: flex;
+  height: calc(100vh - 48px);
 }
