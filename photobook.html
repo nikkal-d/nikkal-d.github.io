@@ -9,11 +9,13 @@
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="css/photobook.css" />
 
+  
   <!-- FABRIC (ΜΙΑ ΦΟΡΑ ΜΟΝΟ) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 </head>
 
 <body>
+
 
 <!-- ================= TOP BAR ================= -->
 <header id="topBar">
@@ -29,12 +31,12 @@
 <div id="main">
 
   <!-- ========== LEFT SIDEBAR ========== -->
-  <aside id="leftSidebar" class="sidebar">
-    <button data-panel="text">Text</button>
-    <button data-panel="image">Image</button>
-    <button data-panel="shapes">Shapes</button>
-    <button data-panel="pages">Pages</button>
-  </aside>
+ <div id="leftSidebar">
+  <button data-panel="text">Text</button>
+  <button data-panel="image">Image</button>
+  <button data-panel="shapes">Shapes</button>
+  <button data-panel="pages">Pages</button>
+</div>
 
   <!-- ========== PANELS ========== -->
   <div id="panels">
@@ -46,24 +48,21 @@
     </div>
 
     <!-- IMAGE PANEL -->
-    <div class="panel" id="panel-image">
-      <h3>Image</h3>
-      <input type="file" id="imageInput" accept="image/*" />
-    </div>
+   <div id="panel-text" class="panel">
+  <button id="addTextBtn">➕ Προσθήκη Κειμένου</button>
+</div>
 
-    <!-- SHAPES PANEL -->
-    <div class="panel" id="panel-shapes">
-      <h3>Shapes</h3>
-      <p>(θα μπουν μετά)</p>
-    </div>
+<div id="panel-image" class="panel">
+  <input type="file" id="imageInput" accept="image/*">
+</div>
 
-    <!-- PAGES PANEL -->
-    <div class="panel" id="panel-pages">
-      <h3>Pages</h3>
-      <div id="thumbStrip"></div>
-    </div>
+<div id="panel-shapes" class="panel">
+  (έρχεται μετά)
+</div>
 
-  </div>
+<div id="panel-pages" class="panel">
+  (έρχεται μετά)
+</div>
 
   <!-- ========== WORKSPACE ========== -->
   <main id="workspace">
