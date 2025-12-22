@@ -1,40 +1,37 @@
 // js/sidebar.js
-// =======================================
-// LEFT / RIGHT SIDEBAR TOGGLE CONTROLLER
-// =======================================
+// =====================================
+// SAFE SIDEBAR CONTROLLER (NO ASSUMPTIONS)
+// =====================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("🟢 sidebar.js loaded");
 
   const leftSidebar = document.getElementById("leftSidebar");
-  const rightSidebar = document.getElementById("rightSidebar");
+  if (!leftSidebar) {
+    console.warn("❌ leftSidebar not found");
+    return;
+  }
 
   const panels = document.querySelectorAll(".panel");
-  const sidebarButtons = document.querySelectorAll("#leftSidebar button");
+  const buttons = leftSidebar.querySelectorAll("button");
 
-  // ===============================
-  // LEFT SIDEBAR → PANELS
-  // ===============================
-  sidebarButtons.forEach(btn => {
+  console.log("🟢 sidebar buttons:", buttons.length);
+  console.log("🟢 panels:", panels.length);
+
+  buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      const panelName = btn.dataset.panel;
-      if (!panelName) return;
+      const panel = btn.getAttribute("data-panel");
+      console.log("👉 clicked:", panel);
 
-      panels.forEach(panel => {
-        if (panel.id === `panel-${panelName}`) {
-          panel.classList.toggle("open");
+      if (!panel) return;
+
+      panels.forEach(p => {
+        if (p.id === "panel-" + panel) {
+          p.classList.toggle("open");
         } else {
-          panel.classList.remove("open");
+          p.classList.remove("open");
         }
       });
     });
   });
-
-  // ===============================
-  // RIGHT SIDEBAR (EXPORT / ZOOM)
-  // ===============================
-  // (έτοιμο για επέκταση – δεν σπάει τίποτα)
-  if (rightSidebar) {
-    rightSidebar.classList.add("ready");
-  }
-
 });
