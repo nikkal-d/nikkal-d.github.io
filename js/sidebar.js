@@ -1,34 +1,40 @@
-// sidebar.js
-// ===============================
-// SAFE SIDEBAR TOGGLER
-// ===============================
+// js/sidebar.js
+// =======================================
+// LEFT / RIGHT SIDEBAR TOGGLE CONTROLLER
+// =======================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  const leftSidebar  = document.getElementById("leftSidebar");
+
+  const leftSidebar = document.getElementById("leftSidebar");
   const rightSidebar = document.getElementById("rightSidebar");
 
-  const toggleLeftBtn  = document.getElementById("toggleLeft");
-  const toggleRightBtn = document.getElementById("toggleRight");
+  const panels = document.querySelectorAll(".panel");
+  const sidebarButtons = document.querySelectorAll("#leftSidebar button");
 
-  // -------- LEFT SIDEBAR ----------
-  if (toggleLeftBtn && leftSidebar) {
-    toggleLeftBtn.onclick = () => {
-      leftSidebar.classList.toggle("open");
-      // κλείσε τη δεξιά αν είναι ανοιχτή
-      if (rightSidebar) rightSidebar.classList.remove("open");
-    };
-  } else {
-    console.warn("⚠️ Left sidebar or button not found");
+  // ===============================
+  // LEFT SIDEBAR → PANELS
+  // ===============================
+  sidebarButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const panelName = btn.dataset.panel;
+      if (!panelName) return;
+
+      panels.forEach(panel => {
+        if (panel.id === `panel-${panelName}`) {
+          panel.classList.toggle("open");
+        } else {
+          panel.classList.remove("open");
+        }
+      });
+    });
+  });
+
+  // ===============================
+  // RIGHT SIDEBAR (EXPORT / ZOOM)
+  // ===============================
+  // (έτοιμο για επέκταση – δεν σπάει τίποτα)
+  if (rightSidebar) {
+    rightSidebar.classList.add("ready");
   }
 
-  // -------- RIGHT SIDEBAR ----------
-  if (toggleRightBtn && rightSidebar) {
-    toggleRightBtn.onclick = () => {
-      rightSidebar.classList.toggle("open");
-      // κλείσε την αριστερή αν είναι ανοιχτή
-      if (leftSidebar) leftSidebar.classList.remove("open");
-    };
-  } else {
-    console.warn("⚠️ Right sidebar or button not found");
-  }
 });
