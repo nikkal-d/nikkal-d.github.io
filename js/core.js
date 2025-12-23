@@ -1,21 +1,26 @@
 // core.js
-import { fabric } from "https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js";
-
 export let canvas = null;
 let zoomLevel = 1;
 
 // ================= INIT =================
 export function initCanvas() {
+  if (!window.fabric) {
+    console.error("❌ Fabric not loaded");
+    return;
+  }
+
   canvas = new fabric.Canvas("canvas", {
     preserveObjectStacking: true,
     selection: true,
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
   });
 
-  setCanvasSize(1240, 1754); // A4 portrait default
+  setCanvasSize(1240, 1754); // A4 Portrait
   centerCanvas();
+
   console.log("✅ Canvas initialized");
 }
+
 
 // ================= CANVAS SIZE =================
 export function setCanvasSize(w, h) {
