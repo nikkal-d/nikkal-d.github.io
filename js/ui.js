@@ -5,9 +5,9 @@ import {
   zoomOut,
   resetZoom,
   getZoomPercent,
+  addText
 } from "./core.js";
 
-// INIT
 window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
 
@@ -26,5 +26,10 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("zoomReset")?.addEventListener("click", () => {
     resetZoom();
     zoomLabel.textContent = "100%";
+  });
+
+  document.getElementById("addTextBtn")?.addEventListener("click", () => {
+    console.log("🟢 Add Text clicked");
+    addText();
   });
 });
