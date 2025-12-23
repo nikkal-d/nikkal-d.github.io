@@ -31,21 +31,24 @@ export function setCanvasSize(w, h) {
 
 // ================= CENTER =================
 export function centerCanvas() {
-  const wrapper = document.getElementById("canvasWrapper");
-  if (!wrapper || !canvas) return;
+  const host = document.getElementById("canvasHost");
+  if (!host || !canvas) return;
 
+  const padding = 40;
   const scale = Math.min(
-    wrapper.clientWidth / canvas.getWidth(),
-    wrapper.clientHeight / canvas.getHeight()
+    (host.clientWidth - padding) / canvas.getWidth(),
+    (host.clientHeight - padding) / canvas.getHeight()
   );
 
   zoomLevel = scale;
-  canvas.setZoom(scale);
 
+  canvas.setZoom(scale);
   canvas.absolutePan({
-    x: (wrapper.clientWidth - canvas.getWidth() * scale) / 2,
-    y: (wrapper.clientHeight - canvas.getHeight() * scale) / 2,
+    x: (host.clientWidth - canvas.getWidth() * scale) / 2,
+    y: (host.clientHeight - canvas.getHeight() * scale) / 2,
   });
+
+  canvas.requestRenderAll();
 }
 
 // ================= ZOOM =================
