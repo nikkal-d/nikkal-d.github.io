@@ -21,7 +21,6 @@ export function initCanvas() {
   console.log("✅ Canvas initialized");
 }
 
-
 // ================= CANVAS SIZE =================
 export function setCanvasSize(w, h) {
   canvas.setWidth(w);
@@ -33,7 +32,7 @@ export function setCanvasSize(w, h) {
 // ================= CENTER =================
 export function centerCanvas() {
   const wrapper = document.getElementById("canvasWrapper");
-  if (!wrapper) return;
+  if (!wrapper || !canvas) return;
 
   const scale = Math.min(
     wrapper.clientWidth / canvas.getWidth(),
@@ -68,4 +67,26 @@ export function resetZoom() {
 
 export function getZoomPercent() {
   return Math.round(zoomLevel * 100);
+}
+
+// ================= TEXT =================
+export function addText() {
+  if (!canvas) return;
+
+  const center = canvas.getCenter();
+
+  const text = new fabric.Textbox("Text", {
+    left: center.left,
+    top: center.top,
+    originX: "center",
+    originY: "center",
+    fontSize: 48,
+    fill: "#111",
+  });
+
+  canvas.add(text);
+  canvas.setActiveObject(text);
+  canvas.requestRenderAll();
+
+  console.log("✅ Text added");
 }
