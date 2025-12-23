@@ -386,3 +386,26 @@ canvas {
   box-shadow: 0 0 0 1px #d1d5db, 0 12px 30px rgba(0,0,0,0.15);
 }
 
+/* ===== DARK MODE ===== */
+body.dark {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark .topbar,
+body.dark .leftPanel,
+body.dark .rightPanel {
+  background: #020617;
+  border-color: #1e293b;
+}
+
+body.dark button {
+  background: #1e293b;
+  color: #e5e7eb;
+}
+
+body.dark .canvasHost {
+  background: #020617;
+}
+
+
