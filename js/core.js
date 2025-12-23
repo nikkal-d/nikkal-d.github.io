@@ -1,82 +1,66 @@
 // core.js
-console.log("🟢 core.js loaded");
+import { fabric } from "https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js";
 
 export let canvas = null;
+let zoomLevel = 1;
 
+// ================= INIT =================
 export function initCanvas() {
-  if (!window.fabric) {
-    console.error("❌ Fabric not loaded");
-    return;
-  }
-
   canvas = new fabric.Canvas("canvas", {
     preserveObjectStacking: true,
-    selection: true
+    selection: true,
+    backgroundColor: "#fff",
   });
 
-  // ΣΤΑΘΕΡΟ ΜΕΓΕΘΟΣ ΣΕΛΙΔΑΣ
-  canvas.setWidth(1240);
-  canvas.setHeight(1754);
-  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
-
-  fitCanvasToScreen();
-
+  setCanvasSize(1240, 1754); // A4 portrait default
+  centerCanvas();
   console.log("✅ Canvas initialized");
 }
 
-export function fitCanvasToScreen() {
-  const host = document.getElementById("canvasHost");
-  if (!host || !canvas) return;
+// ================= CANVAS SIZE =================
+export function setCanvasSize(w, h) {
+  canvas.setWidth(w);
+  canvas.setHeight(h);
+  canvas.requestRenderAll();
+  resetZoom();
+}
+
+// ================= CENTER =================
+export function centerCanvas() {
+  const wrapper = document.getElementById("canvasWrapper");
+  if (!wrapper) return;
 
   const scale = Math.min(
-    host.clientWidth / canvas.getWidth(),
-    host.clientHeight / canvas.getHeight()
+    wrapper.clientWidth / canvas.getWidth(),
+    wrapper.clientHeight / canvas.getHeight()
   );
 
+  zoomLevel = scale;
   canvas.setZoom(scale);
-  canvas.viewportTransform[4] = (host.clientWidth - canvas.getWidth() * scale) / 2;
-  canvas.viewportTransform[5] = (host.clientHeight - canvas.getHeight() * scale) / 2;
-  canvas.requestRenderAll();
-}
 
-export function addText() {
-  if (!canvas) return;
-
-  const center = canvas.getCenter();
-
-  const text = new fabric.Textbox("Text", {
-    left: center.left,
-    top: center.top,
-    originX: "center",
-    originY: "center",
-    fontSize: 48,
-    fill: "#111"
+  canvas.absolutePan({
+    x: (wrapper.clientWidth - canvas.getWidth() * scale) / 2,
+    y: (wrapper.clientHeight - canvas.getHeight() * scale) / 2,
   });
-
-  canvas.add(text);
-  canvas.setActiveObject(text);
-  canvas.requestRenderAll();
-
-  console.log("🟢 Text added");
 }
 
-export function addImageFromFile(file) {
-  if (!canvas) return;
+// ================= ZOOM =================
+export function zoomIn() {
+  zoomLevel = Math.min(zoomLevel + 0.1, 3);
+  canvas.setZoom(zoomLevel);
+}
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.scaleToWidth(canvas.getWidth() * 0.5);
-      img.set({
-        left: canvas.getCenter().left,
-        top: canvas.getCenter().top,
-        originX: "center",
-        originY: "center"
-      });
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.requestRenderAll();
-    });
-  };
-  reader.readAsDataURL(file);
+export function zoomOut() {
+  zoomLevel = Math.max(zoomLevel - 0.1, 0.2);
+  canvas.setZoom(zoomLevel);
+}
+
+export function resetZoom() {
+  zoomLevel = 1;
+  canvas.setZoom(1);
+  centerCanvas();
+}
+
+export function getZoomPercent() {
+  return Math.round(zoomLevel * 100);
 }
