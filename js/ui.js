@@ -1,21 +1,30 @@
 // ui.js
-import { initCanvas, addText, addImageFromFile } from "./core.js";
+import {
+  initCanvas,
+  zoomIn,
+  zoomOut,
+  resetZoom,
+  getZoomPercent,
+} from "./core.js";
 
+// INIT
 window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
 
-  const textBtn = document.getElementById("addTextBtn");
-  const imageInput = document.getElementById("imageInput");
+  const zoomLabel = document.getElementById("zoomValue");
 
-  textBtn?.addEventListener("click", () => {
-    console.log("🟢 Add Text clicked");
-    addText();
+  document.getElementById("zoomIn")?.addEventListener("click", () => {
+    zoomIn();
+    zoomLabel.textContent = getZoomPercent() + "%";
   });
 
-  imageInput?.addEventListener("change", e => {
-    if (e.target.files[0]) {
-      addImageFromFile(e.target.files[0]);
-      e.target.value = "";
-    }
+  document.getElementById("zoomOut")?.addEventListener("click", () => {
+    zoomOut();
+    zoomLabel.textContent = getZoomPercent() + "%";
+  });
+
+  document.getElementById("zoomReset")?.addEventListener("click", () => {
+    resetZoom();
+    zoomLabel.textContent = "100%";
   });
 });
