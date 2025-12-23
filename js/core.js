@@ -78,18 +78,18 @@ export function addText() {
 
   const center = canvas.getCenter();
 
-  const text = new fabric.Textbox("Text", {
+  const t = new fabric.Textbox("Text", {
     left: center.left,
     top: center.top,
     originX: "center",
     originY: "center",
     fontSize: 48,
-    fill: "#111",
+    fill: "#111",          // ΠΑΝΤΑ ΣΚΟΥΡΟ
+    backgroundColor: null,
+    textAlign: "center",
   });
 
-  canvas.add(text);
-  canvas.setActiveObject(text);
+  canvas.add(t);
+  canvas.setActiveObject(t);
   canvas.requestRenderAll();
-
-  console.log("✅ Text added");
 }
