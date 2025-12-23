@@ -338,3 +338,37 @@ canvas {
   gap: 8px;
 }
 
+/* ROOT */
+#editorRoot {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #e5e5e5;
+  overflow: hidden;
+}
+
+/* CANVAS WRAPPER */
+#canvasWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible; /* ΠΟΛΥ ΣΗΜΑΝΤΙΚΟ */
+}
+
+/* FABRIC CANVAS */
+.canvas-container {
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  background: white;
+}
+
+/* ΜΗΝ ΠΕΙΡΑΞΕΙΣ ΠΟΤΕ ΤΟ CANVAS ΜΕ TRANSFORM */
+canvas {
+  display: block;
+}
+
+
