@@ -309,3 +309,32 @@ body{
     box-shadow: var(--shadow);
   }
 }
+
+#canvasWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #e5e5e5;
+}
+
+canvas {
+  box-shadow: 0 0 20px rgba(0,0,0,0.15);
+  background: white;
+}
+
+.zoom-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  border-radius: 20px;
+  padding: 6px 10px;
+  display: flex;
+  gap: 8px;
+}
+
