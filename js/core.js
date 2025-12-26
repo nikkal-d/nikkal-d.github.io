@@ -1,75 +1,44 @@
 // core.js
 console.log("🟢 core.js loaded");
 
-export let canvas = null;
+let canvas;
 
 export function initCanvas() {
-  if (!window.fabric) {
-    console.error("❌ Fabric not loaded");
-    return;
-  }
-
   canvas = new fabric.Canvas("canvas", {
-    preserveObjectStacking: true,
-    selection: true
+    backgroundColor: "#fff",
+    preserveObjectStacking: true
   });
 
-  // ΣΤΑΘΕΡΟ ΜΕΓΕΘΟΣ ΣΕΛΙΔΑΣ
   canvas.setWidth(1240);
   canvas.setHeight(1754);
-  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
-
-  fitCanvasToScreen();
 
   console.log("✅ Canvas initialized");
 }
 
-export function fitCanvasToScreen() {
-  const host = document.getElementById("canvasHost");
-  if (!host || !canvas) return;
-
-  const scale = Math.min(
-    host.clientWidth / canvas.getWidth(),
-    host.clientHeight / canvas.getHeight()
-  );
-
-  canvas.setZoom(scale);
-  canvas.viewportTransform[4] = (host.clientWidth - canvas.getWidth() * scale) / 2;
-  canvas.viewportTransform[5] = (host.clientHeight - canvas.getHeight() * scale) / 2;
-  canvas.requestRenderAll();
-}
-
 export function addText() {
-  if (!canvas) return;
-
-  const center = canvas.getCenter();
-
   const text = new fabric.Textbox("Text", {
-    left: center.left,
-    top: center.top,
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
     originX: "center",
     originY: "center",
     fontSize: 48,
-    fill: "#111"
+    fill: "#000"
   });
 
   canvas.add(text);
   canvas.setActiveObject(text);
   canvas.requestRenderAll();
-
-  console.log("🟢 Text added");
+  console.log("✅ Text added");
 }
 
-export function addImageFromFile(file) {
-  if (!canvas) return;
-
+export function addImage(file) {
   const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.scaleToWidth(canvas.getWidth() * 0.5);
+  reader.onload = e => {
+    fabric.Image.fromURL(e.target.result, img => {
+      img.scaleToWidth(600);
       img.set({
-        left: canvas.getCenter().left,
-        top: canvas.getCenter().top,
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
         originX: "center",
         originY: "center"
       });
@@ -79,4 +48,55 @@ export function addImageFromFile(file) {
     });
   };
   reader.readAsDataURL(file);
+}
+
+/* =========================
+   EXPORT FLIPBOOK
+========================= */
+
+export function exportFlipbook() {
+  const img = canvas.toDataURL({
+    format: "png",
+    quality: 1
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Flipbook</title>
+<style>
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #222;
+  height: 100vh;
+}
+.page {
+  width: 80%;
+  max-width: 900px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.page img {
+  width: 100%;
+  display: block;
+}
+</style>
+</head>
+<body>
+  <div class="page">
+    <img src="${img}">
+  </div>
+</body>
+</html>
+`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "flipbook.html";
+  a.click();
 }
