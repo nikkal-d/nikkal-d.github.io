@@ -1,46 +1,50 @@
-// core.js
-console.log("🟢 core.js loaded");
+// js/core.js
+console.log("core.js loaded");
 
-let canvas;
+export let canvas;
+export let pages = [];
+export let currentPage = 0;
+export let zoom = 1;
 
 export function initCanvas() {
   canvas = new fabric.Canvas("canvas", {
-    backgroundColor: "#fff",
+    width: 1240,
+    height: 1754,
+    backgroundColor: "#ffffff",
     preserveObjectStacking: true
   });
 
-  canvas.setWidth(1240);
-  canvas.setHeight(1754);
-
+  pages = [canvas.toJSON()];
   console.log("✅ Canvas initialized");
 }
 
 export function addText() {
-  const text = new fabric.Textbox("Text", {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2,
+  const t = new fabric.Textbox("Text", {
+    left: canvas.width / 2,
+    top: canvas.height / 2,
     originX: "center",
     originY: "center",
     fontSize: 48,
-    fill: "#000"
+    fill: "#111"
   });
 
-  canvas.add(text);
-  canvas.setActiveObject(text);
+  canvas.add(t);
+  canvas.setActiveObject(t);
   canvas.requestRenderAll();
   console.log("✅ Text added");
 }
 
-export function addImage(file) {
+export function addImageFromFile(file) {
   const reader = new FileReader();
-  reader.onload = e => {
-    fabric.Image.fromURL(e.target.result, img => {
-      img.scaleToWidth(600);
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
       img.set({
-        left: canvas.getWidth() / 2,
-        top: canvas.getHeight() / 2,
+        left: canvas.width / 2,
+        top: canvas.height / 2,
         originX: "center",
-        originY: "center"
+        originY: "center",
+        scaleX: 0.5,
+        scaleY: 0.5
       });
       canvas.add(img);
       canvas.setActiveObject(img);
@@ -50,53 +54,47 @@ export function addImage(file) {
   reader.readAsDataURL(file);
 }
 
-/* =========================
-   EXPORT FLIPBOOK
-========================= */
+/* ---------- PAGES ---------- */
 
-export function exportFlipbook() {
-  const img = canvas.toDataURL({
-    format: "png",
-    quality: 1
+export function savePage() {
+  pages[currentPage] = canvas.toJSON();
+}
+
+export function loadPage(index) {
+  savePage();
+  canvas.clear();
+  canvas.loadFromJSON(pages[index], () => {
+    canvas.requestRenderAll();
   });
+  currentPage = index;
+}
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Flipbook</title>
-<style>
-body {
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #222;
-  height: 100vh;
+export function addPage() {
+  savePage();
+  pages.push({});
+  currentPage = pages.length - 1;
+  canvas.clear();
+  canvas.setBackgroundColor("#ffffff", canvas.requestRenderAll.bind(canvas));
 }
-.page {
-  width: 80%;
-  max-width: 900px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.6);
-}
-.page img {
-  width: 100%;
-  display: block;
-}
-</style>
-</head>
-<body>
-  <div class="page">
-    <img src="${img}">
-  </div>
-</body>
-</html>
-`;
 
-  const blob = new Blob([html], { type: "text/html" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "flipbook.html";
-  a.click();
+/* ---------- ZOOM ---------- */
+
+export function applyZoom(value) {
+  zoom = value;
+  canvas.setZoom(zoom);
+  canvas.requestRenderAll();
+}
+
+/* ---------- EXPORT ---------- */
+
+export function exportPagesAsImages() {
+  savePage();
+  return pages.map((page, i) => {
+    const temp = new fabric.StaticCanvas(null, {
+      width: canvas.width,
+      height: canvas.height
+    });
+    temp.loadFromJSON(page, () => {});
+    return temp.toDataURL({ format: "png" });
+  });
 }
