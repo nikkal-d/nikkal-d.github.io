@@ -1,31 +1,50 @@
 // core.js
-let canvas = null;
-let zoom = 1;
+console.log("🟢 core.js loaded");
+
+export let canvas = null;
 
 export function initCanvas() {
-  const el = document.getElementById("canvas");
-  canvas = new fabric.Canvas(el, {
-    backgroundColor: "#fff",
-    preserveObjectStacking: true
+  if (!window.fabric) {
+    console.error("❌ Fabric not loaded");
+    return;
+  }
+
+  canvas = new fabric.Canvas("canvas", {
+    preserveObjectStacking: true,
+    selection: true
   });
 
-  canvas.setWidth(900);
-  canvas.setHeight(1200);
-  centerCanvas();
+  // ΣΤΑΘΕΡΟ ΜΕΓΕΘΟΣ ΣΕΛΙΔΑΣ
+  canvas.setWidth(1240);
+  canvas.setHeight(1754);
+  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+
+  fitCanvasToScreen();
 
   console.log("✅ Canvas initialized");
 }
 
-export function getCanvas() {
-  return canvas;
+export function fitCanvasToScreen() {
+  const host = document.getElementById("canvasHost");
+  if (!host || !canvas) return;
+
+  const scale = Math.min(
+    host.clientWidth / canvas.getWidth(),
+    host.clientHeight / canvas.getHeight()
+  );
+
+  canvas.setZoom(scale);
+  canvas.viewportTransform[4] = (host.clientWidth - canvas.getWidth() * scale) / 2;
+  canvas.viewportTransform[5] = (host.clientHeight - canvas.getHeight() * scale) / 2;
+  canvas.requestRenderAll();
 }
 
-// ---------------- TEXT ----------------
 export function addText() {
   if (!canvas) return;
 
   const center = canvas.getCenter();
-  const t = new fabric.Textbox("Text", {
+
+  const text = new fabric.Textbox("Text", {
     left: center.left,
     top: center.top,
     originX: "center",
@@ -34,56 +53,30 @@ export function addText() {
     fill: "#111"
   });
 
-  canvas.add(t);
-  canvas.setActiveObject(t);
+  canvas.add(text);
+  canvas.setActiveObject(text);
   canvas.requestRenderAll();
+
+  console.log("🟢 Text added");
 }
 
-// ---------------- IMAGE ----------------
 export function addImageFromFile(file) {
-  if (!canvas || !file) return;
+  if (!canvas) return;
 
   const reader = new FileReader();
-  reader.onload = e => {
-    fabric.Image.fromURL(e.target.result, img => {
-      const center = canvas.getCenter();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
+      img.scaleToWidth(canvas.getWidth() * 0.5);
       img.set({
-        left: center.left,
-        top: center.top,
+        left: canvas.getCenter().left,
+        top: canvas.getCenter().top,
         originX: "center",
         originY: "center"
       });
-      img.scaleToWidth(400);
       canvas.add(img);
       canvas.setActiveObject(img);
       canvas.requestRenderAll();
     });
   };
   reader.readAsDataURL(file);
-}
-
-// ---------------- ZOOM ----------------
-export function setZoom(value) {
-  if (!canvas) return;
-
-  zoom = Math.min(3, Math.max(0.2, value));
-  canvas.setZoom(zoom);
-  centerCanvas();
-}
-
-export function getZoom() {
-  return zoom;
-}
-
-function centerCanvas() {
-  const wrap = document.querySelector(".canvas-wrapper");
-  if (!wrap || !canvas) return;
-
-  const w = wrap.clientWidth;
-  const h = wrap.clientHeight;
-
-  const vt = canvas.viewportTransform;
-  vt[4] = w / 2 - (canvas.width * zoom) / 2;
-  vt[5] = h / 2 - (canvas.height * zoom) / 2;
-  canvas.setViewportTransform(vt);
 }
