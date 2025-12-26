@@ -448,4 +448,21 @@ body.theme-dark .panel { background: var(--panel); border-color: var(--border); 
 }
 #floatToolbar.show{ opacity:1; pointer-events:auto; }
 
+/* IMPORTANT FIX */
+.canvas-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar,
+.panel {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+canvas {
+  display: block;
+}
+
 
