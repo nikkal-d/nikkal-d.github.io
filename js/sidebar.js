@@ -1,33 +1,110 @@
 // js/sidebar.js
-function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
-function qs(sel) { return document.querySelector(sel); }
+// Handles: left panel tabs + right export panel + theme/lang UI (safe, no null crashes)
 
-const exportPanel = qs("#exportPanel");
-const toggleExportBtn = qs("#toggleExport");
+const $ = (id) => document.getElementById(id);
 
-function closeLeftPanels() {
-  qsa(".leftpanels .panel").forEach(p => p.classList.remove("open"));
+const leftPanel = $("leftPanel");
+const rightPanel = $("rightPanel");
+const panelTitle = $("panelTitle");
+
+const closeLeft = $("closeLeftPanelBtn");
+const closeRight = $("closeRightPanelBtn");
+const openExportBtn = $("openExportBtn");
+const toggleExportBtn = $("toggleExportBtn");
+
+const themeToggleBtn = $("themeToggleBtn");
+const langToggleBtn = $("langToggleBtn");
+
+function setActiveRailButton(btn){
+  document.querySelectorAll(".leftRail .railbtn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
 }
 
-function openLeftPanel(name) {
-  const p = qs(`#panel-${name}`);
-  if (!p) return;
-  const isOpen = p.classList.contains("open");
-  closeLeftPanels();
-  if (!isOpen) p.classList.add("open");
+function openLeftPanel(viewName, title){
+  if (!leftPanel) return;
+  leftPanel.classList.remove("closed");
+  if (panelTitle) panelTitle.textContent = title;
+
+  document.querySelectorAll(".leftPanel .panelView").forEach(v => {
+    v.hidden = (v.dataset.view !== viewName);
+  });
 }
 
-qsa(".leftbar .tool").forEach(btn => {
-  btn.addEventListener("click", () => openLeftPanel(btn.dataset.panel));
-});
-
-qsa('[data-close="left"]').forEach(btn => {
-  btn.addEventListener("click", closeLeftPanels);
-});
-
-if (toggleExportBtn && exportPanel) {
-  toggleExportBtn.addEventListener("click", () => exportPanel.classList.toggle("open"));
+function closeLeftPanel(){
+  if (!leftPanel) return;
+  leftPanel.classList.add("closed");
+  document.querySelectorAll(".leftRail .railbtn").forEach(b => b.classList.remove("active"));
 }
-qsa('[data-close="export"]').forEach(btn => {
-  btn.addEventListener("click", () => exportPanel?.classList.remove("open"));
+
+function openRightPanel(){
+  if (!rightPanel) return;
+  rightPanel.classList.add("open");
+}
+function closeRightPanel(){
+  if (!rightPanel) return;
+  rightPanel.classList.remove("open");
+}
+
+document.querySelectorAll(".leftRail .railbtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const view = btn.dataset.panel;
+    if (!view) return;
+
+    // toggle behavior
+    if (leftPanel && !leftPanel.classList.contains("closed")) {
+      const currentVisible = document.querySelector('.leftPanel .panelView:not([hidden])');
+      const isSame = currentVisible && currentVisible.dataset.view === view;
+      if (isSame) {
+        closeLeftPanel();
+        return;
+      }
+    }
+
+    setActiveRailButton(btn);
+
+    const titles = {
+      pages: "Pages",
+      text: "Text",
+      images: "Images",
+      colors: "Colors",
+      shapes: "Shapes",
+      layers: "Layers",
+    };
+
+    openLeftPanel(view, titles[view] || "Panel");
+  });
 });
+
+closeLeft?.addEventListener("click", closeLeftPanel);
+
+openExportBtn?.addEventListener("click", () => {
+  if (!rightPanel) return;
+  rightPanel.classList.toggle("open");
+});
+toggleExportBtn?.addEventListener("click", () => {
+  if (!rightPanel) return;
+  rightPanel.classList.toggle("open");
+});
+closeRight?.addEventListener("click", closeRightPanel);
+
+// Theme toggle (UI only)
+themeToggleBtn?.addEventListener("click", () => {
+  document.body.classList.toggle("theme-light");
+  document.body.classList.toggle("theme-dark");
+  // optional icon switch
+  themeToggleBtn.textContent = document.body.classList.contains("theme-light") ? "🌙" : "☀️";
+});
+
+// Lang toggle (UI only)
+langToggleBtn?.addEventListener("click", () => {
+  const isEL = (langToggleBtn.textContent || "").trim().toUpperCase() === "EL";
+  langToggleBtn.textContent = isEL ? "EN" : "EL";
+});
+
+// Default state: left panel open on Pages
+// (only if exists)
+const firstBtn = document.querySelector(".leftRail .railbtn[data-panel='pages']");
+if (firstBtn) {
+  setActiveRailButton(firstBtn);
+  openLeftPanel("pages", "Pages");
+}
