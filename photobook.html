@@ -5,268 +5,230 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Photobook Editor</title>
 
-  <!-- CSS -->
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
+  <!-- Fabric (global `fabric`) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js" crossorigin="anonymous"></script>
 </head>
 
-<body class="theme-light">
+<body class="app light">
   <!-- TOP BAR -->
   <header class="topbar">
-    <div class="topbar-left">
-      <a class="brand" href="./index.html">Photobook</a>
+    <div class="brand">Photobook</div>
 
-      <nav class="topnav" aria-label="Site navigation">
-        <a href="./index.html" data-i18n="nav_home">Home</a>
-        <a href="./templates.html" data-i18n="nav_templates">Templates</a>
-        <a href="./projects.html" data-i18n="nav_projects">Projects</a>
-        <a href="./viewer.html" data-i18n="nav_viewer">Viewer</a>
-        <a href="./stickers.html" data-i18n="nav_stickers">Stickers</a>
-      </nav>
-    </div>
+    <nav class="topnav">
+      <a href="./index.html">Home</a>
+      <a href="./viewer.html">Viewer</a>
+      <a class="active" href="./photobook.html">Editor</a>
+      <a href="./pricing.html">Pricing</a>
+    </nav>
 
-    <div class="topbar-right">
-      <button class="iconbtn" id="themeToggleBtn" title="Dark / Light">🌙</button>
-      <button class="iconbtn" id="langToggleBtn" title="EL / EN">EL</button>
+    <div class="top-actions">
+      <button id="langToggle" class="btn ghost" title="Εναλλαγή γλώσσας">ΕΛ/EN</button>
+      <button id="themeToggle" class="btn ghost" title="Light/Dark">🌙</button>
 
-      <div class="authbox">
+      <div class="auth">
+        <button id="loginBtn" class="btn">Σύνδεση</button>
+        <button id="logoutBtn" class="btn ghost" style="display:none;">Έξοδος</button>
         <span id="userInfo" class="userInfo"></span>
-        <button class="btn" id="loginBtn">Σύνδεση</button>
-        <button class="btn ghost" id="logoutBtn" style="display:none;">Logout</button>
       </div>
+
+      <button id="toggleExport" class="btn primary" title="Export">Export</button>
     </div>
   </header>
 
-  <!-- APP LAYOUT -->
-  <div class="appShell">
-    <!-- LEFT MINI BAR -->
-    <aside class="leftRail" aria-label="Tools">
-      <button class="railbtn active" data-panel="pages" title="Pages">📄</button>
-      <button class="railbtn" data-panel="text" title="Text">🅰</button>
-      <button class="railbtn" data-panel="images" title="Images">🖼</button>
-      <button class="railbtn" data-panel="colors" title="Colors">🎨</button>
-      <button class="railbtn" data-panel="shapes" title="Shapes">⬛</button>
-      <button class="railbtn" data-panel="layers" title="Layers">📚</button>
+  <div class="workspace">
+    <!-- LEFT TOOLBAR -->
+    <aside class="leftbar">
+      <button class="tool" data-panel="insert" title="Insert">➕</button>
+      <button class="tool" data-panel="text" title="Text">T</button>
+      <button class="tool" data-panel="shapes" title="Shapes">⬛</button>
+      <button class="tool" data-panel="layers" title="Layers">≡</button>
+      <button class="tool" data-panel="pages" title="Pages">📄</button>
+      <button class="tool" data-panel="templates" title="Templates">🧩</button>
     </aside>
 
-    <!-- LEFT PANEL (collapsible) -->
-    <section class="leftPanel" id="leftPanel">
-      <div class="panelHeader">
-        <h3 id="panelTitle">Pages</h3>
-        <button class="iconbtn" id="closeLeftPanelBtn" title="Close">✕</button>
-      </div>
-
-      <!-- PAGES -->
-      <div class="panelBody panelView" data-view="pages">
-        <div class="row gap">
-          <button class="btn" id="addPageBtn">+ Page</button>
-          <button class="btn ghost" id="dupPageBtn">Duplicate</button>
-          <button class="btn danger" id="delPageBtn">Delete</button>
+    <!-- LEFT PANELS -->
+    <section class="leftpanels" id="leftPanels">
+      <div class="panel" id="panel-insert">
+        <div class="panel-header">
+          <h3>Insert</h3>
+          <button class="icon" data-close="left">✕</button>
         </div>
+        <div class="panel-body">
+          <label class="fileBtn">
+            <input type="file" id="imageInput" accept="image/*" />
+            <span>📷 Εισαγωγή εικόνας</span>
+          </label>
 
-        <div class="row gap" style="margin-top:10px;">
-          <button class="btn ghost" id="prevPageBtn">←</button>
-          <div class="pill" id="pageInfo">1 / 1</div>
-          <button class="btn ghost" id="nextPageBtn">→</button>
-        </div>
+          <button class="btn" id="addTextBtn">➕ Text</button>
 
-        <div class="thumbStrip" id="thumbStrip"></div>
-      </div>
-
-      <!-- TEXT -->
-      <div class="panelBody panelView" data-view="text" hidden>
-        <button class="btn" id="addTextBtn">➕ Add Text</button>
-
-        <div class="field">
-          <label>Font</label>
-          <select class="select" id="fontSelect">
-            <option value="Arial" selected>Arial</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Times New Roman">Times</option>
-            <option value="Verdana">Verdana</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Size</label>
-          <input class="input" id="fontSizeInput" type="number" min="8" max="180" value="48" />
-        </div>
-
-        <div class="row gap">
-          <button class="btn ghost" id="boldBtn">B</button>
-          <button class="btn ghost" id="italicBtn">I</button>
-          <button class="btn ghost" id="underlineBtn">U</button>
-        </div>
-
-        <div class="field">
-          <label>Color</label>
-          <input class="input" id="textColorInput" type="color" value="#111111"/>
-        </div>
-
-        <div class="row gap">
-          <button class="btn ghost" id="alignLeftBtn">Left</button>
-          <button class="btn ghost" id="alignCenterBtn">Center</button>
-          <button class="btn ghost" id="alignRightBtn">Right</button>
+          <div class="hint">Σύρε αντικείμενα. Space για panning. Ctrl+Wheel για zoom.</div>
         </div>
       </div>
 
-      <!-- IMAGES -->
-      <div class="panelBody panelView" data-view="images" hidden>
-        <label class="btn">
-          Upload Image
-          <input type="file" id="imageInput" accept="image/*" hidden />
-        </label>
-
-        <div class="row gap" style="margin-top:10px;">
-          <button class="btn ghost" id="removeBgBtn">Remove BG</button>
-          <button class="btn ghost" id="cropBtn">Crop</button>
+      <div class="panel" id="panel-text">
+        <div class="panel-header">
+          <h3>Text</h3>
+          <button class="icon" data-close="left">✕</button>
         </div>
-
-        <p class="hint">
-          Remove BG / Crop θα “δέσουν” στο επόμενο βήμα (placeholder UI).
-        </p>
-      </div>
-
-      <!-- COLORS -->
-      <div class="panelBody panelView" data-view="colors" hidden>
-        <div class="field">
-          <label>Canvas Background</label>
-          <input class="input" id="canvasBgColor" type="color" value="#ffffff" />
-        </div>
-
-        <div class="field">
-          <label>Selected Fill</label>
-          <input class="input" id="objFillColor" type="color" value="#ff0000" />
-        </div>
-
-        <div class="row gap">
-          <button class="btn ghost" data-bg="#ffffff">White</button>
-          <button class="btn ghost" data-bg="#f3f4f6">Gray</button>
-          <button class="btn ghost" data-bg="#111827">Dark</button>
+        <div class="panel-body">
+          <button class="btn" id="addHeadingBtn">Heading</button>
+          <button class="btn" id="addSubheadingBtn">Subheading</button>
+          <button class="btn" id="addBodyTextBtn">Body</button>
+          <div class="divider"></div>
+          <label class="row">
+            <span>Font</span>
+            <select id="fontFamily">
+              <option value="Arial">Arial</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Times New Roman">Times</option>
+              <option value="Verdana">Verdana</option>
+            </select>
+          </label>
+          <label class="row">
+            <span>Size</span>
+            <input id="fontSize" type="number" min="8" max="200" value="48" />
+          </label>
+          <label class="row">
+            <span>Color</span>
+            <input id="fontColor" type="color" value="#111111" />
+          </label>
+          <button class="btn ghost" id="applyTextStyleBtn">Apply to selected</button>
         </div>
       </div>
 
-      <!-- SHAPES -->
-      <div class="panelBody panelView" data-view="shapes" hidden>
-        <div class="row gap">
+      <div class="panel" id="panel-shapes">
+        <div class="panel-header">
+          <h3>Shapes</h3>
+          <button class="icon" data-close="left">✕</button>
+        </div>
+        <div class="panel-body">
           <button class="btn" id="addRectBtn">Rectangle</button>
           <button class="btn" id="addCircleBtn">Circle</button>
-        </div>
-        <div class="row gap" style="margin-top:10px;">
-          <button class="btn ghost" id="addLineBtn">Line</button>
+          <button class="btn" id="addLineBtn">Line</button>
+          <div class="divider"></div>
+          <label class="row">
+            <span>Fill</span>
+            <input id="shapeFill" type="color" value="#ff4d4d" />
+          </label>
+          <label class="row">
+            <span>Stroke</span>
+            <input id="shapeStroke" type="color" value="#111111" />
+          </label>
+          <label class="row">
+            <span>Stroke</span>
+            <input id="shapeStrokeWidth" type="number" min="0" max="40" value="2" />
+          </label>
+          <button class="btn ghost" id="applyShapeStyleBtn">Apply to selected</button>
         </div>
       </div>
 
-      <!-- LAYERS -->
-      <div class="panelBody panelView" data-view="layers" hidden>
-        <div class="row gap">
-          <button class="btn ghost" id="bringFwdBtn">Bring +</button>
-          <button class="btn ghost" id="sendBackBtn">Send -</button>
-          <button class="btn danger" id="deleteObjBtn">Delete</button>
+      <div class="panel" id="panel-layers">
+        <div class="panel-header">
+          <h3>Layers</h3>
+          <button class="icon" data-close="left">✕</button>
         </div>
+        <div class="panel-body">
+          <div id="layersList" class="layersList"></div>
+          <div class="row2">
+            <button class="btn ghost" id="bringForwardBtn">Forward</button>
+            <button class="btn ghost" id="sendBackBtn">Backward</button>
+          </div>
+          <div class="row2">
+            <button class="btn ghost" id="bringToFrontBtn">To Front</button>
+            <button class="btn ghost" id="sendToBackBtn">To Back</button>
+          </div>
+        </div>
+      </div>
 
-        <div class="layersList" id="layersList"></div>
+      <div class="panel" id="panel-pages">
+        <div class="panel-header">
+          <h3>Pages</h3>
+          <button class="icon" data-close="left">✕</button>
+        </div>
+        <div class="panel-body">
+          <div class="row2">
+            <button class="btn" id="addPageBtn">+ Page</button>
+            <button class="btn ghost" id="dupPageBtn">Duplicate</button>
+            <button class="btn danger" id="delPageBtn">Delete</button>
+          </div>
+          <div class="row2">
+            <button class="btn ghost" id="prevPageBtn">◀</button>
+            <div id="pageInfo" class="pageInfo">1 / 1</div>
+            <button class="btn ghost" id="nextPageBtn">▶</button>
+          </div>
+          <div id="thumbStrip" class="thumbStrip"></div>
+        </div>
+      </div>
 
-        <p class="hint">
-          Layers list ενημερώνεται όταν προσθέτεις/επιλέγεις αντικείμενα (επόμενο βήμα το “δέσιμο”).
-        </p>
+      <div class="panel" id="panel-templates">
+        <div class="panel-header">
+          <h3>Templates</h3>
+          <button class="icon" data-close="left">✕</button>
+        </div>
+        <div class="panel-body">
+          <button class="btn ghost" id="tpl1Btn">2-Photo Grid</button>
+          <button class="btn ghost" id="tpl2Btn">Title + Photo</button>
+          <div class="hint">Templates είναι demo (μπορούμε να τα γεμίσουμε μετά).</div>
+        </div>
       </div>
     </section>
 
-    <!-- CANVAS AREA -->
-    <main class="stage">
-      <!-- Stage toolbar -->
-      <div class="stageBar">
-        <div class="stageBar-left">
-          <button class="btn ghost" id="fitBtn" title="Fit to screen">Fit</button>
-
-          <div class="zoomBox">
-            <button class="iconbtn" id="zoomOutBtn" title="Zoom out">−</button>
-            <div class="pill" id="zoomValue">100%</div>
-            <button class="iconbtn" id="zoomInBtn" title="Zoom in">+</button>
-            <button class="btn ghost" id="zoomResetBtn" title="Reset zoom">Reset</button>
-          </div>
+    <!-- CENTER CANVAS -->
+    <main class="center">
+      <div class="canvasToolbar">
+        <div class="zoomBox">
+          <button class="icon" id="zoomOutBtn" title="Zoom out">−</button>
+          <span id="zoomValue">100%</span>
+          <button class="icon" id="zoomInBtn" title="Zoom in">+</button>
+          <button class="icon" id="zoomResetBtn" title="Fit">⤢</button>
         </div>
 
-        <div class="stageBar-right">
-          <select class="select" id="pageSizeSelect" title="Page size">
-            <option value="A4P" selected>A4 Portrait</option>
-            <option value="A4L">A4 Landscape</option>
-            <option value="SQUARE">Square</option>
-            <option value="STORY">Story</option>
-            <option value="HD">HD</option>
-          </select>
-
-          <button class="btn" id="toggleExportBtn">Export</button>
+        <div class="historyBox">
+          <button class="btn ghost" id="undoBtn">Undo</button>
+          <button class="btn ghost" id="redoBtn">Redo</button>
         </div>
       </div>
 
-      <!-- Canvas host -->
       <div class="canvasHost" id="canvasHost">
-        <div class="canvasFrame" id="canvasFrame">
-          <canvas id="canvas"></canvas>
-        </div>
-
-        <!-- Floating object toolbar (HTML overlay placeholder) -->
-        <div class="floatToolbar" id="floatToolbar" hidden>
-          <button class="btn ghost" id="fltEffectsBtn">Effects</button>
-          <button class="btn ghost" id="fltOpacityBtn">Opacity</button>
-          <button class="btn ghost" id="fltCropBtn">Crop</button>
-          <button class="btn danger" id="fltDeleteBtn">Delete</button>
-        </div>
+        <canvas id="canvas"></canvas>
       </div>
     </main>
 
-    <!-- RIGHT EXPORT RAIL -->
-    <aside class="rightRail" aria-label="Export">
-      <button class="railbtn" id="openExportBtn" title="Export">⬆️</button>
-    </aside>
-
     <!-- RIGHT EXPORT PANEL -->
-    <section class="rightPanel" id="rightPanel" aria-label="Export panel">
-      <div class="panelHeader">
+    <aside class="exportPanel" id="exportPanel" aria-label="Export panel">
+      <div class="panel-header">
         <h3>Export</h3>
-        <button class="iconbtn" id="closeRightPanelBtn" title="Close">✕</button>
+        <button class="icon" data-close="export">✕</button>
       </div>
-
-      <div class="panelBody">
-        <div class="field">
-          <label>Export Size</label>
-          <select class="select" id="exportSizeSelect">
-            <option value="current" selected>Current page</option>
-            <option value="A4P">A4 Portrait</option>
-            <option value="A4L">A4 Landscape</option>
-            <option value="SQUARE">Square</option>
-            <option value="STORY">Story</option>
-            <option value="HD">HD</option>
-          </select>
-        </div>
-
-        <div class="grid2">
-          <button class="btn" id="exportPdfBtn">PDF</button>
-          <button class="btn" id="exportFlipBtn">Flipbook</button>
-          <button class="btn" id="exportPngBtn">PNG</button>
-          <button class="btn" id="exportJpgBtn">JPG</button>
-          <button class="btn" id="exportLinkBtn">Link</button>
-          <button class="btn" id="exportCloudBtn">Cloud</button>
-        </div>
+      <div class="panel-body">
+        <button class="btn primary" id="exportFlipbookBtn">Export Flipbook (HTML)</button>
+        <button class="btn" id="previewFlipbookBtn">Preview Flipbook</button>
 
         <div class="divider"></div>
 
-        <button class="btn ghost" id="previewFlipBtn">Preview Flipbook</button>
+        <button class="btn ghost" id="exportPNGBtn">Export Current Page (PNG)</button>
 
-        <p class="hint">
-          Export/Preview θα “κουμπώσουν” στο export.js στο επόμενο βήμα (UI έτοιμο).
-        </p>
+        <div class="hint">
+          Flipbook export: κατεβάζει ένα HTML αρχείο που ανοίγει offline.
+        </div>
       </div>
-    </section>
+    </aside>
   </div>
 
-  <!-- Scripts (modules) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <!-- Flipbook Preview Modal -->
+  <div class="modal" id="flipbookModal" aria-hidden="true">
+    <div class="modalCard">
+      <div class="modalHeader">
+        <div>Flipbook Preview</div>
+        <button class="icon" id="closeFlipbookModal">✕</button>
+      </div>
+      <iframe id="flipbookFrame" title="Flipbook preview"></iframe>
+    </div>
+  </div>
 
-  
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script type="module" src="./js/sidebar.js"></script>
