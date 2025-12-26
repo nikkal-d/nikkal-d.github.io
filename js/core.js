@@ -568,3 +568,49 @@ export function downloadFlipbookHTML({ title, orientation } = {}) {
   setTimeout(() => URL.revokeObjectURL(a.href), 8000);
   return html;
 }
+
+
+export function exportFlipbook(){
+  const pagesData = pages.map((p, i) => {
+    return `
+      <div class="page">
+        <img src="${p.image}" />
+      </div>
+    `;
+  }).join("");
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Flipbook</title>
+<style>
+body{margin:0;background:#222;display:flex;justify-content:center;}
+.book{width:80vw;height:90vh;display:flex;overflow:hidden;}
+.page{
+  min-width:100%;
+  transition:transform .6s;
+}
+.page img{width:100%;height:100%;object-fit:contain;}
+</style>
+</head>
+<body>
+<div class="book">${pagesData}</div>
+<script>
+let index=0;
+const pages=[...document.querySelectorAll('.page')];
+function show(){
+  pages.forEach((p,i)=>p.style.transform=\`translateX(\${(i-index)*100}%)\`);
+}
+document.body.onclick=()=>{index=Math.min(index+1,pages.length-1);show();}
+show();
+</script>
+</body>
+</html>
+`;
+
+  const blob = new Blob([html], {type:"text/html"});
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+}
