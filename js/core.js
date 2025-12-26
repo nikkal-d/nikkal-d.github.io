@@ -98,3 +98,48 @@ export function exportPagesAsImages() {
     return temp.toDataURL({ format: "png" });
   });
 }
+
+
+
+// core.js
+export const pages = [];
+export let currentPage = 0;
+
+export function savePage() {
+  pages[currentPage] = canvas.toJSON();
+}
+
+export function loadPage(index) {
+  if (!pages[index]) {
+    canvas.clear();
+    canvas.setBackgroundColor("#fff", canvas.renderAll.bind(canvas));
+    return;
+  }
+
+  canvas.loadFromJSON(pages[index], canvas.renderAll.bind(canvas));
+}
+
+export function addPage() {
+  savePage();
+  pages.push(null);
+  currentPage = pages.length - 1;
+  canvas.clear();
+  canvas.setBackgroundColor("#fff", canvas.renderAll.bind(canvas));
+}
+
+export function nextPage() {
+  savePage();
+  if (currentPage < pages.length - 1) {
+    currentPage++;
+    loadPage(currentPage);
+  }
+}
+
+export function prevPage() {
+  savePage();
+  if (currentPage > 0) {
+    currentPage--;
+    loadPage(currentPage);
+  }
+}
+
