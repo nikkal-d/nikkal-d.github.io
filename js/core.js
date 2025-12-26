@@ -391,24 +391,26 @@ export function clearDraft() {
   try { localStorage.removeItem(DRAFT_KEY); } catch {}
 }
 
-export function saveDraft() {
-  // Keep it SMALL: store json + thumbs only (thumbs already small)
-  saveCurrentPage();
-  const payload = {
-    pages: state.pages.map(p => ({ json: p.json, thumb: p.thumb })),
-    current: state.current,
-    size: state.size,
-    bg: state.bg
-  };
-  const str = JSON.stringify(payload);
-  // If too big, drop thumbs then try again
+function saveDraft(){
   try {
-    localStorage.setItem(DRAFT_KEY, str);
+    // ❌ ΜΗΝ αποθηκεύεις images/base64
+    const safePages = pages.map(p => ({
+      json: p.json,
+      // image: p.image ❌ ΤΟ ΑΦΑΙΡΟΥΜΕ
+    }));
+
+    localStorage.setItem(
+      "photobook_draft_v2",
+      JSON.stringify({
+        pages: safePages,
+        currentPage
+      })
+    );
   } catch (e) {
-    const payload2 = { ...payload, pages: payload.pages.map(p => ({ json: p.json })) };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload2));
+    console.warn("Draft not saved (quota)", e);
   }
 }
+
 
 export function loadDraft() {
   try {
