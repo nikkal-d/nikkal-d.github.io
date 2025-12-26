@@ -408,4 +408,44 @@ body.dark .canvasHost {
   background: #020617;
 }
 
+/* Paste at END of app.css (or photobook.css) */
+
+body.theme-dark {
+  --bg: #0b0f14;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --border: rgba(255,255,255,.12);
+}
+
+body.theme-dark { background: var(--bg); color: var(--text); }
+body.theme-dark .topbar,
+body.theme-dark .sidebar,
+body.theme-dark .panel { background: var(--panel); border-color: var(--border); }
+
+#canvasHost{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  position:relative;
+}
+
+#canvas{
+  background:#fff;
+  box-shadow:0 10px 40px rgba(0,0,0,.18);
+  border-radius:10px;
+}
+
+#floatToolbar{
+  position:absolute;
+  top:14px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:30;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .15s ease;
+}
+#floatToolbar.show{ opacity:1; pointer-events:auto; }
+
 
