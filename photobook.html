@@ -9,6 +9,20 @@
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
+
+<style>
+/* flipbook modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+.modal.open{display:flex}
+.modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+.modal-title{font-weight:700}
+#flipPreviewFrame{flex:1;border:0;background:#000}
+.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.field input,.field select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}
+.export-actions{display:flex;gap:10px;margin-top:10px}
+.hint{opacity:.8;font-size:12px;line-height:1.35}
+</style>
 </head>
 
 <body class="theme-light">
@@ -186,6 +200,7 @@
             <div class="pill" id="zoomValue">100%</div>
             <button class="iconbtn" id="zoomInBtn" title="Zoom in">+</button>
             <button class="btn ghost" id="zoomResetBtn" title="Reset zoom">Reset</button>
+<button class="btn" id="zoomFitBtn" title="Fit">⤢</button>
           </div>
         </div>
 
@@ -270,5 +285,15 @@
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script type="module" src="./js/sidebar.js"></script>
+
+<div class="modal" id="flipPreviewModal">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <div class="modal-title">Flipbook Preview</div>
+      <button class="btn" id="closeFlipPreview">✕</button>
+    </div>
+    <iframe id="flipPreviewFrame" title="Flipbook preview"></iframe>
+  </div>
+</div>
 </body>
 </html>
