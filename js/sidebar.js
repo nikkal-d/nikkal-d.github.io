@@ -120,3 +120,27 @@ document.querySelectorAll(".railbtn").forEach(btn => {
     });
   });
 });
+
+// js/sidebar.js
+// Only handles sidebar + export drawer toggle. No Fabric logic here.
+
+window.addEventListener("DOMContentLoaded", () => {
+  // left icon buttons -> open corresponding panel
+  document.querySelectorAll(".sidebar button[data-view]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      document.querySelectorAll(".panel-container").forEach((p) => {
+        const isTarget = p.dataset.view === view;
+        if (isTarget) p.classList.toggle("open");
+        else p.classList.remove("open");
+      });
+    });
+  });
+
+  // export drawer
+  const exportPanel = document.getElementById("exportPanel");
+  const toggleExport = document.getElementById("toggleExport");
+  if (toggleExport && exportPanel) {
+    toggleExport.addEventListener("click", () => exportPanel.classList.toggle("open"));
+  }
+});
