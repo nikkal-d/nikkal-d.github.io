@@ -65,3 +65,9 @@ function openFlipbook(images) {
     </html>
   `);
 }
+
+import { addPage, nextPage, prevPage } from "./core.js";
+
+document.getElementById("addPageBtn").onclick = addPage;
+document.getElementById("nextPageBtn").onclick = nextPage;
+document.getElementById("prevPageBtn").onclick = prevPage;
