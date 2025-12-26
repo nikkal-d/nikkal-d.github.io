@@ -1,25 +1,50 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const railButtons = document.querySelectorAll(".railbtn[data-panel]");
-  const leftPanel = document.getElementById("leftPanel");
-  const panelTitle = document.getElementById("panelTitle");
-  const views = document.querySelectorAll(".panelView");
+// sidebar.js
+// Safe sidebar toggles
 
-  railButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.panel;
-      if (!leftPanel) return;
+const $ = (id)=>document.getElementById(id);
 
-      leftPanel.classList.add("open");
+function setPanelView(panelEl, viewName){
+  if (!panelEl) return;
+  panelEl.querySelectorAll(".panel-view").forEach(v=>{
+    v.classList.toggle("active", v.dataset.view === viewName);
+  });
+}
 
-      views.forEach(v => {
-        v.hidden = v.dataset.view !== view;
-      });
+window.addEventListener("DOMContentLoaded", ()=>{
+  const left = $("leftPanel");
+  const right = $("rightPanel");
 
-      panelTitle.textContent = view.charAt(0).toUpperCase() + view.slice(1);
+  document.querySelectorAll("[data-left-view]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const view = btn.dataset.leftView;
+      if (!left) return;
+      left.classList.add("open");
+      setPanelView(left, view);
     });
   });
 
-  document.getElementById("closeLeftPanelBtn")?.addEventListener("click", () => {
-    leftPanel?.classList.remove("open");
+  $("closeLeftPanelBtn")?.addEventListener("click", ()=>left?.classList.remove("open"));
+  $("closeRightPanelBtn")?.addEventListener("click", ()=>right?.classList.remove("open"));
+
+  $("toggleExportBtn")?.addEventListener("click", ()=>{
+    if (!right) return;
+    right.classList.toggle("open");
+    // default view
+    setPanelView(right, "export");
+  });
+
+  $("openExportBtn")?.addEventListener("click", ()=>{
+    if (!right) return;
+    right.classList.add("open");
+    setPanelView(right, "export");
+  });
+
+  document.querySelectorAll("[data-right-view]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const view = btn.dataset.rightView;
+      if (!right) return;
+      right.classList.add("open");
+      setPanelView(right, view);
+    });
   });
 });
