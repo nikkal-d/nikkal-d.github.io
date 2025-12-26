@@ -172,3 +172,8 @@ function refreshThumbs(){
     });
   });
 }
+import { exportFlipbook } from "./core.js";
+
+document.getElementById("exportFlipbookBtn")?.addEventListener("click", () => {
+  exportFlipbook();
+});
