@@ -309,3 +309,9 @@ body{
     box-shadow: var(--shadow);
   }
 }
+
+
+/* --- Patch: ensure canvas is always visible and centered --- */
+.canvasHost{display:flex;align-items:center;justify-content:center;overflow:auto}
+.canvasFrame{background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);padding:12px}
+.thumbStrip .thumb img{background:#fff}
