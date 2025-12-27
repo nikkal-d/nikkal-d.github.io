@@ -2,56 +2,40 @@
 import {
   addText,
   addImageFromFile,
-  zoomIn,
-  zoomOut,
-  resetZoom,
-  addPage,
-  prevPage,
+  setZoom,
+  getZoom,
   nextPage,
-  exportFlipbook
+  prevPage,
+  exportFlipbook,
+  setCanvasSize
 } from "./core.js";
 
-/* ---------- HELPERS ---------- */
-const $ = (id) => document.getElementById(id);
+// TEXT
+document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
-/* ---------- TEXT ---------- */
-$("addTextBtn")?.addEventListener("click", () => {
-  console.log("🟢 Add Text clicked");
-  addText();
+// IMAGE
+document.getElementById("imageInput")?.addEventListener("change", e => {
+  if (e.target.files[0]) addImageFromFile(e.target.files[0]);
 });
 
-/* ---------- IMAGE ---------- */
-$("imageInput")?.addEventListener("change", (e) => {
-  const file = e.target.files?.[0];
-  if (file) addImageFromFile(file);
-});
+// ZOOM
+document.getElementById("zoomInBtn")?.onclick = () => {
+  setZoom(getZoom() + 0.1);
+  document.getElementById("zoomValue").textContent = Math.round(getZoom() * 100) + "%";
+};
 
-/* ---------- ZOOM ---------- */
-$("zoomInBtn")?.addEventListener("click", () => {
-  zoomIn();
-  updateZoomLabel();
-});
+document.getElementById("zoomOutBtn")?.onclick = () => {
+  setZoom(getZoom() - 0.1);
+  document.getElementById("zoomValue").textContent = Math.round(getZoom() * 100) + "%";
+};
 
-$("zoomOutBtn")?.addEventListener("click", () => {
-  zoomOut();
-  updateZoomLabel();
-});
+// PAGES
+document.getElementById("nextPageBtn")?.onclick = nextPage;
+document.getElementById("prevPageBtn")?.onclick = prevPage;
 
-$("zoomResetBtn")?.addEventListener("click", () => {
-  resetZoom();
-  updateZoomLabel();
-});
+// EXPORT
+document.getElementById("exportFlipbookBtn")?.onclick = exportFlipbook;
 
-function updateZoomLabel() {
-  const el = $("zoomValue");
-  if (!el) return;
-  el.textContent = Math.round(window.__PB_ZOOM__ * 100) + "%";
-}
-
-/* ---------- PAGES ---------- */
-$("addPageBtn")?.addEventListener("click", addPage);
-$("prevPageBtn")?.addEventListener("click", prevPage);
-$("nextPageBtn")?.addEventListener("click", nextPage);
-
-/* ---------- EXPORT ---------- */
-$("exportFlipbookBtn")?.addEventListener("click", exportFlipbook);
+// CANVAS SIZE
+document.getElementById("sizeA4Btn")?.onclick = () => setCanvasSize(1240, 1754);
+document.getElementById("sizeSquareBtn")?.onclick = () => setCanvasSize(1400, 1400);
