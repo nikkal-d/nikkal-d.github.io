@@ -1,149 +1,112 @@
 // js/core.js
-/* GLOBAL FABRIC */
-let canvas = null;
+// ΣΤΑΘΕΡΟΣ ΠΥΡΗΝΑΣ – canvas, pages, zoom, export flipbook
 
-/* ===============================
-   STATE
-================================ */
-let pages = [];
-let currentPage = 0;
-let zoom = 1;
+window.pages = [];
+window.currentPage = 0;
+window.canvas = null;
 
-/* ===============================
-   INIT
-================================ */
-export function initCanvas() {
-  canvas = new fabric.Canvas("canvas", {
+const PAGE_SIZES = {
+  A4P: { w: 1240, h: 1754 },
+  A4L: { w: 1754, h: 1240 },
+  SQUARE: { w: 1400, h: 1400 },
+  HD: { w: 1920, h: 1080 },
+};
+
+function createCanvas(w, h) {
+  const el = document.getElementById("canvas");
+  el.width = w;
+  el.height = h;
+
+  window.canvas = new fabric.Canvas("canvas", {
     backgroundColor: "#ffffff",
     preserveObjectStacking: true,
   });
 
-  setCanvasSize("A4P");
-  addPage(); // πρώτη σελίδα
-  renderPage();
-
-  console.log("✅ Canvas initialized");
+  centerCanvas();
 }
 
-window.addEventListener("DOMContentLoaded", initCanvas);
-
-/* ===============================
-   CANVAS SIZE
-================================ */
-export function setCanvasSize(preset) {
-  const sizes = {
-    A4P: [1240, 1754],
-    A4L: [1754, 1240],
-    SQUARE: [1200, 1200],
-    HD: [1920, 1080],
-  };
-
-  const [w, h] = sizes[preset] || sizes.A4P;
-
-  canvas.setWidth(w);
-  canvas.setHeight(h);
-  canvas.calcOffset();
-  canvas.requestRenderAll();
+function centerCanvas() {
+  const frame = document.getElementById("canvasFrame");
+  frame.style.width = canvas.width + "px";
+  frame.style.height = canvas.height + "px";
 }
 
-/* ===============================
-   ZOOM (CANVAS)
-================================ */
-export function setZoom(value) {
-  zoom = Math.max(0.25, Math.min(3, value));
-  canvas.setZoom(zoom);
-  canvas.requestRenderAll();
+function savePage(index) {
+  pages[index] = canvas.toJSON();
 }
 
-export function zoomIn() {
-  setZoom(zoom + 0.1);
-}
-export function zoomOut() {
-  setZoom(zoom - 0.1);
-}
-export function zoomReset() {
-  setZoom(1);
-}
-
-/* ===============================
-   PAGES
-================================ */
-export function addPage() {
-  pages.push([]);
-  currentPage = pages.length - 1;
-}
-
-export function goToPage(index) {
-  if (index < 0 || index >= pages.length) return;
-  saveCurrentPage();
-  currentPage = index;
-  renderPage();
-}
-
-function saveCurrentPage() {
-  pages[currentPage] = canvas.toJSON();
-}
-
-function renderPage() {
+function loadPage(index) {
   canvas.clear();
-  canvas.backgroundColor = "#ffffff";
-
-  const data = pages[currentPage];
-  if (data) {
-    canvas.loadFromJSON(data, () => {
-      canvas.requestRenderAll();
-    });
-  }
+  canvas.loadFromJSON(pages[index], () => {
+    canvas.renderAll();
+  });
 }
 
-/* ===============================
-   OBJECTS
-================================ */
-export function addText() {
+function addPage() {
+  savePage(currentPage);
+  pages.push({ version: "5.3.0", objects: [], background: "#ffffff" });
+  currentPage = pages.length - 1;
+  loadPage(currentPage);
+  updatePageInfo();
+}
+
+function goToPage(i) {
+  if (i < 0 || i >= pages.length) return;
+  savePage(currentPage);
+  currentPage = i;
+  loadPage(currentPage);
+  updatePageInfo();
+}
+
+function updatePageInfo() {
+  const el = document.getElementById("pageInfo");
+  if (el) el.textContent = `${currentPage + 1} / ${pages.length}`;
+}
+
+function setPageSize(key) {
+  const s = PAGE_SIZES[key];
+  if (!s) return;
+  savePage(currentPage);
+  canvas.setWidth(s.w);
+  canvas.setHeight(s.h);
+  centerCanvas();
+  loadPage(currentPage);
+}
+
+// -------- ZOOM (ΚΑΜΒΑΣ, ΟΧΙ ΑΝΤΙΚΕΙΜΕΝΑ) --------
+window.zoomLevel = 1;
+
+function applyZoom(z) {
+  zoomLevel = Math.max(0.2, Math.min(3, z));
+  canvas.setZoom(zoomLevel);
+  document.getElementById("zoomValue").textContent =
+    Math.round(zoomLevel * 100) + "%";
+}
+
+// -------- TEXT --------
+function addText() {
   const t = new fabric.Textbox("Text", {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2,
+    left: canvas.width / 2,
+    top: canvas.height / 2,
     originX: "center",
     originY: "center",
     fontSize: 48,
     fill: "#111",
   });
-
   canvas.add(t);
   canvas.setActiveObject(t);
-  canvas.requestRenderAll();
 }
 
-export function addImageFromFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    fabric.Image.fromURL(e.target.result, (img) => {
-      img.scaleToWidth(canvas.getWidth() * 0.6);
-      img.set({
-        left: canvas.getWidth() / 2,
-        top: canvas.getHeight() / 2,
-        originX: "center",
-        originY: "center",
-      });
-      canvas.add(img);
-      canvas.requestRenderAll();
-    });
-  };
-  reader.readAsDataURL(file);
-}
-
-/* ===============================
-   FLIPBOOK EXPORT
-================================ */
-export function exportFlipbookHTML() {
-  saveCurrentPage();
+// -------- FLIPBOOK EXPORT --------
+function exportFlipbook() {
+  savePage(currentPage);
 
   const pagesHTML = pages
     .map((p, i) => {
       return `
-      <div class="page">
-        <img src="${canvasToImage(p)}"/>
-      </div>`;
+        <div class="page">
+          <img src="${canvasToImage(p)}"/>
+        </div>`;
     })
     .join("");
 
@@ -151,11 +114,11 @@ export function exportFlipbookHTML() {
 <!doctype html>
 <html>
 <head>
-<meta charset="utf-8"/>
+<meta charset="utf-8">
 <title>Flipbook</title>
 <style>
 body{margin:0;background:#111;display:flex;justify-content:center}
-.book{display:flex;gap:10px}
+.book{display:flex;gap:10px;padding:20px}
 .page img{width:600px;background:#fff}
 </style>
 </head>
@@ -165,18 +128,30 @@ body{margin:0;background:#111;display:flex;justify-content:center}
 </html>`;
 
   const blob = new Blob([html], { type: "text/html" });
-  return URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
 }
 
 function canvasToImage(json) {
-  const tmp = new fabric.StaticCanvas(null, {
-    width: canvas.getWidth(),
-    height: canvas.getHeight(),
+  const c = new fabric.StaticCanvas(null, {
+    width: canvas.width,
+    height: canvas.height,
   });
-
-  tmp.loadFromJSON(json, () => {
-    tmp.renderAll();
-  });
-
-  return tmp.toDataURL({ format: "png" });
+  c.loadFromJSON(json, () => {});
+  return c.toDataURL({ format: "png" });
 }
+
+// -------- INIT --------
+window.addEventListener("DOMContentLoaded", () => {
+  createCanvas(1240, 1754);
+  pages.push(canvas.toJSON());
+  updatePageInfo();
+});
+
+// EXPOSE
+window.addPage = addPage;
+window.goToPage = goToPage;
+window.addText = addText;
+window.applyZoom = applyZoom;
+window.setPageSize = setPageSize;
+window.exportFlipbook = exportFlipbook;
