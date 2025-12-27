@@ -5,37 +5,38 @@ import {
   addImageFromFile,
   addPage,
   goToPage,
-  applyZoom,
+  setZoom,
+  getZoom,
   setCanvasSize,
-  generateFlipbookLink
+  exportFlipbookHTML
 } from "./core.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
 
-  document.getElementById("addTextBtn")?.addEventListener("click", addText);
+  document.getElementById("addTextBtn").onclick = addText;
 
-  document.getElementById("imageInput")?.addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (file) addImageFromFile(file);
-  });
+  document.getElementById("imageInput").onchange = e => {
+    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+  };
 
-  document.getElementById("addPageBtn")?.addEventListener("click", addPage);
+  document.getElementById("addPageBtn").onclick = addPage;
 
-  document.getElementById("zoomRange")?.addEventListener("input", e => {
-    const z = parseFloat(e.target.value);
-    applyZoom(z);
-    document.getElementById("zoomValue").textContent = Math.round(z * 100) + "%";
-  });
+  document.getElementById("zoomIn").onclick = () => {
+    setZoom(getZoom() + 0.1);
+    document.getElementById("zoomValue").textContent = Math.round(getZoom()*100)+"%";
+  };
 
-  document.getElementById("canvasSizeBtn")?.addEventListener("click", () => {
-    const w = parseInt(document.getElementById("canvasW").value);
-    const h = parseInt(document.getElementById("canvasH").value);
-    if (w && h) setCanvasSize(w, h);
-  });
+  document.getElementById("zoomOut").onclick = () => {
+    setZoom(getZoom() - 0.1);
+    document.getElementById("zoomValue").textContent = Math.round(getZoom()*100)+"%";
+  };
 
-  document.getElementById("flipbookLinkBtn")?.addEventListener("click", () => {
-    const link = generateFlipbookLink();
-    prompt("Flipbook link:", link);
-  });
+  document.getElementById("a4Btn").onclick = () => setCanvasSize(1240,1754);
+  document.getElementById("squareBtn").onclick = () => setCanvasSize(1200,1200);
+
+  document.getElementById("exportFlipbookBtn").onclick = () => {
+    const url = exportFlipbookHTML();
+    window.open(url, "_blank");
+  };
 });
