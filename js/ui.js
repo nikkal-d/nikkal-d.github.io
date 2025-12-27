@@ -1,62 +1,62 @@
 // js/ui.js
 import {
+  initCanvas,
   addText,
   addImageFromFile,
-  zoomIn,
-  zoomOut,
-  zoomReset,
-  zoomFit,
-  setCanvasSize,
-  exportFlipbook,
-  previewFlipbook,
+  setZoom,
+  getZoom,
+  resetZoom,
+  fitToScreen,
+  addPage,
+  goToPage,
+  pageInfo,
+  previewFlipbook
 } from "./core.js";
 
-/* ======================
-   SAFE BIND HELPER
-====================== */
-function bind(id, event, handler) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener(event, handler);
-}
+document.addEventListener("DOMContentLoaded", () => {
+  initCanvas();
 
-/* ======================
-   TEXT
-====================== */
-bind("addTextBtn", "click", () => {
-  console.log("🟢 Add Text clicked");
-  addText();
-});
+  // TEXT
+  document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
-/* ======================
-   IMAGES
-====================== */
-const imageInput = document.getElementById("imageInput");
-if (imageInput) {
-  imageInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) addImageFromFile(file);
-    imageInput.value = "";
+  // IMAGE
+  document.getElementById("imageInput")?.addEventListener("change", e => {
+    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
   });
-}
 
-/* ======================
-   ZOOM (CANVAS)
-====================== */
-bind("zoomInBtn", "click", zoomIn);
-bind("zoomOutBtn", "click", zoomOut);
-bind("zoomResetBtn", "click", zoomReset);
-bind("zoomFitBtn", "click", zoomFit);
+  // ZOOM
+  const zoomVal = document.getElementById("zoomValue");
+  const updateZoom = () => zoomVal.textContent = Math.round(getZoom() * 100) + "%";
 
-/* ======================
-   CANVAS SIZE
-====================== */
-bind("pageSizeSelect", "change", (e) => {
-  setCanvasSize(e.target.value);
+  document.getElementById("zoomInBtn")?.addEventListener("click", () => {
+    setZoom(getZoom() + 0.1); updateZoom();
+  });
+  document.getElementById("zoomOutBtn")?.addEventListener("click", () => {
+    setZoom(getZoom() - 0.1); updateZoom();
+  });
+  document.getElementById("zoomResetBtn")?.addEventListener("click", () => {
+    resetZoom(); updateZoom();
+  });
+  document.getElementById("fitBtn")?.addEventListener("click", fitToScreen);
+
+  updateZoom();
+
+  // PAGES
+  document.getElementById("addPageBtn")?.addEventListener("click", () => {
+    addPage();
+    const info = pageInfo();
+    document.getElementById("pageInfo").textContent = `${info.current} / ${info.total}`;
+  });
+
+  // FLIPBOOK PREVIEW
+  document.getElementById("previewFlipBtn")?.addEventListener("click", () => {
+    const url = previewFlipbook();
+    const frame = document.getElementById("flipPreviewFrame");
+    frame.src = url;
+    document.getElementById("flipPreviewModal").classList.add("open");
+  });
+
+  document.getElementById("closeFlipPreview")?.addEventListener("click", () => {
+    document.getElementById("flipPreviewModal").classList.remove("open");
+  });
 });
-
-/* ======================
-   EXPORT
-====================== */
-bind("exportFlipBtn", "click", exportFlipbook);
-bind("previewFlipBtn", "click", previewFlipbook);
