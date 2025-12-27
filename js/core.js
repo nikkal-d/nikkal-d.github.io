@@ -6,15 +6,12 @@ export let pages = [];
 export let currentPage = 0;
 export let zoom = 1;
 
-const BASE_WIDTH = 1240;
-const BASE_HEIGHT = 1754;
-
-/* ---------------- INIT ---------------- */
+const CANVAS_ID = "canvas";
 
 export function initCanvas() {
-  canvas = new fabric.Canvas("canvas", {
-    width: BASE_WIDTH,
-    height: BASE_HEIGHT,
+  canvas = new fabric.Canvas(CANVAS_ID, {
+    width: 1240,
+    height: 1754,
     backgroundColor: "#ffffff",
     preserveObjectStacking: true
   });
@@ -25,12 +22,12 @@ export function initCanvas() {
   console.log("✅ Canvas initialized");
 }
 
-/* ---------------- TEXT ---------------- */
+/* ---------- ADD CONTENT ---------- */
 
 export function addText() {
   const t = new fabric.Textbox("Text", {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2,
+    left: canvas.width / 2,
+    top: canvas.height / 2,
     originX: "center",
     originY: "center",
     fontSize: 48,
@@ -42,15 +39,13 @@ export function addText() {
   canvas.requestRenderAll();
 }
 
-/* ---------------- IMAGE ---------------- */
-
 export function addImageFromFile(file) {
   const reader = new FileReader();
   reader.onload = () => {
     fabric.Image.fromURL(reader.result, img => {
       img.set({
-        left: canvas.getWidth() / 2,
-        top: canvas.getHeight() / 2,
+        left: canvas.width / 2,
+        top: canvas.height / 2,
         originX: "center",
         originY: "center",
         scaleX: 0.5,
@@ -64,9 +59,9 @@ export function addImageFromFile(file) {
   reader.readAsDataURL(file);
 }
 
-/* ---------------- PAGES ---------------- */
+/* ---------- PAGES ---------- */
 
-export function savePage() {
+function savePage() {
   pages[currentPage] = canvas.toJSON();
 }
 
@@ -88,46 +83,66 @@ export function goToPage(index) {
   currentPage = index;
 }
 
-/* ---------------- ZOOM (ΚΑΜΒΑΣ) ---------------- */
+/* ---------- ZOOM (ΚΑΜΒΑΣ, ΟΧΙ ΑΝΤΙΚΕΙΜΕΝΟ) ---------- */
 
-export function applyZoom(value) {
-  zoom = value;
-
-  canvas.setWidth(BASE_WIDTH * zoom);
-  canvas.setHeight(BASE_HEIGHT * zoom);
-
+export function setZoom(value) {
+  zoom = Math.max(0.2, Math.min(3, value));
   canvas.setZoom(zoom);
   canvas.requestRenderAll();
 }
 
-/* ---------------- CANVAS SIZE ---------------- */
+export function getZoom() {
+  return zoom;
+}
+
+/* ---------- CANVAS SIZE ---------- */
 
 export function setCanvasSize(w, h) {
-  savePage();
-  canvas.setWidth(w * zoom);
-  canvas.setHeight(h * zoom);
+  canvas.setWidth(w);
+  canvas.setHeight(h);
   canvas.requestRenderAll();
 }
 
-/* ---------------- EXPORT ---------------- */
+/* ---------- EXPORT FLIPBOOK ---------- */
 
-export function exportPagesAsImages() {
+export function exportFlipbookHTML() {
   savePage();
 
-  return pages.map(page => {
+  const images = pages.map(page => {
     const temp = new fabric.StaticCanvas(null, {
-      width: BASE_WIDTH,
-      height: BASE_HEIGHT
+      width: canvas.width,
+      height: canvas.height
     });
     temp.loadFromJSON(page, () => {});
     return temp.toDataURL({ format: "png" });
   });
-}
 
-/* ---------------- FLIPBOOK LINK ---------------- */
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Flipbook</title>
+<style>
+body { margin:0; background:#111; display:flex; justify-content:center; align-items:center; }
+img { max-width:100%; max-height:100%; display:none; }
+img.active { display:block; }
+</style>
+</head>
+<body>
+${images.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}">`).join("")}
+<script>
+let index=0;
+const imgs=[...document.querySelectorAll('img')];
+document.body.onclick=()=>{
+  imgs[index].classList.remove('active');
+  index=(index+1)%imgs.length;
+  imgs[index].classList.add('active');
+};
+</script>
+</body>
+</html>`;
 
-export function generateFlipbookLink() {
-  savePage();
-  const data = encodeURIComponent(JSON.stringify(pages));
-  return `${location.origin}${location.pathname.replace("photobook.html","")}flipbook.html#data=${data}`;
+  const blob = new Blob([html], { type: "text/html" });
+  return URL.createObjectURL(blob);
 }
