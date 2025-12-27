@@ -1,50 +1,57 @@
-// js/ui.js
 import {
   addText,
   addImageFromFile,
-  applyZoom,
-  getZoom,
+  zoomIn,
+  zoomOut,
+  zoomReset,
   addPage,
-  nextPage,
-  prevPage,
+  goToPage,
   exportFlipbookHTML,
-  setPageSize
+  setCanvasSize
 } from "./core.js";
 
+/* TEXT */
 document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
-document.getElementById("imageInput")?.addEventListener("change", e => {
+/* IMAGE */
+document.getElementById("imageInput")?.addEventListener("change", (e) => {
   if (e.target.files[0]) addImageFromFile(e.target.files[0]);
 });
 
-// Zoom
-document.getElementById("zoomInBtn")?.addEventListener("click", () => {
-  applyZoom(getZoom() + 0.1);
-  document.getElementById("zoomValue").textContent = Math.round(getZoom()*100)+"%";
-});
-document.getElementById("zoomOutBtn")?.addEventListener("click", () => {
-  applyZoom(getZoom() - 0.1);
-  document.getElementById("zoomValue").textContent = Math.round(getZoom()*100)+"%";
-});
-document.getElementById("zoomResetBtn")?.addEventListener("click", () => {
-  applyZoom(1);
-  document.getElementById("zoomValue").textContent = "100%";
+/* ZOOM */
+document.getElementById("zoomInBtn")?.onclick = zoomIn;
+document.getElementById("zoomOutBtn")?.onclick = zoomOut;
+document.getElementById("zoomResetBtn")?.onclick = zoomReset;
+
+/* PAGES */
+document.getElementById("addPageBtn")?.onclick = () => {
+  addPage();
+  goToPage(pages.length - 1);
+};
+
+document.getElementById("prevPageBtn")?.onclick = () =>
+  goToPage(currentPage - 1);
+
+document.getElementById("nextPageBtn")?.onclick = () =>
+  goToPage(currentPage + 1);
+
+/* SIZE */
+document.getElementById("pageSizeSelect")?.addEventListener("change", (e) => {
+  setCanvasSize(e.target.value);
 });
 
-// Pages
-document.getElementById("addPageBtn")?.addEventListener("click", () => addPage());
-document.getElementById("nextPageBtn")?.addEventListener("click", nextPage);
-document.getElementById("prevPageBtn")?.addEventListener("click", prevPage);
-
-// Page size
-document.getElementById("pageSizeSelect")?.addEventListener("change", e => {
-  setPageSize(e.target.value);
-});
-
-// Flipbook
-document.getElementById("exportFlipBtn")?.addEventListener("click", () => {
-  const html = exportFlipbookHTML();
-  const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
+/* FLIPBOOK */
+document.getElementById("exportFlipBtn")?.onclick = () => {
+  const url = exportFlipbookHTML();
   window.open(url, "_blank");
-});
+};
+
+document.getElementById("previewFlipBtn")?.onclick = () => {
+  const url = exportFlipbookHTML();
+  document.getElementById("flipPreviewFrame").src = url;
+  document.getElementById("flipPreviewModal").classList.add("open");
+};
+
+document.getElementById("closeFlipPreview")?.onclick = () => {
+  document.getElementById("flipPreviewModal").classList.remove("open");
+};
