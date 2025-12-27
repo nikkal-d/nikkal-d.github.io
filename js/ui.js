@@ -4,8 +4,10 @@ import {
   addText,
   addImageFromFile,
   addPage,
+  goToPage,
   applyZoom,
-  exportPagesAsImages
+  setCanvasSize,
+  generateFlipbookLink
 } from "./core.js";
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -14,54 +16,26 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
   document.getElementById("imageInput")?.addEventListener("change", e => {
-    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) addImageFromFile(file);
   });
 
   document.getElementById("addPageBtn")?.addEventListener("click", addPage);
 
-  document.getElementById("zoomInBtn")?.addEventListener("click", () =>
-    applyZoom(1.2)
-  );
-  document.getElementById("zoomOutBtn")?.addEventListener("click", () =>
-    applyZoom(0.8)
-  );
+  document.getElementById("zoomRange")?.addEventListener("input", e => {
+    const z = parseFloat(e.target.value);
+    applyZoom(z);
+    document.getElementById("zoomValue").textContent = Math.round(z * 100) + "%";
+  });
 
-  document.getElementById("exportFlipBtn")?.addEventListener("click", () => {
-    const images = exportPagesAsImages();
-    openFlipbook(images);
+  document.getElementById("canvasSizeBtn")?.addEventListener("click", () => {
+    const w = parseInt(document.getElementById("canvasW").value);
+    const h = parseInt(document.getElementById("canvasH").value);
+    if (w && h) setCanvasSize(w, h);
+  });
+
+  document.getElementById("flipbookLinkBtn")?.addEventListener("click", () => {
+    const link = generateFlipbookLink();
+    prompt("Flipbook link:", link);
   });
 });
-
-/* -------- FLIPBOOK ---------- */
-
-function openFlipbook(images) {
-  const win = window.open("", "_blank");
-  win.document.write(`
-    <html>
-    <head>
-      <title>Flipbook</title>
-      <style>
-        body { margin:0; display:flex; justify-content:center; align-items:center; background:#111; }
-        img { max-width:100%; max-height:100vh; }
-        .nav { position:fixed; top:50%; color:white; font-size:40px; cursor:pointer; }
-        .left { left:20px; }
-        .right { right:20px; }
-      </style>
-    </head>
-    <body>
-      <div class="nav left" onclick="prev()">‹</div>
-      <img id="page">
-      <div class="nav right" onclick="next()">›</div>
-
-      <script>
-        const pages = ${JSON.stringify(images)};
-        let i = 0;
-        const img = document.getElementById("page");
-        img.src = pages[0];
-        function next(){ if(i < pages.length-1) img.src = pages[++i]; }
-        function prev(){ if(i > 0) img.src = pages[--i]; }
-      </script>
-    </body>
-    </html>
-  `);
-}
