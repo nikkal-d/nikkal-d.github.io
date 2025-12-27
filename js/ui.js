@@ -1,35 +1,57 @@
 // js/ui.js
 import {
-  initCanvas,
   addText,
   addImageFromFile,
-  setZoom,
-  getZoom,
+  zoomIn,
+  zoomOut,
+  resetZoom,
   addPage,
+  prevPage,
+  nextPage,
   exportFlipbook
 } from "./core.js";
 
-window.addEventListener("DOMContentLoaded", () => {
-  initCanvas();
+/* ---------- HELPERS ---------- */
+const $ = (id) => document.getElementById(id);
 
-  // TEXT
-  document.getElementById("addTextBtn")?.addEventListener("click", addText);
-
-  // IMAGE
-  document.getElementById("imageInput")?.addEventListener("change", e => {
-    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
-  });
-
-  // ZOOM
-  document.getElementById("zoomInBtn")?.onclick = () =>
-    setZoom(getZoom() + 0.1);
-
-  document.getElementById("zoomOutBtn")?.onclick = () =>
-    setZoom(getZoom() - 0.1);
-
-  // PAGE
-  document.getElementById("addPageBtn")?.onclick = addPage;
-
-  // EXPORT
-  document.getElementById("exportFlipbookBtn")?.onclick = exportFlipbook;
+/* ---------- TEXT ---------- */
+$("addTextBtn")?.addEventListener("click", () => {
+  console.log("🟢 Add Text clicked");
+  addText();
 });
+
+/* ---------- IMAGE ---------- */
+$("imageInput")?.addEventListener("change", (e) => {
+  const file = e.target.files?.[0];
+  if (file) addImageFromFile(file);
+});
+
+/* ---------- ZOOM ---------- */
+$("zoomInBtn")?.addEventListener("click", () => {
+  zoomIn();
+  updateZoomLabel();
+});
+
+$("zoomOutBtn")?.addEventListener("click", () => {
+  zoomOut();
+  updateZoomLabel();
+});
+
+$("zoomResetBtn")?.addEventListener("click", () => {
+  resetZoom();
+  updateZoomLabel();
+});
+
+function updateZoomLabel() {
+  const el = $("zoomValue");
+  if (!el) return;
+  el.textContent = Math.round(window.__PB_ZOOM__ * 100) + "%";
+}
+
+/* ---------- PAGES ---------- */
+$("addPageBtn")?.addEventListener("click", addPage);
+$("prevPageBtn")?.addEventListener("click", prevPage);
+$("nextPageBtn")?.addEventListener("click", nextPage);
+
+/* ---------- EXPORT ---------- */
+$("exportFlipbookBtn")?.addEventListener("click", exportFlipbook);
