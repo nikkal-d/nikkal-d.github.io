@@ -1,57 +1,71 @@
+// js/ui.js
 import {
   addText,
   addImageFromFile,
   zoomIn,
   zoomOut,
-  zoomReset,
+  resetZoom,
+  getZoom,
+  setCanvasSize,
   addPage,
-  goToPage,
-  exportFlipbookHTML,
-  setCanvasSize
+  goToPage
 } from "./core.js";
 
-/* TEXT */
-document.getElementById("addTextBtn")?.addEventListener("click", addText);
+// ---------------- TEXT ----------------
+const addTextBtn = document.getElementById("addTextBtn");
+if (addTextBtn) {
+  addTextBtn.addEventListener("click", () => {
+    console.log("🟢 Add Text clicked");
+    addText();
+  });
+}
 
-/* IMAGE */
-document.getElementById("imageInput")?.addEventListener("change", (e) => {
-  if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+// ---------------- IMAGE ----------------
+const imageInput = document.getElementById("imageInput");
+if (imageInput) {
+  imageInput.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (file) addImageFromFile(file);
+  });
+}
+
+// ---------------- ZOOM ----------------
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+const zoomResetBtn = document.getElementById("zoomResetBtn");
+const zoomValue = document.getElementById("zoomValue");
+
+function updateZoomLabel() {
+  if (zoomValue) zoomValue.textContent = Math.round(getZoom() * 100) + "%";
+}
+
+zoomInBtn?.addEventListener("click", () => {
+  zoomIn();
+  updateZoomLabel();
+});
+zoomOutBtn?.addEventListener("click", () => {
+  zoomOut();
+  updateZoomLabel();
+});
+zoomResetBtn?.addEventListener("click", () => {
+  resetZoom();
+  updateZoomLabel();
 });
 
-/* ZOOM */
-document.getElementById("zoomInBtn")?.onclick = zoomIn;
-document.getElementById("zoomOutBtn")?.onclick = zoomOut;
-document.getElementById("zoomResetBtn")?.onclick = zoomReset;
-
-/* PAGES */
-document.getElementById("addPageBtn")?.onclick = () => {
+// ---------------- PAGES ----------------
+document.getElementById("addPageBtn")?.addEventListener("click", () => {
   addPage();
-  goToPage(pages.length - 1);
-};
+});
+document.getElementById("prevPageBtn")?.addEventListener("click", () => {
+  goToPage(0);
+});
+document.getElementById("nextPageBtn")?.addEventListener("click", () => {
+  goToPage(1);
+});
 
-document.getElementById("prevPageBtn")?.onclick = () =>
-  goToPage(currentPage - 1);
-
-document.getElementById("nextPageBtn")?.onclick = () =>
-  goToPage(currentPage + 1);
-
-/* SIZE */
-document.getElementById("pageSizeSelect")?.addEventListener("change", (e) => {
+// ---------------- PAGE SIZE ----------------
+document.getElementById("pageSizeSelect")?.addEventListener("change", e => {
   setCanvasSize(e.target.value);
 });
 
-/* FLIPBOOK */
-document.getElementById("exportFlipBtn")?.onclick = () => {
-  const url = exportFlipbookHTML();
-  window.open(url, "_blank");
-};
-
-document.getElementById("previewFlipBtn")?.onclick = () => {
-  const url = exportFlipbookHTML();
-  document.getElementById("flipPreviewFrame").src = url;
-  document.getElementById("flipPreviewModal").classList.add("open");
-};
-
-document.getElementById("closeFlipPreview")?.onclick = () => {
-  document.getElementById("flipPreviewModal").classList.remove("open");
-};
+updateZoomLabel();
