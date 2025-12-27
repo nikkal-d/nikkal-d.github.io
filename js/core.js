@@ -1,27 +1,54 @@
 // js/core.js
+export let canvas = null;
 
-let canvas;
+let zoom = 1;
 let pages = [];
 let currentPage = 0;
 
-window.__PB_ZOOM__ = 1;
-
-/* ---------- INIT ---------- */
 window.addEventListener("DOMContentLoaded", () => {
   canvas = new fabric.Canvas("canvas", {
-    backgroundColor: "#ffffff",
-    preserveObjectStacking: true
+    preserveObjectStacking: true,
+    backgroundColor: "#fff"
   });
 
+  setCanvasSize(1240, 1754);
+  pages.push(savePage());
   console.log("✅ Canvas initialized");
-
-  pages.push(canvas.toJSON());
 });
 
-/* ---------- TEXT ---------- */
+// --------------------
+// CANVAS SIZE
+// --------------------
+export function setCanvasSize(w, h) {
+  canvas.setWidth(w);
+  canvas.setHeight(h);
+  canvas.renderAll();
+}
+
+// --------------------
+// ZOOM (CANVAS, NOT OBJECT)
+// --------------------
+export function setZoom(value) {
+  zoom = Math.max(0.2, Math.min(3, value));
+  canvas.setZoom(zoom);
+
+  const center = canvas.getCenter();
+  canvas.viewportTransform[4] = center.left * (1 - zoom);
+  canvas.viewportTransform[5] = center.top * (1 - zoom);
+
+  canvas.requestRenderAll();
+}
+
+export function getZoom() {
+  return zoom;
+}
+
+// --------------------
+// TEXT
+// --------------------
 export function addText() {
   const center = canvas.getCenter();
-  const text = new fabric.Textbox("Text", {
+  const t = new fabric.Textbox("Text", {
     left: center.left,
     top: center.top,
     originX: "center",
@@ -29,108 +56,70 @@ export function addText() {
     fontSize: 48,
     fill: "#111"
   });
-
-  canvas.add(text);
-  canvas.setActiveObject(text);
-  canvas.requestRenderAll();
+  canvas.add(t);
+  canvas.setActiveObject(t);
 }
 
-/* ---------- IMAGE ---------- */
+// --------------------
+// IMAGES
+// --------------------
 export function addImageFromFile(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    fabric.Image.fromURL(reader.result, (img) => {
-      img.scaleToWidth(canvas.getWidth() * 0.5);
+    fabric.Image.fromURL(reader.result, img => {
+      const center = canvas.getCenter();
       img.set({
-        left: canvas.getCenter().left,
-        top: canvas.getCenter().top,
+        left: center.left,
+        top: center.top,
         originX: "center",
         originY: "center"
       });
+      img.scaleToWidth(canvas.getWidth() * 0.4);
       canvas.add(img);
       canvas.setActiveObject(img);
-      canvas.requestRenderAll();
     });
   };
   reader.readAsDataURL(file);
 }
 
-/* ---------- ZOOM (CANVAS) ---------- */
-export function zoomIn() {
-  setZoom(window.__PB_ZOOM__ + 0.1);
-}
-export function zoomOut() {
-  setZoom(window.__PB_ZOOM__ - 0.1);
-}
-export function resetZoom() {
-  setZoom(1);
+// --------------------
+// PAGES
+// --------------------
+function savePage() {
+  return canvas.toJSON();
 }
 
-function setZoom(z) {
-  window.__PB_ZOOM__ = Math.max(0.2, Math.min(4, z));
-  canvas.setZoom(window.__PB_ZOOM__);
-  canvas.requestRenderAll();
-}
-
-/* ---------- PAGES ---------- */
-export function addPage() {
-  pages[currentPage] = canvas.toJSON();
-  canvas.clear();
-  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
-  pages.push(canvas.toJSON());
-  currentPage = pages.length - 1;
+export function nextPage() {
+  pages[currentPage] = savePage();
+  currentPage++;
+  if (!pages[currentPage]) {
+    pages.push(null);
+    canvas.clear();
+    canvas.backgroundColor = "#fff";
+  } else {
+    canvas.loadFromJSON(pages[currentPage], canvas.renderAll.bind(canvas));
+  }
 }
 
 export function prevPage() {
   if (currentPage === 0) return;
-  savePage();
+  pages[currentPage] = savePage();
   currentPage--;
-  loadPage();
+  canvas.loadFromJSON(pages[currentPage], canvas.renderAll.bind(canvas));
 }
 
-export function nextPage() {
-  if (currentPage >= pages.length - 1) return;
-  savePage();
-  currentPage++;
-  loadPage();
-}
-
-function savePage() {
-  pages[currentPage] = canvas.toJSON();
-}
-
-function loadPage() {
-  canvas.loadFromJSON(pages[currentPage], () => {
-    canvas.renderAll();
-  });
-}
-
-/* ---------- EXPORT FLIPBOOK ---------- */
+// --------------------
+// EXPORT FLIPBOOK (BASIC)
+// --------------------
 export function exportFlipbook() {
-  savePage();
+  const imgs = pages.map(p => {
+    canvas.loadFromJSON(p, canvas.renderAll.bind(canvas));
+    return canvas.toDataURL("image/png");
+  });
 
-  const win = window.open("", "_blank");
-  const pagesHTML = pages
-    .map(
-      (p) =>
-        `<div class="page"><img src="${canvas.toDataURL({
-          format: "png"
-        })}"></div>`
-    )
-    .join("");
-
-  win.document.write(`
-    <html>
-    <head>
-      <style>
-        body{margin:0;background:#111;display:flex;justify-content:center}
-        .book{display:flex;gap:20px;padding:40px}
-        .page img{max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-      </style>
-    </head>
-    <body>
-      <div class="book">${pagesHTML}</div>
-    </body>
-    </html>
-  `);
+  const w = window.open("");
+  w.document.write("<h1>Flipbook Preview</h1>");
+  imgs.forEach(src => {
+    w.document.write(`<img src="${src}" style="width:100%;margin-bottom:20px"/>`);
+  });
 }
