@@ -1,63 +1,104 @@
 // js/core.js
-// Fabric is GLOBAL (loaded via script tag)
+/* GLOBAL FABRIC */
+let canvas = null;
 
-let canvas;
-let zoom = 1;
-
-// Pages
+/* ===============================
+   STATE
+================================ */
 let pages = [];
 let currentPage = 0;
+let zoom = 1;
 
-// ---------- INIT ----------
-window.addEventListener("DOMContentLoaded", () => {
+/* ===============================
+   INIT
+================================ */
+export function initCanvas() {
   canvas = new fabric.Canvas("canvas", {
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
     preserveObjectStacking: true,
   });
 
-  setPageSize("A4P");
-  addPage(true);
-  applyZoom(1);
+  setCanvasSize("A4P");
+  addPage(); // πρώτη σελίδα
+  renderPage();
 
   console.log("✅ Canvas initialized");
-});
+}
 
-// ---------- CANVAS SIZE ----------
-export function setPageSize(preset) {
+window.addEventListener("DOMContentLoaded", initCanvas);
+
+/* ===============================
+   CANVAS SIZE
+================================ */
+export function setCanvasSize(preset) {
   const sizes = {
     A4P: [1240, 1754],
     A4L: [1754, 1240],
-    SQUARE: [1400, 1400],
-    STORY: [1080, 1920],
+    SQUARE: [1200, 1200],
     HD: [1920, 1080],
   };
+
   const [w, h] = sizes[preset] || sizes.A4P;
+
   canvas.setWidth(w);
   canvas.setHeight(h);
-  canvas.renderAll();
-}
-
-// ---------- ZOOM (REAL) ----------
-export function applyZoom(z) {
-  zoom = Math.min(3, Math.max(0.2, z));
-  canvas.setZoom(zoom);
-
-  const host = document.getElementById("canvasHost");
-  if (!host) return;
-
-  const cx = (host.clientWidth - canvas.getWidth() * zoom) / 2;
-  const cy = (host.clientHeight - canvas.getHeight() * zoom) / 2;
-
-  canvas.viewportTransform[4] = cx;
-  canvas.viewportTransform[5] = cy;
+  canvas.calcOffset();
   canvas.requestRenderAll();
 }
 
-export function getZoom() {
-  return zoom;
+/* ===============================
+   ZOOM (CANVAS)
+================================ */
+export function setZoom(value) {
+  zoom = Math.max(0.25, Math.min(3, value));
+  canvas.setZoom(zoom);
+  canvas.requestRenderAll();
 }
 
-// ---------- TEXT ----------
+export function zoomIn() {
+  setZoom(zoom + 0.1);
+}
+export function zoomOut() {
+  setZoom(zoom - 0.1);
+}
+export function zoomReset() {
+  setZoom(1);
+}
+
+/* ===============================
+   PAGES
+================================ */
+export function addPage() {
+  pages.push([]);
+  currentPage = pages.length - 1;
+}
+
+export function goToPage(index) {
+  if (index < 0 || index >= pages.length) return;
+  saveCurrentPage();
+  currentPage = index;
+  renderPage();
+}
+
+function saveCurrentPage() {
+  pages[currentPage] = canvas.toJSON();
+}
+
+function renderPage() {
+  canvas.clear();
+  canvas.backgroundColor = "#ffffff";
+
+  const data = pages[currentPage];
+  if (data) {
+    canvas.loadFromJSON(data, () => {
+      canvas.requestRenderAll();
+    });
+  }
+}
+
+/* ===============================
+   OBJECTS
+================================ */
 export function addText() {
   const t = new fabric.Textbox("Text", {
     left: canvas.getWidth() / 2,
@@ -67,15 +108,16 @@ export function addText() {
     fontSize: 48,
     fill: "#111",
   });
+
   canvas.add(t);
   canvas.setActiveObject(t);
+  canvas.requestRenderAll();
 }
 
-// ---------- IMAGES ----------
 export function addImageFromFile(file) {
   const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
+  reader.onload = (e) => {
+    fabric.Image.fromURL(e.target.result, (img) => {
       img.scaleToWidth(canvas.getWidth() * 0.6);
       img.set({
         left: canvas.getWidth() / 2,
@@ -84,79 +126,57 @@ export function addImageFromFile(file) {
         originY: "center",
       });
       canvas.add(img);
+      canvas.requestRenderAll();
     });
   };
   reader.readAsDataURL(file);
 }
 
-// ---------- PAGES ----------
-export function addPage(initial = false) {
-  if (!initial) saveCurrentPage();
-  pages.push({ json: null });
-  currentPage = pages.length - 1;
-  canvas.clear();
-  canvas.setBackgroundColor("#fff", canvas.renderAll.bind(canvas));
-  updatePageInfo();
-}
-
-export function saveCurrentPage() {
-  pages[currentPage].json = canvas.toJSON();
-}
-
-export function goToPage(index) {
-  if (index < 0 || index >= pages.length) return;
-  saveCurrentPage();
-  currentPage = index;
-  canvas.clear();
-  canvas.loadFromJSON(pages[index].json || {}, canvas.renderAll.bind(canvas));
-  updatePageInfo();
-}
-
-export function nextPage() {
-  goToPage(currentPage + 1);
-}
-export function prevPage() {
-  goToPage(currentPage - 1);
-}
-
-function updatePageInfo() {
-  const el = document.getElementById("pageInfo");
-  if (el) el.textContent = `${currentPage + 1} / ${pages.length}`;
-}
-
-// ---------- FLIPBOOK EXPORT ----------
+/* ===============================
+   FLIPBOOK EXPORT
+================================ */
 export function exportFlipbookHTML() {
   saveCurrentPage();
 
-  const pagesHTML = pages.map(p => {
-    return `<div class="page"><img src="${canvasToImage(p.json)}"></div>`;
-  }).join("");
+  const pagesHTML = pages
+    .map((p, i) => {
+      return `
+      <div class="page">
+        <img src="${canvasToImage(p)}"/>
+      </div>`;
+    })
+    .join("");
 
   const html = `
 <!doctype html>
 <html>
 <head>
+<meta charset="utf-8"/>
+<title>Flipbook</title>
 <style>
 body{margin:0;background:#111;display:flex;justify-content:center}
-.book{display:flex}
-.page{width:400px;height:560px;margin:10px;background:#fff}
-.page img{width:100%;height:100%;object-fit:contain}
+.book{display:flex;gap:10px}
+.page img{width:600px;background:#fff}
 </style>
 </head>
 <body>
 <div class="book">${pagesHTML}</div>
 </body>
-</html>
-`;
+</html>`;
 
-  return html;
+  const blob = new Blob([html], { type: "text/html" });
+  return URL.createObjectURL(blob);
 }
 
 function canvasToImage(json) {
-  const temp = new fabric.StaticCanvas(null, {
+  const tmp = new fabric.StaticCanvas(null, {
     width: canvas.getWidth(),
     height: canvas.getHeight(),
   });
-  temp.loadFromJSON(json, () => {});
-  return temp.toDataURL({ format: "png" });
+
+  tmp.loadFromJSON(json, () => {
+    tmp.renderAll();
+  });
+
+  return tmp.toDataURL({ format: "png" });
 }
