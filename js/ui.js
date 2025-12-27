@@ -1,42 +1,62 @@
 // js/ui.js
 import {
-  initCanvas,
   addText,
   addImageFromFile,
-  addPage,
-  goToPage,
-  setZoom,
-  getZoom,
+  zoomIn,
+  zoomOut,
+  zoomReset,
+  zoomFit,
   setCanvasSize,
-  exportFlipbookHTML
+  exportFlipbook,
+  previewFlipbook,
 } from "./core.js";
 
-window.addEventListener("DOMContentLoaded", () => {
-  initCanvas();
+/* ======================
+   SAFE BIND HELPER
+====================== */
+function bind(id, event, handler) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener(event, handler);
+}
 
-  document.getElementById("addTextBtn").onclick = addText;
-
-  document.getElementById("imageInput").onchange = e => {
-    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
-  };
-
-  document.getElementById("addPageBtn").onclick = addPage;
-
-  document.getElementById("zoomIn").onclick = () => {
-    setZoom(getZoom() + 0.1);
-    document.getElementById("zoomValue").textContent = Math.round(getZoom()*100)+"%";
-  };
-
-  document.getElementById("zoomOut").onclick = () => {
-    setZoom(getZoom() - 0.1);
-    document.getElementById("zoomValue").textContent = Math.round(getZoom()*100)+"%";
-  };
-
-  document.getElementById("a4Btn").onclick = () => setCanvasSize(1240,1754);
-  document.getElementById("squareBtn").onclick = () => setCanvasSize(1200,1200);
-
-  document.getElementById("exportFlipbookBtn").onclick = () => {
-    const url = exportFlipbookHTML();
-    window.open(url, "_blank");
-  };
+/* ======================
+   TEXT
+====================== */
+bind("addTextBtn", "click", () => {
+  console.log("🟢 Add Text clicked");
+  addText();
 });
+
+/* ======================
+   IMAGES
+====================== */
+const imageInput = document.getElementById("imageInput");
+if (imageInput) {
+  imageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) addImageFromFile(file);
+    imageInput.value = "";
+  });
+}
+
+/* ======================
+   ZOOM (CANVAS)
+====================== */
+bind("zoomInBtn", "click", zoomIn);
+bind("zoomOutBtn", "click", zoomOut);
+bind("zoomResetBtn", "click", zoomReset);
+bind("zoomFitBtn", "click", zoomFit);
+
+/* ======================
+   CANVAS SIZE
+====================== */
+bind("pageSizeSelect", "change", (e) => {
+  setCanvasSize(e.target.value);
+});
+
+/* ======================
+   EXPORT
+====================== */
+bind("exportFlipBtn", "click", exportFlipbook);
+bind("previewFlipBtn", "click", previewFlipbook);
