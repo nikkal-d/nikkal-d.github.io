@@ -1,123 +1,86 @@
 // js/core.js
-// ===============================
-// CANVAS + PAGES CORE
-// ===============================
-
-export let canvas = null;
-
-// pages
+let canvas;
 let pages = [];
-let currentPage = 0;
-
-// zoom
+let currentPageIndex = 0;
 let zoom = 1;
 
-// -------------------------------
-// INIT
-// -------------------------------
+// ================= INIT =================
 export function initCanvas() {
   canvas = new fabric.Canvas("canvas", {
     backgroundColor: "#ffffff",
     preserveObjectStacking: true,
   });
 
-  // αρχική σελίδα
-  pages = [serializeCanvas()];
-  currentPage = 0;
-
-  resizeCanvas(800, 1130); // A4 portrait default
-  applyZoom(1);
+  pages = [emptyPage()];
+  renderPage(0);
 
   console.log("✅ Canvas initialized");
 }
 
-// -------------------------------
-// PAGES
-// -------------------------------
-function serializeCanvas() {
-  return canvas.toJSON();
+// ================= PAGES =================
+function emptyPage() {
+  return { json: null };
 }
 
-function loadPage(index) {
-  canvas.clear();
-  canvas.loadFromJSON(pages[index], () => {
-    canvas.renderAll();
-  });
+function saveCurrentPage() {
+  pages[currentPageIndex].json = canvas.toJSON();
 }
 
 export function addPage() {
-  pages[currentPage] = serializeCanvas();
-  pages.push(serializeCanvas());
-  currentPage = pages.length - 1;
-  loadPage(currentPage);
+  saveCurrentPage();
+  pages.push(emptyPage());
+  currentPageIndex = pages.length - 1;
+  renderPage(currentPageIndex);
 }
 
-export function prevPage() {
-  if (currentPage === 0) return;
-  pages[currentPage] = serializeCanvas();
-  currentPage--;
-  loadPage(currentPage);
+export function goToPage(index) {
+  if (index < 0 || index >= pages.length) return;
+  saveCurrentPage();
+  currentPageIndex = index;
+  renderPage(index);
 }
 
-export function nextPage() {
-  if (currentPage >= pages.length - 1) return;
-  pages[currentPage] = serializeCanvas();
-  currentPage++;
-  loadPage(currentPage);
+function renderPage(index) {
+  canvas.clear();
+  canvas.setBackgroundColor("#ffffff", canvas.renderAll.bind(canvas));
+
+  const page = pages[index];
+  if (page.json) {
+    canvas.loadFromJSON(page.json, () => {
+      canvas.renderAll();
+      applyZoom();
+    });
+  } else {
+    canvas.renderAll();
+    applyZoom();
+  }
 }
 
 export function getPageInfo() {
-  return { current: currentPage + 1, total: pages.length };
-}
-
-// -------------------------------
-// OBJECTS
-// -------------------------------
-export function addText() {
-  const center = canvas.getCenter();
-  const t = new fabric.Textbox("Text", {
-    left: center.left,
-    top: center.top,
-    originX: "center",
-    originY: "center",
-    fontSize: 48,
-    fill: "#111",
-  });
-  canvas.add(t);
-  canvas.setActiveObject(t);
-  canvas.renderAll();
-}
-
-export function addImageFromFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    fabric.Image.fromURL(e.target.result, (img) => {
-      const center = canvas.getCenter();
-      img.set({
-        left: center.left,
-        top: center.top,
-        originX: "center",
-        originY: "center",
-      });
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.renderAll();
-    });
+  return {
+    current: currentPageIndex + 1,
+    total: pages.length,
   };
-  reader.readAsDataURL(file);
 }
 
-// -------------------------------
-// ZOOM (VIEWPORT ONLY)
-// -------------------------------
-export function applyZoom(value) {
-  zoom = Math.max(0.2, Math.min(3, value));
-  canvas.setZoom(zoom);
+// ================= ZOOM (CANVAS, ΟΧΙ OBJECT) =================
+export function zoomIn() {
+  zoom = Math.min(zoom + 0.1, 3);
+  applyZoom();
+}
 
-  // κεντράρισμα viewport
-  const vpt = canvas.viewportTransform;
-  vpt[4] = (canvas.getWidth() - canvas.getWidth() * zoom) / 2;
-  vpt[5] = (canvas.getHeight() - canvas.getHeight() * zoom) / 2;
+export function zoomOut() {
+  zoom = Math.max(zoom - 0.1, 0.2);
+  applyZoom();
+}
+
+export function resetZoom() {
+  zoom = 1;
+  applyZoom();
+}
+
+function applyZoom() {
+  canvas.setZoom(zoom);
   canvas.requestRenderAll();
 }
 
@@ -125,12 +88,23 @@ export function getZoom() {
   return zoom;
 }
 
-// -------------------------------
-// CANVAS SIZE
-// -------------------------------
-export function resizeCanvas(w, h) {
+// ================= CANVAS SIZE =================
+export function setCanvasSize(w, h) {
   canvas.setWidth(w);
   canvas.setHeight(h);
-  canvas.calcOffset();
-  canvas.renderAll();
+  applyZoom();
+}
+
+// ================= TEXT =================
+export function addText() {
+  const t = new fabric.Textbox("Text", {
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    originX: "center",
+    originY: "center",
+    fontSize: 48,
+    fill: "#111",
+  });
+  canvas.add(t);
+  canvas.setActiveObject(t);
 }
