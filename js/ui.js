@@ -1,40 +1,42 @@
+// js/ui.js
 import {
   initCanvas,
   addText,
+  addImageFromFile,
   addPage,
-  prevPage,
-  nextPage,
+  goToPage,
   setZoom,
-  getZoom,
-  resetZoom,
+  fitToScreen,
+  setPageSize,
   exportFlipbook
 } from "./core.js";
 
 window.addEventListener("DOMContentLoaded", () => {
-  initCanvas("A4P");
+  initCanvas();
 
-  document.getElementById("addTextBtn").onclick = addText;
-  document.getElementById("addPageBtn").onclick = addPage;
-  document.getElementById("prevPageBtn").onclick = prevPage;
-  document.getElementById("nextPageBtn").onclick = nextPage;
+  // TEXT
+  document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
-  document.getElementById("zoomInBtn").onclick = () => {
-    setZoom(getZoom() + 0.1);
-    updateZoom();
-  };
-  document.getElementById("zoomOutBtn").onclick = () => {
-    setZoom(getZoom() - 0.1);
-    updateZoom();
-  };
-  document.getElementById("zoomResetBtn").onclick = () => {
-    resetZoom();
-    updateZoom();
-  };
+  // IMAGE
+  document.getElementById("imageInput")?.addEventListener("change", e => {
+    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+  });
 
-  document.getElementById("exportFlipBtn").onclick = exportFlipbook;
+  // PAGES
+  document.getElementById("addPageBtn")?.addEventListener("click", addPage);
+  document.getElementById("prevPageBtn")?.addEventListener("click", () => goToPage(App.currentPage - 1));
+  document.getElementById("nextPageBtn")?.addEventListener("click", () => goToPage(App.currentPage + 1));
+
+  // ZOOM
+  document.getElementById("zoomInBtn")?.addEventListener("click", () => setZoom(App.zoom + 0.1));
+  document.getElementById("zoomOutBtn")?.addEventListener("click", () => setZoom(App.zoom - 0.1));
+  document.getElementById("zoomResetBtn")?.addEventListener("click", fitToScreen);
+
+  // PAGE SIZE
+  document.getElementById("pageSizeSelect")?.addEventListener("change", e => {
+    setPageSize(e.target.value);
+  });
+
+  // EXPORT
+  document.getElementById("exportFlipBtn")?.addEventListener("click", exportFlipbook);
 });
-
-function updateZoom() {
-  document.getElementById("zoomValue").textContent =
-    Math.round(getZoom() * 100) + "%";
-}
