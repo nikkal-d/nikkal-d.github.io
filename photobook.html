@@ -9,20 +9,20 @@
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
-
-<style>
-/* flipbook modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
-.modal.open{display:flex}
-.modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
-.modal-title{font-weight:700}
-#flipPreviewFrame{flex:1;border:0;background:#000}
-.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-.field input,.field select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}
-.export-actions{display:flex;gap:10px;margin-top:10px}
-.hint{opacity:.8;font-size:12px;line-height:1.35}
-</style>
+  <!-- Flipbook preview modal styles (scoped) -->
+  <style>
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+    .modal.open{display:flex}
+    .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+    .modal-title{font-weight:700}
+    #flipPreviewFrame{flex:1;border:0;background:#000}
+    .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+    .field input,.field select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}
+    .hint{opacity:.8;font-size:12px;line-height:1.35}
+    .divider{height:1px;background:rgba(255,255,255,.12);margin:14px 0}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  </style>
 </head>
 
 <body class="theme-light">
@@ -32,11 +32,11 @@
       <a class="brand" href="./index.html">Photobook</a>
 
       <nav class="topnav" aria-label="Site navigation">
-        <a href="./index.html" data-i18n="nav_home">Home</a>
-        <a href="./templates.html" data-i18n="nav_templates">Templates</a>
-        <a href="./projects.html" data-i18n="nav_projects">Projects</a>
-        <a href="./viewer.html" data-i18n="nav_viewer">Viewer</a>
-        <a href="./stickers.html" data-i18n="nav_stickers">Stickers</a>
+        <a href="./index.html">Home</a>
+        <a href="./templates.html">Templates</a>
+        <a href="./projects.html">Projects</a>
+        <a href="./viewer.html">Viewer</a>
+        <a href="./stickers.html">Stickers</a>
       </nav>
     </div>
 
@@ -138,7 +138,7 @@
         </div>
 
         <p class="hint">
-          Remove BG / Crop θα “δέσουν” στο επόμενο βήμα (placeholder UI).
+          Remove BG / Crop είναι UI placeholder (θα “δέσουν” μετά).
         </p>
       </div>
 
@@ -181,16 +181,11 @@
         </div>
 
         <div class="layersList" id="layersList"></div>
-
-        <p class="hint">
-          Layers list ενημερώνεται όταν προσθέτεις/επιλέγεις αντικείμενα (επόμενο βήμα το “δέσιμο”).
-        </p>
       </div>
     </section>
 
     <!-- CANVAS AREA -->
     <main class="stage">
-      <!-- Stage toolbar -->
       <div class="stageBar">
         <div class="stageBar-left">
           <button class="btn ghost" id="fitBtn" title="Fit to screen">Fit</button>
@@ -200,7 +195,7 @@
             <div class="pill" id="zoomValue">100%</div>
             <button class="iconbtn" id="zoomInBtn" title="Zoom in">+</button>
             <button class="btn ghost" id="zoomResetBtn" title="Reset zoom">Reset</button>
-<button class="btn" id="zoomFitBtn" title="Fit">⤢</button>
+            <button class="btn" id="zoomFitBtn" title="Fit">⤢</button>
           </div>
         </div>
 
@@ -211,19 +206,19 @@
             <option value="SQUARE">Square</option>
             <option value="STORY">Story</option>
             <option value="HD">HD</option>
+            <option value="CUSTOM">Custom…</option>
           </select>
+          <button class="btn ghost" id="customSizeBtn" title="Set custom size">Size</button>
 
           <button class="btn" id="toggleExportBtn">Export</button>
         </div>
       </div>
 
-      <!-- Canvas host -->
       <div class="canvasHost" id="canvasHost">
         <div class="canvasFrame" id="canvasFrame">
           <canvas id="canvas"></canvas>
         </div>
 
-        <!-- Floating object toolbar (HTML overlay placeholder) -->
         <div class="floatToolbar" id="floatToolbar" hidden>
           <button class="btn ghost" id="fltEffectsBtn">Effects</button>
           <button class="btn ghost" id="fltOpacityBtn">Opacity</button>
@@ -258,6 +253,14 @@
           </select>
         </div>
 
+        <div class="field">
+          <label>Flip direction</label>
+          <select class="select" id="flipDirectionSelect">
+            <option value="horizontal" selected>Horizontal (book)</option>
+            <option value="vertical">Vertical</option>
+          </select>
+        </div>
+
         <div class="grid2">
           <button class="btn" id="exportPdfBtn">PDF</button>
           <button class="btn" id="exportFlipBtn">Flipbook</button>
@@ -270,30 +273,28 @@
         <div class="divider"></div>
 
         <button class="btn ghost" id="previewFlipBtn">Preview Flipbook</button>
-
-        <p class="hint">
-          Export/Preview θα “κουμπώσουν” στο export.js στο επόμενο βήμα (UI έτοιμο).
-        </p>
+        <p class="hint" id="exportHint"></p>
       </div>
     </section>
   </div>
 
-  <!-- Scripts (modules) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <!-- Fabric (global) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-  
+  <!-- Scripts (modules) -->
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
-  <script type="module" src="./js/sidebar.js"></script>
+  <script src="./js/sidebar.js"></script>
 
-<div class="modal" id="flipPreviewModal">
-  <div class="modal-inner">
-    <div class="modal-head">
-      <div class="modal-title">Flipbook Preview</div>
-      <button class="btn" id="closeFlipPreview">✕</button>
+  <!-- Flipbook preview modal -->
+  <div class="modal" id="flipPreviewModal" role="dialog" aria-modal="true">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div class="modal-title">Flipbook Preview</div>
+        <button class="btn" id="closeFlipPreview">✕</button>
+      </div>
+      <iframe id="flipPreviewFrame" title="Flipbook preview"></iframe>
     </div>
-    <iframe id="flipPreviewFrame" title="Flipbook preview"></iframe>
   </div>
-</div>
 </body>
 </html>
