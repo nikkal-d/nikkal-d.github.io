@@ -2,67 +2,81 @@
 import {
   initCanvas,
   addText,
-  addImageFromFile,
   addPage,
-  prevPage,
-  nextPage,
+  goToPage,
   getPageInfo,
-  applyZoom,
+  zoomIn,
+  zoomOut,
+  resetZoom,
   getZoom,
+  setCanvasSize
 } from "./core.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
+  bindUI();
+  updatePageInfo();
+  updateZoomLabel();
+});
 
+function bindUI() {
   // TEXT
   document.getElementById("addTextBtn")?.addEventListener("click", addText);
-
-  // IMAGE
-  document.getElementById("imageInput")?.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) addImageFromFile(file);
-  });
 
   // PAGES
   document.getElementById("addPageBtn")?.addEventListener("click", () => {
     addPage();
     updatePageInfo();
   });
+
   document.getElementById("prevPageBtn")?.addEventListener("click", () => {
-    prevPage();
+    const info = getPageInfo();
+    goToPage(info.current - 2);
     updatePageInfo();
   });
+
   document.getElementById("nextPageBtn")?.addEventListener("click", () => {
-    nextPage();
+    const info = getPageInfo();
+    goToPage(info.current);
     updatePageInfo();
   });
 
   // ZOOM
   document.getElementById("zoomInBtn")?.addEventListener("click", () => {
-    applyZoom(getZoom() + 0.1);
-    updateZoom();
+    zoomIn();
+    updateZoomLabel();
   });
+
   document.getElementById("zoomOutBtn")?.addEventListener("click", () => {
-    applyZoom(getZoom() - 0.1);
-    updateZoom();
+    zoomOut();
+    updateZoomLabel();
   });
+
   document.getElementById("zoomResetBtn")?.addEventListener("click", () => {
-    applyZoom(1);
-    updateZoom();
+    resetZoom();
+    updateZoomLabel();
   });
 
-  updateZoom();
-  updatePageInfo();
-});
-
-function updateZoom() {
-  const z = document.getElementById("zoomValue");
-  if (z) z.textContent = Math.round(getZoom() * 100) + "%";
+  // PAGE SIZE
+  document.getElementById("pageSizeSelect")?.addEventListener("change", (e) => {
+    const v = e.target.value;
+    const sizes = {
+      A4P: [1240, 1754],
+      A4L: [1754, 1240],
+      SQUARE: [1400, 1400],
+      HD: [1920, 1080],
+    };
+    if (sizes[v]) setCanvasSize(...sizes[v]);
+  });
 }
 
 function updatePageInfo() {
-  const info = document.getElementById("pageInfo");
-  if (!info) return;
-  const p = getPageInfo();
-  info.textContent = `${p.current} / ${p.total}`;
+  const info = getPageInfo();
+  const el = document.getElementById("pageInfo");
+  if (el) el.textContent = `${info.current} / ${info.total}`;
+}
+
+function updateZoomLabel() {
+  const el = document.getElementById("zoomValue");
+  if (el) el.textContent = Math.round(getZoom() * 100) + "%";
 }
