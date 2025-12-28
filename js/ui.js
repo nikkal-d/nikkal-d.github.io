@@ -2,38 +2,67 @@
 import {
   initCanvas,
   addText,
-  addRect,
-  addCircle,
   addImageFromFile,
   addPage,
   prevPage,
   nextPage,
-  setPageSize,
+  getPageInfo,
+  applyZoom,
+  getZoom,
 } from "./core.js";
 
-window.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   initCanvas();
 
   // TEXT
   document.getElementById("addTextBtn")?.addEventListener("click", addText);
 
-  // SHAPES
-  document.getElementById("addRectBtn")?.addEventListener("click", addRect);
-  document.getElementById("addCircleBtn")?.addEventListener("click", addCircle);
-
   // IMAGE
-  document.getElementById("imageInput")?.addEventListener("change", e => {
+  document.getElementById("imageInput")?.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) addImageFromFile(file);
   });
 
   // PAGES
-  document.getElementById("addPageBtn")?.addEventListener("click", addPage);
-  document.getElementById("prevPageBtn")?.addEventListener("click", prevPage);
-  document.getElementById("nextPageBtn")?.addEventListener("click", nextPage);
-
-  // PAGE SIZE
-  document.getElementById("pageSizeSelect")?.addEventListener("change", e => {
-    setPageSize(e.target.value);
+  document.getElementById("addPageBtn")?.addEventListener("click", () => {
+    addPage();
+    updatePageInfo();
   });
+  document.getElementById("prevPageBtn")?.addEventListener("click", () => {
+    prevPage();
+    updatePageInfo();
+  });
+  document.getElementById("nextPageBtn")?.addEventListener("click", () => {
+    nextPage();
+    updatePageInfo();
+  });
+
+  // ZOOM
+  document.getElementById("zoomInBtn")?.addEventListener("click", () => {
+    applyZoom(getZoom() + 0.1);
+    updateZoom();
+  });
+  document.getElementById("zoomOutBtn")?.addEventListener("click", () => {
+    applyZoom(getZoom() - 0.1);
+    updateZoom();
+  });
+  document.getElementById("zoomResetBtn")?.addEventListener("click", () => {
+    applyZoom(1);
+    updateZoom();
+  });
+
+  updateZoom();
+  updatePageInfo();
 });
+
+function updateZoom() {
+  const z = document.getElementById("zoomValue");
+  if (z) z.textContent = Math.round(getZoom() * 100) + "%";
+}
+
+function updatePageInfo() {
+  const info = document.getElementById("pageInfo");
+  if (!info) return;
+  const p = getPageInfo();
+  info.textContent = `${p.current} / ${p.total}`;
+}
