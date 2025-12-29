@@ -2,12 +2,9 @@
 import {
   initCanvas,
   addText,
-  addImageFromFile,
-  zoomIn,
-  zoomOut,
-  resetZoom,
-  setPageSize,
-  addPage,
+  addImage,
+  applyZoom,
+  getZoom,
   nextPage,
   prevPage,
   exportFlipbook
@@ -16,23 +13,20 @@ import {
 window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
 
-  document.getElementById("addTextBtn")?.addEventListener("click", addText);
+  document.getElementById("addTextBtn").onclick = addText;
 
-  document.getElementById("imageInput")?.addEventListener("change", e => {
-    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
-  });
+  document.getElementById("imageInput").onchange = e => {
+    if (e.target.files[0]) addImage(e.target.files[0]);
+  };
 
-  document.getElementById("zoomInBtn")?.addEventListener("click", zoomIn);
-  document.getElementById("zoomOutBtn")?.addEventListener("click", zoomOut);
-  document.getElementById("zoomResetBtn")?.addEventListener("click", resetZoom);
+  document.getElementById("zoomInBtn").onclick = () =>
+    applyZoom(getZoom() + 0.1);
 
-  document.getElementById("pageSizeSelect")?.addEventListener("change", e => {
-    setPageSize(e.target.value);
-  });
+  document.getElementById("zoomOutBtn").onclick = () =>
+    applyZoom(getZoom() - 0.1);
 
-  document.getElementById("addPageBtn")?.addEventListener("click", addPage);
-  document.getElementById("nextPageBtn")?.addEventListener("click", nextPage);
-  document.getElementById("prevPageBtn")?.addEventListener("click", prevPage);
+  document.getElementById("nextPageBtn").onclick = nextPage;
+  document.getElementById("prevPageBtn").onclick = prevPage;
 
-  document.getElementById("exportFlipBtn")?.addEventListener("click", exportFlipbook);
+  document.getElementById("exportFlipBtn").onclick = exportFlipbook;
 });
