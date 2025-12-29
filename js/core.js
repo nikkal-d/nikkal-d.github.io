@@ -73,7 +73,10 @@ export function initCanvas() {
   fabricCanvas = new window.fabric.Canvas("canvas", {
     preserveObjectStacking: true,
     selection: true
-  });
+  }
+setTimeout(fitCanvasToScreen, 0);
+window.addEventListener("resize", fitCanvasToScreen);
+);
 
   // Default page
   pages = [ { json: blankPageJSON() } ];
