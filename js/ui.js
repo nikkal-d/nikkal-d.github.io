@@ -1,32 +1,24 @@
-// js/ui.js
-import {
-  initCanvas,
-  addText,
-  addImage,
-  applyZoom,
-  getZoom,
-  nextPage,
-  prevPage,
-  exportFlipbook
-} from "./core.js";
+document.getElementById("addTextBtn").onclick = () => PB.addText();
 
-window.addEventListener("DOMContentLoaded", () => {
-  initCanvas();
+document.getElementById("imageInput").onchange = e => {
+  if (e.target.files[0]) PB.addImage(e.target.files[0]);
+};
 
-  document.getElementById("addTextBtn").onclick = addText;
+document.getElementById("addPageBtn").onclick = PB.addPage;
+document.getElementById("nextPageBtn").onclick = PB.nextPage;
+document.getElementById("prevPageBtn").onclick = PB.prevPage;
 
-  document.getElementById("imageInput").onchange = e => {
-    if (e.target.files[0]) addImage(e.target.files[0]);
-  };
+document.getElementById("zoomInBtn").onclick = () => PB.zoomCanvas(0.1);
+document.getElementById("zoomOutBtn").onclick = () => PB.zoomCanvas(-0.1);
 
-  document.getElementById("zoomInBtn").onclick = () =>
-    applyZoom(getZoom() + 0.1);
+document.getElementById("pageSizeSelect").onchange = e =>
+  PB.setCanvasSize(e.target.value);
 
-  document.getElementById("zoomOutBtn").onclick = () =>
-    applyZoom(getZoom() - 0.1);
+document.getElementById("exportFlipBtn").onclick = () =>
+  PB.exportFlipbook(false);
 
-  document.getElementById("nextPageBtn").onclick = nextPage;
-  document.getElementById("prevPageBtn").onclick = prevPage;
+document.getElementById("previewFlipBtn").onclick = () =>
+  PB.exportFlipbook(true);
 
-  document.getElementById("exportFlipBtn").onclick = exportFlipbook;
-});
+document.getElementById("closeFlipBtn").onclick = () =>
+  document.getElementById("flipModal").style.display = "none";
