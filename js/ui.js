@@ -1,41 +1,37 @@
-// js/ui.js
 import {
   initCanvas,
   addText,
-  addRect,
-  addCircle,
-  addLine,
   addImageFromFile,
   addPage,
-  nextPage,
   prevPage,
-  zoomCanvas,
+  nextPage,
+  setZoom,
+  resetZoom,
+  setPageSize,
   exportFlipbook
 } from "./core.js";
 
-initCanvas();
+window.addEventListener("DOMContentLoaded", () => {
+  initCanvas();
 
-// TEXT
-document.getElementById("addTextBtn")?.addEventListener("click", addText);
+  document.getElementById("addTextBtn")?.onclick = addText;
 
-// SHAPES
-document.getElementById("addRectBtn")?.addEventListener("click", addRect);
-document.getElementById("addCircleBtn")?.addEventListener("click", addCircle);
-document.getElementById("addLineBtn")?.addEventListener("click", addLine);
+  document.getElementById("imageInput")?.addEventListener("change", e => {
+    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+  });
 
-// IMAGE
-document.getElementById("imageInput")?.addEventListener("change", e => {
-  if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+  document.getElementById("addPageBtn")?.onclick = addPage;
+  document.getElementById("prevPageBtn")?.onclick = prevPage;
+  document.getElementById("nextPageBtn")?.onclick = nextPage;
+
+  document.getElementById("zoomInBtn")?.onclick = () => setZoom(0.1);
+  document.getElementById("zoomOutBtn")?.onclick = () => setZoom(-0.1);
+  document.getElementById("zoomResetBtn")?.onclick = resetZoom;
+  document.getElementById("zoomFitBtn")?.onclick = resetZoom;
+
+  document.getElementById("pageSizeSelect")?.addEventListener("change", e => {
+    setPageSize(e.target.value);
+  });
+
+  document.getElementById("exportFlipBtn")?.onclick = exportFlipbook;
 });
-
-// PAGES
-document.getElementById("addPageBtn")?.addEventListener("click", addPage);
-document.getElementById("nextPageBtn")?.addEventListener("click", nextPage);
-document.getElementById("prevPageBtn")?.addEventListener("click", prevPage);
-
-// ZOOM
-document.getElementById("zoomInBtn")?.addEventListener("click", () => zoomCanvas(0.1));
-document.getElementById("zoomOutBtn")?.addEventListener("click", () => zoomCanvas(-0.1));
-
-// EXPORT
-document.getElementById("exportFlipBtn")?.addEventListener("click", exportFlipbook);
