@@ -637,4 +637,35 @@ export async function exportFlipbookLink(direction="horizontal"){
     prompt("Copy this link:", dataUrl);
   }
 }
+// === CANVAS FIT / ZOOM SYSTEM ===
+let currentZoom = 1;
+
+export function fitCanvasToScreen() {
+  const host = document.getElementById("canvasHost");
+  if (!host || !canvas) return;
+
+  const padding = 40;
+  const scaleX = (host.clientWidth - padding) / canvas.getWidth();
+  const scaleY = (host.clientHeight - padding) / canvas.getHeight();
+
+  currentZoom = Math.min(scaleX, scaleY, 1);
+
+  canvas.setZoom(currentZoom);
+  canvas.setViewportTransform([currentZoom, 0, 0, currentZoom, 0, 0]);
+  canvas.requestRenderAll();
+
+  updateZoomLabel();
+}
+
+export function zoomCanvas(delta) {
+  currentZoom = Math.max(0.1, Math.min(3, currentZoom + delta));
+  canvas.setZoom(currentZoom);
+  canvas.requestRenderAll();
+  updateZoomLabel();
+}
+
+function updateZoomLabel() {
+  const el = document.getElementById("zoomValue");
+  if (el) el.textContent = Math.round(currentZoom * 100) + "%";
+}
 
