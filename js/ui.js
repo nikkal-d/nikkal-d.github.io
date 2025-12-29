@@ -22,7 +22,9 @@ import {
   exportFlipbookLink,
   addRect,
   addCircle,
-  addLine
+  addLine,
+  fitCanvasToScreen, 
+  zoomCanvas 
 } from "./core.js";
 
 function $(id){ return document.getElementById(id); }
@@ -144,6 +146,20 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.target === modal) closeFlipPreview();
     });
   }
+
+
+  
+document.getElementById("zoomInBtn")?.addEventListener("click", () => {
+  zoomCanvas(0.1);
+});
+
+document.getElementById("zoomOutBtn")?.addEventListener("click", () => {
+  zoomCanvas(-0.1);
+});
+
+document.getElementById("zoomFitBtn")?.addEventListener("click", () => {
+  fitCanvasToScreen();
+});
 
   // initial UI sync
   updateZoomLabel();
