@@ -1,41 +1,77 @@
+// js/ui.js
+// UI bindings – SAFE VERSION (no broken imports)
+
 import {
-  canvas,
+  initCanvas,
   addText,
-  applyTextColor,
-  applyTextOpacity,
-  applyTextStroke,
-  animateFade,
-  animateSlide,
-  animateScale
-} from "./core_flipbook_ready.js";
+  addImageFromFile,
+  zoomIn,
+  zoomOut,
+  resetZoom,
+  fitToScreen,
+  setCanvasSizePreset,
+  addPage,
+  nextPage,
+  prevPage,
+  exportFlipbook,
+  previewFlipbook
+} from "./core.js";
 
-/* =====================
-   TEXT UI
-===================== */
-const addTextBtn = document.getElementById("addTextBtn");
-const textColorInput = document.getElementById("textColorInput");
-const textOpacityInput = document.getElementById("textOpacityInput");
-const textStrokeToggle = document.getElementById("textStrokeToggle");
+// ---------- INIT ----------
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("🟢 UI loaded");
 
-addTextBtn?.addEventListener("click", () => {
-  addText();
+  initCanvas();
+  bindUI();
 });
 
-textColorInput?.addEventListener("input", e => {
-  applyTextColor(e.target.value);
-});
+// ---------- HELPERS ----------
+const $ = (id) => document.getElementById(id);
 
-textOpacityInput?.addEventListener("input", e => {
-  applyTextOpacity(Number(e.target.value));
-});
+// ---------- UI BINDINGS ----------
+function bindUI() {
 
-textStrokeToggle?.addEventListener("change", e => {
-  applyTextStroke(e.target.checked);
-});
+  /* TEXT */
+  $("addTextBtn")?.addEventListener("click", () => {
+    console.log("🟢 Add Text");
+    addText();
+  });
 
-/* =====================
-   ANIMATIONS
-===================== */
-document.getElementById("animFadeBtn")?.addEventListener("click", animateFade);
-document.getElementById("animSlideBtn")?.addEventListener("click", () => animateSlide("left"));
-document.getElementById("animScaleBtn")?.addEventListener("click", animateScale);
+  /* IMAGE */
+  const imageInput = $("imageInput");
+  if (imageInput) {
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) addImageFromFile(file);
+      imageInput.value = "";
+    });
+  }
+
+  /* ZOOM */
+  $("zoomInBtn")?.addEventListener("click", zoomIn);
+  $("zoomOutBtn")?.addEventListener("click", zoomOut);
+  $("zoomResetBtn")?.addEventListener("click", resetZoom);
+  $("fitBtn")?.addEventListener("click", fitToScreen);
+  $("zoomFitBtn")?.addEventListener("click", fitToScreen);
+
+  /* PAGE SIZE */
+  $("pageSizeSelect")?.addEventListener("change", (e) => {
+    setCanvasSizePreset(e.target.value);
+  });
+
+  /* PAGES */
+  $("addPageBtn")?.addEventListener("click", addPage);
+  $("nextPageBtn")?.addEventListener("click", nextPage);
+  $("prevPageBtn")?.addEventListener("click", prevPage);
+
+  /* EXPORT */
+  $("exportFlipBtn")?.addEventListener("click", () => {
+    exportFlipbook();
+  });
+
+  $("previewFlipBtn")?.addEventListener("click", () => {
+    previewFlipbook();
+  });
+
+  console.log("✅ UI bindings OK");
+}
