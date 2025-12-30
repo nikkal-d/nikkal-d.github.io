@@ -1,5 +1,5 @@
 // js/ui.js
-// UI bindings – SAFE VERSION (no missing exports)
+// UI bindings – ΔΕΝ ορίζει logic, μόνο κουμπιά → core.js
 
 import {
   canvas,
@@ -7,60 +7,63 @@ import {
   addImageFromFile,
   zoomIn,
   zoomOut,
-  zoomReset,
-  nextPage,
-  prevPage,
+  resetZoom,
+  fitToScreen,
   addPage,
-  exportFlipbook
+  prevPage,
+  nextPage,
+  setPageSize,
+  exportFlipbook,
+  previewFlipbook
 } from "./core.js";
 
-/* --------------------------------------------------
-   HELPERS
--------------------------------------------------- */
-const $ = (id) => document.getElementById(id);
+/* ---------------- TEXT ---------------- */
 
-/* --------------------------------------------------
-   TEXT
--------------------------------------------------- */
-const addTextBtn = $("addTextBtn");
+const addTextBtn = document.getElementById("addTextBtn");
 addTextBtn?.addEventListener("click", () => {
   addText();
 });
 
-/* --------------------------------------------------
-   IMAGE UPLOAD
--------------------------------------------------- */
-const imageInput = $("imageInput");
+/* ---------------- IMAGE ---------------- */
+
+const imageInput = document.getElementById("imageInput");
 imageInput?.addEventListener("change", (e) => {
   const file = e.target.files?.[0];
-  if (!file) return;
-  addImageFromFile(file);
+  if (file) addImageFromFile(file);
   imageInput.value = "";
 });
 
-/* --------------------------------------------------
-   ZOOM (CANVAS ZOOM)
--------------------------------------------------- */
-$("zoomInBtn")?.addEventListener("click", zoomIn);
-$("zoomOutBtn")?.addEventListener("click", zoomOut);
-$("zoomResetBtn")?.addEventListener("click", zoomReset);
+/* ---------------- ZOOM ---------------- */
 
-/* --------------------------------------------------
-   PAGES
--------------------------------------------------- */
-$("addPageBtn")?.addEventListener("click", addPage);
-$("nextPageBtn")?.addEventListener("click", nextPage);
-$("prevPageBtn")?.addEventListener("click", prevPage);
+document.getElementById("zoomInBtn")?.addEventListener("click", zoomIn);
+document.getElementById("zoomOutBtn")?.addEventListener("click", zoomOut);
+document.getElementById("zoomResetBtn")?.addEventListener("click", resetZoom);
+document.getElementById("fitBtn")?.addEventListener("click", fitToScreen);
+document.getElementById("zoomFitBtn")?.addEventListener("click", fitToScreen);
 
-/* --------------------------------------------------
-   EXPORT
--------------------------------------------------- */
-$("exportFlipBtn")?.addEventListener("click", () => {
+/* ---------------- PAGES ---------------- */
+
+document.getElementById("addPageBtn")?.addEventListener("click", addPage);
+document.getElementById("prevPageBtn")?.addEventListener("click", prevPage);
+document.getElementById("nextPageBtn")?.addEventListener("click", nextPage);
+
+/* ---------------- PAGE SIZE ---------------- */
+
+const pageSizeSelect = document.getElementById("pageSizeSelect");
+pageSizeSelect?.addEventListener("change", () => {
+  setPageSize(pageSizeSelect.value);
+});
+
+/* ---------------- EXPORT ---------------- */
+
+document.getElementById("exportFlipBtn")?.addEventListener("click", () => {
   exportFlipbook();
 });
 
-/* --------------------------------------------------
-   DEBUG (optional – μπορείς να το σβήσεις)
--------------------------------------------------- */
+document.getElementById("previewFlipBtn")?.addEventListener("click", () => {
+  previewFlipbook();
+});
+
+/* ---------------- DEBUG (safe) ---------------- */
+
 window.__canvas = canvas;
-console.log("✅ ui.js loaded");
