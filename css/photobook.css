@@ -128,17 +128,3 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   .leftPanel{display:none}
   .leftPanel.closed{display:none}
 }
-
-.canvasHost {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: auto;
-}
-
-.canvasFrame {
-  background: #e5e7eb;
-  padding: 20px;
-  border-radius: 12px;
-}
-
