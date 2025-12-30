@@ -1,77 +1,87 @@
 // js/ui.js
-// UI bindings – SAFE VERSION (no broken imports)
+// ===============================
+// UI bindings – SAFE & STABLE
+// ===============================
 
 import {
-  initCanvas,
   addText,
-  addImageFromFile,
+  addImage,
   zoomIn,
   zoomOut,
   resetZoom,
-  fitToScreen,
-  setCanvasSizePreset,
+  fitCanvas,
   addPage,
   nextPage,
   prevPage,
+  updatePageInfo,
   exportFlipbook,
-  previewFlipbook
+  previewFlipbook,
+  setCanvasSizePreset
 } from "./core.js";
 
-// ---------- INIT ----------
-window.addEventListener("DOMContentLoaded", () => {
-  console.log("🟢 UI loaded");
-
-  initCanvas();
-  bindUI();
-});
-
-// ---------- HELPERS ----------
+/* -----------------------------
+   HELPERS
+----------------------------- */
 const $ = (id) => document.getElementById(id);
 
-// ---------- UI BINDINGS ----------
-function bindUI() {
+/* -----------------------------
+   TEXT
+----------------------------- */
+$("addTextBtn")?.addEventListener("click", () => {
+  console.log("🟢 Add Text clicked");
+  addText();
+});
 
-  /* TEXT */
-  $("addTextBtn")?.addEventListener("click", () => {
-    console.log("🟢 Add Text");
-    addText();
-  });
+/* -----------------------------
+   IMAGE UPLOAD
+----------------------------- */
+$("imageInput")?.addEventListener("change", (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  addImage(file);
+  e.target.value = "";
+});
 
-  /* IMAGE */
-  const imageInput = $("imageInput");
-  if (imageInput) {
-    imageInput.addEventListener("change", (e) => {
-      const file = e.target.files?.[0];
-      if (file) addImageFromFile(file);
-      imageInput.value = "";
-    });
-  }
+/* -----------------------------
+   ZOOM (CANVAS, NOT OBJECT)
+----------------------------- */
+$("zoomInBtn")?.addEventListener("click", zoomIn);
+$("zoomOutBtn")?.addEventListener("click", zoomOut);
+$("zoomResetBtn")?.addEventListener("click", resetZoom);
+$("zoomFitBtn")?.addEventListener("click", fitCanvas);
 
-  /* ZOOM */
-  $("zoomInBtn")?.addEventListener("click", zoomIn);
-  $("zoomOutBtn")?.addEventListener("click", zoomOut);
-  $("zoomResetBtn")?.addEventListener("click", resetZoom);
-  $("fitBtn")?.addEventListener("click", fitToScreen);
-  $("zoomFitBtn")?.addEventListener("click", fitToScreen);
+/* -----------------------------
+   PAGE SIZE
+----------------------------- */
+$("pageSizeSelect")?.addEventListener("change", (e) => {
+  setCanvasSizePreset(e.target.value);
+});
 
-  /* PAGE SIZE */
-  $("pageSizeSelect")?.addEventListener("change", (e) => {
-    setCanvasSizePreset(e.target.value);
-  });
+/* -----------------------------
+   PAGES
+----------------------------- */
+$("addPageBtn")?.addEventListener("click", () => {
+  addPage();
+  updatePageInfo();
+});
 
-  /* PAGES */
-  $("addPageBtn")?.addEventListener("click", addPage);
-  $("nextPageBtn")?.addEventListener("click", nextPage);
-  $("prevPageBtn")?.addEventListener("click", prevPage);
+$("nextPageBtn")?.addEventListener("click", () => {
+  nextPage();
+  updatePageInfo();
+});
 
-  /* EXPORT */
-  $("exportFlipBtn")?.addEventListener("click", () => {
-    exportFlipbook();
-  });
+$("prevPageBtn")?.addEventListener("click", () => {
+  prevPage();
+  updatePageInfo();
+});
 
-  $("previewFlipBtn")?.addEventListener("click", () => {
-    previewFlipbook();
-  });
+/* -----------------------------
+   EXPORT / FLIPBOOK
+----------------------------- */
+$("exportFlipBtn")?.addEventListener("click", exportFlipbook);
+$("previewFlipBtn")?.addEventListener("click", previewFlipbook);
 
-  console.log("✅ UI bindings OK");
-}
+/* -----------------------------
+   INIT
+----------------------------- */
+console.log("✅ UI loaded");
