@@ -1,87 +1,66 @@
 // js/ui.js
-// ===============================
-// UI bindings – SAFE & STABLE
-// ===============================
+// UI bindings – SAFE VERSION (no missing exports)
 
 import {
+  canvas,
   addText,
-  addImage,
+  addImageFromFile,
   zoomIn,
   zoomOut,
-  resetZoom,
-  fitCanvas,
-  addPage,
+  zoomReset,
   nextPage,
   prevPage,
-  updatePageInfo,
-  exportFlipbook,
-  previewFlipbook,
-  setCanvasSizePreset
+  addPage,
+  exportFlipbook
 } from "./core.js";
 
-/* -----------------------------
+/* --------------------------------------------------
    HELPERS
------------------------------ */
+-------------------------------------------------- */
 const $ = (id) => document.getElementById(id);
 
-/* -----------------------------
+/* --------------------------------------------------
    TEXT
------------------------------ */
-$("addTextBtn")?.addEventListener("click", () => {
-  console.log("🟢 Add Text clicked");
+-------------------------------------------------- */
+const addTextBtn = $("addTextBtn");
+addTextBtn?.addEventListener("click", () => {
   addText();
 });
 
-/* -----------------------------
+/* --------------------------------------------------
    IMAGE UPLOAD
------------------------------ */
-$("imageInput")?.addEventListener("change", (e) => {
+-------------------------------------------------- */
+const imageInput = $("imageInput");
+imageInput?.addEventListener("change", (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
-  addImage(file);
-  e.target.value = "";
+  addImageFromFile(file);
+  imageInput.value = "";
 });
 
-/* -----------------------------
-   ZOOM (CANVAS, NOT OBJECT)
------------------------------ */
+/* --------------------------------------------------
+   ZOOM (CANVAS ZOOM)
+-------------------------------------------------- */
 $("zoomInBtn")?.addEventListener("click", zoomIn);
 $("zoomOutBtn")?.addEventListener("click", zoomOut);
-$("zoomResetBtn")?.addEventListener("click", resetZoom);
-$("zoomFitBtn")?.addEventListener("click", fitCanvas);
+$("zoomResetBtn")?.addEventListener("click", zoomReset);
 
-/* -----------------------------
-   PAGE SIZE
------------------------------ */
-$("pageSizeSelect")?.addEventListener("change", (e) => {
-  setCanvasSizePreset(e.target.value);
-});
-
-/* -----------------------------
+/* --------------------------------------------------
    PAGES
------------------------------ */
-$("addPageBtn")?.addEventListener("click", () => {
-  addPage();
-  updatePageInfo();
+-------------------------------------------------- */
+$("addPageBtn")?.addEventListener("click", addPage);
+$("nextPageBtn")?.addEventListener("click", nextPage);
+$("prevPageBtn")?.addEventListener("click", prevPage);
+
+/* --------------------------------------------------
+   EXPORT
+-------------------------------------------------- */
+$("exportFlipBtn")?.addEventListener("click", () => {
+  exportFlipbook();
 });
 
-$("nextPageBtn")?.addEventListener("click", () => {
-  nextPage();
-  updatePageInfo();
-});
-
-$("prevPageBtn")?.addEventListener("click", () => {
-  prevPage();
-  updatePageInfo();
-});
-
-/* -----------------------------
-   EXPORT / FLIPBOOK
------------------------------ */
-$("exportFlipBtn")?.addEventListener("click", exportFlipbook);
-$("previewFlipBtn")?.addEventListener("click", previewFlipbook);
-
-/* -----------------------------
-   INIT
------------------------------ */
-console.log("✅ UI loaded");
+/* --------------------------------------------------
+   DEBUG (optional – μπορείς να το σβήσεις)
+-------------------------------------------------- */
+window.__canvas = canvas;
+console.log("✅ ui.js loaded");
