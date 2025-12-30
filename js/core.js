@@ -1,85 +1,102 @@
-/* =====================
-   TEXT HELPERS
-===================== */
-export function applyTextColor(color) {
-  const obj = canvas.getActiveObject();
-  if (!obj) return;
-  obj.set("fill", color);
+// js/core.js
+export let canvas;
+export let pages = [];
+export let currentPage = 0;
+
+const PAGE_SIZES = {
+  A4P: { w: 1240, h: 1754 },
+  A4L: { w: 1754, h: 1240 },
+  SQUARE: { w: 1400, h: 1400 },
+};
+
+export function initCanvas() {
+  canvas = new fabric.Canvas("canvas", {
+    backgroundColor: "#fff",
+    preserveObjectStacking: true,
+  });
+
+  setPageSize("A4P");
+  pages.push({ json: null });
+}
+
+export function setPageSize(key) {
+  const s = PAGE_SIZES[key];
+  canvas.setWidth(s.w);
+  canvas.setHeight(s.h);
+  fitCanvas();
+}
+
+function fitCanvas() {
+  const host = document.getElementById("canvasHost");
+  const scale = Math.min(
+    host.clientWidth / canvas.width,
+    host.clientHeight / canvas.height
+  );
+  canvas.setZoom(scale);
   canvas.requestRenderAll();
 }
 
-export function applyTextOpacity(val) {
-  const obj = canvas.getActiveObject();
-  if (!obj) return;
-  obj.set("opacity", val);
-  canvas.requestRenderAll();
+// -------- TEXT --------
+export function addText() {
+  const t = new fabric.Textbox("Text", {
+    left: canvas.width / 2,
+    top: canvas.height / 2,
+    originX: "center",
+    originY: "center",
+    fontSize: 48,
+    fill: "#111",
+  });
+  canvas.add(t).setActiveObject(t);
 }
 
-export function applyTextStroke(enabled) {
+// -------- TEXT COLOR --------
+export function setTextColor(color) {
   const obj = canvas.getActiveObject();
-  if (!obj) return;
-
-  if (enabled) {
-    obj.set({
-      stroke: "#000",
-      strokeWidth: 2
-    });
-  } else {
-    obj.set({
-      stroke: null,
-      strokeWidth: 0
-    });
+  if (obj && obj.type === "textbox") {
+    obj.set("fill", color);
+    canvas.requestRenderAll();
   }
-  canvas.requestRenderAll();
 }
 
-/* =====================
-   ANIMATIONS
-===================== */
-export function animateFade() {
-  const obj = canvas.getActiveObject();
-  if (!obj) return;
-
-  obj.set("opacity", 0);
-  canvas.requestRenderAll();
-
-  obj.animate("opacity", 1, {
-    duration: 600,
-    easing: fabric.util.ease.easeOutCubic,
-    onChange: canvas.requestRenderAll.bind(canvas)
-  });
+// -------- PAGES --------
+export function savePage() {
+  pages[currentPage].json = canvas.toJSON();
 }
 
-export function animateSlide(dir = "left") {
-  const obj = canvas.getActiveObject();
-  if (!obj) return;
-
-  const start = dir === "left" ? obj.left - 120 : obj.top - 120;
-  const prop = dir === "left" ? "left" : "top";
-
-  obj.set(prop, start);
-  canvas.requestRenderAll();
-
-  obj.animate(prop, start + 120, {
-    duration: 600,
-    easing: fabric.util.ease.easeOutCubic,
-    onChange: canvas.requestRenderAll.bind(canvas)
-  });
+export function loadPage(i) {
+  savePage();
+  currentPage = i;
+  canvas.clear();
+  if (pages[i].json) {
+    canvas.loadFromJSON(pages[i].json, canvas.renderAll.bind(canvas));
+  }
 }
 
-export function animateScale() {
-  const obj = canvas.getActiveObject();
-  if (!obj) return;
+export function addPage() {
+  savePage();
+  pages.push({ json: null });
+  loadPage(pages.length - 1);
+}
 
-  obj.set({ scaleX: 0.3, scaleY: 0.3 });
-  canvas.requestRenderAll();
-
-  obj.animate("scaleX", 1, {
-    duration: 500,
-    onChange: canvas.requestRenderAll.bind(canvas)
-  });
-  obj.animate("scaleY", 1, {
-    duration: 500,
-    onChange: canvas.requestRenderAll.bind(canvas)
-  });
+// -------- EXPORT FLIPBOOK --------
+export function exportFlipbook({ direction = "horizontal" } = {}) {
+  savePage();
+  const html = `
+  <html>
+  <head>
+    <style>
+      body{margin:0;background:#111;display:flex;justify-content:center}
+      .book{display:flex;flex-direction:${direction === "vertical" ? "column" : "row"}}
+      img{width:600px;height:auto;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+    </style>
+  </head>
+  <body>
+    <div class="book">
+      ${pages.map(p => `<img src="${canvas.toDataURL()}">`).join("")}
+    </div>
+  </body>
+  </html>
+  `;
+  const blob = new Blob([html], { type: "text/html" });
+  window.open(URL.createObjectURL(blob));
 }
