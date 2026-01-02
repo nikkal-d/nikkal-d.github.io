@@ -1,17 +1,18 @@
 // js/ui.js
 import {
-  initCanvas,
+ initEditor,
   addText,
-  addCircle,
-  addLine,
   addImageFromFile,
   addPage,
+  duplicatePage,
   prevPage,
   nextPage,
   zoomIn,
   zoomOut,
   resetZoom,
-  previewFlipbook
+  exportFlipbook,
+  openFlipbookPreview,
+  closeFlipbookPreview
 } from "./core.js";
 
 window.addEventListener("DOMContentLoaded", () => {
