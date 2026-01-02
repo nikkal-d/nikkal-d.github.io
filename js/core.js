@@ -1,5 +1,5 @@
 // core.js
-import { uploadPhotobook } from "./saveToFirebase.js";
+import { uploadPhotobook } from "../saveToFirebase.js";
 
 export let fabricCanvas = null;
 export let pages = [];
