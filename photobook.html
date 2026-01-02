@@ -8,29 +8,21 @@
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
-  <style>
-  /* flipbook modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
-  .modal.open{display:flex}
-  .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
-  .modal-title{font-weight:700}
-  #flipPreviewFrame{flex:1;border:0;background:#000}
-  </style>
+  <!-- Fabric (global) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 </head>
 
 <body class="theme-light">
-  <!-- TOP BAR -->
   <header class="topbar">
     <div class="topbar-left">
       <a class="brand" href="./index.html">Photobook</a>
 
       <nav class="topnav" aria-label="Site navigation">
-        <a href="./index.html">Home</a>
-        <a href="./templates.html">Templates</a>
-        <a href="./projects.html">Projects</a>
-        <a href="./viewer.html">Viewer</a>
-        <a href="./stickers.html">Stickers</a>
+        <a href="./index.html" data-i18n="nav_home">Home</a>
+        <a href="./templates.html" data-i18n="nav_templates">Templates</a>
+        <a href="./projects.html" data-i18n="nav_projects">Projects</a>
+        <a href="./viewer.html" data-i18n="nav_viewer">Viewer</a>
+        <a href="./stickers.html" data-i18n="nav_stickers">Stickers</a>
       </nav>
     </div>
 
@@ -46,9 +38,7 @@
     </div>
   </header>
 
-  <!-- APP LAYOUT -->
   <div class="appShell">
-    <!-- LEFT MINI BAR -->
     <aside class="leftRail" aria-label="Tools">
       <button class="railbtn active" data-panel="pages" title="Pages">📄</button>
       <button class="railbtn" data-panel="text" title="Text">🅰</button>
@@ -58,14 +48,12 @@
       <button class="railbtn" data-panel="layers" title="Layers">📚</button>
     </aside>
 
-    <!-- LEFT PANEL -->
     <section class="leftPanel" id="leftPanel">
       <div class="panelHeader">
         <h3 id="panelTitle">Pages</h3>
         <button class="iconbtn" id="closeLeftPanelBtn" title="Close">✕</button>
       </div>
 
-      <!-- PAGES -->
       <div class="panelBody panelView" data-view="pages">
         <div class="row gap">
           <button class="btn" id="addPageBtn">+ Page</button>
@@ -82,7 +70,6 @@
         <div class="thumbStrip" id="thumbStrip"></div>
       </div>
 
-      <!-- TEXT -->
       <div class="panelBody panelView" data-view="text" hidden>
         <button class="btn" id="addTextBtn">➕ Add Text</button>
 
@@ -101,46 +88,62 @@
           <input class="input" id="fontSizeInput" type="number" min="8" max="180" value="48" />
         </div>
 
+        <div class="row gap">
+          <button class="btn ghost" id="boldBtn">B</button>
+          <button class="btn ghost" id="italicBtn">I</button>
+          <button class="btn ghost" id="underlineBtn">U</button>
+        </div>
+
         <div class="field">
-          <label>Color</label>
-          <input class="input" id="textColorInput" type="color" value="#111111"/>
+          <label>Fill</label>
+          <input class="input" id="textFillInput" type="color" value="#111111"/>
+        </div>
+
+        <div class="field">
+          <label>Stroke</label>
+          <input class="input" id="textStrokeInput" type="color" value="#000000"/>
+        </div>
+
+        <div class="field">
+          <label>Stroke width</label>
+          <input class="input" id="textStrokeWidthInput" type="number" min="0" max="20" value="0"/>
+        </div>
+
+        <div class="field">
+          <label>Opacity</label>
+          <input class="input" id="textOpacityInput" type="range" min="0" max="1" step="0.05" value="1"/>
+        </div>
+
+        <div class="row gap">
+          <button class="btn ghost" id="alignLeftBtn">Left</button>
+          <button class="btn ghost" id="alignCenterBtn">Center</button>
+          <button class="btn ghost" id="alignRightBtn">Right</button>
         </div>
       </div>
 
-      <div class="field">
-  <label>Opacity</label>
-  <input type="range" id="textOpacityInput" min="0" max="1" step="0.05" value="1">
-</div>
-
-<label class="checkbox">
-  <input type="checkbox" id="textStrokeToggle"> Outline
-</label>
-
-<hr>
-
-<div class="row gap">
-  <button class="btn" id="animFadeBtn">Fade</button>
-  <button class="btn" id="animSlideBtn">Slide</button>
-  <button class="btn" id="animScaleBtn">Pop</button>
-</div>
-
-      <!-- IMAGES -->
       <div class="panelBody panelView" data-view="images" hidden>
         <label class="btn">
           Upload Image
           <input type="file" id="imageInput" accept="image/*" hidden />
         </label>
 
-        <p class="hint" style="margin-top:10px;">
-          Tip: Ctrl + wheel για zoom στο canvas.
-        </p>
+        <div class="row gap" style="margin-top:10px;">
+          <button class="btn ghost" id="removeBgBtn">Remove BG</button>
+          <button class="btn ghost" id="cropBtn">Crop</button>
+        </div>
+
+        <p class="hint">Remove BG / Crop: placeholder UI (θα δέσει μετά).</p>
       </div>
 
-      <!-- COLORS -->
       <div class="panelBody panelView" data-view="colors" hidden>
         <div class="field">
           <label>Canvas Background</label>
           <input class="input" id="canvasBgColor" type="color" value="#ffffff" />
+        </div>
+
+        <div class="field">
+          <label>Selected Fill</label>
+          <input class="input" id="objFillColor" type="color" value="#ff0000" />
         </div>
 
         <div class="row gap">
@@ -150,7 +153,6 @@
         </div>
       </div>
 
-      <!-- SHAPES -->
       <div class="panelBody panelView" data-view="shapes" hidden>
         <div class="row gap">
           <button class="btn" id="addRectBtn">Rectangle</button>
@@ -161,13 +163,17 @@
         </div>
       </div>
 
-      <!-- LAYERS (placeholder UI) -->
       <div class="panelBody panelView" data-view="layers" hidden>
-        <p class="hint">Layers θα “δέσουν” στο επόμενο βήμα.</p>
+        <div class="row gap">
+          <button class="btn ghost" id="bringFwdBtn">Bring +</button>
+          <button class="btn ghost" id="sendBackBtn">Send -</button>
+          <button class="btn danger" id="deleteObjBtn">Delete</button>
+        </div>
+
+        <div class="layersList" id="layersList"></div>
       </div>
     </section>
 
-    <!-- CANVAS AREA -->
     <main class="stage">
       <div class="stageBar">
         <div class="stageBar-left">
@@ -189,6 +195,7 @@
             <option value="SQUARE">Square</option>
             <option value="STORY">Story</option>
             <option value="HD">HD</option>
+            <option value="CUSTOM">Custom…</option>
           </select>
 
           <button class="btn" id="toggleExportBtn">Export</button>
@@ -199,15 +206,19 @@
         <div class="canvasFrame" id="canvasFrame">
           <canvas id="canvas"></canvas>
         </div>
+
+        <div class="floatToolbar" id="floatToolbar" hidden>
+          <button class="btn ghost" id="fltOpacityBtn">Opacity</button>
+          <button class="btn ghost" id="fltCropBtn">Crop</button>
+          <button class="btn danger" id="fltDeleteBtn">Delete</button>
+        </div>
       </div>
     </main>
 
-    <!-- RIGHT EXPORT RAIL -->
     <aside class="rightRail" aria-label="Export">
       <button class="railbtn" id="openExportBtn" title="Export">⬆️</button>
     </aside>
 
-    <!-- RIGHT EXPORT PANEL -->
     <section class="rightPanel" id="rightPanel" aria-label="Export panel">
       <div class="panelHeader">
         <h3>Export</h3>
@@ -216,43 +227,46 @@
 
       <div class="panelBody">
         <div class="field">
-          <label>Flip direction</label>
+          <label>Flip animation</label>
           <select class="select" id="flipDirSelect">
-            <option value="horizontal" selected>Horizontal (book)</option>
-            <option value="vertical">Vertical</option>
+            <option value="horizontal" selected>Book (horizontal)</option>
+            <option value="vertical">Vertical flip</option>
           </select>
         </div>
 
         <div class="grid2">
-          <button class="btn" id="exportFlipBtn">Flipbook (HTML)</button>
-          <button class="btn" id="previewFlipBtn">Preview Flipbook</button>
-          <button class="btn" id="exportPngBtn">PNG</button>
-          <button class="btn" id="exportJpgBtn">JPG</button>
+          <button class="btn" id="exportFlipBtn">Export Flipbook</button>
+          <button class="btn ghost" id="previewFlipBtn">Preview</button>
           <button class="btn" id="exportLinkBtn">Copy Link</button>
-          <button class="btn" id="exportCloudBtn">Cloud</button>
+          <button class="btn" id="exportPdfBtn">PDF (βασικό)</button>
         </div>
 
-        <p class="hint" style="margin-top:10px;">
-          Το “Copy Link” είναι προσωρινό (blob URL) και δουλεύει στο ίδιο browser session.
-          Για δημόσιο link θέλει upload σε hosting.
+        <div class="divider"></div>
+
+        <p class="hint" id="exportHint">
+          Το Flipbook export γίνεται σε shareable link (data URL) + Preview modal.
+          Για πραγματικό hosted link θέλει Cloud backend (μετά).
         </p>
       </div>
     </section>
   </div>
 
-  <!-- Flipbook Preview Modal -->
+  <!-- Flipbook preview modal -->
   <div class="modal" id="flipPreviewModal" aria-hidden="true">
     <div class="modal-inner">
       <div class="modal-head">
         <div class="modal-title">Flipbook Preview</div>
-        <button class="btn" id="closeFlipPreview">✕</button>
+        <div class="row gap">
+          <button class="btn ghost" id="flipPrevBtn">← Prev</button>
+          <div class="pill" id="flipPageLbl">1 / 1</div>
+          <button class="btn ghost" id="flipNextBtn">Next →</button>
+          <button class="btn" id="closeFlipPreview">✕</button>
+        </div>
       </div>
       <iframe id="flipPreviewFrame" title="Flipbook preview"></iframe>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script src="./js/sidebar.js"></script>
