@@ -772,26 +772,39 @@ export async function removeBgSelected({ threshold = 235 } = {}) {
 }
 
 // --------------------
-// Crop selected image (simple prompt)
+// Crop selected image (safe version)
 // --------------------
-
 export function cropSelected() {
   if (!fabricCanvas) return;
+
   const obj = fabricCanvas.getActiveObject();
   if (!obj || obj.type !== 'image') {
     alert('Επίλεξε μια εικόνα πρώτα.');
     return;
   }
+
   const w = obj.width || 0;
   const h = obj.height || 0;
-  const cropX = Number(prompt(`cropX (0-${w})`, String(obj.cropX || 0)) ?? obj.cropX || 0);
-  const cropY = Number(prompt(`cropY (0-${h})`, String(obj.cropY || 0)) ?? obj.cropY || 0);
-  const cropW = Number(prompt(`cropW (min 10, max ${w})`, String(obj.width || w)) ?? obj.width || w);
-  const cropH = Number(prompt(`cropH (min 10, max ${h})`, String(obj.height || h)) ?? obj.height || h);
-  obj.set({ cropX: clamp(cropX, 0, w), cropY: clamp(cropY, 0, h) });
-  obj.set({ width: clamp(cropW, 10, w), height: clamp(cropH, 10, h) });
+
+  const ask = (label, def) => {
+    const v = prompt(label, String(def));
+    const n = Number(v);
+    return isNaN(n) ? def : n;
+  };
+
+  const cropX = ask(`cropX (0-${w})`, obj.cropX || 0);
+  const cropY = ask(`cropY (0-${h})`, obj.cropY || 0);
+  const cropW = ask(`cropW (min 10, max ${w})`, w);
+  const cropH = ask(`cropH (min 10, max ${h})`, h);
+
+  obj.set({
+    cropX: clamp(cropX, 0, w),
+    cropY: clamp(cropY, 0, h),
+    width: clamp(cropW, 10, w),
+    height: clamp(cropH, 10, h)
+  });
+
   obj.setCoords();
   fabricCanvas.requestRenderAll();
   saveCurrentPage();
 }
-
