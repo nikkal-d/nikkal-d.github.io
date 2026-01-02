@@ -9,19 +9,17 @@
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
-  <!-- Flipbook preview modal styles (scoped) -->
   <style>
+    /* flipbook modal */
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
     .modal.open{display:flex}
-    .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+    .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
     .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
     .modal-title{font-weight:700}
     #flipPreviewFrame{flex:1;border:0;background:#000}
     .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
     .field input,.field select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}
     .hint{opacity:.8;font-size:12px;line-height:1.35}
-    .divider{height:1px;background:rgba(255,255,255,.12);margin:14px 0}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   </style>
 </head>
 
@@ -64,7 +62,7 @@
       <button class="railbtn" data-panel="layers" title="Layers">📚</button>
     </aside>
 
-    <!-- LEFT PANEL (collapsible) -->
+    <!-- LEFT PANEL -->
     <section class="leftPanel" id="leftPanel">
       <div class="panelHeader">
         <h3 id="panelTitle">Pages</h3>
@@ -107,21 +105,9 @@
           <input class="input" id="fontSizeInput" type="number" min="8" max="180" value="48" />
         </div>
 
-        <div class="row gap">
-          <button class="btn ghost" id="boldBtn">B</button>
-          <button class="btn ghost" id="italicBtn">I</button>
-          <button class="btn ghost" id="underlineBtn">U</button>
-        </div>
-
         <div class="field">
           <label>Color</label>
           <input class="input" id="textColorInput" type="color" value="#111111"/>
-        </div>
-
-        <div class="row gap">
-          <button class="btn ghost" id="alignLeftBtn">Left</button>
-          <button class="btn ghost" id="alignCenterBtn">Center</button>
-          <button class="btn ghost" id="alignRightBtn">Right</button>
         </div>
       </div>
 
@@ -132,55 +118,26 @@
           <input type="file" id="imageInput" accept="image/*" hidden />
         </label>
 
-        <div class="row gap" style="margin-top:10px;">
-          <button class="btn ghost" id="removeBgBtn">Remove BG</button>
-          <button class="btn ghost" id="cropBtn">Crop</button>
-        </div>
-
-        <p class="hint">
-          Remove BG / Crop είναι UI placeholder (θα “δέσουν” μετά).
-        </p>
+        <p class="hint">Οι εικόνες γίνονται export σε PNG/PDF/Flipbook (αν δεν υπάρχει CORS taint).</p>
       </div>
 
       <!-- COLORS -->
       <div class="panelBody panelView" data-view="colors" hidden>
-        <div class="field">
-          <label>Canvas Background</label>
-          <input class="input" id="canvasBgColor" type="color" value="#ffffff" />
-        </div>
-
-        <div class="field">
-          <label>Selected Fill</label>
-          <input class="input" id="objFillColor" type="color" value="#ff0000" />
-        </div>
-
-        <div class="row gap">
-          <button class="btn ghost" data-bg="#ffffff">White</button>
-          <button class="btn ghost" data-bg="#f3f4f6">Gray</button>
-          <button class="btn ghost" data-bg="#111827">Dark</button>
-        </div>
+        <p class="hint">Στο επόμενο βήμα θα δέσουμε πλήρως τα presets.</p>
       </div>
 
       <!-- SHAPES -->
       <div class="panelBody panelView" data-view="shapes" hidden>
         <div class="row gap">
-          <button class="btn" id="addRectBtn">Rectangle</button>
-          <button class="btn" id="addCircleBtn">Circle</button>
-        </div>
-        <div class="row gap" style="margin-top:10px;">
-          <button class="btn ghost" id="addLineBtn">Line</button>
+          <button class="btn" id="addRectBtn" title="Rectangle">▭</button>
+          <button class="btn" id="addCircleBtn" title="Circle">◯</button>
+          <button class="btn" id="addLineBtn" title="Line">／</button>
         </div>
       </div>
 
       <!-- LAYERS -->
       <div class="panelBody panelView" data-view="layers" hidden>
-        <div class="row gap">
-          <button class="btn ghost" id="bringFwdBtn">Bring +</button>
-          <button class="btn ghost" id="sendBackBtn">Send -</button>
-          <button class="btn danger" id="deleteObjBtn">Delete</button>
-        </div>
-
-        <div class="layersList" id="layersList"></div>
+        <p class="hint">Layers panel θα εμπλουτιστεί στο επόμενο βήμα.</p>
       </div>
     </section>
 
@@ -206,9 +163,7 @@
             <option value="SQUARE">Square</option>
             <option value="STORY">Story</option>
             <option value="HD">HD</option>
-            <option value="CUSTOM">Custom…</option>
           </select>
-          <button class="btn ghost" id="customSizeBtn" title="Set custom size">Size</button>
 
           <button class="btn" id="toggleExportBtn">Export</button>
         </div>
@@ -217,13 +172,6 @@
       <div class="canvasHost" id="canvasHost">
         <div class="canvasFrame" id="canvasFrame">
           <canvas id="canvas"></canvas>
-        </div>
-
-        <div class="floatToolbar" id="floatToolbar" hidden>
-          <button class="btn ghost" id="fltEffectsBtn">Effects</button>
-          <button class="btn ghost" id="fltOpacityBtn">Opacity</button>
-          <button class="btn ghost" id="fltCropBtn">Crop</button>
-          <button class="btn danger" id="fltDeleteBtn">Delete</button>
         </div>
       </div>
     </main>
@@ -241,53 +189,42 @@
       </div>
 
       <div class="panelBody">
-        <div class="field">
-          <label>Export Size</label>
-          <select class="select" id="exportSizeSelect">
-            <option value="current" selected>Current page</option>
-            <option value="A4P">A4 Portrait</option>
-            <option value="A4L">A4 Landscape</option>
-            <option value="SQUARE">Square</option>
-            <option value="STORY">Story</option>
-            <option value="HD">HD</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Flip direction</label>
-          <select class="select" id="flipDirectionSelect">
-            <option value="horizontal" selected>Horizontal (book)</option>
-            <option value="vertical">Vertical</option>
-          </select>
-        </div>
-
         <div class="grid2">
           <button class="btn" id="exportPdfBtn">PDF</button>
           <button class="btn" id="exportFlipBtn">Flipbook</button>
           <button class="btn" id="exportPngBtn">PNG</button>
           <button class="btn" id="exportJpgBtn">JPG</button>
           <button class="btn" id="exportLinkBtn">Link</button>
-          <button class="btn" id="exportCloudBtn">Cloud</button>
         </div>
 
-        <div class="divider"></div>
+        <div class="field">
+          <label>Flip orientation</label>
+          <select class="select" id="flipOrientation">
+            <option value="horizontal" selected>Book (horizontal)</option>
+            <option value="vertical">Vertical</option>
+          </select>
+        </div>
 
         <button class="btn ghost" id="previewFlipBtn">Preview Flipbook</button>
-        <p class="hint" id="exportHint"></p>
+
+        <p class="hint">
+          Flipbook: κατεβάζει flipbook.html (μπορείς να το ανεβάσεις σε GitHub Pages για κανονικό share link).
+        </p>
       </div>
     </section>
   </div>
 
-  <!-- Fabric (global) -->
+  <!-- Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Scripts (modules) -->
+  <!-- App scripts -->
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script src="./js/sidebar.js"></script>
 
   <!-- Flipbook preview modal -->
-  <div class="modal" id="flipPreviewModal" role="dialog" aria-modal="true">
+  <div class="modal" id="flipPreviewModal">
     <div class="modal-inner">
       <div class="modal-head">
         <div class="modal-title">Flipbook Preview</div>
