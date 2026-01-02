@@ -1,75 +1,74 @@
-// core.js
-import { uploadPhotobook } from "../saveToFirebase.js";
+// js/core.js
+import { uploadPhotobook } from "./saveToFirebase.js";
 
 export let fabricCanvas = null;
 export let pages = [];
 export let currentPage = 0;
 
-// --------------------
-// INIT
-// --------------------
 export function initCanvas() {
   fabricCanvas = new fabric.Canvas("canvas", {
-    backgroundColor: "#ffffff",
     preserveObjectStacking: true,
+    backgroundColor: "#ffffff"
   });
 
-  pages = [serializeCanvas()];
-  currentPage = 0;
+  addPage(true);
 }
 
-// --------------------
-// PAGE MANAGEMENT
-// --------------------
-function serializeCanvas() {
-  return fabricCanvas.toJSON();
-}
+export function addPage(isFirst = false) {
+  if (!isFirst) saveCurrentPage();
 
-function loadCanvas(data) {
-  fabricCanvas.loadFromJSON(data, () => {
-    fabricCanvas.requestRenderAll();
-  });
-}
-
-export function addPage() {
-  pages[currentPage] = serializeCanvas();
-  pages.push(null);
+  pages.push({ json: null });
   currentPage = pages.length - 1;
+
   fabricCanvas.clear();
-  fabricCanvas.setBackgroundColor("#ffffff", () => {});
+  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.renderAll.bind(fabricCanvas));
+  updatePageInfo();
 }
 
-export function goToPage(index) {
-  if (index < 0 || index >= pages.length) return;
-  pages[currentPage] = serializeCanvas();
+export function saveCurrentPage() {
+  if (!pages[currentPage]) return;
+  pages[currentPage].json = fabricCanvas.toJSON();
+}
+
+export function loadPage(index) {
+  if (!pages[index]) return;
+  saveCurrentPage();
   currentPage = index;
 
   fabricCanvas.clear();
-  if (pages[index]) {
-    loadCanvas(pages[index]);
+  if (pages[index].json) {
+    fabricCanvas.loadFromJSON(pages[index].json, () => {
+      fabricCanvas.renderAll();
+    });
   }
+  updatePageInfo();
 }
 
-// --------------------
-// OBJECTS
-// --------------------
+export function updatePageInfo() {
+  const el = document.getElementById("pageInfo");
+  if (el) el.textContent = `${currentPage + 1} / ${pages.length}`;
+}
+
+/* =========================
+   OBJECTS
+========================= */
+
 export function addText() {
   const t = new fabric.Textbox("Text", {
     left: 200,
     top: 200,
     fontSize: 48,
-    fill: "#111",
+    fill: "#111"
   });
   fabricCanvas.add(t);
-  fabricCanvas.setActiveObject(t);
 }
 
 export function addCircle() {
   const c = new fabric.Circle({
     radius: 60,
-    fill: "#4f46e5",
+    fill: "#3b82f6",
     left: 200,
-    top: 200,
+    top: 200
   });
   fabricCanvas.add(c);
 }
@@ -80,7 +79,7 @@ export function addRect() {
     height: 100,
     fill: "#22c55e",
     left: 200,
-    top: 200,
+    top: 200
   });
   fabricCanvas.add(r);
 }
@@ -90,37 +89,57 @@ export function addImageFromFile(file) {
   reader.onload = () => {
     fabric.Image.fromURL(reader.result, img => {
       img.scaleToWidth(400);
+      img.set({ left: 200, top: 200 });
       fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
     });
   };
   reader.readAsDataURL(file);
 }
 
-// --------------------
-// EXPORT FLIPBOOK (🔥 ΤΟ ΣΗΜΑΝΤΙΚΟ)
-// --------------------
+/* =========================
+   ZOOM (CANVAS)
+========================= */
+
+let zoom = 1;
+
+export function setZoom(z) {
+  zoom = Math.max(0.2, Math.min(3, z));
+  fabricCanvas.setZoom(zoom);
+  fabricCanvas.requestRenderAll();
+
+  const zv = document.getElementById("zoomValue");
+  if (zv) zv.textContent = Math.round(zoom * 100) + "%";
+}
+
+export function zoomIn() { setZoom(zoom + 0.1); }
+export function zoomOut() { setZoom(zoom - 0.1); }
+export function resetZoom() { setZoom(1); }
+
+/* =========================
+   EXPORT FLIPBOOK (FIREBASE)
+========================= */
+
 export async function exportFlipbook() {
-  pages[currentPage] = serializeCanvas();
+  saveCurrentPage();
 
-  const pageImages = [];
+  const images = [];
+  for (const p of pages) {
+    if (!p.json) continue;
 
-  for (let i = 0; i < pages.length; i++) {
+    fabricCanvas.clear();
     await new Promise(res => {
-      fabricCanvas.clear();
-      if (pages[i]) {
-        loadCanvas(pages[i]);
-      }
-      setTimeout(() => {
-        pageImages.push(fabricCanvas.toDataURL({ format: "png" }));
+      fabricCanvas.loadFromJSON(p.json, () => {
+        fabricCanvas.renderAll();
+        images.push(fabricCanvas.toDataURL({ format: "png" }));
         res();
-      }, 100);
+      });
     });
   }
 
-  const docId = await uploadPhotobook(pageImages, {
-    title: "My Photobook",
+  const docId = await uploadPhotobook(images, {
+    title: "My Photobook"
   });
 
-  return docId; // για share link
+  const link = `${location.origin}/viewer.html?id=${docId}`;
+  alert("Flipbook link:\n" + link);
 }
