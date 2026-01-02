@@ -1,0 +1,7 @@
+[
+  {
+    "origin": ["https://nikkal-d.github.io"],
+    "method": ["GET", "POST", "PUT"],
+    "maxAgeSeconds": 3600
+  }
+]
