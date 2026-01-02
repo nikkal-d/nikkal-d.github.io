@@ -1,37 +1,24 @@
 // js/ui.js
 import {
- initEditor,
-  addText,
-  addImageFromFile,
-  addPage,
-  duplicatePage,
-  prevPage,
-  nextPage,
-  zoomIn,
-  zoomOut,
-  resetZoom,
-  exportFlipbook,
-  openFlipbookPreview,
-  closeFlipbookPreview
+  initCanvas, addText, addPage, duplicatePage,
+  nextPage, prevPage, addImageFromFile, exportFlipbook
 } from "./core.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
 
   document.getElementById("addTextBtn").onclick = addText;
-  document.getElementById("addCircleBtn").onclick = addCircle;
-  document.getElementById("addLineBtn").onclick = addLine;
-
-  document.getElementById("imageInput").onchange = e =>
-    addImageFromFile(e.target.files[0]);
-
   document.getElementById("addPageBtn").onclick = addPage;
-  document.getElementById("prevPageBtn").onclick = prevPage;
+  document.getElementById("dupPageBtn").onclick = duplicatePage;
   document.getElementById("nextPageBtn").onclick = nextPage;
+  document.getElementById("prevPageBtn").onclick = prevPage;
 
-  document.getElementById("zoomInBtn").onclick = zoomIn;
-  document.getElementById("zoomOutBtn").onclick = zoomOut;
-  document.getElementById("zoomResetBtn").onclick = resetZoom;
+  document.getElementById("imageInput").onchange = e => {
+    if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+  };
 
-  document.getElementById("previewFlipBtn").onclick = previewFlipbook;
+  document.getElementById("exportFlipBtn").onclick = () => {
+    const pages = exportFlipbook();
+    console.log("Flipbook pages:", pages);
+  };
 });
