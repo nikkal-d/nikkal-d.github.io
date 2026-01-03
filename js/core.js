@@ -1,17 +1,23 @@
 // js/core.js
-import { saveProject, loadProject, uploadImage } from "./saveToFirebase.js";
+import { saveProject, loadProject, uploadImageFile } from "./saveToFirebase.js";
 
 export let canvas;
 export let pages = [];
 export let currentPage = 0;
 export const PROJECT_ID = "demo-project";
 
+/* =========================
+   CANVAS
+========================= */
 export function initCanvas() {
   canvas = new fabric.Canvas("canvas", {
     backgroundColor: "#fff",
     preserveObjectStacking: true
   });
+
   setCanvasSize(2480, 3508); // A4
+  pages = [null];
+  renderPage(0);
 }
 
 export function setCanvasSize(w, h) {
@@ -22,16 +28,22 @@ export function setCanvasSize(w, h) {
 
 export function fitCanvas() {
   const host = document.getElementById("canvasFrame");
+  if (!host) return;
+
   const scale = Math.min(
     host.clientWidth / canvas.width,
     host.clientHeight / canvas.height
   );
+
   canvas.setZoom(scale);
   canvas.renderAll();
 }
 
+/* =========================
+   PAGES
+========================= */
 export function saveCurrentPage() {
-  pages[currentPage] = canvas.toJSON(["selectable"]);
+  pages[currentPage] = canvas.toJSON();
   saveProject(PROJECT_ID, pages);
 }
 
@@ -52,7 +64,8 @@ export function addPage() {
 
 export function duplicatePage() {
   saveCurrentPage();
-  pages.splice(currentPage + 1, 0, JSON.parse(JSON.stringify(pages[currentPage])));
+  const clone = JSON.parse(JSON.stringify(pages[currentPage]));
+  pages.splice(currentPage + 1, 0, clone);
   renderPage(currentPage + 1);
 }
 
@@ -70,6 +83,9 @@ export function prevPage() {
   }
 }
 
+/* =========================
+   OBJECTS
+========================= */
 export function addText() {
   const t = new fabric.Textbox("Text", {
     left: canvas.width / 2,
@@ -79,49 +95,48 @@ export function addText() {
     fontSize: 48,
     fill: "#111"
   });
-  canvas.add(t).setActiveObject(t);
-}
-
-export function addImageFromFile(file) {
-  const reader = new FileReader();
-  reader.onload = async e => {
-    const url = await uploadImage(e.target.result, `${Date.now()}.png`);
-    fabric.Image.fromURL(url, img => {
-      img.set({ left: 200, top: 200 });
-      canvas.add(img);
-    });
-  };
-  reader.readAsDataURL(file);
-}
-
-export function exportFlipbook() {
+  canvas.add(t);
+  canvas.setActiveObject(t);
   saveCurrentPage();
-  const imgs = pages.map(p => {
-    const c = new fabric.StaticCanvas(null, { width: canvas.width, height: canvas.height });
-    if (p) c.loadFromJSON(p, c.renderAll.bind(c));
-    return c.toDataURL();
-  });
-  return imgs;
 }
 
-import { uploadImageFile } from "./saveToFirebase.js";
-
+/* 🔥 ΜΟΝΟ ΕΝΑ addImageFromFile 🔥 */
 export async function addImageFromFile(file) {
   const url = await uploadImageFile(file);
 
-  fabric.Image.fromURL(url, (img) => {
-    img.set({
-      left: canvas.getWidth() / 2,
-      top: canvas.getHeight() / 2,
-      originX: "center",
-      originY: "center",
-      crossOrigin: "anonymous"
-    });
+  fabric.Image.fromURL(
+    url,
+    (img) => {
+      img.set({
+        left: canvas.width / 2,
+        top: canvas.height / 2,
+        originX: "center",
+        originY: "center",
+        crossOrigin: "anonymous"
+      });
 
-    canvas.add(img);
-    canvas.setActiveObject(img);
-    canvas.requestRenderAll();
-    saveCurrentPage();
-  });
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.requestRenderAll();
+      saveCurrentPage();
+    },
+    { crossOrigin: "anonymous" }
+  );
 }
 
+/* =========================
+   EXPORT
+========================= */
+export function exportFlipbook() {
+  saveCurrentPage();
+
+  return pages.map((p) => {
+    const c = new fabric.StaticCanvas(null, {
+      width: canvas.width,
+      height: canvas.height
+    });
+
+    if (p) c.loadFromJSON(p, c.renderAll.bind(c));
+    return c.toDataURL("image/png");
+  });
+}
