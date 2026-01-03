@@ -1,22 +1,31 @@
 // js/saveToFirebase.js
-import { db, storage } from "./firebase-init.js";
-import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const storage = getStorage();
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-export async function uploadImageFile(file) {
-  const path = `images/${Date.now()}_${file.name}`;
-  const imageRef = ref(storage, path);
+import { firebaseConfig } from "../firebase-init.js";
 
-  await uploadBytes(imageRef, file);
-  const url = await getDownloadURL(imageRef);
+/* =========================
+   INIT
+========================= */
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-  return url;
-}
-
-
+/* =========================
+   PROJECT SAVE / LOAD
+========================= */
 export async function saveProject(projectId, pages) {
   await setDoc(doc(db, "projects", projectId), {
     pages,
@@ -29,8 +38,15 @@ export async function loadProject(projectId) {
   return snap.exists() ? snap.data().pages : null;
 }
 
-export async function uploadImage(dataUrl, name) {
-  const r = ref(storage, `images/${name}`);
-  await uploadString(r, dataUrl, "data_url");
-  return await getDownloadURL(r);
+/* =========================
+   IMAGE UPLOAD (Storage)
+========================= */
+export async function uploadImageFile(file) {
+  const imgRef = storageRef(
+    storage,
+    `images/${Date.now()}_${file.name}`
+  );
+
+  await uploadBytes(imgRef, file);
+  return await getDownloadURL(imgRef);
 }
