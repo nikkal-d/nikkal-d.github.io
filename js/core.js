@@ -103,3 +103,25 @@ export function exportFlipbook() {
   });
   return imgs;
 }
+
+import { uploadImageFile } from "./saveToFirebase.js";
+
+export async function addImageFromFile(file) {
+  const url = await uploadImageFile(file);
+
+  fabric.Image.fromURL(url, (img) => {
+    img.set({
+      left: canvas.getWidth() / 2,
+      top: canvas.getHeight() / 2,
+      originX: "center",
+      originY: "center",
+      crossOrigin: "anonymous"
+    });
+
+    canvas.add(img);
+    canvas.setActiveObject(img);
+    canvas.requestRenderAll();
+    saveCurrentPage();
+  });
+}
+
