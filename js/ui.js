@@ -1,6 +1,4 @@
 // js/ui.js
-// UI bindings (no inline onclick) - depends on core.js exports
-
 import {
   initCanvas,
   addText,
@@ -10,81 +8,37 @@ import {
   addLine,
   zoomIn,
   zoomOut,
-  resetZoom,
-  fitToScreen,
-  setCanvasPreset,
-  setCanvasCustom,
+  zoomReset,
   addPage,
-  duplicatePage,
-  deletePage,
-  prevPage,
   nextPage,
-  goToPage,
-  previewFlipbook,
-  closeFlipbookPreview,
-  exportFlipbookLink
+  prevPage,
+  exportFlipbook,
+  setFontFamily,
+  setFontSize,
+  setTextColor
 } from "./core.js";
 
-const $ = (id) => document.getElementById(id);
+window.addEventListener("DOMContentLoaded", () => {
+  initCanvas();
 
-initCanvas();
+  document.getElementById("addTextBtn").onclick = addText;
+  document.getElementById("imageInput").onchange = e => addImageFromFile(e.target.files[0]);
 
-// -------- Pages --------
-$("addPageBtn")?.addEventListener("click", addPage);
-$("dupPageBtn")?.addEventListener("click", duplicatePage);
-$("delPageBtn")?.addEventListener("click", deletePage);
-$("prevPageBtn")?.addEventListener("click", prevPage);
-$("nextPageBtn")?.addEventListener("click", nextPage);
+  document.getElementById("addRectBtn").onclick = addRect;
+  document.getElementById("addCircleBtn").onclick = addCircle;
+  document.getElementById("addLineBtn").onclick = addLine;
 
-// Clicking thumbnails handled in core.refreshThumbnails()
+  document.getElementById("zoomInBtn").onclick = zoomIn;
+  document.getElementById("zoomOutBtn").onclick = zoomOut;
+  document.getElementById("zoomResetBtn").onclick = zoomReset;
 
-// -------- Text --------
-$("addTextBtn")?.addEventListener("click", () => {
-  const fontFamily = $("fontSelect")?.value || "Arial";
-  const fontSize = Number($("fontSizeInput")?.value) || 48;
-  const fill = $("textColorInput")?.value || "#111111";
-  addText({ fontFamily, fontSize, fill });
-});
+  document.getElementById("addPageBtn").onclick = addPage;
+  document.getElementById("nextPageBtn").onclick = nextPage;
+  document.getElementById("prevPageBtn").onclick = prevPage;
 
-// -------- Images --------
-$("imageInput")?.addEventListener("change", (e) => {
-  const f = e.target.files?.[0];
-  if (f) addImageFromFile(f);
-  e.target.value = "";
-});
+  document.getElementById("exportFlipBtn").onclick = exportFlipbook;
 
-// -------- Shapes --------
-$("addRectBtn")?.addEventListener("click", addRect);
-$("addCircleBtn")?.addEventListener("click", addCircle);
-$("addLineBtn")?.addEventListener("click", addLine);
-
-// -------- Zoom / Fit --------
-$("zoomInBtn")?.addEventListener("click", zoomIn);
-$("zoomOutBtn")?.addEventListener("click", zoomOut);
-$("zoomResetBtn")?.addEventListener("click", resetZoom);
-$("fitBtn")?.addEventListener("click", fitToScreen);
-$("zoomFitBtn")?.addEventListener("click", fitToScreen);
-
-// -------- Size preset --------
-$("pageSizeSelect")?.addEventListener("change", (e) => {
-  setCanvasPreset(e.target.value);
-});
-
-// -------- Flipbook preview/export --------
-$("previewFlipBtn")?.addEventListener("click", () => previewFlipbook({ direction: "horizontal" }));
-$("closeFlipPreview")?.addEventListener("click", closeFlipbookPreview);
-$("flipPreviewModal")?.addEventListener("click", (e) => {
-  if (e.target?.id === "flipPreviewModal") closeFlipbookPreview();
-});
-
-$("exportFlipBtn")?.addEventListener("click", async () => {
-  const url = await exportFlipbookLink({ direction: "horizontal" });
-  // open in new tab
-  window.open(url, "_blank", "noopener,noreferrer");
-});
-
-$("exportLinkBtn")?.addEventListener("click", async () => {
-  const url = await exportFlipbookLink({ direction: "horizontal" });
-  await navigator.clipboard?.writeText(url);
-  alert("Link αντιγράφηκε (τοπικό link - δουλεύει μόνο στον ίδιο browser).");
+  document.getElementById("fontSelect").onchange = e => setFontFamily(e.target.value);
+  document.getElementById("fontSizeInput").oninput = e => setFontSize(+e.target.value);
+  document.getElementById("textColorInput").oninput = e => setTextColor(e.target.value);
 });
