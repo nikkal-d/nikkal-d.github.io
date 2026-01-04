@@ -777,7 +777,6 @@ fabric.Image.fromURL(
   { crossOrigin: "anonymous" }
 );
 
-}
 
 // --------------------
 // Crop selected image (simple prompt)
