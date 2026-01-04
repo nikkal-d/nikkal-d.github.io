@@ -174,3 +174,22 @@
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
 .modal-title{font-weight:800}
 #flipPreviewFrame{flex:1;border:0;background:#000}
+
+.canvasHost {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  overflow: auto;
+}
+
+.canvasFrame {
+  background: #e5e7eb;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+canvas {
+  background: white;
+  border-radius: 8px;
+}
