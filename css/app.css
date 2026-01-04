@@ -1,28 +1,38 @@
-.stage {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+
+:root{
+  --bg:#0b0f19;
+  --bg2:#0f172a;
+  --panel:#111827;
+  --panel2:#0b1220;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --line:rgba(255,255,255,.12);
+  --brand:#ef4444;
+  --btn:#1f2937;
+  --btn2:#111827;
+  --danger:#dc2626;
+  --radius:14px;
 }
 
-.canvasHost {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #e5e7eb;
+body.theme-light{
+  --bg:#f6f7fb;
+  --bg2:#ffffff;
+  --panel:#ffffff;
+  --panel2:#ffffff;
+  --text:#0f172a;
+  --muted:#475569;
+  --line:rgba(15,23,42,.12);
+  --btn:#0f172a;
+  --btn2:#ffffff;
 }
 
-.canvasFrame {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,.15);
-  max-width: 90%;
-  max-height: 90%;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg);
+  color:var(--text);
 }
 
-canvas {
-  max-width: 100%;
-  height: auto !important;
-}
+a{color:inherit;text-decoration:none}
