@@ -87,7 +87,7 @@ toggleExportBtn?.addEventListener("click", () => {
 });
 closeRight?.addEventListener("click", closeRightPanel);
 
-// Theme toggle
+// Theme toggle (UI only)
 themeToggleBtn?.addEventListener("click", () => {
   document.body.classList.toggle("theme-light");
   document.body.classList.toggle("theme-dark");
@@ -100,7 +100,7 @@ langToggleBtn?.addEventListener("click", () => {
   langToggleBtn.textContent = isEL ? "EN" : "EL";
 });
 
-// Default state: left panel open on Pages
+// Default open: pages
 const firstBtn = document.querySelector(".leftRail .railbtn[data-panel='pages']");
 if (firstBtn) {
   setActiveRailButton(firstBtn);
