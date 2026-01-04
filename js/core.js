@@ -1,16 +1,22 @@
 // js/core.js
-// Fabric core – stable base (NO localStorage autosave, page-safe)
+// STABLE CORE – canvas size fixed, pages safe, flipbook OK
 
 export let fabricCanvas = null;
 
+const PAGE_WIDTH = 794;   // A4 @ 96dpi
+const PAGE_HEIGHT = 1123;
+
 let pages = [];
 let currentPage = 0;
+let zoom = 1;
 
 // --------------------
 // INIT
 // --------------------
 export function initCanvas() {
   fabricCanvas = new fabric.Canvas("canvas", {
+    width: PAGE_WIDTH,
+    height: PAGE_HEIGHT,
     backgroundColor: "#ffffff",
     preserveObjectStacking: true
   });
@@ -26,12 +32,12 @@ export function initCanvas() {
 // PAGE SYSTEM
 // --------------------
 function serialize() {
-  return fabricCanvas.toJSON(["selectable", "evented"]);
+  return fabricCanvas.toJSON();
 }
 
 function load(json) {
   fabricCanvas.loadFromJSON(json, () => {
-    fabricCanvas.setViewportTransform([1,0,0,1,0,0]);
+    fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     fabricCanvas.renderAll();
   });
 }
@@ -39,7 +45,7 @@ function load(json) {
 export function renderPage(index) {
   if (index < 0 || index >= pages.length) return;
   fabricCanvas.clear();
-  fabricCanvas.backgroundColor = "#ffffff";
+  fabricCanvas.setBackgroundColor("#fff", () => {});
   load(pages[index]);
   currentPage = index;
 }
@@ -50,7 +56,7 @@ export function saveCurrentPage() {
 
 export function addPage() {
   saveCurrentPage();
-  pages.push(pages[currentPage]); // clone page
+  pages.push(JSON.parse(JSON.stringify(pages[currentPage]))); // clone
   currentPage = pages.length - 1;
   renderPage(currentPage);
 }
@@ -65,22 +71,18 @@ export function prevPage() {
   if (currentPage > 0) renderPage(currentPage - 1);
 }
 
-export function getPages() {
-  return pages;
-}
-
 // --------------------
 // TEXT
 // --------------------
 export function addText() {
   const t = new fabric.Textbox("Text", {
-    left: fabricCanvas.width / 2,
-    top: fabricCanvas.height / 2,
+    left: PAGE_WIDTH / 2,
+    top: PAGE_HEIGHT / 2,
     originX: "center",
     originY: "center",
     fontSize: 48,
     fill: "#111",
-    fontFamily: "Inter"
+    fontFamily: "Arial"
   });
 
   fabricCanvas.add(t);
@@ -117,13 +119,14 @@ export function setTextColor(color) {
 // IMAGES
 // --------------------
 export function addImageFromFile(file) {
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
     fabric.Image.fromURL(e.target.result, img => {
       img.scaleToWidth(400);
       img.set({
-        left: fabricCanvas.width / 2,
-        top: fabricCanvas.height / 2,
+        left: PAGE_WIDTH / 2,
+        top: PAGE_HEIGHT / 2,
         originX: "center",
         originY: "center"
       });
@@ -139,44 +142,39 @@ export function addImageFromFile(file) {
 // SHAPES
 // --------------------
 export function addRect() {
-  const r = new fabric.Rect({
+  fabricCanvas.add(new fabric.Rect({
     width: 200,
     height: 120,
-    fill: "#ff0000",
+    fill: "#ff5252",
     left: 200,
     top: 200
-  });
-  fabricCanvas.add(r);
+  }));
   saveCurrentPage();
 }
 
 export function addCircle() {
-  const c = new fabric.Circle({
+  fabricCanvas.add(new fabric.Circle({
     radius: 60,
-    fill: "#00aaee",
-    left: 250,
-    top: 250
-  });
-  fabricCanvas.add(c);
+    fill: "#42a5f5",
+    left: 300,
+    top: 300
+  }));
   saveCurrentPage();
 }
 
 export function addLine() {
-  const l = new fabric.Line([0, 0, 200, 0], {
+  fabricCanvas.add(new fabric.Line([0, 0, 200, 0], {
     stroke: "#000",
     strokeWidth: 4,
-    left: 200,
-    top: 300
-  });
-  fabricCanvas.add(l);
+    left: 250,
+    top: 400
+  }));
   saveCurrentPage();
 }
 
 // --------------------
-// ZOOM (CANVAS, όχι αντικείμενο)
+// ZOOM (CANVAS)
 // --------------------
-let zoom = 1;
-
 export function zoomIn() {
   zoom *= 1.1;
   fabricCanvas.setZoom(zoom);
@@ -190,6 +188,7 @@ export function zoomOut() {
 export function zoomReset() {
   zoom = 1;
   fabricCanvas.setZoom(1);
+  fabricCanvas.setViewportTransform([1,0,0,1,0,0]);
 }
 
 // --------------------
@@ -198,24 +197,22 @@ export function zoomReset() {
 export function exportFlipbook() {
   saveCurrentPage();
 
-  const images = pages.map(p =>
-    fabric.util.enlivenObjects(p.objects, () => {
-      const c = document.createElement("canvas");
-      c.width = fabricCanvas.width;
-      c.height = fabricCanvas.height;
-      const temp = new fabric.StaticCanvas(c);
-      temp.loadFromJSON(p, () => temp.renderAll());
-      return c.toDataURL("image/png");
-    })
-  );
+  const images = pages.map(page => {
+    const c = document.createElement("canvas");
+    c.width = PAGE_WIDTH;
+    c.height = PAGE_HEIGHT;
+    const temp = new fabric.StaticCanvas(c);
+    temp.loadFromJSON(page, () => temp.renderAll());
+    return c.toDataURL("image/png");
+  });
 
   const html = `
   <html>
   <head>
     <style>
       body{margin:0;background:#111;display:flex;justify-content:center}
-      .book{display:flex;gap:20px}
-      img{max-height:90vh}
+      .book{display:flex;gap:20px;padding:20px}
+      img{max-height:90vh;box-shadow:0 10px 30px rgba(0,0,0,.5)}
     </style>
   </head>
   <body>
