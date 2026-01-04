@@ -1,7 +1,11 @@
-// core.js
-// ====== FABRIC CORE ======
+// js/core.js
+// STABLE CORE – canvas size fixed, pages safe, flipbook OK
 
-let fabricCanvas = null;
+export let fabricCanvas = null;
+
+const PAGE_WIDTH = 794;   // A4 @ 96dpi
+const PAGE_HEIGHT = 1123;
+
 let pages = [];
 let currentPage = 0;
 let zoom = 1;
@@ -11,104 +15,60 @@ let zoom = 1;
 // --------------------
 export function initCanvas() {
   fabricCanvas = new fabric.Canvas("canvas", {
+    width: PAGE_WIDTH,
+    height: PAGE_HEIGHT,
     backgroundColor: "#ffffff",
-    preserveObjectStacking: true,
+    preserveObjectStacking: true
   });
 
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
-
-  pages = [serializePage()];
+  pages = [serialize()];
   currentPage = 0;
-  renderPage(0);
 
+  renderPage(0);
   console.log("✅ Canvas initialized");
 }
 
 // --------------------
-// CANVAS SIZE
+// PAGE SYSTEM
 // --------------------
-function resizeCanvas() {
-  const frame = document.getElementById("canvasFrame");
-  if (!frame || !fabricCanvas) return;
-
-  const maxW = 900;
-  const maxH = 1200;
-
-  const w = Math.min(maxW, frame.clientWidth - 40);
-  const h = Math.min(maxH, frame.clientHeight - 40);
-
-  fabricCanvas.setWidth(w);
-  fabricCanvas.setHeight(h);
-  fabricCanvas.calcOffset();
-  fabricCanvas.renderAll();
+function serialize() {
+  return fabricCanvas.toJSON();
 }
 
-// --------------------
-// ZOOM
-// --------------------
-export function zoomIn() {
-  setZoom(zoom + 0.1);
-}
-export function zoomOut() {
-  setZoom(Math.max(0.2, zoom - 0.1));
-}
-export function zoomReset() {
-  setZoom(1);
+function load(json) {
+  fabricCanvas.loadFromJSON(json, () => {
+    fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    fabricCanvas.renderAll();
+  });
 }
 
-function setZoom(z) {
-  zoom = z;
-  fabricCanvas.setZoom(zoom);
-  fabricCanvas.requestRenderAll();
-
-  const label = document.getElementById("zoomValue");
-  if (label) label.textContent = Math.round(zoom * 100) + "%";
+export function renderPage(index) {
+  if (index < 0 || index >= pages.length) return;
+  fabricCanvas.clear();
+  fabricCanvas.setBackgroundColor("#fff", () => {});
+  load(pages[index]);
+  currentPage = index;
 }
 
-// --------------------
-// PAGES
-// --------------------
+export function saveCurrentPage() {
+  pages[currentPage] = serialize();
+}
+
 export function addPage() {
-  pages[currentPage] = serializePage();
-  pages.push(emptyPage());
+  saveCurrentPage();
+  pages.push(JSON.parse(JSON.stringify(pages[currentPage]))); // clone
   currentPage = pages.length - 1;
   renderPage(currentPage);
 }
 
 export function nextPage() {
-  if (currentPage >= pages.length - 1) return;
-  pages[currentPage] = serializePage();
-  currentPage++;
-  renderPage(currentPage);
+  saveCurrentPage();
+  if (currentPage < pages.length - 1) renderPage(currentPage + 1);
 }
 
 export function prevPage() {
-  if (currentPage <= 0) return;
-  pages[currentPage] = serializePage();
-  currentPage--;
-  renderPage(currentPage);
-}
-
-function renderPage(i) {
-  fabricCanvas.clear();
-  fabricCanvas.loadFromJSON(pages[i], () => {
-    fabricCanvas.renderAll();
-  });
-
-  const info = document.getElementById("pageInfo");
-  if (info) info.textContent = `${i + 1} / ${pages.length}`;
-}
-
-function serializePage() {
-  return fabricCanvas.toJSON();
-}
-function emptyPage() {
-  return {
-    version: "5.3.0",
-    objects: [],
-    background: "#ffffff",
-  };
+  saveCurrentPage();
+  if (currentPage > 0) renderPage(currentPage - 1);
 }
 
 // --------------------
@@ -116,77 +76,152 @@ function emptyPage() {
 // --------------------
 export function addText() {
   const t = new fabric.Textbox("Text", {
-    left: fabricCanvas.width / 2,
-    top: fabricCanvas.height / 2,
+    left: PAGE_WIDTH / 2,
+    top: PAGE_HEIGHT / 2,
     originX: "center",
     originY: "center",
     fontSize: 48,
     fill: "#111",
+    fontFamily: "Arial"
   });
 
   fabricCanvas.add(t);
   fabricCanvas.setActiveObject(t);
+  fabricCanvas.renderAll();
+  saveCurrentPage();
 }
 
-// --------------------
-// SHAPES
-// --------------------
-export function addRect() {
-  fabricCanvas.add(
-    new fabric.Rect({
-      left: 100,
-      top: 100,
-      width: 120,
-      height: 80,
-      fill: "#4f46e5",
-    })
-  );
+export function setFontFamily(font) {
+  const o = fabricCanvas.getActiveObject();
+  if (!o || o.type !== "textbox") return;
+  o.set("fontFamily", font);
+  fabricCanvas.renderAll();
+  saveCurrentPage();
 }
 
-export function addCircle() {
-  fabricCanvas.add(
-    new fabric.Circle({
-      left: 120,
-      top: 120,
-      radius: 50,
-      fill: "#16a34a",
-    })
-  );
+export function setFontSize(size) {
+  const o = fabricCanvas.getActiveObject();
+  if (!o || o.type !== "textbox") return;
+  o.set("fontSize", size);
+  fabricCanvas.renderAll();
+  saveCurrentPage();
 }
 
-export function addLine() {
-  fabricCanvas.add(
-    new fabric.Line([50, 50, 200, 50], {
-      stroke: "#000",
-      strokeWidth: 3,
-    })
-  );
+export function setTextColor(color) {
+  const o = fabricCanvas.getActiveObject();
+  if (!o) return;
+  o.set("fill", color);
+  fabricCanvas.renderAll();
+  saveCurrentPage();
 }
 
 // --------------------
 // IMAGES
 // --------------------
 export function addImageFromFile(file) {
+  if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, (img) => {
-      img.scaleToWidth(300);
+  reader.onload = e => {
+    fabric.Image.fromURL(e.target.result, img => {
+      img.scaleToWidth(400);
       img.set({
-        left: fabricCanvas.width / 2,
-        top: fabricCanvas.height / 2,
+        left: PAGE_WIDTH / 2,
+        top: PAGE_HEIGHT / 2,
         originX: "center",
-        originY: "center",
+        originY: "center"
       });
       fabricCanvas.add(img);
+      fabricCanvas.renderAll();
+      saveCurrentPage();
     });
   };
   reader.readAsDataURL(file);
 }
 
 // --------------------
-// EXPORT FLIPBOOK (basic)
+// SHAPES
+// --------------------
+export function addRect() {
+  fabricCanvas.add(new fabric.Rect({
+    width: 200,
+    height: 120,
+    fill: "#ff5252",
+    left: 200,
+    top: 200
+  }));
+  saveCurrentPage();
+}
+
+export function addCircle() {
+  fabricCanvas.add(new fabric.Circle({
+    radius: 60,
+    fill: "#42a5f5",
+    left: 300,
+    top: 300
+  }));
+  saveCurrentPage();
+}
+
+export function addLine() {
+  fabricCanvas.add(new fabric.Line([0, 0, 200, 0], {
+    stroke: "#000",
+    strokeWidth: 4,
+    left: 250,
+    top: 400
+  }));
+  saveCurrentPage();
+}
+
+// --------------------
+// ZOOM (CANVAS)
+// --------------------
+export function zoomIn() {
+  zoom *= 1.1;
+  fabricCanvas.setZoom(zoom);
+}
+
+export function zoomOut() {
+  zoom /= 1.1;
+  fabricCanvas.setZoom(zoom);
+}
+
+export function zoomReset() {
+  zoom = 1;
+  fabricCanvas.setZoom(1);
+  fabricCanvas.setViewportTransform([1,0,0,1,0,0]);
+}
+
+// --------------------
+// FLIPBOOK EXPORT (ALL PAGES)
 // --------------------
 export function exportFlipbook() {
-  pages[currentPage] = serializePage();
-  alert("Flipbook export OK (base).");
+  saveCurrentPage();
+
+  const images = pages.map(page => {
+    const c = document.createElement("canvas");
+    c.width = PAGE_WIDTH;
+    c.height = PAGE_HEIGHT;
+    const temp = new fabric.StaticCanvas(c);
+    temp.loadFromJSON(page, () => temp.renderAll());
+    return c.toDataURL("image/png");
+  });
+
+  const html = `
+  <html>
+  <head>
+    <style>
+      body{margin:0;background:#111;display:flex;justify-content:center}
+      .book{display:flex;gap:20px;padding:20px}
+      img{max-height:90vh;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+    </style>
+  </head>
+  <body>
+    <div class="book">
+      ${images.map(i => `<img src="${i}">`).join("")}
+    </div>
+  </body>
+  </html>`;
+
+  const w = window.open();
+  w.document.write(html);
 }
