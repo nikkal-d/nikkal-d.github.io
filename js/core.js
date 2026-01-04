@@ -756,19 +756,27 @@ export async function removeBgSelected({ threshold = 235 } = {}) {
     const left = obj.left, top = obj.top, angle = obj.angle;
     const sx = obj.scaleX, sy = obj.scaleY;
     const ox = obj.originX, oy = obj.originY;
+fabric.Image.fromURL(
+  out,
+  (img) => {
+    img.set({
+      left,
+      top,
+      angle,
+      scaleX: sx,
+      scaleY: sy,
+      originX: ox,
+      originY: oy
+    });
+    fabricCanvas.remove(obj);
+    fabricCanvas.add(img);
+    fabricCanvas.setActiveObject(img);
+    fabricCanvas.requestRenderAll();
+    saveCurrentPage();
+  },
+  { crossOrigin: "anonymous" }
+);
 
-    fabric.Image.fromURL(out, (img) => {
-      img.set({ left, top, angle, scaleX: sx, scaleY: sy, originX: ox, originY: oy });
-      fabricCanvas.remove(obj);
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.requestRenderAll();
-      saveCurrentPage();
-    }, { crossOrigin: 'anonymous' });
-  } catch (e) {
-    console.error(e);
-    alert('Remove BG απέτυχε (πιθανό CORS/tainted canvas).');
-  }
 }
 
 // --------------------
