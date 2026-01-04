@@ -1,47 +1,25 @@
-// ui.js
 import {
-  initCanvas,
-  addText,
-  addRect,
-  addCircle,
-  addLine,
-  addImageFromFile,
-  addPage,
-  nextPage,
-  prevPage,
-  zoomIn,
-  zoomOut,
-  zoomReset,
-  exportFlipbook,
+  initCanvas, addText, addRect, addCircle,
+  addImageFromFile, zoomIn, zoomOut,
+  addPage, duplicatePage, prevPage, nextPage,
+  exportFlipbook
 } from "./core.js";
 
-window.addEventListener("DOMContentLoaded", () => {
-  initCanvas();
+initCanvas();
 
-  bind("addTextBtn", addText);
-  bind("addRectBtn", addRect);
-  bind("addCircleBtn", addCircle);
-  bind("addLineBtn", addLine);
+document.getElementById("addTextBtn").onclick = addText;
+document.getElementById("addRectBtn").onclick = addRect;
+document.getElementById("addCircleBtn").onclick = addCircle;
 
-  bind("addPageBtn", addPage);
-  bind("nextPageBtn", nextPage);
-  bind("prevPageBtn", prevPage);
+document.getElementById("imageInput").onchange =
+  e => addImageFromFile(e.target.files[0]);
 
-  bind("zoomInBtn", zoomIn);
-  bind("zoomOutBtn", zoomOut);
-  bind("zoomResetBtn", zoomReset);
+document.getElementById("zoomInBtn").onclick = zoomIn;
+document.getElementById("zoomOutBtn").onclick = zoomOut;
 
-  bind("exportFlipBtn", exportFlipbook);
+document.getElementById("addPageBtn").onclick = addPage;
+document.getElementById("dupPageBtn").onclick = duplicatePage;
+document.getElementById("prevPageBtn").onclick = prevPage;
+document.getElementById("nextPageBtn").onclick = nextPage;
 
-  const imgInput = document.getElementById("imageInput");
-  if (imgInput) {
-    imgInput.onchange = (e) => {
-      if (e.target.files[0]) addImageFromFile(e.target.files[0]);
-    };
-  }
-});
-
-function bind(id, fn) {
-  const el = document.getElementById(id);
-  if (el) el.onclick = fn;
-}
+document.getElementById("exportFlipBtn").onclick = exportFlipbook;
