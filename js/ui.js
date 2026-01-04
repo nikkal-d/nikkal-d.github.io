@@ -37,8 +37,19 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("prevPageBtn").onclick = prevPage;
 
   document.getElementById("exportFlipBtn").onclick = exportFlipbook;
+const fontSelect = document.getElementById("fontSelect");
+if (fontSelect) {
+  fontSelect.onchange = e => setFontFamily(e.target.value);
+}
 
-  document.getElementById("fontSelect").onchange = e => setFontFamily(e.target.value);
-  document.getElementById("fontSizeInput").oninput = e => setFontSize(+e.target.value);
-  document.getElementById("textColorInput").oninput = e => setTextColor(e.target.value);
+const fontSizeInput = document.getElementById("fontSizeInput");
+if (fontSizeInput) {
+  fontSizeInput.oninput = e => setFontSize(+e.target.value);
+}
+
+const textColorInput = document.getElementById("textColorInput");
+if (textColorInput) {
+  textColorInput.oninput = e => setTextColor(e.target.value);
+}
+
 });
