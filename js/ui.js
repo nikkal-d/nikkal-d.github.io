@@ -1,55 +1,47 @@
-// js/ui.js
+// ui.js
 import {
   initCanvas,
   addText,
-  addImageFromFile,
   addRect,
   addCircle,
   addLine,
-  zoomIn,
-  zoomOut,
-  zoomReset,
+  addImageFromFile,
   addPage,
   nextPage,
   prevPage,
+  zoomIn,
+  zoomOut,
+  zoomReset,
   exportFlipbook,
-  setFontFamily,
-  setFontSize,
-  setTextColor
 } from "./core.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
 
-  document.getElementById("addTextBtn").onclick = addText;
-  document.getElementById("imageInput").onchange = e => addImageFromFile(e.target.files[0]);
+  bind("addTextBtn", addText);
+  bind("addRectBtn", addRect);
+  bind("addCircleBtn", addCircle);
+  bind("addLineBtn", addLine);
 
-  document.getElementById("addRectBtn").onclick = addRect;
-  document.getElementById("addCircleBtn").onclick = addCircle;
-  document.getElementById("addLineBtn").onclick = addLine;
+  bind("addPageBtn", addPage);
+  bind("nextPageBtn", nextPage);
+  bind("prevPageBtn", prevPage);
 
-  document.getElementById("zoomInBtn").onclick = zoomIn;
-  document.getElementById("zoomOutBtn").onclick = zoomOut;
-  document.getElementById("zoomResetBtn").onclick = zoomReset;
+  bind("zoomInBtn", zoomIn);
+  bind("zoomOutBtn", zoomOut);
+  bind("zoomResetBtn", zoomReset);
 
-  document.getElementById("addPageBtn").onclick = addPage;
-  document.getElementById("nextPageBtn").onclick = nextPage;
-  document.getElementById("prevPageBtn").onclick = prevPage;
+  bind("exportFlipBtn", exportFlipbook);
 
-  document.getElementById("exportFlipBtn").onclick = exportFlipbook;
-const fontSelect = document.getElementById("fontSelect");
-if (fontSelect) {
-  fontSelect.onchange = e => setFontFamily(e.target.value);
-}
-
-const fontSizeInput = document.getElementById("fontSizeInput");
-if (fontSizeInput) {
-  fontSizeInput.oninput = e => setFontSize(+e.target.value);
-}
-
-const textColorInput = document.getElementById("textColorInput");
-if (textColorInput) {
-  textColorInput.oninput = e => setTextColor(e.target.value);
-}
-
+  const imgInput = document.getElementById("imageInput");
+  if (imgInput) {
+    imgInput.onchange = (e) => {
+      if (e.target.files[0]) addImageFromFile(e.target.files[0]);
+    };
+  }
 });
+
+function bind(id, fn) {
+  const el = document.getElementById(id);
+  if (el) el.onclick = fn;
+}
