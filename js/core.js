@@ -734,6 +734,7 @@ export async function removeBgSelected({ threshold = 235 } = {}) {
   try {
     const w = el.naturalWidth || el.width;
     const h = el.naturalHeight || el.height;
+
     const c = document.createElement('canvas');
     c.width = w;
     c.height = h;
@@ -742,41 +743,52 @@ export async function removeBgSelected({ threshold = 235 } = {}) {
 
     const imgData = ctx.getImageData(0, 0, w, h);
     const d = imgData.data;
+
     for (let i = 0; i < d.length; i += 4) {
-      const r = d[i], g = d[i+1], b = d[i+2];
-      // remove near-white pixels
+      const r = d[i], g = d[i + 1], b = d[i + 2];
       if (r >= threshold && g >= threshold && b >= threshold) {
-        d[i+3] = 0;
+        d[i + 3] = 0;
       }
     }
+
     ctx.putImageData(imgData, 0, 0);
     const out = c.toDataURL('image/png');
 
-    // replace image while keeping transform
-    const left = obj.left, top = obj.top, angle = obj.angle;
-    const sx = obj.scaleX, sy = obj.scaleY;
-    const ox = obj.originX, oy = obj.originY;
-fabric.Image.fromURL(
-  out,
-  (img) => {
-    img.set({
-      left,
-      top,
-      angle,
-      scaleX: sx,
-      scaleY: sy,
-      originX: ox,
-      originY: oy
-    });
-    fabricCanvas.remove(obj);
-    fabricCanvas.add(img);
-    fabricCanvas.setActiveObject(img);
-    fabricCanvas.requestRenderAll();
-    saveCurrentPage();
-  },
-  { crossOrigin: "anonymous" }
-);
+    const left = obj.left;
+    const top = obj.top;
+    const angle = obj.angle;
+    const sx = obj.scaleX;
+    const sy = obj.scaleY;
+    const ox = obj.originX;
+    const oy = obj.originY;
 
+    fabric.Image.fromURL(
+      out,
+      (img) => {
+        img.set({
+          left,
+          top,
+          angle,
+          scaleX: sx,
+          scaleY: sy,
+          originX: ox,
+          originY: oy
+        });
+
+        fabricCanvas.remove(obj);
+        fabricCanvas.add(img);
+        fabricCanvas.setActiveObject(img);
+        fabricCanvas.requestRenderAll();
+        saveCurrentPage();
+      },
+      { crossOrigin: 'anonymous' }
+    );
+
+  } catch (e) {
+    console.error(e);
+    alert('Remove BG απέτυχε');
+  }
+}
 
 // --------------------
 // Crop selected image (simple prompt)
