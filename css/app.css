@@ -1,38 +1,118 @@
-
-:root{
-  --bg:#0b0f19;
-  --bg2:#0f172a;
-  --panel:#111827;
-  --panel2:#0b1220;
-  --text:#e5e7eb;
-  --muted:#9ca3af;
-  --line:rgba(255,255,255,.12);
-  --brand:#ef4444;
-  --btn:#1f2937;
-  --btn2:#111827;
-  --danger:#dc2626;
-  --radius:14px;
+* {
+  box-sizing: border-box;
 }
 
-body.theme-light{
-  --bg:#f6f7fb;
-  --bg2:#ffffff;
-  --panel:#ffffff;
-  --panel2:#ffffff;
-  --text:#0f172a;
-  --muted:#475569;
-  --line:rgba(15,23,42,.12);
-  --btn:#0f172a;
-  --btn2:#ffffff;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background:var(--bg);
-  color:var(--text);
+/* THEME */
+body.theme-light {
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+}
+body.theme-dark {
+  --bg: #0f172a;
+  --panel: #020617;
+  --border: #1e293b;
+  --text: #e5e7eb;
 }
 
-a{color:inherit;text-decoration:none}
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* TOP BAR */
+.topbar {
+  height: 56px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+/* APP SHELL */
+.appShell {
+  display: flex;
+  height: calc(100vh - 56px);
+  width: 100vw;
+}
+
+/* LEFT MINI BAR */
+.leftRail {
+  width: 56px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 8px;
+}
+
+/* LEFT PANEL */
+.leftPanel {
+  width: 300px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+/* CANVAS STAGE */
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* STAGE BAR */
+.stageBar {
+  height: 48px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+/* RIGHT MINI BAR */
+.rightRail {
+  width: 56px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* RIGHT PANEL */
+.rightPanel {
+  width: 320px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: none;
+}
+.rightPanel.open {
+  display: flex;
+  flex-direction: column;
+}
+
+/* BUTTONS */
+button {
+  cursor: pointer;
+}
