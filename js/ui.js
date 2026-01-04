@@ -1,5 +1,5 @@
 // js/ui.js
-// UI bindings (no inline onclick) - depends on core.js exports
+// Wires UI controls to core functions (safe: no null crashes)
 
 import {
   initCanvas,
@@ -8,83 +8,122 @@ import {
   addRect,
   addCircle,
   addLine,
+  setPageSize,
+  setCanvasBackground,
+  setZoom,
   zoomIn,
   zoomOut,
-  resetZoom,
   fitToScreen,
-  setCanvasPreset,
-  setCanvasCustom,
+  resetZoom,
+  nextPage,
+  prevPage,
   addPage,
   duplicatePage,
   deletePage,
-  prevPage,
-  nextPage,
   goToPage,
+  refreshThumbnails,
+  refreshLayers,
+  setActiveFontFamily,
+  setActiveFontSize,
+  setActiveFill,
+  setActiveStroke,
+  setActiveOpacity,
+  cropSelected,
+  removeBgSelected,
+  exportFlipbook,
+  exportFlipbookLink,
   previewFlipbook,
   closeFlipbookPreview,
-  exportFlipbookLink
+  exportPrintablePDF,
 } from "./core.js";
 
 const $ = (id) => document.getElementById(id);
 
-initCanvas();
+function on(id, evt, fn){
+  const el = $(id);
+  if (!el) return;
+  el.addEventListener(evt, fn);
+}
 
-// -------- Pages --------
-$("addPageBtn")?.addEventListener("click", addPage);
-$("dupPageBtn")?.addEventListener("click", duplicatePage);
-$("delPageBtn")?.addEventListener("click", deletePage);
-$("prevPageBtn")?.addEventListener("click", prevPage);
-$("nextPageBtn")?.addEventListener("click", nextPage);
+window.addEventListener("DOMContentLoaded", () => {
+  initCanvas();
 
-// Clicking thumbnails handled in core.refreshThumbnails()
+  // Pages
+  on("addPageBtn", "click", () => addPage());
+  on("dupPageBtn", "click", () => duplicatePage());
+  on("delPageBtn", "click", () => deletePage());
+  on("nextPageBtn", "click", () => nextPage());
+  on("prevPageBtn", "click", () => prevPage());
 
-// -------- Text --------
-$("addTextBtn")?.addEventListener("click", () => {
-  const fontFamily = $("fontSelect")?.value || "Arial";
-  const fontSize = Number($("fontSizeInput")?.value) || 48;
-  const fill = $("textColorInput")?.value || "#111111";
-  addText({ fontFamily, fontSize, fill });
-});
+  // Text
+  on("addTextBtn", "click", () => addText("Text"));
+  on("fontSelect", "change", (e) => setActiveFontFamily(e.target.value));
+  on("fontSizeInput", "input", (e) => setActiveFontSize(e.target.value));
+  on("textColorInput", "input", (e) => setActiveFill(e.target.value));
 
-// -------- Images --------
-$("imageInput")?.addEventListener("change", (e) => {
-  const f = e.target.files?.[0];
-  if (f) addImageFromFile(f);
-  e.target.value = "";
-});
+  // extra text stroke + opacity (if controls exist)
+  on("textStrokeInput", "input", (e) => setActiveStroke(e.target.value));
+  on("opacityInput", "input", (e) => setActiveOpacity(Number(e.target.value)/100));
 
-// -------- Shapes --------
-$("addRectBtn")?.addEventListener("click", addRect);
-$("addCircleBtn")?.addEventListener("click", addCircle);
-$("addLineBtn")?.addEventListener("click", addLine);
+  // Images
+  const imgInput = $("imageInput");
+  if (imgInput){
+    imgInput.addEventListener("change", (e) => {
+      const f = e.target.files?.[0];
+      if (f) addImageFromFile(f);
+      imgInput.value = "";
+    });
+  }
 
-// -------- Zoom / Fit --------
-$("zoomInBtn")?.addEventListener("click", zoomIn);
-$("zoomOutBtn")?.addEventListener("click", zoomOut);
-$("zoomResetBtn")?.addEventListener("click", resetZoom);
-$("fitBtn")?.addEventListener("click", fitToScreen);
-$("zoomFitBtn")?.addEventListener("click", fitToScreen);
+  on("removeBgBtn", "click", () => removeBgSelected());
+  on("cropBtn", "click", () => cropSelected());
 
-// -------- Size preset --------
-$("pageSizeSelect")?.addEventListener("change", (e) => {
-  setCanvasPreset(e.target.value);
-});
+  // Colors (canvas bg)
+  on("canvasBgColor", "input", (e) => setCanvasBackground(e.target.value));
+  document.querySelectorAll("[data-bg]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const c = btn.getAttribute("data-bg");
+      if (c) setCanvasBackground(c);
+      const picker = $("canvasBgColor");
+      if (picker) picker.value = c;
+    });
+  });
 
-// -------- Flipbook preview/export --------
-$("previewFlipBtn")?.addEventListener("click", () => previewFlipbook({ direction: "horizontal" }));
-$("closeFlipPreview")?.addEventListener("click", closeFlipbookPreview);
-$("flipPreviewModal")?.addEventListener("click", (e) => {
-  if (e.target?.id === "flipPreviewModal") closeFlipbookPreview();
-});
+  // Shapes
+  on("addRectBtn", "click", () => addRect());
+  on("addCircleBtn", "click", () => addCircle());
+  on("addLineBtn", "click", () => addLine());
 
-$("exportFlipBtn")?.addEventListener("click", async () => {
-  const url = await exportFlipbookLink({ direction: "horizontal" });
-  // open in new tab
-  window.open(url, "_blank", "noopener,noreferrer");
-});
+  // Zoom (canvas zoom)
+  on("zoomInBtn", "click", () => zoomIn());
+  on("zoomOutBtn", "click", () => zoomOut());
+  on("zoomResetBtn", "click", () => resetZoom());
+  on("zoomFitBtn", "click", () => fitToScreen());
+  on("fitBtn", "click", () => fitToScreen());
 
-$("exportLinkBtn")?.addEventListener("click", async () => {
-  const url = await exportFlipbookLink({ direction: "horizontal" });
-  await navigator.clipboard?.writeText(url);
-  alert("Link αντιγράφηκε (τοπικό link - δουλεύει μόνο στον ίδιο browser).");
+  // Page size
+  on("pageSizeSelect", "change", (e) => setPageSize(e.target.value));
+
+  // Export
+  on("exportFlipBtn", "click", async () => exportFlipbook());
+  on("exportPdfBtn", "click", async () => exportPrintablePDF());
+  on("previewFlipBtn", "click", async () => previewFlipbook());
+  on("closeFlipPreview", "click", () => closeFlipbookPreview());
+
+  on("exportLinkBtn", "click", async () => {
+    const url = await exportFlipbookLink();
+    try{
+      await navigator.clipboard.writeText(url);
+      alert("Link copied (temporary blob link).");
+    }catch(_e){
+      prompt("Copy this link:", url);
+    }
+  });
+
+  // Keep UI lists fresh (when user clicks tabs etc)
+  // (core already refreshes on object/page changes, but safe)
+  setInterval(() => {
+    refreshLayers();
+    refreshThumbnails();
+  }, 1500);
 });
