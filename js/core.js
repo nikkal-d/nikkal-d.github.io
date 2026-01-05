@@ -1,6 +1,6 @@
 // js/core.js
 // Core engine: Fabric canvas + pages + zoom(viewport) + export flipbook + draft (quota-safe)
-import { saveProjectToFirebase, loadProjectFromFirebase, ensureFirebaseAuth } from "./firebase-store.js";
+
 export let fabricCanvas = null;
 
 const DRAFT_KEY = "photobook_draft_v2"; // quota-safe (no thumbnails/dataURLs)
