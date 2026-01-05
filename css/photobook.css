@@ -137,15 +137,21 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
 
 
+.canvas-container {
+  /* Αντί για scale, χρησιμοποιούμε zoom που είναι πιο φιλικό για τον καμβά */
+  zoom: 0.5 !important; 
+  margin: 0 auto !important; /* Κεντράρισμα */
+  position: relative !important;
+  top: 0 !important;
+}
+
+/* Εξασφαλίζουμε ότι το πλαίσιο δεν σπρώχνει τον καμβά μακριά */
 .canvasFrame {
-  display: inline-flex !important; /* Αναγκάζει το πλαίσιο να κλείσει γύρω από το περιεχόμενο */
-  align-items: center;
-  justify-content: center;
-  padding: 0 !important;   /* Αφαιρούμε τυχόν εσωτερικά κενά */
-  margin: auto;
-  border: 2px solid #ccc;  /* Ένα λεπτό περίγραμμα για να ξέρουμε πού τελειώνει */
-  background: white;       /* Το χρώμα του πλαισίου */
-  overflow: visible !important; /* Επιτρέπει στον καμβά να φαίνεται αν είναι μεγαλύτερος */
+  display: block !important;
+  text-align: center;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 200px;
 }
 
 /* Εξασφαλίζουμε ότι ο host επιτρέπει στο frame να κεντραριστεί */
@@ -156,11 +162,6 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   min-height: 500px; /* Ή όσο ύψος θέλεις */
 }
 
-/* Εδώ είναι το μυστικό για να μικρύνει ο καμβάς της Fabric */
-.canvas-container {
-  transform: scale(0.6); /* Δοκίμασε 0.5 ή 0.6 για να μικρύνει οπτικά */
-  transform-origin: center;
-}
 
 
 .canvas-container canvas {
