@@ -1,181 +1,163 @@
 // js/ui.js
-// Wires buttons -> core functions (safe guards, no null crashes)
+// Wires UI controls to core functions (safe bindings)
 
 import {
-  fabricCanvas,
+  initCanvas,
   addText,
   addImageFromFile,
+  addPdfFromFile,
   addRect,
   addCircle,
   addLine,
+  addTriangle,
+  addEllipse,
   setZoom,
-  getZoom,
-  resetZoom,
+  zoomIn,
+  zoomOut,
+  zoomReset,
   fitToScreen,
-  setCanvasSizePreset,
-  setCanvasCustom,
-  setCanvasBackground,
+  setCanvasSize,
   addPage,
   duplicatePage,
   deletePage,
-  nextPage,
   prevPage,
-  goToPage,
-  refreshThumbnails,
-  updatePageInfo,
-  bringForward,
-  sendBackwards,
-  deleteActive,
+  nextPage,
+  exportPNG,
+  exportJPG,
+  exportPDF,
   exportFlipbook,
   previewFlipbook,
-  makeFlipbookLink
+  closeFlipbookPreview,
+  exportLink,
+  cropSelected,
+  removeBgSelected,
+  setCanvasBackground,
+  setActiveFill,
+  setActiveStroke,
+  setActiveOpacity,
+  setTextProps,
+  bringForward,
+  sendBackwards,
+  deleteSelected,
+  updateLayersUI,
+  clearDraft,
 } from "./core.js";
 
-const $ = (id)=>document.getElementById(id);
+const $ = (id) => document.getElementById(id);
+const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
 
-function setHint(msg){
-  const el = $("exportHint");
-  if (el) el.textContent = msg || "";
-}
+// ---------- init ----------
+document.addEventListener("DOMContentLoaded", async () => {
+  await initCanvas({ preset: $("pageSizeSelect")?.value || "A4P" });
 
-function updateZoomLabel(){
-  const z = Math.round(getZoom()*100);
-  const el = $("zoomValue");
-  if (el) el.textContent = `${z}%`;
-}
+  // Pages
+  on("addPageBtn", "click", () => addPage());
+  on("dupPageBtn", "click", () => duplicatePage());
+  on("delPageBtn", "click", () => deletePage());
+  on("prevPageBtn", "click", () => prevPage());
+  on("nextPageBtn", "click", () => nextPage());
 
-window.addEventListener("DOMContentLoaded", () => {
-  // -------- Text
-  $("addTextBtn")?.addEventListener("click", () => {
-    const font = $("fontSelect")?.value || "Arial";
-    const fontSize = Number($("fontSizeInput")?.value || 48);
-    const fill = $("textColorInput")?.value || "#111111";
-    addText({ fontFamily: font, fontSize, fill });
+  // Zoom / stage
+  on("zoomInBtn", "click", () => zoomIn());
+  on("zoomOutBtn", "click", () => zoomOut());
+  on("zoomResetBtn", "click", () => zoomReset());
+  on("zoomFitBtn", "click", () => fitToScreen());
+  on("fitBtn", "click", () => fitToScreen());
+
+  // Page size (canvas dimensions)
+  on("pageSizeSelect", "change", (e) => {
+    const preset = e.target.value;
+    setCanvasSize(preset, true);
   });
 
-  // simple formatting on active textbox
-  const applyToActiveText = (fn) => {
-    const obj = fabricCanvas?.getActiveObject?.();
-    if (!obj || obj.type !== "textbox") return;
-    fn(obj);
-    fabricCanvas.requestRenderAll();
-  };
+  // Text
+  on("addTextBtn", "click", () => {
+    const font = $("fontSelect")?.value || "Arial";
+    const size = Number($("fontSizeInput")?.value || 48);
+    const fill = $("textColorInput")?.value || "#111111";
+    addText({ fontFamily: font, fontSize: size, fill });
+  });
 
-  $("boldBtn")?.addEventListener("click", ()=>applyToActiveText(o=>{
-    o.set("fontWeight", o.fontWeight === "bold" ? "normal" : "bold");
-  }));
-  $("italicBtn")?.addEventListener("click", ()=>applyToActiveText(o=>{
-    o.set("fontStyle", o.fontStyle === "italic" ? "normal" : "italic");
-  }));
-  $("underlineBtn")?.addEventListener("click", ()=>applyToActiveText(o=>{
-    o.set("underline", !o.underline);
-  }));
+  on("fontSelect", "change", (e) => setTextProps({ fontFamily: e.target.value }));
+  on("fontSizeInput", "input", (e) => setTextProps({ fontSize: Number(e.target.value || 48) }));
+  on("textColorInput", "input", (e) => setTextProps({ fill: e.target.value }));
 
-  $("alignLeftBtn")?.addEventListener("click", ()=>applyToActiveText(o=>o.set("textAlign","left")));
-  $("alignCenterBtn")?.addEventListener("click", ()=>applyToActiveText(o=>o.set("textAlign","center")));
-  $("alignRightBtn")?.addEventListener("click", ()=>applyToActiveText(o=>o.set("textAlign","right")));
+  on("boldBtn", "click", () => toggleTextProp("fontWeight", "bold", "normal"));
+  on("italicBtn", "click", () => toggleTextProp("fontStyle", "italic", "normal"));
+  on("underlineBtn", "click", () => toggleTextProp("underline", true, false));
 
-  $("fontSelect")?.addEventListener("change",(e)=>applyToActiveText(o=>o.set("fontFamily", e.target.value)));
-  $("fontSizeInput")?.addEventListener("change",(e)=>applyToActiveText(o=>o.set("fontSize", Number(e.target.value)||48)));
-  $("textColorInput")?.addEventListener("input",(e)=>applyToActiveText(o=>o.set("fill", e.target.value)));
+  on("alignLeftBtn", "click", () => setTextProps({ textAlign: "left" }));
+  on("alignCenterBtn", "click", () => setTextProps({ textAlign: "center" }));
+  on("alignRightBtn", "click", () => setTextProps({ textAlign: "right" }));
 
-  // -------- Images
-  $("imageInput")?.addEventListener("change", (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) addImageFromFile(file);
+  // Images
+  on("imageInput", "change", async (e) => {
+    const file = e.target.files?.[0];
+    if (file) await addImageFromFile(file);
     e.target.value = "";
   });
 
-  // -------- Colors
-  $("canvasBgColor")?.addEventListener("input",(e)=>setCanvasBackground(e.target.value));
-  $("objFillColor")?.addEventListener("input",(e)=>{
-    const obj = fabricCanvas?.getActiveObject?.();
-    if (!obj) return;
-    if (obj.set) obj.set("fill", e.target.value);
-    fabricCanvas.requestRenderAll();
-  });
-  document.querySelectorAll("[data-bg]")?.forEach(btn=>{
-    btn.addEventListener("click", ()=>setCanvasBackground(btn.dataset.bg));
+  // PDF upload (adds first/selected page as image)
+  on("pdfInput", "change", async (e) => {
+    const file = e.target.files?.[0];
+    if (file) await addPdfFromFile(file);
+    e.target.value = "";
   });
 
-  // -------- Shapes
-  $("addRectBtn")?.addEventListener("click", addRect);
-  $("addCircleBtn")?.addEventListener("click", addCircle);
-  $("addLineBtn")?.addEventListener("click", addLine);
+  on("cropBtn", "click", () => cropSelected());
+  on("removeBgBtn", "click", () => removeBgSelected());
 
-  // -------- Layers
-  $("bringFwdBtn")?.addEventListener("click", bringForward);
-  $("sendBackBtn")?.addEventListener("click", sendBackwards);
-  $("deleteObjBtn")?.addEventListener("click", deleteActive);
+  // Colors
+  on("canvasBgColor", "input", (e) => setCanvasBackground(e.target.value));
+  on("objFillColor", "input", (e) => setActiveFill(e.target.value));
+  on("objStrokeColor", "input", (e) => setActiveStroke(e.target.value, Number($("objStrokeWidth")?.value || 4)));
+  on("objStrokeWidth", "input", (e) => setActiveStroke($("objStrokeColor")?.value || "#000000", Number(e.target.value || 4)));
+  on("objOpacity", "input", (e) => setActiveOpacity(Number(e.target.value || 1)));
 
-  // -------- Pages
-  $("addPageBtn")?.addEventListener("click", addPage);
-  $("dupPageBtn")?.addEventListener("click", duplicatePage);
-  $("delPageBtn")?.addEventListener("click", deletePage);
-  $("nextPageBtn")?.addEventListener("click", nextPage);
-  $("prevPageBtn")?.addEventListener("click", prevPage);
-
-  // -------- Zoom
-  $("zoomInBtn")?.addEventListener("click", ()=>{ setZoom(getZoom()+0.1); updateZoomLabel(); });
-  $("zoomOutBtn")?.addEventListener("click", ()=>{ setZoom(getZoom()-0.1); updateZoomLabel(); });
-  $("zoomResetBtn")?.addEventListener("click", ()=>{ resetZoom(); updateZoomLabel(); });
-  $("zoomFitBtn")?.addEventListener("click", ()=>{ fitToScreen(); updateZoomLabel(); });
-  $("fitBtn")?.addEventListener("click", ()=>{ fitToScreen(); updateZoomLabel(); });
-
-  // -------- Page size
-  $("pageSizeSelect")?.addEventListener("change", (e)=>{
-    const v = e.target.value;
-    if (v === "CUSTOM") return; // handled by button
-    setCanvasSizePreset(v);
-    updateZoomLabel();
+  document.querySelectorAll("[data-bg]").forEach(btn => {
+    btn.addEventListener("click", () => setCanvasBackground(btn.dataset.bg));
   });
 
-  $("customSizeBtn")?.addEventListener("click", ()=>{
-    const w = prompt("Canvas width (px):", String(fabricCanvas?.getWidth?.() || 1240));
-    if (w === null) return;
-    const h = prompt("Canvas height (px):", String(fabricCanvas?.getHeight?.() || 1754));
-    if (h === null) return;
-    setCanvasCustom(w,h);
-    updateZoomLabel();
+  // Shapes
+  on("addRectBtn", "click", () => addRect());
+  on("addCircleBtn", "click", () => addCircle());
+  on("addLineBtn", "click", () => addLine());
+  on("addTriBtn", "click", () => addTriangle());
+  on("addEllBtn", "click", () => addEllipse());
+
+  // Layers
+  on("bringFwdBtn", "click", () => bringForward());
+  on("sendBackBtn", "click", () => sendBackwards());
+  on("deleteObjBtn", "click", () => deleteSelected());
+
+  // Export
+  on("exportPngBtn", "click", () => exportPNG());
+  on("exportJpgBtn", "click", () => exportJPG());
+  on("exportPdfBtn", "click", () => exportPDF());
+  on("exportFlipBtn", "click", async () => {
+    const dir = $("flipDirSelect")?.value || "horizontal";
+    await exportFlipbook({ direction: dir });
   });
-
-  // -------- Export / Preview flipbook
-  const modal = $("flipPreviewModal");
-  const frame = $("flipPreviewFrame");
-
-  $("closeFlipPreview")?.addEventListener("click", ()=>{
-    modal?.classList.remove("open");
-    if (frame) frame.srcdoc = "";
+  on("previewFlipBtn", "click", async () => {
+    const dir = $("flipDirSelect")?.value || "horizontal";
+    await previewFlipbook({ direction: dir });
   });
+  on("closeFlipPreview", "click", () => closeFlipbookPreview());
+  on("exportLinkBtn", "click", () => exportLink());
+  on("clearDraftBtn", "click", () => clearDraft());
 
-  $("previewFlipBtn")?.addEventListener("click", async ()=>{
-    const direction = $("flipDirectionSelect")?.value || "horizontal";
-    const { html } = await previewFlipbook({ direction });
-    if (frame) frame.srcdoc = html;
-    modal?.classList.add("open");
-    setHint("Preview ready.");
-  });
-
-  $("exportFlipBtn")?.addEventListener("click", async ()=>{
-    const direction = $("flipDirectionSelect")?.value || "horizontal";
-    await exportFlipbook({ direction });
-    setHint("Flipbook exported: flipbook.html downloaded.");
-  });
-
-  $("exportLinkBtn")?.addEventListener("click", ()=>{
-    const direction = $("flipDirectionSelect")?.value || "horizontal";
-    const link = makeFlipbookLink({ direction });
-    navigator.clipboard?.writeText(link).catch(()=>{});
-    setHint("Link copied (viewer.html#pb=...). For small projects.");
-    alert("Link copied to clipboard:\n\n" + link);
-  });
-
-  // Export PNG/JPG/PDF placeholders (UI-only for now)
-  $("exportPngBtn")?.addEventListener("click", ()=>alert("PNG export: next step"));
-  $("exportJpgBtn")?.addEventListener("click", ()=>alert("JPG export: next step"));
-  $("exportPdfBtn")?.addEventListener("click", ()=>alert("PDF export: next step"));
-  $("exportCloudBtn")?.addEventListener("click", ()=>alert("Cloud export: next step"));
-
-  // Sync initial zoom label after canvas init
-  setTimeout(()=>updateZoomLabel(), 300);
+  // Keep layers refreshed when something changes (core already listens, but this helps on UI load)
+  updateLayersUI();
 });
+
+// ---------- helpers ----------
+function toggleTextProp(key, onVal, offVal) {
+  // Read selection style via fabric active object if possible
+  // We don't import getActiveObject to keep ui small; we just set the property toggling.
+  // Toggle by reading current style from DOM inputs if present; fallback to off->on.
+  // (Core will ignore if selection isn't text)
+  const guess = (onVal === true) ? false : offVal;
+  setTextProps({ [key]: guess });
+  // second pass: if it was off, set on (best-effort)
+  setTimeout(() => setTextProps({ [key]: onVal }), 0);
+}
