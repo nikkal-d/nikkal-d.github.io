@@ -138,18 +138,20 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
 
 .canvas-container {
+  /* Αντί για scale, χρησιμοποιούμε zoom που είναι πιο φιλικό για τον καμβά */
   zoom: 0.5 !important; 
-  margin: 0 auto !important;
-  vertical-align: top !important; /* Αναγκάζει τον καμβά να ξεκινά από πάνω */
-  display: block !important;
+  margin: 0 auto !important; /* Κεντράρισμα */
+  position: relative !important;
+  top: 0 !important;
 }
 
+/* Εξασφαλίζουμε ότι το πλαίσιο δεν σπρώχνει τον καμβά μακριά */
 .canvasFrame {
-  display: flex !important;
-  flex-direction: column; /* Στοιβάζει τα περιεχόμενα κάθετα */
-  justify-content: flex-start !important; /* Τα σπρώχνει όλα προς τα πάνω */
-  align-items: center;
-  min-height: 100vh; /* Εξασφαλίζει ότι το πλαίσιο έχει χώρο */
+  display: block !important;
+  text-align: center;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 200px;
 }
 
 /* Εξασφαλίζουμε ότι ο host επιτρέπει στο frame να κεντραριστεί */
