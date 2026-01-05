@@ -136,24 +136,6 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
 
 
-/* Αναγκάζουμε το δοχείο της Fabric να μην ξεπερνά το πλάτος του Host */
-.canvas-container {
-    max-width: 100% !important;
-    max-height: 100% !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Αναγκάζουμε τα ίδια τα canvas elements να χωρέσουν */
-.canvas-container canvas {
-    max-width: 100% !important;
-    max-height: 100% !important;
-    width: auto !important;  /* Επιτρέπει στο CSS να αλλάξει το μέγεθος */
-    height: auto !important; /* Διατηρώντας το aspect ratio */
-    object-fit: contain;
-}
-
 .canvasHost {
   /* ... οι άλλες ιδιότητες ... */
   display: flex !important;
@@ -168,4 +150,27 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   align-items: center !important;
   justify-content: center !important;
   margin: auto; /* Βοηθάει στο κεντράρισμα */
+}
+
+/* Αυτό θα περιορίσει το πλαίσιο να μην ξεπερνά ποτέ το ύψος της οθόνης */
+.canvasFrame {
+  max-width: 90%;  /* Αφήνουμε λίγο αέρα δεξιά-αριστερά */
+  max-height: 80vh; /* Το 80% του ύψους της οθόνης */
+  overflow: hidden;
+}
+
+/* Αυτό αναγκάζει τον καμβά της Fabric να ακολουθήσει το μέγεθος του πλαισίου */
+.canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-container canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 100% !important;
+  object-fit: contain; /* Διατηρεί τις αναλογίες του photobook */
 }
