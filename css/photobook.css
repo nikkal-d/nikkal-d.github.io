@@ -155,11 +155,17 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 }
 
 .canvasHost {
-  background-color: #ffcccc !important; /* Ανοιχτό κόκκινο */
-  min-height: 500px; /* Δίνουμε ένα ελάχιστο ύψος */
+  /* ... οι άλλες ιδιότητες ... */
+  display: flex !important;
+  align-items: center !important;   /* Κεντράρισμα κάθετα */
+  justify-content: center !important; /* Κεντράρισμα οριζόντια */
+  overflow: hidden;
 }
 
 .canvasFrame {
-  background-color: #ccffcc !important; /* Ανοιχτό πράσινο */
-  border: 5px solid blue !important; /* Μπλε πλαίσιο */
+  /* ... οι άλλες ιδιότητες ... */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto; /* Βοηθάει στο κεντράρισμα */
 }
