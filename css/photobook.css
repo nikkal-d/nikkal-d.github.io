@@ -1,68 +1,117 @@
-/* css/photobook.css - editor-specific layout */
+
+/* Topbar */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 14px;
+  background:linear-gradient(180deg,var(--bg2),rgba(0,0,0,0));
+  border-bottom:1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+.topbar-left{display:flex; align-items:center; gap:16px}
+.brand{font-weight:800; letter-spacing:.2px}
+.topnav{display:flex; gap:10px; opacity:.9}
+.topnav a{padding:7px 10px; border-radius:10px}
+.topnav a:hover{background:rgba(255,255,255,.06)}
+.topbar-right{display:flex; align-items:center; gap:10px}
+.authbox{display:flex; align-items:center; gap:8px}
+.userInfo{font-size:13px; opacity:.9; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+/* Layout */
 .appShell{
   height:calc(100vh - 56px);
   display:grid;
-  grid-template-columns:64px 320px 1fr 64px;
+  grid-template-columns: 56px 320px 1fr 56px 0px;
   gap:0;
 }
 .leftRail,.rightRail{
   border-right:1px solid var(--line);
-  background:var(--panel2);
-  display:flex;flex-direction:column;align-items:center;
-  padding:10px 8px;gap:10px;
+  background:rgba(255,255,255,.02);
+  display:flex; flex-direction:column; gap:10px;
+  padding:10px 8px;
 }
 .rightRail{border-right:none;border-left:1px solid var(--line)}
 .railbtn{
-  width:44px;height:44px;border-radius:14px;
+  width:40px; height:40px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:inherit;
+  cursor:pointer;
+  display:grid; place-items:center;
+}
+.railbtn.active{outline:2px solid rgba(239,68,68,.35); border-color:rgba(239,68,68,.55)}
+
+.leftPanel{
+  border-right:1px solid var(--line);
+  background:var(--panel);
+  display:flex; flex-direction:column;
+  min-width:280px;
+  transition: transform .18s ease;
+}
+.leftPanel.closed{transform:translateX(-100%); position:relative; z-index:20}
+.panelHeader{
+  height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 12px;
+  border-bottom:1px solid var(--line);
+}
+.panelBody{padding:12px; overflow:auto}
+.row{display:flex; align-items:center}
+.gap{gap:10px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.divider{height:1px;background:var(--line); margin:14px 0}
+.hint{opacity:.8; font-size:12px; line-height:1.35}
+
+/* Buttons/inputs */
+.btn, .iconbtn, .select, .input{
+  font:inherit;
+  color:inherit;
+}
+.btn{
+  padding:10px 12px;
+  border-radius:12px;
   border:1px solid var(--line);
   background:rgba(255,255,255,.06);
   cursor:pointer;
 }
-.railbtn.active{outline:2px solid rgba(34,197,94,.35);border-color:rgba(34,197,94,.45)}
-.leftPanel{
-  border-right:1px solid var(--line);
-  background:var(--panel);
-  display:flex;flex-direction:column;
-  overflow:hidden;
-}
-.leftPanel.closed{display:none}
-.panelHeader{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 10px;border-bottom:1px solid var(--line)
-}
-.panelHeader h3{margin:0;font-size:14px;letter-spacing:.2px}
-.panelBody{
-  padding:12px;
-  overflow:auto;
-}
-.thumbStrip{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:12px;
-}
-.thumb{
-  border:1px solid var(--line);
+.btn:hover{background:rgba(255,255,255,.09)}
+.btn.ghost{background:transparent}
+.btn.danger{background:rgba(220,38,38,.12); border-color:rgba(220,38,38,.35)}
+.iconbtn{
+  width:40px;height:40px;
   border-radius:12px;
-  overflow:hidden;
+  border:1px solid var(--line);
   background:rgba(255,255,255,.04);
   cursor:pointer;
+  display:grid; place-items:center;
 }
-.thumb.active{outline:2px solid rgba(34,197,94,.35)}
-.thumb img{width:100%;height:auto;display:block}
+.select,.input{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06);
+}
+.pill{
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  font-size:12px;
+}
 
-.stage{
-  display:flex;flex-direction:column;
-  overflow:hidden;
-}
+/* Stage */
+.stage{display:flex; flex-direction:column; min-width:0}
 .stageBar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 12px;border-bottom:1px solid var(--line);
-  background:var(--panel);
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 12px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.02);
 }
-.stageBar-left,.stageBar-right{display:flex;align-items:center;gap:10px}
-.zoomBox{display:flex;align-items:center;gap:8px}
-
+.zoomBox{display:flex; align-items:center; gap:8px}
 .canvasHost{
   position:relative;
   flex:1;
@@ -70,116 +119,58 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:16px;
+  padding:18px;
 }
 .canvasFrame{
-  background:transparent;
+  background:rgba(0,0,0,.08);
+  border:1px solid var(--line);
   border-radius:18px;
-  padding:12px;
-  box-shadow:var(--shadow);
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.04);
+  padding:18px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.22);
+  max-width: calc(100% - 20px);
+  max-height: calc(100% - 20px);
 }
-body.theme-light .canvasFrame{background:rgba(0,0,0,.02)}
-.canvas-container{ /* created by fabric */
+.canvas-container{ /* fabric wrapper */
   border-radius:12px;
+  overflow:hidden;
+  background:#fff;
 }
-.floatToolbar{
-  position:absolute;
-  top:18px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:10px;
-  padding:10px;
-  border:1px solid var(--line);
-  background:rgba(0,0,0,.25);
-  backdrop-filter:blur(10px);
-  border-radius:14px;
-}
-body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
+/* Thumbnails */
+.thumbStrip{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:12px}
+.thumb{
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+  background:rgba(255,255,255,.03);
+  cursor:pointer;
+  min-height:120px;
+  display:flex; align-items:center; justify-content:center;
+}
+.thumb.active{outline:2px solid rgba(239,68,68,.35); border-color:rgba(239,68,68,.55)}
+.thumb img{max-width:100%; height:auto; display:block}
+
+/* Right export panel */
 .rightPanel{
   position:fixed;
   top:56px;
   right:0;
-  height:calc(100vh - 56px);
   width:min(360px, 92vw);
+  height:calc(100vh - 56px);
   background:var(--panel);
   border-left:1px solid var(--line);
-  box-shadow:var(--shadow);
-  transform:translateX(100%);
-  transition:transform .18s ease;
-  z-index:1200;
-  display:flex;
-  flex-direction:column;
+  transform: translateX(100%);
+  transition: transform .18s ease;
+  z-index:60;
+  display:flex; flex-direction:column;
 }
-.rightPanel.open{transform:translateX(0)}
-.layersList{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-.layerRow{
-  padding:10px 10px;border:1px solid var(--line);border-radius:12px;
-  background:rgba(255,255,255,.04);
-  cursor:pointer;
-}
-.layerRow.active{outline:2px solid rgba(34,197,94,.28)}
+.rightPanel.open{transform: translateX(0)}
+.rightPanel .panelBody{overflow:auto}
 
-@media (max-width: 980px){
-  .appShell{grid-template-columns:64px 1fr 64px}
-  .leftPanel{display:none}
-  .leftPanel.closed{display:none}
-}
-
-
-
-
-
-
-
-
-
-.canvas-container {
-  /* Αντί για scale, χρησιμοποιούμε zoom που είναι πιο φιλικό για τον καμβά */
-  zoom: 0.5 !important; 
-  margin: 0 auto !important; /* Κεντράρισμα */
-  position: relative !important;
-  top: 0 !important;
-}
-
-/* Εξασφαλίζουμε ότι το πλαίσιο δεν σπρώχνει τον καμβά μακριά */
-.canvasFrame {
-  display: block !important;
-  text-align: center;
-  overflow: visible !important;
-  height: auto !important;
-  min-height: 200px;
-}
-
-/* Εξασφαλίζουμε ότι ο host επιτρέπει στο frame να κεντραριστεί */
-.canvasHost {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  min-height: 500px; /* Ή όσο ύψος θέλεις */
-}
-
-
-
-.canvas-container canvas {
-  width: 100% !important;
-  height: auto !important;
-  max-height: 100% !important;
-  object-fit: contain; /* Διατηρεί τις αναλογίες του photobook */
-}
-
-
-/* Μειώνουμε το μέγεθος της μπάρας εργαλείων πάνω από τα αντικείμενα */
-.canvas-tools, .floating-toolbar, div[style*="position: absolute"] > button {
-  transform: scale(0.8) !important; /* Τα μικραίνουμε κατά 20% */
-  transform-origin: bottom center;
-}
-
-/* Αν έχεις συγκεκριμένο class για τα κουμπιά 'Effects', 'Opacity' κλπ */
-.floating-toolbar button {
-  padding: 4px 8px !important; /* Μικρότερο γέμισμα */
-  font-size: 12px !important;    /* Μικρότερο κείμενο */
-}
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+.modal.open{display:flex}
+.modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
+.modal-title{font-weight:800}
+#flipPreviewFrame{flex:1;border:0;background:#000}
