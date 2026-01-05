@@ -163,6 +163,7 @@ export function fitToScreen() {
 // Ctrl+wheel zoom around pointer
 window.addEventListener("wheel", (e) => {
   if (!fabricCanvas) return;
+  console.log("Διαθέσιμο Ύψος:", host.clientHeight);
   const overCanvas = e.target && (e.target.id === "canvas" || (e.target.closest && e.target.closest(".canvas-container")));
   if (!overCanvas) return;
 
