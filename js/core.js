@@ -155,7 +155,7 @@ export function fitToScreen() {
   // Center by shifting viewport
   const vt = fabricCanvas.viewportTransform;
   vt[4] = (availW - fabricCanvas.getWidth() * s) / 2;
-  vt[5] = 20;
+  vt[5] = 50;
   fabricCanvas.setViewportTransform(vt);
   fabricCanvas.requestRenderAll();
 }
