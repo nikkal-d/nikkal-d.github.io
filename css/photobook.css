@@ -151,14 +151,14 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   justify-content: center !important;
   margin: auto; /* Βοηθάει στο κεντράρισμα */
   max-width: 90%;  /* Αφήνουμε λίγο αέρα δεξιά-αριστερά */
-  max-height: 80vh; /* Το 80% του ύψους της οθόνης */
+height: 500px;
   overflow: hidden;
 }
 
 /* Αυτό αναγκάζει τον καμβά της Fabric να ακολουθήσει το μέγεθος του πλαισίου */
 .canvas-container {
   width: 100% !important;
-  height: 100% !important;
+ min-height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
