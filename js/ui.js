@@ -16,7 +16,6 @@ import {
   setCanvasCustom,
   addPage,
   duplicatePage,
-  deletePage,
   prevPage,
   nextPage,
   goToPage,
