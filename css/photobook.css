@@ -128,3 +128,34 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   .leftPanel{display:none}
   .leftPanel.closed{display:none}
 }
+
+
+
+
+
+
+
+
+
+
+.canvasFrame {
+  /* ... οι υπόλοιπες ιδιότητες που ήδη έχεις ... */
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-container {
+  /* Αυτό αναγκάζει το Fabric να μην ξεπερνάει το μέγεθος του frame */
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.canvas-container canvas {
+  /* Αυτό διατηρεί την αναλογία (aspect ratio) */
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain;
+}
