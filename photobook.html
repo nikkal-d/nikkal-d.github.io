@@ -5,32 +5,34 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Photobook Editor</title>
 
-  <!-- CSS -->
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
-  <!-- Flipbook preview modal styles (scoped) -->
+  <!-- pdf.js + jsPDF for exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
-    .modal.open{display:flex}
-    .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
-    .modal-title{font-weight:700}
-    #flipPreviewFrame{flex:1;border:0;background:#000}
-    .field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-    .field input,.field select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}
-    .hint{opacity:.8;font-size:12px;line-height:1.35}
-    .divider{height:1px;background:rgba(255,255,255,.12);margin:14px 0}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  /* flipbook modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal.open{display:flex}
+  .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .modal-title{font-weight:700}
+  #flipPreviewFrame{flex:1;border:0;background:#000}
   </style>
 </head>
 
 <body class="theme-light">
-  <!-- TOP BAR -->
   <header class="topbar">
     <div class="topbar-left">
       <a class="brand" href="./index.html">Photobook</a>
-
       <nav class="topnav" aria-label="Site navigation">
         <a href="./index.html">Home</a>
         <a href="./templates.html">Templates</a>
@@ -52,7 +54,6 @@
     </div>
   </header>
 
-  <!-- APP LAYOUT -->
   <div class="appShell">
     <!-- LEFT MINI BAR -->
     <aside class="leftRail" aria-label="Tools">
@@ -64,7 +65,7 @@
       <button class="railbtn" data-panel="layers" title="Layers">📚</button>
     </aside>
 
-    <!-- LEFT PANEL (collapsible) -->
+    <!-- LEFT PANEL -->
     <section class="leftPanel" id="leftPanel">
       <div class="panelHeader">
         <h3 id="panelTitle">Pages</h3>
@@ -86,6 +87,9 @@
         </div>
 
         <div class="thumbStrip" id="thumbStrip"></div>
+
+        <div class="divider" style="margin:12px 0;"></div>
+        <button class="btn danger" id="clearDraftBtn">Clear Draft</button>
       </div>
 
       <!-- TEXT -->
@@ -96,6 +100,11 @@
           <label>Font</label>
           <select class="select" id="fontSelect">
             <option value="Arial" selected>Arial</option>
+            <option value="Inter, system-ui">Inter</option>
+            <option value="Roboto, Arial">Roboto</option>
+            <option value="Montserrat, Arial">Montserrat</option>
+            <option value="Playfair Display, serif">Playfair</option>
+            <option value="Merriweather, serif">Merriweather</option>
             <option value="Georgia">Georgia</option>
             <option value="Times New Roman">Times</option>
             <option value="Verdana">Verdana</option>
@@ -132,13 +141,18 @@
           <input type="file" id="imageInput" accept="image/*" hidden />
         </label>
 
+        <label class="btn ghost" style="margin-top:10px;">
+          Upload PDF
+          <input type="file" id="pdfInput" accept="application/pdf" hidden />
+        </label>
+
         <div class="row gap" style="margin-top:10px;">
           <button class="btn ghost" id="removeBgBtn">Remove BG</button>
           <button class="btn ghost" id="cropBtn">Crop</button>
         </div>
 
         <p class="hint">
-          Remove BG / Crop είναι UI placeholder (θα “δέσουν” μετά).
+          Remove BG: βασικό (λευκό background). Crop: manual.
         </p>
       </div>
 
@@ -154,6 +168,19 @@
           <input class="input" id="objFillColor" type="color" value="#ff0000" />
         </div>
 
+        <div class="field">
+          <label>Selected Stroke</label>
+          <div class="row gap">
+            <input class="input" id="objStrokeColor" type="color" value="#000000" />
+            <input class="input" id="objStrokeWidth" type="number" min="0" max="40" value="4" style="width:90px"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Opacity</label>
+          <input class="input" id="objOpacity" type="range" min="0" max="1" step="0.01" value="1"/>
+        </div>
+
         <div class="row gap">
           <button class="btn ghost" data-bg="#ffffff">White</button>
           <button class="btn ghost" data-bg="#f3f4f6">Gray</button>
@@ -164,11 +191,13 @@
       <!-- SHAPES -->
       <div class="panelBody panelView" data-view="shapes" hidden>
         <div class="row gap">
-          <button class="btn" id="addRectBtn">Rectangle</button>
-          <button class="btn" id="addCircleBtn">Circle</button>
+          <button class="btn" id="addRectBtn" title="Rectangle">⬛</button>
+          <button class="btn" id="addCircleBtn" title="Circle">⚪</button>
+          <button class="btn" id="addTriBtn" title="Triangle">🔺</button>
+          <button class="btn" id="addEllBtn" title="Ellipse">🥚</button>
         </div>
         <div class="row gap" style="margin-top:10px;">
-          <button class="btn ghost" id="addLineBtn">Line</button>
+          <button class="btn" id="addLineBtn" title="Line">／</button>
         </div>
       </div>
 
@@ -181,6 +210,10 @@
         </div>
 
         <div class="layersList" id="layersList"></div>
+
+        <p class="hint">
+          🔒 κλειδώνει layer για να μην κουνιέται.
+        </p>
       </div>
     </section>
 
@@ -206,9 +239,7 @@
             <option value="SQUARE">Square</option>
             <option value="STORY">Story</option>
             <option value="HD">HD</option>
-            <option value="CUSTOM">Custom…</option>
           </select>
-          <button class="btn ghost" id="customSizeBtn" title="Set custom size">Size</button>
 
           <button class="btn" id="toggleExportBtn">Export</button>
         </div>
@@ -217,13 +248,6 @@
       <div class="canvasHost" id="canvasHost">
         <div class="canvasFrame" id="canvasFrame">
           <canvas id="canvas"></canvas>
-        </div>
-
-        <div class="floatToolbar" id="floatToolbar" hidden>
-          <button class="btn ghost" id="fltEffectsBtn">Effects</button>
-          <button class="btn ghost" id="fltOpacityBtn">Opacity</button>
-          <button class="btn ghost" id="fltCropBtn">Crop</button>
-          <button class="btn danger" id="fltDeleteBtn">Delete</button>
         </div>
       </div>
     </main>
@@ -242,21 +266,9 @@
 
       <div class="panelBody">
         <div class="field">
-          <label>Export Size</label>
-          <select class="select" id="exportSizeSelect">
-            <option value="current" selected>Current page</option>
-            <option value="A4P">A4 Portrait</option>
-            <option value="A4L">A4 Landscape</option>
-            <option value="SQUARE">Square</option>
-            <option value="STORY">Story</option>
-            <option value="HD">HD</option>
-          </select>
-        </div>
-
-        <div class="field">
           <label>Flip direction</label>
-          <select class="select" id="flipDirectionSelect">
-            <option value="horizontal" selected>Horizontal (book)</option>
+          <select class="select" id="flipDirSelect">
+            <option value="horizontal" selected>Horizontal</option>
             <option value="vertical">Vertical</option>
           </select>
         </div>
@@ -267,27 +279,28 @@
           <button class="btn" id="exportPngBtn">PNG</button>
           <button class="btn" id="exportJpgBtn">JPG</button>
           <button class="btn" id="exportLinkBtn">Link</button>
-          <button class="btn" id="exportCloudBtn">Cloud</button>
+          <button class="btn" id="exportCloudBtn" disabled>Cloud</button>
         </div>
 
         <div class="divider"></div>
 
         <button class="btn ghost" id="previewFlipBtn">Preview Flipbook</button>
-        <p class="hint" id="exportHint"></p>
       </div>
     </section>
   </div>
 
-  <!-- Fabric (global) -->
+  <!-- Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-  <!-- Scripts (modules) -->
+  <!-- Optional Firebase (only if you add js/firebase-init.js + js/firebase-store.js) -->
+  script type="module" src="./js/firebase-store.js"></script>
+
+  <!-- App scripts -->
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script src="./js/sidebar.js"></script>
 
-  <!-- Flipbook preview modal -->
-  <div class="modal" id="flipPreviewModal" role="dialog" aria-modal="true">
+  <div class="modal" id="flipPreviewModal">
     <div class="modal-inner">
       <div class="modal-head">
         <div class="modal-title">Flipbook Preview</div>
