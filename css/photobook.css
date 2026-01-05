@@ -158,7 +158,7 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
 /* Εδώ είναι το μυστικό για να μικρύνει ο καμβάς της Fabric */
 .canvas-container {
-  transform: scale(0.3); /* Δοκίμασε 0.5 ή 0.6 για να μικρύνει οπτικά */
+  transform: scale(0.6); /* Δοκίμασε 0.5 ή 0.6 για να μικρύνει οπτικά */
   transform-origin: center;
 }
 
@@ -168,4 +168,17 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   height: auto !important;
   max-height: 100% !important;
   object-fit: contain; /* Διατηρεί τις αναλογίες του photobook */
+}
+
+
+/* Μειώνουμε το μέγεθος της μπάρας εργαλείων πάνω από τα αντικείμενα */
+.canvas-tools, .floating-toolbar, div[style*="position: absolute"] > button {
+  transform: scale(0.8) !important; /* Τα μικραίνουμε κατά 20% */
+  transform-origin: bottom center;
+}
+
+/* Αν έχεις συγκεκριμένο class για τα κουμπιά 'Effects', 'Opacity' κλπ */
+.floating-toolbar button {
+  padding: 4px 8px !important; /* Μικρότερο γέμισμα */
+  font-size: 12px !important;    /* Μικρότερο κείμενο */
 }
