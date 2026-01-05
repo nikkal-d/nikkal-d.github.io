@@ -135,27 +135,6 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
 
 
-/* Το canvasHost είναι ο "πατέρας" που τα κεντράρει όλα */
-.canvasHost {
-  position: relative;
-  flex: 1;
-  overflow: hidden; /* Σημαντικό: κρύβει ό,τι περισσεύει */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px; /* Λίγο περιθώριο γύρω-γύρω */
-}
-
-/* Το canvasFrame είναι το άσπρο πλαίσιο που βλέπεις */
-.canvasFrame {
-  position: relative;
-  max-width: 100%;
-  max-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* ... οι υπόλοιπες ιδιότητες (border, shadow κλπ) ... */
-}
 
 /* Αναγκάζουμε το δοχείο της Fabric να μην ξεπερνά το πλάτος του Host */
 .canvas-container {
