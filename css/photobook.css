@@ -172,7 +172,7 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
 /* Μειώνουμε το μέγεθος της μπάρας εργαλείων πάνω από τα αντικείμενα */
 .canvas-tools, .floating-toolbar, div[style*="position: absolute"] > button {
-  transform: scale(0.8) !important; /* Τα μικραίνουμε κατά 20% */
+  transform: scale(0.6) !important; /* Τα μικραίνουμε κατά 20% */
   transform-origin: bottom center;
 }
 
