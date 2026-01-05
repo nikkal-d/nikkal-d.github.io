@@ -154,11 +154,13 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   aspect-ratio: 1 / 1.41; /* Προαιρετικό: Διατηρεί αναλογία A4 */
   background: white; 
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  background: transparent !important; /* Αφαιρεί το γκρι χρώμα */
+  box-shadow: none !important;        /* Αφαιρεί τη σκιά αν δεν τη θέλεις */
 }
 
 /* Εδώ είναι το μυστικό για να μικρύνει ο καμβάς της Fabric */
 .canvas-container {
-  transform: scale(0.6); /* Δοκίμασε 0.5 ή 0.6 για να μικρύνει οπτικά */
+  transform: scale(0.3); /* Δοκίμασε 0.5 ή 0.6 για να μικρύνει οπτικά */
   transform-origin: center;
 }
 
