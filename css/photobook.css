@@ -70,7 +70,7 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:auto;
+  padding:16px;
 }
 .canvasFrame{
   background:transparent;
