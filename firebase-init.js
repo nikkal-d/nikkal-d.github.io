@@ -1,16 +1,10 @@
-// firebase-init.js (root)
-// Initialize Firebase (Auth + Firestore + Storage)
-
+// js/firebase-init.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInAnonymously
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyD65Khx_U2kKa-zzJeG9PJ51e_BOT4OKX0",
   authDomain: "photobook-studio-b1064.firebaseapp.com",
   projectId: "photobook-studio-b1064",
@@ -25,17 +19,13 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-export function ensureAuth(){
-  return new Promise((resolve, reject) => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      unsub();
-      if (user) return resolve(user);
-      try{
-        const cred = await signInAnonymously(auth);
-        resolve(cred.user);
-      }catch(e){
-        reject(e);
-      }
-    });
-  });
+export async function ensureAuth() {
+  try {
+    if (auth.currentUser) return auth.currentUser;
+    const cred = await signInAnonymously(auth);
+    return cred.user;
+  } catch (e) {
+    console.warn("Firebase auth not available (enable Anonymous auth or adjust rules).", e);
+    return null;
+  }
 }
