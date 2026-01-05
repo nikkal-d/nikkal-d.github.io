@@ -154,8 +154,8 @@ export function fitToScreen() {
 
   // Center by shifting viewport
   const vt = fabricCanvas.viewportTransform;
-  vt[4] = 50;
-  vt[5] = 50;
+  vt[4] = 0;
+  vt[5] = 0;
   fabricCanvas.setViewportTransform(vt);
   fabricCanvas.requestRenderAll();
 }
@@ -163,7 +163,6 @@ export function fitToScreen() {
 // Ctrl+wheel zoom around pointer
 window.addEventListener("wheel", (e) => {
   if (!fabricCanvas) return;
-  console.log("Διαθέσιμο Ύψος:", host.clientHeight);
   const overCanvas = e.target && (e.target.id === "canvas" || (e.target.closest && e.target.closest(".canvas-container")));
   if (!overCanvas) return;
 
