@@ -21,7 +21,6 @@ import {
   goToPage,
   previewFlipbook,
   closeFlipbookPreview,
-  exportFlipbookLink
 } from "./core.js";
 
 const $ = (id) => document.getElementById(id);
