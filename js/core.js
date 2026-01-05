@@ -40,6 +40,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // Render first page
   loadPageToCanvas();
 
+
+setTimeout(() => {
+    fitToScreen();
+}, 100); // Δίνουμε 100ms στον browser να σχεδιάσει το layout
+  
+
   // Update UI bits
   refreshThumbnails();
   updatePageInfo();
