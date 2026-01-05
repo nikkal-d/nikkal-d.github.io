@@ -174,3 +174,13 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
     height: auto !important; /* Διατηρώντας το aspect ratio */
     object-fit: contain;
 }
+
+.canvasHost {
+  background-color: #ffcccc !important; /* Ανοιχτό κόκκινο */
+  min-height: 500px; /* Δίνουμε ένα ελάχιστο ύψος */
+}
+
+.canvasFrame {
+  background-color: #ccffcc !important; /* Ανοιχτό πράσινο */
+  border: 5px solid blue !important; /* Μπλε πλαίσιο */
+}
