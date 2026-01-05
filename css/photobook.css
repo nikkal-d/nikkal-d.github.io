@@ -157,14 +157,20 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   /* ... οι υπόλοιπες ιδιότητες (border, shadow κλπ) ... */
 }
 
-/* Αυτό είναι το μυστικό για να μικραίνει αυτόματα ο καμβάς της Fabric */
+/* Αναγκάζουμε το δοχείο της Fabric να μην ξεπερνά το πλάτος του Host */
 .canvas-container {
-  max-width: 100% !important;
-  max-height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Αναγκάζουμε τα ίδια τα canvas elements να χωρέσουν */
 .canvas-container canvas {
-  max-width: 100% !important;
-  max-height: 100% !important;
-  object-fit: contain; /* Διατηρεί την αναλογία πλάτους/ύψους */
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;  /* Επιτρέπει στο CSS να αλλάξει το μέγεθος */
+    height: auto !important; /* Διατηρώντας το aspect ratio */
+    object-fit: contain;
 }
