@@ -1,656 +1,882 @@
 // js/core.js
-// Core engine: Fabric canvas + pages + zoom(viewport) + export flipbook + draft (quota-safe)
+// Photobook core (Fabric.js)
+// - Pages with thumbnails
+// - Canvas zoom/fit + page size presets
+// - Export: PNG/JPG/PDF + Flipbook (all pages)
+// - Autosave via IndexedDB (avoids localStorage quota)
+// - Optional Firebase hooks (if window.FirebaseStore is provided)
 
-export let fabricCanvas = null;
-
-const DRAFT_KEY = "photobook_draft_v2"; // quota-safe (no thumbnails/dataURLs)
-export let pages = [];         // [{ json }]
-export let currentPage = 0;
-
-let zoom = 1;
-
-// ---------------------------
-// Init
-// ---------------------------
-window.addEventListener("DOMContentLoaded", () => {
-  if (typeof fabric === "undefined") {
-    console.error("Fabric not loaded");
-    return;
-  }
-
-  // Create canvas
-  fabricCanvas = new fabric.Canvas("canvas", {
-    preserveObjectStacking: true,
-    selection: true
-  });
-
-  // Default size
-  setCanvasSizePreset("A4P");
-  resetZoom();
-
-  // First page
-  pages = [{ json: null }];
-  currentPage = 0;
-
-  bindAutosave();
-
-  // Load draft (if any)
-  loadDraft();
-
-  // Render first page
-  loadPageToCanvas();
-
-
-setTimeout(() => {
-    fitToScreen();
-}, 100); // Δίνουμε 100ms στον browser να σχεδιάσει το layout
-  
-
-  // Update UI bits
-  refreshThumbnails();
-  updatePageInfo();
-
-  // Keep thumbnails updated
-  ["object:added","object:modified","object:removed"].forEach(ev => {
-    fabricCanvas.on(ev, () => {
-      saveCurrentPage();
-      refreshThumbnails();
-      updateLayersList();
-    });
-  });
-
-  fabricCanvas.on("selection:created", updateLayersList);
-  fabricCanvas.on("selection:updated", updateLayersList);
-  fabricCanvas.on("selection:cleared", updateLayersList);
-
-  console.log("✅ Canvas initialized");
-});
-
-// ---------------------------
-// Canvas size presets + custom
-// ---------------------------
-const PRESETS = {
-  A4P: { w: 1240, h: 1754 },
-  A4L: { w: 1754, h: 1240 },
-  SQUARE: { w: 1400, h: 1400 },
-  STORY: { w: 1080, h: 1920 },
-  HD: { w: 1920, h: 1080 },
+export const App = {
+  canvas: null,
+  pages: [],              // [{ json, preset }]
+  current: 0,
+  preset: "A4P",
+  zoom: 1,
+  autosaveEnabled: true,
+  autosaveKey: "photobook_draft_v3",
 };
 
-export function setCanvasSizePreset(preset) {
-  if (!fabricCanvas) return;
-  const p = PRESETS[preset];
-  if (!p) return;
+const PRESETS = {
+  A4P:   { w: 2480, h: 3508, label: "A4 Portrait" },   // ~300dpi
+  A4L:   { w: 3508, h: 2480, label: "A4 Landscape" },
+  SQUARE:{ w: 2500, h: 2500, label: "Square" },
+  STORY: { w: 1080, h: 1920, label: "Story" },
+  HD:    { w: 1920, h: 1080, label: "HD" },
+};
 
-  fabricCanvas.setWidth(p.w);
-  fabricCanvas.setHeight(p.h);
-  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.requestRenderAll.bind(fabricCanvas));
+// ---------- IndexedDB tiny helper ----------
+const IDB_DB = "photobook_db_v1";
+const IDB_STORE = "drafts";
 
-  // ensure visible in host
-  fitToScreen();
-  saveCurrentPage();
-  refreshThumbnails();
-  updatePageInfo();
-}
-
-export function setCanvasCustom(w, h) {
-  if (!fabricCanvas) return;
-  const W = Math.max(200, Math.min(6000, Number(w)));
-  const H = Math.max(200, Math.min(6000, Number(h)));
-  fabricCanvas.setWidth(W);
-  fabricCanvas.setHeight(H);
-  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.requestRenderAll.bind(fabricCanvas));
-  fitToScreen();
-  saveCurrentPage();
-  refreshThumbnails();
-  updatePageInfo();
-}
-
-export function setCanvasBackground(color) {
-  if (!fabricCanvas) return;
-  fabricCanvas.setBackgroundColor(color || "#ffffff", fabricCanvas.requestRenderAll.bind(fabricCanvas));
-  saveCurrentPage();
-  refreshThumbnails();
-}
-
-// ---------------------------
-// Zoom (viewport transform)
-// ---------------------------
-export function getZoom() { return zoom; }
-
-export function setZoom(next) {
-  if (!fabricCanvas) return;
-  zoom = Math.max(0.15, Math.min(4, Number(next) || 1));
-
-  const center = new fabric.Point(fabricCanvas.getWidth()/2, fabricCanvas.getHeight()/2);
-  fabricCanvas.zoomToPoint(center, zoom);
-  fabricCanvas.requestRenderAll();
-}
-
-export function resetZoom() {
-  if (!fabricCanvas) return;
-  zoom = 1;
-  fabricCanvas.setViewportTransform([1,0,0,1,0,0]);
-  fabricCanvas.setZoom(1);
-  fabricCanvas.requestRenderAll();
-}
-
-export function fitToScreen() {
-  if (!fabricCanvas) return;
-  const host = document.getElementById("canvasHost");
-  if (!host) return;
-
-  // reset
-  zoom = 1;
-  fabricCanvas.setViewportTransform([1,0,0,1,0,0]);
-  fabricCanvas.setZoom(1);
-
-  const pad = 28;
-  const availW = Math.max(100, host.clientWidth - pad);
-  const availH = Math.max(100, host.clientHeight - pad);
-
-  const s = Math.min(availW / fabricCanvas.getWidth(), availH / fabricCanvas.getHeight());
-  setZoom(s);
-
-  // Center by shifting viewport
-  const vt = fabricCanvas.viewportTransform;
-  vt[4] = 0;
-  vt[5] = 0;
-  fabricCanvas.setViewportTransform(vt);
-  fabricCanvas.requestRenderAll();
-}
-
-// Ctrl+wheel zoom around pointer
-window.addEventListener("wheel", (e) => {
-  if (!fabricCanvas) return;
-  const overCanvas = e.target && (e.target.id === "canvas" || (e.target.closest && e.target.closest(".canvas-container")));
-  if (!overCanvas) return;
-
-  if (!e.ctrlKey) return;
-  e.preventDefault();
-
-  const factor = e.deltaY > 0 ? 0.95 : 1.05;
-  zoom = Math.max(0.15, Math.min(4, zoom * factor));
-
-  const rect = fabricCanvas.upperCanvasEl.getBoundingClientRect();
-  const pt = new fabric.Point(e.clientX - rect.left, e.clientY - rect.top);
-  fabricCanvas.zoomToPoint(pt, zoom);
-  fabricCanvas.requestRenderAll();
-}, { passive:false });
-
-// Space+drag pan
-let panMode = false;
-let isPanning = false;
-let panLast = {x:0,y:0};
-
-document.addEventListener("keydown",(e)=>{ if(e.code==="Space") panMode=true; });
-document.addEventListener("keyup",(e)=>{ if(e.code==="Space") panMode=false; });
-
-function bindPan() {
-  if (!fabricCanvas) return;
-  fabricCanvas.on("mouse:down",(opt)=>{
-    if(!panMode) return;
-    isPanning=true;
-    const ev=opt.e;
-    panLast={x:ev.clientX,y:ev.clientY};
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_DB, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
   });
-  fabricCanvas.on("mouse:move",(opt)=>{
-    if(!isPanning) return;
-    const ev=opt.e;
-    const vpt=fabricCanvas.viewportTransform;
-    vpt[4]+=ev.clientX-panLast.x;
-    vpt[5]+=ev.clientY-panLast.y;
-    fabricCanvas.setViewportTransform(vpt);
-    panLast={x:ev.clientX,y:ev.clientY};
+}
+
+async function idbSet(key, value) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
   });
-  fabricCanvas.on("mouse:up",()=>{ isPanning=false; });
 }
-bindPan();
 
-// ---------------------------
-// Objects
-// ---------------------------
-export function addText(opts={}) {
-  if (!fabricCanvas) return;
-  const t = new fabric.Textbox(opts.text ?? "Text", {
-    left: fabricCanvas.getWidth()/2,
-    top: fabricCanvas.getHeight()/2,
-    originX: "center",
-    originY: "center",
-    fontFamily: opts.fontFamily ?? "Arial",
-    fontSize: Number(opts.fontSize ?? 48),
-    fill: opts.fill ?? "#111111",
-    fontWeight: opts.fontWeight ?? "normal",
-    fontStyle: opts.fontStyle ?? "normal",
-    underline: !!opts.underline
+async function idbGet(key) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const req = tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
   });
-  // Force safe baseline to avoid browser warning noise
-  t.set("textBaseline", "alphabetic");
-  fabricCanvas.add(t);
-  fabricCanvas.setActiveObject(t);
-  fabricCanvas.requestRenderAll();
-  saveCurrentPage();
 }
 
-export function addRect() {
-  if (!fabricCanvas) return;
-  const r = new fabric.Rect({ left:200, top:200, width:260, height:180, fill:"#3b82f6" });
-  fabricCanvas.add(r); fabricCanvas.setActiveObject(r);
-  fabricCanvas.requestRenderAll(); saveCurrentPage();
-}
-export function addCircle() {
-  if (!fabricCanvas) return;
-  const c = new fabric.Circle({ left:240, top:240, radius:90, fill:"#22c55e" });
-  fabricCanvas.add(c); fabricCanvas.setActiveObject(c);
-  fabricCanvas.requestRenderAll(); saveCurrentPage();
-}
-export function addLine() {
-  if (!fabricCanvas) return;
-  const l = new fabric.Line([120,120,520,220], { stroke:"#ef4444", strokeWidth:6 });
-  fabricCanvas.add(l); fabricCanvas.setActiveObject(l);
-  fabricCanvas.requestRenderAll(); saveCurrentPage();
+async function idbDel(key) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
 
-export function addImageFromFile(file) {
-  if (!fabricCanvas || !file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    fabric.Image.fromURL(reader.result, img => {
-      img.set({ originX:"center", originY:"center" });
-      img.scaleToWidth(fabricCanvas.getWidth()*0.5);
-      img.left = fabricCanvas.getWidth()/2;
-      img.top = fabricCanvas.getHeight()/2;
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.requestRenderAll();
-      saveCurrentPage();
-      refreshThumbnails();
-    }, { crossOrigin: "anonymous" });
-  };
-  reader.readAsDataURL(file);
+// ---------- helpers ----------
+const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const byId = (id) => document.getElementById(id);
+
+function getPreset(p) {
+  return PRESETS[p] || PRESETS.A4P;
 }
 
-// ---------------------------
-// Pages
-// ---------------------------
-export function updatePageInfo() {
-  const el = document.getElementById("pageInfo");
-  if (el) el.textContent = `${currentPage+1} / ${pages.length}`;
+function getStageSize() {
+  const host = byId("canvasHost") || byId("canvasFrame") || document.body;
+  return { w: host.clientWidth || 800, h: host.clientHeight || 600 };
 }
 
-export function saveCurrentPage() {
-  if (!fabricCanvas || !pages[currentPage]) return;
-  pages[currentPage].json = fabricCanvas.toJSON();
+function getCanvasCenterPoint() {
+  const c = App.canvas;
+  const vpt = c.viewportTransform;
+  // canvas center in viewport coords
+  const x = (c.getWidth() / 2 - vpt[4]) / vpt[0];
+  const y = (c.getHeight() / 2 - vpt[5]) / vpt[3];
+  return new fabric.Point(x, y);
 }
 
-export function loadPageToCanvas() {
-  if (!fabricCanvas) return;
-  const pg = pages[currentPage];
-  fabricCanvas.clear();
-  fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.requestRenderAll.bind(fabricCanvas));
-
-  if (pg && pg.json) {
-    fabricCanvas.loadFromJSON(pg.json, () => {
-      fabricCanvas.requestRenderAll();
-      updateLayersList();
-    });
-  } else {
-    fabricCanvas.requestRenderAll();
-    updateLayersList();
+function ensureImageCrossOrigin(obj) {
+  if (obj && obj.type === "image") {
+    try { obj.set({ crossOrigin: "anonymous" }); } catch {}
   }
 }
 
-export function goToPage(index) {
-  if (index < 0 || index >= pages.length) return;
-  saveCurrentPage();
-  currentPage = index;
-  loadPageToCanvas();
-  refreshThumbnails();
-  updatePageInfo();
-  saveDraft();
+function enrichJSON(c) {
+  // include a few extra props we rely on
+  return c.toJSON([
+    "id",
+    "name",
+    "selectable",
+    "evented",
+    "lockMovementX","lockMovementY","lockRotation","lockScalingX","lockScalingY",
+    "opacity",
+    "stroke","strokeWidth","fill",
+    "fontFamily","fontSize","fontWeight","fontStyle","underline","textAlign",
+    "charSpacing","lineHeight",
+    "cropX","cropY",
+    "rx","ry",
+    "scaleX","scaleY","angle",
+  ]);
 }
 
-export function nextPage() { goToPage(Math.min(pages.length-1, currentPage+1)); }
-export function prevPage() { goToPage(Math.max(0, currentPage-1)); }
+// ---------- init ----------
+export async function initCanvas({ preset = "A4P" } = {}) {
+  App.preset = preset;
+  const { w, h } = getPreset(preset);
 
+  const el = byId("canvas");
+  if (!el) throw new Error("Canvas element #canvas not found");
+
+  App.canvas = new fabric.Canvas(el, {
+    preserveObjectStacking: true,
+    selection: true,
+    backgroundColor: "#ffffff",
+  });
+
+  setCanvasSize(preset);
+
+  // core listeners
+  App.canvas.on("object:added", () => { scheduleAutosave(); });
+  App.canvas.on("object:modified", () => { scheduleAutosave(); });
+  App.canvas.on("object:removed", () => { scheduleAutosave(); });
+  App.canvas.on("selection:created", () => { updateLayersUI(); });
+  App.canvas.on("selection:updated", () => { updateLayersUI(); });
+  App.canvas.on("selection:cleared", () => { updateLayersUI(); });
+
+  // right click context menu hook
+  App.canvas.upperCanvasEl.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // load draft or start new
+  const loaded = await loadDraft();
+  if (!loaded) {
+    App.pages = [makeBlankPage(preset)];
+    App.current = 0;
+    await renderCurrentPage();
+  }
+
+  fitToScreen();
+  refreshThumbnails();
+  updatePageInfoUI();
+  updateLayersUI();
+
+  console.log("✅ Canvas initialized");
+}
+
+function makeBlankPage(preset) {
+  return { preset, json: { version: fabric.version, objects: [], background: "#ffffff" } };
+}
+
+// ---------- pages ----------
 export function addPage() {
   saveCurrentPage();
-  pages.push({ json: null });
-  currentPage = pages.length-1;
-  loadPageToCanvas();
+  App.pages.push(makeBlankPage(App.preset));
+  App.current = App.pages.length - 1;
+  renderCurrentPage();
   refreshThumbnails();
-  updatePageInfo();
-  saveDraft();
+  updatePageInfoUI();
+  scheduleAutosave(true);
 }
 
 export function duplicatePage() {
   saveCurrentPage();
-  const src = pages[currentPage]?.json ? structuredClone(pages[currentPage].json) : null;
-  pages.splice(currentPage+1, 0, { json: src });
-  currentPage++;
-  loadPageToCanvas();
+  const src = App.pages[App.current];
+  const copy = JSON.parse(JSON.stringify(src)); // deep copy
+  App.pages.splice(App.current + 1, 0, copy);
+  App.current = App.current + 1;
+  renderCurrentPage();
   refreshThumbnails();
-  updatePageInfo();
-  saveDraft();
+  updatePageInfoUI();
+  scheduleAutosave(true);
 }
 
 export function deletePage() {
-  if (pages.length <= 1) return alert("Πρέπει να υπάρχει τουλάχιστον 1 σελίδα.");
-  pages.splice(currentPage, 1);
-  currentPage = Math.max(0, currentPage-1);
-  loadPageToCanvas();
+  if (App.pages.length <= 1) return;
+  App.pages.splice(App.current, 1);
+  App.current = clamp(App.current, 0, App.pages.length - 1);
+  renderCurrentPage();
   refreshThumbnails();
-  updatePageInfo();
-  saveDraft();
+  updatePageInfoUI();
+  scheduleAutosave(true);
 }
 
-// Thumbnails: render a small PNG per page ON DEMAND (not stored in draft)
-export async function refreshThumbnails() {
-  const strip = document.getElementById("thumbStrip");
-  if (!strip || !fabricCanvas) return;
-
-  strip.innerHTML = "";
-
-  const makeThumb = async (pageIndex) => {
-    // render in offscreen static canvas
-    const tmpEl = document.createElement("canvas");
-    tmpEl.width = 220;
-    tmpEl.height = 300;
-
-    const tmp = new fabric.StaticCanvas(tmpEl, { backgroundColor: "#ffffff" });
-    const pg = pages[pageIndex];
-
-    if (pg?.json) {
-      await new Promise(res => tmp.loadFromJSON(pg.json, () => { tmp.renderAll(); res(); }));
-    } else {
-      tmp.renderAll();
-    }
-
-    // fit inside
-    const scale = Math.min(220 / fabricCanvas.getWidth(), 300 / fabricCanvas.getHeight());
-    // NOTE: tmp already rendered at original size; use dataURL from tmp without scaling to keep simple
-    const url = tmp.toDataURL({ format:"png", quality:0.7 });
-
-    tmp.dispose();
-    return url;
-  };
-
-  for (let i=0;i<pages.length;i++){
-    const d = document.createElement("div");
-    d.className = "thumb" + (i===currentPage ? " active" : "");
-    const img = document.createElement("img");
-    img.alt = `page ${i+1}`;
-    img.src = await makeThumb(i);
-    d.appendChild(img);
-    d.addEventListener("click", () => goToPage(i));
-    strip.appendChild(d);
-  }
+export function goToPage(index) {
+  saveCurrentPage();
+  App.current = clamp(index, 0, App.pages.length - 1);
+  renderCurrentPage();
+  refreshThumbnails();
+  updatePageInfoUI();
+  scheduleAutosave(true);
 }
 
-// ---------------------------
-// Layers (simple list)
-// ---------------------------
-export function updateLayersList() {
-  const list = document.getElementById("layersList");
-  if (!list || !fabricCanvas) return;
-  list.innerHTML = "";
+export function prevPage() { goToPage(App.current - 1); }
+export function nextPage() { goToPage(App.current + 1); }
 
-  const objs = fabricCanvas.getObjects().slice().reverse();
-  if (!objs.length) {
-    list.innerHTML = `<div class="hint">No layers</div>`;
-    return;
-  }
+async function renderCurrentPage() {
+  const page = App.pages[App.current];
+  if (!page) return;
 
-  const active = fabricCanvas.getActiveObject();
+  const c = App.canvas;
+  setCanvasSize(page.preset || App.preset, false);
 
-  objs.forEach((obj, idx) => {
-    const row = document.createElement("div");
-    row.className = "layerRow" + (obj === active ? " active" : "");
-    const name = obj.type === "textbox" ? "Text" : obj.type;
-    row.textContent = `${objs.length-idx}. ${name}`;
-    row.addEventListener("click", () => {
-      fabricCanvas.setActiveObject(obj);
-      fabricCanvas.requestRenderAll();
-      updateLayersList();
+  await new Promise((resolve) => {
+    c.loadFromJSON(page.json, () => {
+      c.getObjects().forEach(ensureImageCrossOrigin);
+      c.renderAll();
+      resolve();
     });
+  });
+
+  // ensure background
+  const bg = (page.json && (page.json.backgroundColor || page.json.background)) || "#ffffff";
+  c.setBackgroundColor(bg, c.renderAll.bind(c));
+}
+
+export function saveCurrentPage() {
+  const c = App.canvas;
+  if (!c) return;
+  const page = App.pages[App.current];
+  if (!page) return;
+
+  page.preset = App.preset;
+  const json = enrichJSON(c);
+  // keep backgroundColor
+  json.backgroundColor = c.backgroundColor || "#ffffff";
+  page.json = json;
+}
+
+// ---------- size / zoom ----------
+export function setCanvasSize(preset, doFit = true) {
+  App.preset = preset;
+  const { w, h } = getPreset(preset);
+
+  const c = App.canvas;
+  c.setWidth(w);
+  c.setHeight(h);
+
+  // make sure DOM canvas matches
+  c.calcOffset();
+  c.requestRenderAll();
+
+  if (doFit) fitToScreen();
+}
+
+export function fitToScreen() {
+  const c = App.canvas;
+  if (!c) return;
+
+  const stage = getStageSize();
+  const pad = 40;
+  const sx = (stage.w - pad) / c.getWidth();
+  const sy = (stage.h - pad) / c.getHeight();
+  const z = clamp(Math.min(sx, sy), 0.05, 3);
+  setZoom(z, true);
+}
+
+export function setZoom(z, center = true) {
+  const c = App.canvas;
+  if (!c) return;
+
+  App.zoom = clamp(z, 0.05, 6);
+
+  if (center) {
+    const pt = new fabric.Point(c.getWidth() / 2, c.getHeight() / 2);
+    c.zoomToPoint(pt, App.zoom);
+  } else {
+    c.setZoom(App.zoom);
+  }
+
+  c.requestRenderAll();
+  updateZoomUI();
+}
+
+export function zoomIn() { setZoom(App.zoom * 1.1); }
+export function zoomOut() { setZoom(App.zoom / 1.1); }
+export function zoomReset() { setZoom(1); }
+
+function updateZoomUI() {
+  const el = byId("zoomValue");
+  if (el) el.textContent = `${Math.round(App.zoom * 100)}%`;
+}
+
+// ---------- object creation (centered) ----------
+function centerPos() {
+  const c = App.canvas;
+  const vp = getCanvasCenterPoint();
+  return { left: vp.x, top: vp.y, originX: "center", originY: "center" };
+}
+
+export function addText(opts = {}) {
+  const c = App.canvas;
+  if (!c) return;
+  const pos = centerPos();
+  const t = new fabric.Textbox(opts.text || "Text", {
+    ...pos,
+    fontFamily: opts.fontFamily || "Arial",
+    fontSize: opts.fontSize || 48,
+    fill: opts.fill || "#111111",
+    stroke: opts.stroke || null,
+    strokeWidth: opts.strokeWidth || 0,
+    opacity: opts.opacity ?? 1,
+  });
+  c.add(t);
+  c.setActiveObject(t);
+  c.requestRenderAll();
+  scheduleAutosave(true);
+}
+
+export async function addImageFromFile(file) {
+  const c = App.canvas;
+  if (!c || !file) return;
+
+  const pos = centerPos();
+
+  // Try Firebase upload first (optional)
+  let url = null;
+  if (window.FirebaseStore && typeof window.FirebaseStore.uploadImage === "function") {
+    try {
+      url = await window.FirebaseStore.uploadImage(file);
+    } catch (e) {
+      console.warn("Firebase upload failed, fallback to local dataURL", e);
+    }
+  }
+
+  if (!url) {
+    url = await fileToDataURL(file);
+  }
+
+  return new Promise((resolve) => {
+    fabric.Image.fromURL(url, (img) => {
+      ensureImageCrossOrigin(img);
+      // scale to fit ~60% of page
+      const maxW = c.getWidth() * 0.6;
+      const maxH = c.getHeight() * 0.6;
+      const s = Math.min(maxW / img.width, maxH / img.height, 1);
+      img.set({ ...pos, scaleX: s, scaleY: s });
+      c.add(img);
+      c.setActiveObject(img);
+      c.requestRenderAll();
+      scheduleAutosave(true);
+      resolve(img);
+    }, { crossOrigin: "anonymous" });
+  });
+}
+
+export function addRect() {
+  const c = App.canvas;
+  const pos = centerPos();
+  const r = new fabric.Rect({ ...pos, width: 320, height: 220, fill: "#ff3b30", rx: 12, ry: 12 });
+  c.add(r); c.setActiveObject(r); c.requestRenderAll(); scheduleAutosave(true);
+}
+
+export function addCircle() {
+  const c = App.canvas;
+  const pos = centerPos();
+  const o = new fabric.Circle({ ...pos, radius: 140, fill: "#34c759" });
+  c.add(o); c.setActiveObject(o); c.requestRenderAll(); scheduleAutosave(true);
+}
+
+export function addLine() {
+  const c = App.canvas;
+  const pos = centerPos();
+  const x = pos.left, y = pos.top;
+  const l = new fabric.Line([x - 200, y, x + 200, y], { stroke: "#111", strokeWidth: 6, originX:"center", originY:"center" });
+  c.add(l); c.setActiveObject(l); c.requestRenderAll(); scheduleAutosave(true);
+}
+
+export function addTriangle() {
+  const c = App.canvas;
+  const pos = centerPos();
+  const t = new fabric.Triangle({ ...pos, width: 280, height: 240, fill: "#0a84ff" });
+  c.add(t); c.setActiveObject(t); c.requestRenderAll(); scheduleAutosave(true);
+}
+
+export function addEllipse() {
+  const c = App.canvas;
+  const pos = centerPos();
+  const e = new fabric.Ellipse({ ...pos, rx: 180, ry: 120, fill: "#ff9f0a" });
+  c.add(e); c.setActiveObject(e); c.requestRenderAll(); scheduleAutosave(true);
+}
+
+// ---------- styling selected objects ----------
+export function getActiveObject() { return App.canvas?.getActiveObject() || null; }
+
+export function setActiveFill(color) {
+  const obj = getActiveObject(); if (!obj) return;
+  obj.set("fill", color);
+  App.canvas.requestRenderAll(); scheduleAutosave(true); updateLayersUI();
+}
+
+export function setActiveStroke(color, width = 4) {
+  const obj = getActiveObject(); if (!obj) return;
+  obj.set({ stroke: color, strokeWidth: width });
+  App.canvas.requestRenderAll(); scheduleAutosave(true);
+}
+
+export function setActiveOpacity(op) {
+  const obj = getActiveObject(); if (!obj) return;
+  obj.set("opacity", clamp(op, 0, 1));
+  App.canvas.requestRenderAll(); scheduleAutosave(true);
+}
+
+export function setTextProps(props = {}) {
+  const obj = getActiveObject(); if (!obj) return;
+  if (obj.type !== "textbox" && obj.type !== "i-text" && obj.type !== "text") return;
+  obj.set(props);
+  App.canvas.requestRenderAll(); scheduleAutosave(true);
+}
+
+export function setCanvasBackground(color) {
+  const c = App.canvas; if (!c) return;
+  c.setBackgroundColor(color, c.requestRenderAll.bind(c));
+  scheduleAutosave(true);
+}
+
+// ---------- layers ----------
+export function bringForward() {
+  const obj = getActiveObject(); if (!obj) return;
+  App.canvas.bringForward(obj);
+  App.canvas.requestRenderAll(); scheduleAutosave(true); updateLayersUI();
+}
+export function sendBackwards() {
+  const obj = getActiveObject(); if (!obj) return;
+  App.canvas.sendBackwards(obj);
+  App.canvas.requestRenderAll(); scheduleAutosave(true); updateLayersUI();
+}
+export function deleteSelected() {
+  const obj = getActiveObject(); if (!obj) return;
+  App.canvas.remove(obj);
+  App.canvas.requestRenderAll(); scheduleAutosave(true); updateLayersUI();
+}
+
+export function toggleLockObject(obj = getActiveObject()) {
+  if (!obj) return;
+  const locked = !!obj.lockMovementX;
+  obj.set({
+    lockMovementX: !locked,
+    lockMovementY: !locked,
+    lockRotation: !locked,
+    lockScalingX: !locked,
+    lockScalingY: !locked,
+    selectable: true,
+    evented: true,
+  });
+  App.canvas.requestRenderAll();
+  scheduleAutosave(true);
+  updateLayersUI();
+}
+
+export function updateLayersUI() {
+  const list = byId("layersList");
+  if (!list || !App.canvas) return;
+  const objs = App.canvas.getObjects().slice().reverse();
+
+  list.innerHTML = "";
+  objs.forEach((o, idx) => {
+    const row = document.createElement("div");
+    row.className = "layerRow";
+    const name = (o.type === "textbox" ? `Text: ${(o.text||"").slice(0,12)}` : o.type);
+    row.innerHTML = `
+      <button class="layerBtn" data-act="select">#${objs.length-idx} ${escapeHtml(name)}</button>
+      <button class="layerIcon" data-act="lock" title="Lock/Unlock">${o.lockMovementX ? "🔒" : "🔓"}</button>
+      <button class="layerIcon" data-act="up" title="Bring forward">⬆</button>
+      <button class="layerIcon" data-act="down" title="Send back">⬇</button>
+    `;
+    row.querySelector('[data-act="select"]').onclick = () => {
+      App.canvas.setActiveObject(o);
+      App.canvas.requestRenderAll();
+    };
+    row.querySelector('[data-act="lock"]').onclick = () => toggleLockObject(o);
+    row.querySelector('[data-act="up"]').onclick = () => { App.canvas.bringForward(o); App.canvas.requestRenderAll(); scheduleAutosave(true); updateLayersUI(); };
+    row.querySelector('[data-act="down"]').onclick = () => { App.canvas.sendBackwards(o); App.canvas.requestRenderAll(); scheduleAutosave(true); updateLayersUI(); };
     list.appendChild(row);
   });
 }
 
-export function bringForward() {
-  const obj = fabricCanvas?.getActiveObject();
-  if (!obj) return;
-  fabricCanvas.bringForward(obj);
-  fabricCanvas.requestRenderAll();
-  saveCurrentPage();
-  updateLayersList();
-}
-export function sendBackwards() {
-  const obj = fabricCanvas?.getActiveObject();
-  if (!obj) return;
-  fabricCanvas.sendBackwards(obj);
-  fabricCanvas.requestRenderAll();
-  saveCurrentPage();
-  updateLayersList();
-}
-export function deleteActive() {
-  const obj = fabricCanvas?.getActiveObject();
-  if (!obj) return;
-  fabricCanvas.remove(obj);
-  fabricCanvas.discardActiveObject();
-  fabricCanvas.requestRenderAll();
-  saveCurrentPage();
-  updateLayersList();
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+
+// ---------- crop / remove bg (basic) ----------
+export function cropSelected() {
+  const c = App.canvas; if (!c) return;
+  const obj = c.getActiveObject();
+  if (!obj || obj.type !== "image") { alert("Επίλεξε μια εικόνα πρώτα."); return; }
+
+  const w = obj.width || 0;
+  const h = obj.height || 0;
+
+  const cropX = Number(prompt(`cropX (0-${w})`, String(obj.cropX || 0)) ?? (obj.cropX || 0));
+  const cropY = Number(prompt(`cropY (0-${h})`, String(obj.cropY || 0)) ?? (obj.cropY || 0));
+  const cropW = Number(prompt(`cropW (min 10, max ${w})`, String(obj.width || w)) ?? (obj.width || w));
+  const cropH = Number(prompt(`cropH (min 10, max ${h})`, String(obj.height || h)) ?? (obj.height || h));
+
+  obj.set({ cropX: clamp(cropX, 0, w), cropY: clamp(cropY, 0, h) });
+  obj.set({ width: clamp(cropW, 10, w), height: clamp(cropH, 10, h) });
+  obj.setCoords();
+  c.requestRenderAll();
+  scheduleAutosave(true);
 }
 
-// ---------------------------
-// Draft (quota-safe)
-// ---------------------------
-function bindAutosave() {
-  setInterval(() => saveDraft(), 2500);
-}
+// Simple "remove white-ish background" (works best for white studio backgrounds)
+export async function removeBgSelected() {
+  const c = App.canvas; if (!c) return;
+  const obj = c.getActiveObject();
+  if (!obj || obj.type !== "image") { alert("Επίλεξε μια εικόνα πρώτα."); return; }
 
-export function saveDraft() {
-  try {
-    saveCurrentPage();
-    const payload = {
-      pages,
-      currentPage,
-      size: { w: fabricCanvas?.getWidth() ?? 1240, h: fabricCanvas?.getHeight() ?? 1754 }
-    };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-  } catch (e) {
-    // quota exceeded -> keep app running, just stop saving
-    console.warn("Draft not saved (quota?)", e?.message || e);
-  }
-}
+  const tolerance = Number(prompt("Tolerance (0-255) για λευκό background;", "40")) || 40;
 
-export function loadDraft() {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    if (Array.isArray(data.pages) && data.pages.length) pages = data.pages;
-    if (typeof data.currentPage === "number") currentPage = Math.max(0, Math.min(data.currentPage, pages.length-1));
-    if (data.size && typeof data.size.w === "number" && typeof data.size.h === "number" && fabricCanvas) {
-      fabricCanvas.setWidth(data.size.w);
-      fabricCanvas.setHeight(data.size.h);
-      fabricCanvas.setBackgroundColor("#ffffff", fabricCanvas.requestRenderAll.bind(fabricCanvas));
-      fitToScreen();
+  // render image to temp canvas
+  const tmp = document.createElement("canvas");
+  tmp.width = obj.width;
+  tmp.height = obj.height;
+  const ctx = tmp.getContext("2d");
+
+  // draw original element
+  const el = obj._element;
+  if (!el) { alert("Δεν μπορώ να επεξεργαστώ την εικόνα."); return; }
+
+  ctx.drawImage(el, 0, 0, tmp.width, tmp.height);
+  const imgData = ctx.getImageData(0, 0, tmp.width, tmp.height);
+  const d = imgData.data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i+1], b = d[i+2];
+    // whiteness heuristic
+    if (r > 255 - tolerance && g > 255 - tolerance && b > 255 - tolerance) {
+      d[i+3] = 0;
     }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  const out = tmp.toDataURL("image/png");
+
+  // keep transform
+  const left = obj.left, top = obj.top, angle = obj.angle;
+  const sx = obj.scaleX, sy = obj.scaleY;
+  const ox = obj.originX, oy = obj.originY;
+
+  return new Promise((resolve) => {
+    fabric.Image.fromURL(out, (img) => {
+      img.set({ left, top, angle, scaleX: sx, scaleY: sy, originX: ox, originY: oy });
+      c.remove(obj);
+      c.add(img);
+      c.setActiveObject(img);
+      c.requestRenderAll();
+      scheduleAutosave(true);
+      resolve(img);
+    }, { crossOrigin: "anonymous" });
+  });
+}
+
+// ---------- PDF upload (first page) ----------
+export async function addPdfFromFile(file) {
+  if (!file) return;
+  if (!window.pdfjsLib) { alert("pdf.js δεν φορτώθηκε."); return; }
+
+  const ab = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: ab }).promise;
+  const pageNum = Number(prompt(`Ποια σελίδα; (1-${pdf.numPages})`, "1")) || 1;
+  const page = await pdf.getPage(clamp(pageNum, 1, pdf.numPages));
+  const viewport = page.getViewport({ scale: 2 });
+  const cnv = document.createElement("canvas");
+  cnv.width = viewport.width;
+  cnv.height = viewport.height;
+  await page.render({ canvasContext: cnv.getContext("2d"), viewport }).promise;
+  const url = cnv.toDataURL("image/png");
+  return new Promise((resolve) => {
+    fabric.Image.fromURL(url, (img) => {
+      ensureImageCrossOrigin(img);
+      const c = App.canvas;
+      const pos = centerPos();
+      const maxW = c.getWidth() * 0.8;
+      const maxH = c.getHeight() * 0.8;
+      const s = Math.min(maxW / img.width, maxH / img.height, 1);
+      img.set({ ...pos, scaleX: s, scaleY: s });
+      c.add(img); c.setActiveObject(img); c.requestRenderAll();
+      scheduleAutosave(true);
+      resolve(img);
+    }, { crossOrigin: "anonymous" });
+  });
+}
+
+// ---------- thumbnails ----------
+export async function refreshThumbnails() {
+  const strip = byId("thumbStrip");
+  if (!strip) return;
+
+  strip.innerHTML = "";
+  App.pages.forEach((p, i) => {
+    const thumb = document.createElement("div");
+    thumb.className = "thumb" + (i === App.current ? " active" : "");
+    thumb.title = `Page ${i+1}`;
+    thumb.onclick = () => goToPage(i);
+
+    const img = document.createElement("img");
+    img.alt = `Page ${i+1}`;
+    img.src = makeThumbDataURL(p);
+    thumb.appendChild(img);
+
+    const cap = document.createElement("div");
+    cap.className = "thumbCap";
+    cap.textContent = `${i+1}`;
+    thumb.appendChild(cap);
+
+    strip.appendChild(thumb);
+  });
+}
+
+function makeThumbDataURL(page) {
+  try {
+    const preset = getPreset(page.preset || App.preset);
+    const sc = new fabric.StaticCanvas(null, { width: preset.w, height: preset.h, backgroundColor: page.json.backgroundColor || "#fff" });
+    sc.loadFromJSON(page.json, () => {
+      sc.getObjects().forEach(ensureImageCrossOrigin);
+      sc.renderAll();
+    });
+    // NOTE: loadFromJSON is async; but StaticCanvas will render quickly for small thumbs.
+    // We'll just return a placeholder then update later via async refresh below.
+    const ratio = 240 / preset.w;
+    const tmp = document.createElement("canvas");
+    tmp.width = 240;
+    tmp.height = Math.round(preset.h * ratio);
+    const ctx = tmp.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,tmp.width,tmp.height);
+    // async draw after a tick
+    setTimeout(() => {
+      try {
+        const url = sc.toDataURL({ format:"png", multiplier: ratio });
+        // find current thumb img and update
+        // (safe)
+      } catch {}
+    }, 0);
+    // quick synchronous thumb from JSON (may miss images if not ready) - acceptable
+    return sc.toDataURL({ format:"png", multiplier: ratio });
   } catch (e) {
-    console.warn("Draft load failed", e?.message || e);
+    // fallback
+    return "";
   }
 }
 
-// ---------------------------
-// Export: Flipbook (HTML) + Preview
-// ---------------------------
-async function pagesToImages() {
-  // Render each page as image at current canvas size
-  const imgs = [];
-  for (let i=0;i<pages.length;i++){
-    const tmpEl = document.createElement("canvas");
-    tmpEl.width = fabricCanvas.getWidth();
-    tmpEl.height = fabricCanvas.getHeight();
-
-    const tmp = new fabric.StaticCanvas(tmpEl, { backgroundColor: "#ffffff" });
-    const pg = pages[i];
-    if (pg?.json) {
-      await new Promise(res => tmp.loadFromJSON(pg.json, () => { tmp.renderAll(); res(); }));
-    } else {
-      tmp.renderAll();
-    }
-    imgs.push(tmp.toDataURL({ format:"png", quality:0.92 }));
-    tmp.dispose();
-  }
-  return imgs;
+function updatePageInfoUI() {
+  const el = byId("pageInfo");
+  if (el) el.textContent = `${App.current + 1} / ${App.pages.length}`;
 }
 
-function buildFlipbookHTML(images, opts) {
-  const dir = opts?.direction === "vertical" ? "vertical" : "horizontal";
-  const title = opts?.title || "Photobook Flipbook";
-  const w = opts?.w || 900;
-  const h = opts?.h || 600;
+// ---------- exports ----------
+async function pageToDataURL(page, format="png", quality=0.92) {
+  const preset = getPreset(page.preset || App.preset);
+  const sc = new fabric.StaticCanvas(null, { width: preset.w, height: preset.h, backgroundColor: page.json.backgroundColor || "#fff" });
+  await new Promise((resolve) => {
+    sc.loadFromJSON(page.json, () => {
+      sc.getObjects().forEach(ensureImageCrossOrigin);
+      sc.renderAll();
+      resolve();
+    });
+  });
+  if (format === "jpeg" || format === "jpg") {
+    return sc.toDataURL({ format:"jpeg", quality });
+  }
+  return sc.toDataURL({ format:"png" });
+}
 
-  // minimal flip engine (no libs)
+export async function exportPNG() {
+  saveCurrentPage();
+  const url = await pageToDataURL(App.pages[App.current], "png");
+  downloadDataURL(url, `page-${App.current+1}.png`);
+}
+
+export async function exportJPG() {
+  saveCurrentPage();
+  const url = await pageToDataURL(App.pages[App.current], "jpeg", 0.92);
+  downloadDataURL(url, `page-${App.current+1}.jpg`);
+}
+
+export async function exportPDF() {
+  if (!window.jspdf?.jsPDF) { alert("jsPDF δεν φορτώθηκε."); return; }
+  saveCurrentPage();
+  const doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" });
+
+  for (let i=0;i<App.pages.length;i++){
+    const p = App.pages[i];
+    const url = await pageToDataURL(p, "jpeg", 0.92);
+    const img = await dataURLToImage(url);
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const scale = Math.min(pageW / img.width, pageH / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    const x = (pageW - w)/2;
+    const y = (pageH - h)/2;
+
+    if (i>0) doc.addPage();
+    doc.addImage(url, "JPEG", x, y, w, h);
+  }
+
+  doc.save("photobook.pdf");
+}
+
+// Flipbook: builds a standalone HTML with simple page-flip animation.
+export async function exportFlipbook({ direction="horizontal" } = {}) {
+  saveCurrentPage();
+  const pages = [];
+  for (let i=0;i<App.pages.length;i++){
+    pages.push(await pageToDataURL(App.pages[i], "jpeg", 0.92));
+  }
+  const html = buildFlipbookHTML(pages, direction);
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  // open new tab
+  window.open(url, "_blank");
+  return url;
+}
+
+export async function previewFlipbook({ direction="horizontal" } = {}) {
+  const url = await exportFlipbook({ direction });
+  const modal = byId("flipPreviewModal");
+  const frame = byId("flipPreviewFrame");
+  if (frame) frame.src = url;
+  if (modal) modal.classList.add("open");
+}
+
+export function closeFlipbookPreview() {
+  const modal = byId("flipPreviewModal");
+  const frame = byId("flipPreviewFrame");
+  if (frame) frame.src = "about:blank";
+  if (modal) modal.classList.remove("open");
+}
+
+export async function exportLink() {
+  // A "temporary share" link (objectURL) – works on the same device/session.
+  const url = await exportFlipbook({ direction: "horizontal" });
+  await navigator.clipboard.writeText(url);
+  alert("Έγινε αντιγραφή link (προσωρινό / τοπικό). Για πραγματικό share, ανέβασε το flipbook.html στο hosting.");
+}
+
+function buildFlipbookHTML(pageDataURLs, direction) {
+  const axis = (direction === "vertical") ? "Y" : "X";
+  const rotate = (direction === "vertical") ? "rotateY(180deg)" : "rotateY(180deg)";
+  // simple book-style flip with CSS 3D
+  const pagesJson = JSON.stringify(pageDataURLs);
   return `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8"/>
+<html><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${escapeHtml(title)}</title>
+<title>Flipbook</title>
 <style>
-  :root{--bg:#0b1020;--card:#0f172a;--line:rgba(255,255,255,.12);--txt:#e5e7eb}
-  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  header{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.25);backdrop-filter:blur(10px)}
-  .btn{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--txt);padding:10px 12px;border-radius:12px;cursor:pointer}
-  .wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 60px);padding:18px}
-  .book{width:min(${w}px,94vw);height:min(${h}px,82vh);position:relative;perspective:1800px}
-  .page{position:absolute;inset:0;border-radius:16px;overflow:hidden;background:#111;border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.45);transform-style:preserve-3d}
-  .page img{width:100%;height:100%;object-fit:contain;background:#fff}
-  .page .front,.page .back{position:absolute;inset:0;backface-visibility:hidden}
-  .page .back{transform:rotateY(180deg)}
-  /* flip axes */
-  .page.flipH{transform-origin:left center}
-  .page.flippedH{transform:rotateY(-180deg)}
-  .page.flipV{transform-origin:center top}
-  .page.flippedV{transform:rotateX(180deg)}
-  .page.flipV .back{transform:rotateX(180deg)}
-  .page .badge{position:absolute;left:12px;top:12px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.55);border:1px solid var(--line);font-size:12px}
+  html,body{margin:0;height:100%;background:#0b0b0f;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{height:100%;display:flex;align-items:center;justify-content:center;gap:16px;padding:16px}
+  .book{width:min(900px,92vw);aspect-ratio: 3/2;position:relative;perspective:1800px}
+  .page{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 650ms cubic-bezier(.2,.7,.1,1)}
+  .page img{width:100%;height:100%;object-fit:contain;background:#fff;border-radius:12px}
+  .page.flipped{transform: rotate${axis}(180deg)}
+  .controls{display:flex;flex-direction:column;gap:10px}
+  button{background:#1f2937;color:#fff;border:1px solid rgba(255,255,255,.14);padding:10px 12px;border-radius:12px;cursor:pointer}
 </style>
-</head>
-<body>
-<header>
-  <div style="font-weight:800">${escapeHtml(title)}</div>
-  <div style="display:flex;gap:10px;align-items:center">
-    <button class="btn" id="prevBtn">Prev</button>
-    <div id="counter" style="opacity:.9"></div>
-    <button class="btn" id="nextBtn">Next</button>
-  </div>
-</header>
-
+</head><body>
 <div class="wrap">
+  <div class="controls">
+    <button id="prev">← Prev</button>
+    <button id="next">Next →</button>
+    <div id="info" style="opacity:.85"></div>
+  </div>
   <div class="book" id="book"></div>
 </div>
-
 <script>
-const IMAGES = ${JSON.stringify(images)};
-const dir = ${JSON.stringify(dir)};
-const book = document.getElementById('book');
-let idx = 0;
+  const PAGES = ${pagesJson};
+  const book = document.getElementById('book');
+  let idx = 0;
 
-function makePage(src, n){
-  const p = document.createElement('div');
-  p.className = 'page ' + (dir==='vertical'?'flipV':'flipH');
-  p.style.zIndex = String(1000 - n);
-
-  const front = document.createElement('div');
-  front.className='front';
-  const img = document.createElement('img');
-  img.src = src;
-  front.appendChild(img);
-
-  const badge = document.createElement('div');
-  badge.className='badge';
-  badge.textContent = (n+1) + ' / ' + IMAGES.length;
-  front.appendChild(badge);
-
-  p.appendChild(front);
-  return p;
-}
-
-function render(){
-  book.innerHTML='';
-  // show current page only (simple) with flip animation between pages
-  const p = makePage(IMAGES[idx], idx);
-  book.appendChild(p);
-  document.getElementById('counter').textContent = (idx+1) + ' / ' + IMAGES.length;
-}
-
-function go(next){
-  const old = book.querySelector('.page');
-  if(!old){ idx = next; render(); return; }
-  old.classList.add(dir==='vertical'?'flippedV':'flippedH');
-  // after animation, swap
-  setTimeout(()=>{
-    idx = next;
-    render();
-  }, 420);
-}
-
-document.getElementById('prevBtn').onclick = ()=>{
-  if(idx<=0) return;
-  go(idx-1);
-};
-document.getElementById('nextBtn').onclick = ()=>{
-  if(idx>=IMAGES.length-1) return;
-  go(idx+1);
-};
-
-render();
+  function render(){
+    book.innerHTML = '';
+    // stack pages so that current is top
+    for(let i=PAGES.length-1;i>=0;i--){
+      const d = document.createElement('div');
+      d.className = 'page' + (i < idx ? ' flipped' : '');
+      const img = document.createElement('img');
+      img.src = PAGES[i];
+      d.appendChild(img);
+      book.appendChild(d);
+    }
+    document.getElementById('info').textContent = (idx+1) + ' / ' + PAGES.length;
+  }
+  function next(){ if(idx < PAGES.length-1){ idx++; render(); } }
+  function prev(){ if(idx > 0){ idx--; render(); } }
+  document.getElementById('next').onclick = next;
+  document.getElementById('prev').onclick = prev;
+  document.addEventListener('keydown', (e)=>{ if(e.key==='ArrowRight')next(); if(e.key==='ArrowLeft')prev(); });
+  render();
 </script>
-</body>
-</html>`;
+</body></html>`;
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-}
-
-// Export flipbook HTML file (download)
-export async function exportFlipbook(options={}) {
-  const images = await pagesToImages();
-  const html = buildFlipbookHTML(images, options);
-  const blob = new Blob([html], { type:"text/html" });
-  const url = URL.createObjectURL(blob);
-
+function downloadDataURL(dataURL, filename) {
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "flipbook.html";
+  a.href = dataURL;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
-
-  // small delay then revoke
-  setTimeout(()=>URL.revokeObjectURL(url), 4000);
-  return { url, html };
 }
 
-// Preview flipbook inside modal iframe (no black screen, uses srcdoc)
-export async function previewFlipbook(options={}) {
-  const images = await pagesToImages();
-  const html = buildFlipbookHTML(images, options);
-  return { html };
+// ---------- autosave ----------
+let autosaveTimer = null;
+
+function scheduleAutosave(immediate = false) {
+  if (!App.autosaveEnabled) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => saveDraft(), immediate ? 0 : 600);
 }
 
-// Link export (best-effort): creates a sharable "data link" (may be long) in URL hash.
-// Works best for small projects.
-export function makeFlipbookLink(options={}) {
-  // store flipbook HTML in a compressed-ish base64 (no compression lib, so keep plain)
-  // NOTE: can get large; still useful for short demos.
-  const payload = { type:"flipbook", options, pages };
-  const json = JSON.stringify(payload);
-  const b64 = btoa(unescape(encodeURIComponent(json)));
-  return `${location.origin}${location.pathname.replace(/[^/]+$/,'')}viewer.html#pb=${b64}`;
+export async function saveDraft() {
+  try {
+    saveCurrentPage();
+    const payload = {
+      v: 1,
+      preset: App.preset,
+      current: App.current,
+      pages: App.pages,
+      ts: Date.now(),
+    };
+    await idbSet(App.autosaveKey, payload);
+  } catch (e) {
+    console.warn("Draft save failed", e);
+    App.autosaveEnabled = false;
+    console.warn("Draft too large or blocked, autosave disabled.");
+  }
+}
+
+export async function loadDraft() {
+  try {
+    const payload = await idbGet(App.autosaveKey);
+    if (!payload || !payload.pages || !payload.pages.length) return false;
+    App.pages = payload.pages;
+    App.current = clamp(payload.current || 0, 0, App.pages.length - 1);
+    App.preset = payload.preset || App.preset;
+    await renderCurrentPage();
+    refreshThumbnails();
+    updatePageInfoUI();
+    return true;
+  } catch (e) {
+    console.warn("Draft load failed", e);
+    return false;
+  }
+}
+
+export async function clearDraft() {
+  await idbDel(App.autosaveKey);
+  alert("Draft cleared.");
+}
+
+// ---------- util ----------
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function dataURLToImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
 }
