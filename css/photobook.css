@@ -157,7 +157,7 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
   display: flex !important;
   align-items: center;
   justify-content: center;
-  min-height: 400px; /* Ή όσο ύψος θέλεις */
+  min-height: 500px; /* Ή όσο ύψος θέλεις */
 }
 
 
