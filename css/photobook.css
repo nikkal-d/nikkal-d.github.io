@@ -136,33 +136,32 @@ body.theme-light .floatToolbar{background:rgba(255,255,255,.8)}
 
 
 
+
 .canvasHost {
-  /* ... οι άλλες ιδιότητες ... */
   display: flex !important;
-  align-items: center !important;   /* Κεντράρισμα κάθετα */
-  justify-content: center !important; /* Κεντράρισμα οριζόντια */
+  align-items: center !important;
+  justify-content: center !important;
+  height: calc(100vh - 120px); /* Δίνει ύψος ανάλογα με την οθόνη μείον τα μενού */
   overflow: hidden;
 }
 
 .canvasFrame {
-  /* ... οι άλλες ιδιότητες ... */
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: auto; /* Βοηθάει στο κεντράρισμα */
-  max-width: 90%;  /* Αφήνουμε λίγο αέρα δεξιά-αριστερά */
-height: 500px;
-  overflow: hidden;
+  width: auto; 
+  height: 90%; /* Πιάνει το 90% του διαθέσιμου ύψους του Host */
+  aspect-ratio: 1 / 1.41; /* Προαιρετικό: Διατηρεί αναλογία A4 */
+  background: white; 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-/* Αυτό αναγκάζει τον καμβά της Fabric να ακολουθήσει το μέγεθος του πλαισίου */
+/* Εδώ είναι το μυστικό για να μικρύνει ο καμβάς της Fabric */
 .canvas-container {
-  width: 100% !important;
- min-height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transform: scale(0.6); /* Δοκίμασε 0.5 ή 0.6 για να μικρύνει οπτικά */
+  transform-origin: center;
 }
+
 
 .canvas-container canvas {
   width: 100% !important;
