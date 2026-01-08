@@ -737,17 +737,16 @@ export async function exportPDF() {
 export async function exportFlipbook() {
   saveCurrentPage();
 
-  if (!App.pages || !App.pages.length) {
+  if (!App.canvas || !App.pages.length) {
     alert("Δεν υπάρχουν σελίδες");
     return;
   }
 
-  const img = await pageToDataURL(fabricCanvas, page);
-
+  const images = [];
 
   for (let i = 0; i < App.pages.length; i++) {
-    const dataUrl = await pageToDataURL(App.pages[i], "png");
-    images.push(dataUrl);
+    const dataUrl = await pageToDataURL(App.canvas, App.pages[i], "png");
+    if (dataUrl) images.push(dataUrl);
   }
 
   openFlipbookPreview(images);
