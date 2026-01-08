@@ -713,19 +713,35 @@ export async function exportPDF() {
 }
 
 // Flipbook: builds a standalone HTML with simple page-flip animation.
-export async function exportFlipbook({ direction="horizontal" } = {}) {
-  saveCurrentPage();
-  const pages = [];
-  for (let i=0;i<App.pages.length;i++){
-    pages.push(await pageToDataURL(App.pages[i], "jpeg", 0.92));
+export async function exportFlipbook() {
+  if (!pages.length) {
+    alert("Δεν υπάρχουν σελίδες");
+    return;
   }
-  const html = buildFlipbookHTML(pages, direction);
-  const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  // open new tab
-  window.open(url, "_blank");
-  return url;
+
+  const images = [];
+  const originalPage = currentPageIndex;
+
+  for (let i = 0; i < pages.length; i++) {
+    await loadPage(i);
+
+    // αφήνουμε 1 frame να κάνει render
+    await new Promise(r => requestAnimationFrame(r));
+
+    const dataUrl = fabricCanvas.toDataURL({
+      format: "png",
+      multiplier: 2
+    });
+
+    images.push(dataUrl);
+  }
+
+  // επαναφορά σελίδας
+  await loadPage(originalPage);
+
+  openFlipbookPreview(images);
 }
+
 
 export async function previewFlipbook({ direction="horizontal" } = {}) {
   const url = await exportFlipbook({ direction });
