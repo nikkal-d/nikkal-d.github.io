@@ -659,42 +659,40 @@ function updatePageInfoUI() {
 }
 
 // ---------- exports ----------
-export async function pageToDataURL(page, format = "png") {
+export async function pageToDataURL(canvas, page, format = "png") {
   return new Promise((resolve) => {
-    if (!page || !fabricCanvas) {
+    if (!page || !canvas) {
       resolve(null);
       return;
     }
 
-    // 1. Αποθήκευση τρέχοντος state
-    const prevTransform = fabricCanvas.viewportTransform.slice();
-    const prevZoom = fabricCanvas.getZoom();
+    const prevTransform = canvas.viewportTransform.slice();
+    const prevZoom = canvas.getZoom();
 
-    // 2. Reset zoom + pan για σωστό export
-    fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    fabricCanvas.setZoom(1);
+    // reset view
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    canvas.setZoom(1);
 
-    // 3. Φόρτωση page στο canvas
-    fabricCanvas.loadFromJSON(page.json, () => {
-      fabricCanvas.renderAll();
+    canvas.loadFromJSON(page.json, () => {
+      canvas.renderAll();
 
-      // 4. Export ΟΛΟΚΛΗΡΟΥ canvas
-      const dataUrl = fabricCanvas.toDataURL({
+      const dataUrl = canvas.toDataURL({
         format,
         quality: 1,
-        multiplier: 2, // sharp εικόνα
+        multiplier: 2,
         enableRetinaScaling: true
       });
 
-      // 5. Επαναφορά zoom + pan
-      fabricCanvas.setViewportTransform(prevTransform);
-      fabricCanvas.setZoom(prevZoom);
-      fabricCanvas.renderAll();
+      // restore
+      canvas.setViewportTransform(prevTransform);
+      canvas.setZoom(prevZoom);
+      canvas.renderAll();
 
       resolve(dataUrl);
     });
   });
 }
+
 
 
 export async function exportPNG() {
@@ -744,7 +742,8 @@ export async function exportFlipbook() {
     return;
   }
 
-  const images = [];
+  const img = await pageToDataURL(fabricCanvas, page);
+
 
   for (let i = 0; i < App.pages.length; i++) {
     const dataUrl = await pageToDataURL(App.pages[i], "png");
