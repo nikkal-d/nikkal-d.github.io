@@ -822,13 +822,10 @@ document.body.onclick = () => {
 
 
 
-export async function previewFlipbook({ direction="horizontal" } = {}) {
-  const url = await exportFlipbook({ direction });
-  const modal = byId("flipPreviewModal");
-  const frame = byId("flipPreviewFrame");
-  if (frame) frame.src = url;
-  if (modal) modal.classList.add("open");
+export async function previewFlipbook() {
+  await exportFlipbook();
 }
+
 
 export function closeFlipbookPreview() {
   const modal = byId("flipPreviewModal");
