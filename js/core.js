@@ -713,34 +713,93 @@ export async function exportPDF() {
 }
 
 // Flipbook: builds a standalone HTML with simple page-flip animation.
+// ---------- Flipbook Export & Preview ----------
 export async function exportFlipbook() {
-  if (!pages.length) {
+  saveCurrentPage();
+
+  if (!App.pages || !App.pages.length) {
     alert("Δεν υπάρχουν σελίδες");
     return;
   }
 
   const images = [];
-  const originalPage = currentPageIndex;
 
-  for (let i = 0; i < pages.length; i++) {
-    await loadPage(i);
-
-    // αφήνουμε 1 frame να κάνει render
-    await new Promise(r => requestAnimationFrame(r));
-
-    const dataUrl = fabricCanvas.toDataURL({
-      format: "png",
-      multiplier: 2
-    });
-
+  for (let i = 0; i < App.pages.length; i++) {
+    const dataUrl = await pageToDataURL(App.pages[i], "png");
     images.push(dataUrl);
   }
 
-  // επαναφορά σελίδας
-  await loadPage(originalPage);
-
   openFlipbookPreview(images);
 }
+
+export function openFlipbookPreview(images) {
+  const frame = document.getElementById("flipPreviewFrame");
+  const modal = document.getElementById("flipPreviewModal");
+
+  const html = `
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+body {
+  margin:0;
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.book {
+  width:80vw;
+  height:80vh;
+  perspective:2000px;
+  position:relative;
+}
+.page {
+  position:absolute;
+  inset:0;
+  background:#fff;
+  transform-origin:left;
+  transition:transform .8s ease;
+}
+.page img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.page.flipped {
+  transform:rotateY(-180deg);
+}
+</style>
+</head>
+<body>
+<div class="book">
+  ${images.map((src,i)=>`
+    <div class="page" style="z-index:${images.length-i}">
+      <img src="${src}">
+    </div>
+  `).join("")}
+</div>
+
+<script>
+let index = 0;
+const pages = document.querySelectorAll('.page');
+document.body.onclick = () => {
+  if (index < pages.length) {
+    pages[index].classList.add('flipped');
+    index++;
+  }
+};
+</script>
+</body>
+</html>
+  `;
+
+  frame.srcdoc = html;
+  modal.classList.add("open");
+}
+
+
 
 
 export async function previewFlipbook({ direction="horizontal" } = {}) {
