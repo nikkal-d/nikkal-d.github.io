@@ -749,8 +749,81 @@ export async function exportFlipbook() {
     if (dataUrl) images.push(dataUrl);
   }
 
-  openFlipbookPreview(images);
+  const html = `
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Flipbook</title>
+<style>
+body {
+  margin:0;
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
+.book {
+  width:80vw;
+  height:80vh;
+  perspective:2000px;
+  position:relative;
+}
+.page {
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:white;
+  transform-origin:left;
+  transition:transform .8s;
+}
+.page img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.page.flipped {
+  transform:rotateY(-180deg);
+}
+</style>
+</head>
+<body>
+
+<div class="book">
+  ${images.map((src,i)=>`
+    <div class="page" style="z-index:${images.length - i}">
+      <img src="${src}">
+    </div>
+  `).join("")}
+</div>
+
+<script>
+let index = 0;
+const pages = document.querySelectorAll('.page');
+document.body.onclick = () => {
+  if (index < pages.length) {
+    pages[index].classList.add('flipped');
+    index++;
+  }
+};
+</script>
+
+</body>
+</html>
+`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "flipbook.html";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
 
 export function openFlipbookPreview(images) {
   const frame = document.getElementById("flipPreviewFrame");
