@@ -195,3 +195,45 @@
   position: relative !important;
   margin: 0 auto !important;
 }
+
+
+
+
+/* Η μπάρα με το Zoom και το Fit */
+.canvas-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1e293b; /* Σκούρο μπλε/γκρι για να ξεχωρίζει */
+  padding: 8px 16px;
+  border-radius: 30px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  z-index: 100;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.canvas-controls button {
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.canvas-controls button:hover {
+  opacity: 0.7;
+}
+
+.canvas-controls .zoom-value {
+  color: #22c55e; /* Πράσινο χρώμα για το ποσοστό */
+  font-family: monospace;
+  min-width: 45px;
+  text-align: center;
+}
