@@ -282,18 +282,17 @@ export function setZoom(n) {
   if (!App.canvas) return;
 
   const preset = PRESETS[App.preset] || PRESETS.A4P;
-
-  // 1. Αλλάζουμε το ΜΕΓΕΘΟΣ ΤΟΥ CANVAS στην οθόνη
   App.canvas.setDimensions({
     width: preset.w * next,
     height: preset.h * next
   });
-
-  // 2. Ζουμάρουμε το περιεχόμενο στο ίδιο ποσοστό
   App.canvas.setZoom(next);
 
+  // Ενημέρωση του UI
+  const zoomText = document.querySelector(".zoom-value");
+  if (zoomText) zoomText.textContent = Math.round(next * 100) + "%";
+
   App.canvas.requestRenderAll();
-  updateZoomUI(); // Αν έχεις συνάρτηση που ενημερώνει το % στην οθόνη
 }
 
 
