@@ -237,3 +237,34 @@
   min-width: 45px;
   text-align: center;
 }
+
+
+/* Το φόντο πίσω από τον καμβά */
+.canvasHost {
+  background-color: #f1f5f9 !important; /* Πολύ απαλό γαλάζιο/γκρι */
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px); /* Μικρές τελείες σαν σχεδιαστήριο */
+  background-size: 20px 20px;
+}
+
+/* Το αριστερό και δεξί πάνελ */
+.leftPanel, .rightPanel {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+/* Τα κουμπιά Export */
+#openExportBtn {
+  background: #2563eb !important; /* Έντονο μπλε */
+  color: white !important;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+/* Τα εργαλεία που εμφανίζονται πάνω στον καμβά */
+.canvas-tools {
+  transform: scale(0.85); /* Μικραίνουμε τα εργαλεία κατά 15% */
+  transform-origin: top left;
+  background: #1e293b !important;
+  border-radius: 8px !important;
+}
