@@ -269,23 +269,24 @@ export function fitToScreen() {
   setZoom(z, true);
 }
 
-export function setZoom(z, center = true) {
-  const c = App.canvas;
-  if (!c) return;
+export function setZoom(n) {
+  const next = Math.max(0.05, Math.min(5, n));
+  App.zoom = next;
+  if (!App.canvas) return;
 
-  App.zoom = clamp(z, 0.05, 6);
+  // Ορίζουμε το κέντρο με βάση τις ΠΡΑΓΜΑΤΙΚΕΣ διαστάσεις του καμβά (π.χ. Α4)
+  // και όχι τις διαστάσεις που φαίνονται στην οθόνη εκείνη τη στιγμή
+  const vpw = App.canvas.width; 
+  const vph = App.canvas.height;
 
-  if (center) {
-    const pt = new fabric.Point(c.getWidth() / 2, c.getHeight() / 2);
-    c.zoomToPoint(pt, App.zoom);
-  } else {
-    c.setZoom(App.zoom);
-  }
+  App.canvas.setZoom(next); // Χρησιμοποιούμε το απλό setZoom για να κρατάμε τον έλεγχο
+  
+  // Ενημερώνουμε τις διαστάσεις του container για να "φαίνεται" το μέγεθος
+  App.canvas.setWidth(vpw * next);
+  App.canvas.setHeight(vph * next);
 
-  c.requestRenderAll();
-  updateZoomUI();
+  App.canvas.requestRenderAll();
 }
-
 export function zoomIn() { setZoom(App.zoom * 1.1); }
 export function zoomOut() { setZoom(App.zoom / 1.1); }
 export function zoomReset() { setZoom(1); }
