@@ -275,26 +275,27 @@ export function fitToScreen() {
 }
 
 export function setZoom(n) {
-  const next = Math.max(0.05, Math.min(5, n));
+  const next = clamp(n, 0.05, 5);
   App.zoom = next;
   if (!App.canvas) return;
 
-  // 1. Καθαρίζουμε το εσωτερικό ζουμ της Fabric για να μην "πετάει" η εικόνα
-  App.canvas.setZoom(1); 
-  
-  // 2. Παίρνουμε τις αρχικές διαστάσεις του preset (π.χ. Α4)
   const preset = PRESETS[App.preset] || PRESETS.A4P;
-  
-  // 3. Αλλάζουμε το μέγεθος του καμβά στην οθόνη βάσει του ζουμ
-  // Αυτό θα μικρύνει τον ίδιο τον καμβά, όχι μόνο τα περιεχόμενα
-  App.canvas.setWidth(preset.w * next);
-  App.canvas.setHeight(preset.h * next);
 
-  // 4. Ενημερώνουμε την κλίμακα των αντικειμένων εσωτερικά
+  // 1. Αλλάζουμε το ΜΕΓΕΘΟΣ ΤΟΥ CANVAS στην οθόνη
+  App.canvas.setDimensions({
+    width: preset.w * next,
+    height: preset.h * next
+  });
+
+  // 2. Ζουμάρουμε το περιεχόμενο στο ίδιο ποσοστό
   App.canvas.setZoom(next);
 
   App.canvas.requestRenderAll();
+  updateZoomUI(); // Αν έχεις συνάρτηση που ενημερώνει το % στην οθόνη
 }
+
+
+
 export function zoomIn() { setZoom(App.zoom * 1.1); }
 export function zoomOut() { setZoom(App.zoom / 1.1); }
 export function zoomReset() { setZoom(1); }
