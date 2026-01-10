@@ -16,7 +16,7 @@ import {
   zoomOut,
   zoomReset,
   fitToScreen,
-  setCanvasSizePreset,
+  setCanvasSize,
   addPage,
   duplicatePage,
   deletePage,
@@ -65,9 +65,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("fitBtn", "click", () => fitToScreen());
 
   // Page size (canvas dimensions)
- on("pageSizeSelect", "change", (e) => {
-  setCanvasSizePreset(e.target.value);
-});
+  on("pageSizeSelect", "change", (e) => {
+    const preset = e.target.value;
+    setCanvasSize(preset, true);
+  });
 
   // Text
   on("addTextBtn", "click", () => {
@@ -112,7 +113,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("objStrokeColor", "input", (e) => setActiveStroke(e.target.value, Number($("objStrokeWidth")?.value || 4)));
   on("objStrokeWidth", "input", (e) => setActiveStroke($("objStrokeColor")?.value || "#000000", Number(e.target.value || 4)));
   on("objOpacity", "input", (e) => setActiveOpacity(Number(e.target.value || 1)));
-
 
   document.querySelectorAll("[data-bg]").forEach(btn => {
     btn.addEventListener("click", () => setCanvasBackground(btn.dataset.bg));
