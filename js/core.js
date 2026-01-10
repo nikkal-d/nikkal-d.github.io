@@ -262,11 +262,16 @@ export function fitToScreen() {
   if (!c) return;
 
   const stage = getStageSize();
-  const pad = 40;
-  const sx = (stage.w - pad) / c.getWidth();
-  const sy = (stage.h - pad) / c.getHeight();
-  const z = clamp(Math.min(sx, sy), 0.05, 3);
-  setZoom(z, true);
+  const pad = 80; // Αυξάνουμε το padding για να μικρύνει κι άλλο και να "αναπνέει"
+
+  // ΠΑΙΡΝΟΥΜΕ ΤΟ ΠΡΑΓΜΑΤΙΚΟ ΜΕΓΕΘΟΣ ΤΟΥ ΠΡΟΣΧΕΔΙΟΥ (π.χ. 2480x3508)
+  const preset = PRESETS[App.preset] || PRESETS.A4P;
+
+  const sx = (stage.w - pad) / preset.w;
+  const sy = (stage.h - pad) / preset.h;
+  
+  const z = clamp(Math.min(sx, sy), 0.05, 1); // Το 1 σημαίνει 100%
+  setZoom(z);
 }
 
 export function setZoom(n) {
