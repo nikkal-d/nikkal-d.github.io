@@ -65,10 +65,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("fitBtn", "click", () => fitToScreen());
 
   // Page size (canvas dimensions)
-  on("pageSizeSelect", "change", (e) => {
-    const preset = e.target.value;
-    setCanvasSize(preset, true);
-  });
+on("pageSizeSelect", "change", (e) => {
+  setCanvasSize(e.target.value, true); 
+  // Το true εδώ λέει στον κώδικα να κάνει fitToScreen αυτόματα
+});
 
   // Text
   on("addTextBtn", "click", () => {
