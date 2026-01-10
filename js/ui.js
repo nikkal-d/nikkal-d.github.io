@@ -65,10 +65,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("fitBtn", "click", () => fitToScreen());
 
   // Page size (canvas dimensions)
-  on("pageSizeSelect", "change", (e) => {
-    const preset = e.target.value;
-    setCanvasSize(preset, true);
-  });
+ on("pageSizeSelect", "change", (e) => {
+  setCanvasSizePreset(e.target.value);
+});
 
   // Text
   on("addTextBtn", "click", () => {
@@ -114,7 +113,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("objStrokeWidth", "input", (e) => setActiveStroke($("objStrokeColor")?.value || "#000000", Number(e.target.value || 4)));
   on("objOpacity", "input", (e) => setActiveOpacity(Number(e.target.value || 1)));
 
-  on("pageSizeSelect", "change", (e) => setCanvasSizePreset(e.target.value));
 
   document.querySelectorAll("[data-bg]").forEach(btn => {
     btn.addEventListener("click", () => setCanvasBackground(btn.dataset.bg));
