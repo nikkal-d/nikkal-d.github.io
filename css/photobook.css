@@ -176,33 +176,28 @@
 #flipPreviewFrame{flex:1;border:0;background:#000}
 
 
-/* Εξασφαλίζουμε ότι ο host επιτρέπει στο frame να κεντραριστεί */
+/* photobook_new.css */
+
 .canvasHost {
   display: flex !important;
-  align-items: center;
-  justify-content: center;
-  min-height: 500px; /* Ή όσο ύψος θέλεις */
+  align-items: center !important; /* Κάθετο κεντράρισμα */
+  justify-content: center !important; /* Οριζόντιο κεντράρισμα */
+  background: #e2e8f0; /* Ένα γκρι φόντο για να βλέπεις τα όρια */
+  height: calc(100vh - 56px);
+  overflow: auto; /* Επιτρέπει scroll αν το ζουμ μεγαλώσει πολύ */
+  padding: 40px;
 }
 
-
-
-.canvas-container canvas {
-  width: 100% !important;
-  height: auto !important;
-  max-height: 100% !important;
-  object-fit: contain; /* Διατηρεί τις αναλογίες του photobook */
+.canvasFrame {
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  background: #ffffff;
+  /* Αυτό εξασφαλίζει ότι το frame ακολουθεί το μέγεθος του καμβά */
+  line-height: 0; 
+  display: inline-block; 
 }
 
-
-/* Μειώνουμε το μέγεθος της μπάρας εργαλείων πάνω από τα αντικείμενα */
-.canvas-tools, .floating-toolbar, div[style*="position: absolute"] > button {
-  transform: scale(0.8) !important; /* Τα μικραίνουμε κατά 20% */
-  transform-origin: bottom center;
+/* Εξασφαλίζουμε ότι η FabricJS δεν προσθέτει δικά της περίεργα περιθώρια */
+.canvas-container {
+  margin: 0 auto !important;
 }
-
-/* Αν έχεις συγκεκριμένο class για τα κουμπιά 'Effects', 'Opacity' κλπ */
-.floating-toolbar button {
-  padding: 4px 8px !important; /* Μικρότερο γέμισμα */
-  font-size: 12px !important;    /* Μικρότερο κείμενο */
-}
-
