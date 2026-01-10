@@ -274,16 +274,19 @@ export function setZoom(n) {
   App.zoom = next;
   if (!App.canvas) return;
 
-  // Ορίζουμε το κέντρο με βάση τις ΠΡΑΓΜΑΤΙΚΕΣ διαστάσεις του καμβά (π.χ. Α4)
-  // και όχι τις διαστάσεις που φαίνονται στην οθόνη εκείνη τη στιγμή
-  const vpw = App.canvas.width; 
-  const vph = App.canvas.height;
-
-  App.canvas.setZoom(next); // Χρησιμοποιούμε το απλό setZoom για να κρατάμε τον έλεγχο
+  // 1. Καθαρίζουμε το εσωτερικό ζουμ της Fabric για να μην "πετάει" η εικόνα
+  App.canvas.setZoom(1); 
   
-  // Ενημερώνουμε τις διαστάσεις του container για να "φαίνεται" το μέγεθος
-  App.canvas.setWidth(vpw * next);
-  App.canvas.setHeight(vph * next);
+  // 2. Παίρνουμε τις αρχικές διαστάσεις του preset (π.χ. Α4)
+  const preset = PRESETS[App.preset] || PRESETS.A4P;
+  
+  // 3. Αλλάζουμε το μέγεθος του καμβά στην οθόνη βάσει του ζουμ
+  // Αυτό θα μικρύνει τον ίδιο τον καμβά, όχι μόνο τα περιεχόμενα
+  App.canvas.setWidth(preset.w * next);
+  App.canvas.setHeight(preset.h * next);
+
+  // 4. Ενημερώνουμε την κλίμακα των αντικειμένων εσωτερικά
+  App.canvas.setZoom(next);
 
   App.canvas.requestRenderAll();
 }
