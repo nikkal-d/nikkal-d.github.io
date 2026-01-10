@@ -180,24 +180,24 @@
 
 .canvasHost {
   display: flex !important;
-  align-items: center !important; /* Κάθετο κεντράρισμα */
-  justify-content: center !important; /* Οριζόντιο κεντράρισμα */
-  background: #e2e8f0; /* Ένα γκρι φόντο για να βλέπεις τα όρια */
+  align-items: center !important;
+  justify-content: center !important;
+  background: #d1d5db !important; /* Σκούρο γκρι για αντίθεση */
+  overflow: auto !important; /* Εμφανίζει scrollbars μόνο αν ο καμβάς γίνει τεράστιος */
   height: calc(100vh - 56px);
-  overflow: auto; /* Επιτρέπει scroll αν το ζουμ μεγαλώσει πολύ */
-  padding: 40px;
+  padding: 50px;
 }
 
 .canvasFrame {
-  position: relative;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  background: #ffffff;
-  /* Αυτό εξασφαλίζει ότι το frame ακολουθεί το μέγεθος του καμβά */
-  line-height: 0; 
-  display: inline-block; 
+  display: inline-block !important;
+  line-height: 0;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3); /* Πιο έντονη σκιά για να φαίνεται ο καμβάς */
+  background: white;
+  transition: all 0.2s ease-out; /* Για ομαλό ζουμ */
 }
 
-/* Εξασφαλίζουμε ότι η FabricJS δεν προσθέτει δικά της περίεργα περιθώρια */
+/* Εξασφαλίζουμε ότι ο καμβάς δεν "ξεχειλώνει" */
 .canvas-container {
+  position: relative !important;
   margin: 0 auto !important;
 }
