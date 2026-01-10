@@ -242,20 +242,21 @@ export function saveCurrentPage() {
 }
 
 // ---------- size / zoom ----------
-export function setCanvasSize(preset, doFit = true) {
-  App.preset = preset;
-  const { w, h } = getPreset(preset);
-
-  const c = App.canvas;
-  c.setWidth(w);
-  c.setHeight(h);
-
-  // make sure DOM canvas matches
-  c.calcOffset();
-  c.requestRenderAll();
-
-  if (doFit) fitToScreen();
+export function setCanvasSizePreset(pKey) {
+  const p = PRESETS[pKey];
+  if (!p) return;
+  
+  App.preset = pKey;
+  
+  // Ορίζουμε τις ΠΡΑΓΜΑΤΙΚΕΣ διαστάσεις
+  App.canvas.setWidth(p.w);
+  App.canvas.setHeight(p.h);
+  
+  // ΑΛΛΑ αμέσως μετά τον "μαζεύουμε" για να χωράει στην οθόνη
+  fitToScreen(); 
 }
+
+
 
 export function fitToScreen() {
   const c = App.canvas;
