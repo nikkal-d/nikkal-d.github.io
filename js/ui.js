@@ -16,7 +16,7 @@ import {
   zoomOut,
   zoomReset,
   fitToScreen,
-  setCanvasSize,
+  setCanvasSizePreset,
   addPage,
   duplicatePage,
   deletePage,
