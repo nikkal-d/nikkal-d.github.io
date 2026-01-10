@@ -261,17 +261,19 @@ export function fitToScreen() {
   const c = App.canvas;
   if (!c) return;
 
-  const stage = getStageSize();
-  const pad = 80; // Αυξάνουμε το padding για να μικρύνει κι άλλο και να "αναπνέει"
+  const stage = getStageSize(); 
+  const pad = 100; // Αυτό το padding θα δημιουργήσει το κενό γύρω από τον καμβά
 
-  // ΠΑΙΡΝΟΥΜΕ ΤΟ ΠΡΑΓΜΑΤΙΚΟ ΜΕΓΕΘΟΣ ΤΟΥ ΠΡΟΣΧΕΔΙΟΥ (π.χ. 2480x3508)
+  // ΠΑΝΤΑ υπολογίζουμε με βάση το αρχικό Α4
   const preset = PRESETS[App.preset] || PRESETS.A4P;
 
   const sx = (stage.w - pad) / preset.w;
   const sy = (stage.h - pad) / preset.h;
   
-  const z = clamp(Math.min(sx, sy), 0.05, 1); // Το 1 σημαίνει 100%
-  setZoom(z);
+  // Το z είναι το ποσοστό (π.χ. 0.25 για 25%)
+  const z = Math.min(sx, sy, 1); 
+  
+  setZoom(z); // Καλεί τη νέα setZoom που αλλάζει και τις διαστάσεις
 }
 
 export function setZoom(n) {
