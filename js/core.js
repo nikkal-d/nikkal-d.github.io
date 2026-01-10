@@ -130,7 +130,7 @@ export async function initCanvas({ preset = "A4P" } = {}) {
     backgroundColor: "#ffffff",
   });
 
- setCanvasSizePreset(p); 
+setCanvasSizePreset(App.preset);
 
   // core listeners
   App.canvas.on("object:added", () => { scheduleAutosave(); });
