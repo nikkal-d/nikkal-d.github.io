@@ -278,3 +278,23 @@
   border-bottom: 1px solid rgba(255,255,255,0.1);
   color: white;
 }
+
+
+
+.minimal-select {
+  background: #334155;
+  color: white;
+  border: 1px solid #475569;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.btn-primary {
+  background: #22c55e !important; /* Έντονο πράσινο για να ξεχωρίζει το Export */
+  color: white;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+}
