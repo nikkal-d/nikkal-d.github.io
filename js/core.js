@@ -130,7 +130,7 @@ export async function initCanvas({ preset = "A4P" } = {}) {
     backgroundColor: "#ffffff",
   });
 
-setCanvasSizePreset(App.preset);
+  setCanvasSize(preset);
 
   // core listeners
   App.canvas.on("object:added", () => { scheduleAutosave(); });
@@ -242,21 +242,20 @@ export function saveCurrentPage() {
 }
 
 // ---------- size / zoom ----------
-export function setCanvasSizePreset(pKey) {
-  const p = PRESETS[pKey];
-  if (!p) return;
-  
-  App.preset = pKey;
-  
-  // Ορίζουμε τις ΠΡΑΓΜΑΤΙΚΕΣ διαστάσεις
-  App.canvas.setWidth(p.w);
-  App.canvas.setHeight(p.h);
-  
-  // ΑΛΛΑ αμέσως μετά τον "μαζεύουμε" για να χωράει στην οθόνη
-  fitToScreen(); 
+export function setCanvasSize(preset, doFit = true) {
+  App.preset = preset;
+  const { w, h } = getPreset(preset);
+
+  const c = App.canvas;
+  c.setWidth(w);
+  c.setHeight(h);
+
+  // make sure DOM canvas matches
+  c.calcOffset();
+  c.requestRenderAll();
+
+  if (doFit) fitToScreen();
 }
-
-
 
 export function fitToScreen() {
   const c = App.canvas;
@@ -283,17 +282,18 @@ export function setZoom(n) {
   if (!App.canvas) return;
 
   const preset = PRESETS[App.preset] || PRESETS.A4P;
+
+  // 1. Αλλάζουμε το ΜΕΓΕΘΟΣ ΤΟΥ CANVAS στην οθόνη
   App.canvas.setDimensions({
     width: preset.w * next,
     height: preset.h * next
   });
+
+  // 2. Ζουμάρουμε το περιεχόμενο στο ίδιο ποσοστό
   App.canvas.setZoom(next);
 
-  // Ενημέρωση του UI
-  const zoomText = document.querySelector(".zoom-value");
-  if (zoomText) zoomText.textContent = Math.round(next * 100) + "%";
-
   App.canvas.requestRenderAll();
+  updateZoomUI(); // Αν έχεις συνάρτηση που ενημερώνει το % στην οθόνη
 }
 
 
