@@ -361,3 +361,17 @@
   background: #334155;
   margin: 0 10px;
 }
+
+.leftRail {
+  background: #1e293b !important; /* Σκούρο γκρι-μπλε */
+  border-right: 1px solid #0f172a;
+}
+
+.railbtn {
+  color: #94a3b8 !important;
+}
+
+.railbtn:hover, .railbtn.active {
+  background: #334155 !important;
+  color: #22c55e !important; /* Πράσινο εικονίδιο όταν είναι ενεργό */
+}
