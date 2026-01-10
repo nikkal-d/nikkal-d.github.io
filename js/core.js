@@ -277,23 +277,23 @@ export function fitToScreen() {
 }
 
 export function setZoom(n) {
-  const next = clamp(n, 0.05, 5);
+  const next = Math.max(0.05, Math.min(5, n));
   App.zoom = next;
   if (!App.canvas) return;
 
+  // Παίρνουμε τις διαστάσεις του τρέχοντος preset (π.χ. Α4)
   const preset = PRESETS[App.preset] || PRESETS.A4P;
 
-  // 1. Αλλάζουμε το ΜΕΓΕΘΟΣ ΤΟΥ CANVAS στην οθόνη
+  // 1. Αλλάζουμε το οπτικό μέγεθος του καμβά στην οθόνη
   App.canvas.setDimensions({
     width: preset.w * next,
     height: preset.h * next
   });
 
-  // 2. Ζουμάρουμε το περιεχόμενο στο ίδιο ποσοστό
+  // 2. Εφαρμόζουμε το zoom στο περιεχόμενο
   App.canvas.setZoom(next);
 
   App.canvas.requestRenderAll();
-  updateZoomUI(); // Αν έχεις συνάρτηση που ενημερώνει το % στην οθόνη
 }
 
 
