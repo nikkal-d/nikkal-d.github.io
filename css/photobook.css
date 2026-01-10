@@ -375,3 +375,48 @@
   background: #334155 !important;
   color: #22c55e !important; /* Πράσινο εικονίδιο όταν είναι ενεργό */
 }
+
+
+/* Σκούρο θέμα για την Topbar και την Αριστερή Μπάρα */
+.topbar {
+  background: #0f172a !important; /* Σκούρο Navy */
+  color: white !important;
+  border-bottom: 1px solid #1e293b;
+}
+
+.leftRail {
+  background: #1e293b !important;
+  border-right: 1px solid #0f172a;
+}
+
+.railbtn { color: #94a3b8 !important; }
+.railbtn.active { color: #22c55e !important; background: #334155 !important; }
+
+/* Στυλ για το Select και το Export πάνω δεξιά */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.minimal-select {
+  background: #1e293b;
+  color: white;
+  border: 1px solid #334155;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-export {
+  background: #2563eb !important; /* Μπλε της Apple */
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-export:hover { background: #1d4ed8 !important; }
