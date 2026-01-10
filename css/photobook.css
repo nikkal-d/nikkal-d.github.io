@@ -180,10 +180,9 @@
 
 .canvasHost {
   display: flex !important;
-  align-items: center !important; /* Κεντράρει κάθετα */
-  justify-content: center !important; /* Κεντράρει οριζόντια */
-  overflow: auto;
-  background: #ccc; /* Βάλε ένα χρώμα για να βλέπεις τα όρια */
+  align-items: center !important; 
+  justify-content: center !important;
+  overflow: auto !important; /* Σημαντικό για να μπορείς να κουνηθείς αν κάνεις πολύ ζουμ */
 }
 
 .canvasFrame {
