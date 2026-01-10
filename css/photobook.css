@@ -180,20 +180,15 @@
 
 .canvasHost {
   display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: #d1d5db !important; /* Σκούρο γκρι για αντίθεση */
-  overflow: auto !important; /* Εμφανίζει scrollbars μόνο αν ο καμβάς γίνει τεράστιος */
-  height: calc(100vh - 56px);
-  padding: 50px;
+  align-items: center !important; /* Κεντράρει κάθετα */
+  justify-content: center !important; /* Κεντράρει οριζόντια */
+  overflow: auto;
+  background: #ccc; /* Βάλε ένα χρώμα για να βλέπεις τα όρια */
 }
 
 .canvasFrame {
-  display: inline-block !important;
+  display: inline-block !important; /* Αναγκάζει το frame να "σφίξει" γύρω από τον καμβά */
   line-height: 0;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3); /* Πιο έντονη σκιά για να φαίνεται ο καμβάς */
-  background: white;
-  transition: all 0.2s ease-out; /* Για ομαλό ζουμ */
 }
 
 /* Εξασφαλίζουμε ότι ο καμβάς δεν "ξεχειλώνει" */
