@@ -30,29 +30,35 @@
 </head>
 
 <body class="theme-light">
-  <header class="topbar">
-    <div class="topbar-left">
-      <a class="brand" href="./index.html">Photobook</a>
-      <nav class="topnav" aria-label="Site navigation">
-        <a href="./index.html">Home</a>
-        <a href="./templates.html">Templates</a>
-        <a href="./projects.html">Projects</a>
-        <a href="./viewer.html">Viewer</a>
-        <a href="./stickers.html">Stickers</a>
-      </nav>
-    </div>
+ <header class="topbar">
+  <div class="topbar-left">
+    <a class="brand" href="./index.html">Photobook</a>
+    <nav class="topnav" aria-label="Site navigation">
+      <a href="./index.html">Home</a>
+      <a href="./templates.html">Templates</a>
+      <a href="./projects.html">Projects</a>
+    </nav>
+  </div>
 
-    <div class="topbar-right">
-      <button class="iconbtn" id="themeToggleBtn" title="Dark / Light">🌙</button>
-      <button class="iconbtn" id="langToggleBtn" title="EL / EN">EL</button>
+  <div class="topbar-right">
+    <select id="pageSizeSelect" class="minimal-select">
+      <option value="A4P">A4 Όρθιο</option>
+      <option value="A4L">A4 Οριζόντιο</option>
+      <option value="SQUARE">Τετράγωνο</option>
+    </select>
 
-      <div class="authbox">
-        <span id="userInfo" class="userInfo"></span>
-        <button class="btn" id="loginBtn">Σύνδεση</button>
-        <button class="btn ghost" id="logoutBtn" style="display:none;">Logout</button>
-      </div>
+    <button id="openExportBtn" class="btn-export">Export Project</button>
+
+    <div class="divider-v"></div>
+
+    <button class="iconbtn" id="themeToggleBtn">🌙</button>
+    
+    <div class="authbox">
+      <span id="userInfo" class="userInfo"></span>
+      <button class="btn-login" id="loginBtn">Σύνδεση</button>
     </div>
-  </header>
+  </div>
+</header>
 
   <div class="appShell">
     <!-- LEFT MINI BAR -->
