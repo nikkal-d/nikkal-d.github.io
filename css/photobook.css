@@ -112,26 +112,25 @@
 }
 
 /* Stage */
-.stage{display:flex; flex-direction:column; min-width:0}
-.stageBar{
-  height:56px;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 12px;
-  border-bottom:1px solid var(--line);
-  background:rgba(255,255,255,.02);
+
+.stage {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }
+
 .zoomBox{display:flex; align-items:center; gap:8px}
 
 
 .canvasHost {
   flex: 1;
   background-color: #cbd5e1;
-  display: flex !important;
+  display: flex;
   flex-direction: column;
-  align-items: center !important;
-  justify-content: flex-start !important; /* Ανεβάζει τον καμβά ψηλά */
-  overflow: auto !important; /* ΕΝΕΡΓΟΠΟΙΕΙ ΤΟ SCROLL */
-  padding: 30px !important;
+  align-items: flex-start;
+  justify-content: center; /* Ανεβάζει τον καμβά ψηλά */
+  overflow: auto; /* ΕΝΕΡΓΟΠΟΙΕΙ ΤΟ SCROLL */
+  padding: 40px;
 }
 
 body.theme-dark .canvasHost {
@@ -141,7 +140,7 @@ body.theme-dark .canvasHost {
 
 .canvasFrame {
   margin-top: 10px; /* Μικρό κενό από την κορυφή */
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   /* Εμποδίζει τον καμβά να πάρει δική του πρωτοβουλία στο μέγεθος */
   max-height: 100%; 
   max-width: 100%;
@@ -154,9 +153,8 @@ body.theme-dark .canvasHost {
   display: inline-block !important; /* Αναγκάζει το frame να "σφίξει" γύρω από τον καμβά */
   line-height: 0;
   overflow:hidden;
-  background:#fff;
+   background: white;
 }
-
 
 /* Thumbnails */
 .thumbStrip{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:12px}
