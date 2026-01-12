@@ -40,35 +40,51 @@
     </nav>
   </div>
 
- <div class="topbar-right">
-  <select id="pageSizeSelect" class="btn" style="background:#334155; color:white; border:none;">
-    <option value="A4P">A4 Portrait</option>
-    <option value="A4L">A4 Landscape</option>
-    <option value="SQUARE">Square</option>
-  
-  <div class="zoom-controls" style="display:flex; align-items:center; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:8px; gap:5px;">
-    <button class="iconbtn" id="zoomOutBtn" title="Zoom Out">−</button>
-    <span id="zoomLevel" style="font-size:12px; min-width:35px; text-align:center;">100%</span>
-    <button class="iconbtn" id="zoomInBtn" title="Zoom In">+</button>
-    <div class="divider-v" style="height:15px; margin:0 5px;"></div>
-    <button class="btn ghost" id="fitToScreenBtn" style="font-size:11px; padding:4px 8px;">Fit</button>
-  </div>
-    </select>
 
-  <div class="divider-v"></div>
-   
-<button id="openExportBtn" class="btn" style="background:#2563eb; color:white;">Export</button>
 
-  <button class="iconbtn" id="themeToggleBtn">🌙</button>
-</div>
-  
-  <div class="authbox">
-    <button class="btn-login" id="loginBtn">Σύνδεση</button>
-  </div>
-</div>
+<div class="topbar-right">
+      <select id="pageSizeSelect" class="btn" style="background:#334155; color:white; border:none; outline:none; padding: 4px 8px; border-radius:6px;">
+        <option value="A4P">A4 Portrait</option>
+        <option value="A4L">A4 Landscape</option>
+        <option value="SQUARE">Square</option>
+        <option value="STORY">Story</option>
+        <option value="HD">HD</option>
+      </select>
+
+      <div class="divider-v"></div>
+
+      <div class="zoom-controls" style="display:flex; align-items:center; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:8px; gap:5px;">
+        <button class="iconbtn" id="zoomOutBtn" title="Zoom Out">−</button>
+        <span id="zoomLevel" style="font-size:12px; min-width:35px; text-align:center;">100%</span>
+        <button class="iconbtn" id="zoomInBtn" title="Zoom In">+</button>
+        <div class="divider-v" style="height:15px; margin:0 5px;"></div>
+        <button class="btn ghost" id="fitToScreenBtn" style="font-size:11px; padding:4px 8px;">Fit</button>
+      </div>
+
+      <div class="divider-v"></div>
+       
+      <button id="openExportBtn" class="btn" style="background:#2563eb; color:white; padding: 6px 16px; border-radius:6px;">Export</button>
+
+      <button class="iconbtn" id="themeToggleBtn" style="margin-left:5px;">🌙</button>
+
+      <div class="authbox" style="margin-left:10px;">
+        <button class="btn-login" id="loginBtn">Σύνδεση</button>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
+
+  <main class="stage">
+    <div class="canvasHost" id="canvasHost">
+      <div class="canvasFrame" id="canvasFrame">
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+  </main>
+
+
+
+
+  
 
   <div class="appShell">
     <!-- LEFT MINI BAR -->
@@ -233,39 +249,7 @@
       </div>
     </section>
 
-    <!-- CANVAS AREA -->
-    <main class="stage">
-      <div class="stageBar">
-        <div class="stageBar-left">
-          <button class="btn ghost" id="fitBtn" title="Fit to screen">Fit</button>
-
-          <div class="zoomBox">
-            <button class="iconbtn" id="zoomOutBtn" title="Zoom out">−</button>
-            <div class="pill" id="zoomValue">100%</div>
-            <button class="iconbtn" id="zoomInBtn" title="Zoom in">+</button>
-            <button class="btn ghost" id="zoomResetBtn" title="Reset zoom">Reset</button>
-            <button class="btn" id="zoomFitBtn" title="Fit">⤢</button>
-          </div>
-        </div>
-
-        <div class="stageBar-right">
-          <select class="select" id="pageSizeSelect" title="Page size">
-            <option value="A4P" selected>A4 Portrait</option>
-            <option value="A4L">A4 Landscape</option>
-            <option value="SQUARE">Square</option>
-            <option value="STORY">Story</option>
-            <option value="HD">HD</option>
-          </select>
-
-          <button class="btn" id="toggleExportBtn">Export</button>
-        </div>
-      </div>
-
-      <div class="canvasHost" id="canvasHost">
-        <div class="canvasFrame" id="canvasFrame">
-          <canvas id="canvas"></canvas>
-        </div>
-      </div>
+    
     </main>
 
     <!-- RIGHT EXPORT RAIL -->
