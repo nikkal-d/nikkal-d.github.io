@@ -121,15 +121,22 @@
   background:rgba(255,255,255,.02);
 }
 .zoomBox{display:flex; align-items:center; gap:8px}
-.canvasHost{
-  position:relative;
-  flex:1;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
+
+.canvasHost {
+  flex: 1;
+  background-color: #cbd5e1; /* Ένα ουδέτερο γκρι */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: auto !important;
+  padding: 100px; /* Μεγάλο padding για να υπάρχει "αέρας" γύρω από τον καμβά */
 }
+
+body.theme-dark .canvasHost {
+  background-color: #1e293b !important;
+}
+
+
 .canvasFrame{
   background:rgba(0,0,0,.08);
   border:1px solid var(--line);
