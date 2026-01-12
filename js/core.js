@@ -264,20 +264,18 @@ export function fitToScreen() {
   const container = document.querySelector(".canvasHost");
   if (!container) return;
 
-  // Αυξάνουμε το περιθώριο (padding) στα 150px 
-  // για να αναγκάσουμε τον καμβά να μικρύνει
-  const pad = 150; 
+  // Αυξάνουμε το pad στα 120 για να "αναπνέει" ο καμβάς
+  const pad = 120; 
   const cw = container.clientWidth - pad;
   const ch = container.clientHeight - pad;
 
   const preset = PRESETS[App.preset] || PRESETS.A4P;
   
-  // Υπολογίζουμε το zoom ώστε να χωράει 100% στο ύψος ΚΑΙ στο πλάτος
+  // Υπολογισμός zoom ώστε να χωράει 100% στην οθόνη
   const zoom = Math.min(cw / preset.w, ch / preset.h);
 
   setZoom(zoom);
 }
-
 
 
 
