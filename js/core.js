@@ -256,21 +256,30 @@ export function setCanvasSize(preset, doFit = true) {
 
   if (doFit) fitToScreen();
 }
+
+
+
 export function fitToScreen() {
   if (!App.canvas) return;
   const container = document.querySelector(".canvasHost");
   if (!container) return;
 
-  const pad = 80; // Αυξάνουμε το padding για να μικρύνει ο καμβάς
+  // Αυξάνουμε το περιθώριο (padding) στα 150px 
+  // για να αναγκάσουμε τον καμβά να μικρύνει
+  const pad = 150; 
   const cw = container.clientWidth - pad;
   const ch = container.clientHeight - pad;
 
   const preset = PRESETS[App.preset] || PRESETS.A4P;
-  // Προσθέτουμε ένα πολλαπλασιαστή 0.8 για να είναι πάντα στο 80% του διαθέσιμου χώρου
-  const zoom = Math.min(cw / preset.w, ch / preset.h) * 0.8; 
+  
+  // Υπολογίζουμε το zoom ώστε να χωράει 100% στο ύψος ΚΑΙ στο πλάτος
+  const zoom = Math.min(cw / preset.w, ch / preset.h);
 
   setZoom(zoom);
 }
+
+
+
 
 export function setZoom(n) {
   const next = Math.max(0.05, Math.min(5, n));
