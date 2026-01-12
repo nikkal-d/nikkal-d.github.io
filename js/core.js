@@ -17,11 +17,11 @@ export const App = {
 };
 
 const PRESETS = {
-  A4P:   { w: 2480, h: 3508, label: "A4 Portrait" },   // ~300dpi
-  A4L:   { w: 3508, h: 2480, label: "A4 Landscape" },
-  SQUARE:{ w: 2500, h: 2500, label: "Square" },
+  A4P:   { w: 794,  h: 1123, label: "A4 Portrait" },   // 96 DPI (πιο διαχειρίσιμο)
+  A4L:   { w: 1123, h: 794,  label: "A4 Landscape" },
+  SQUARE:{ w: 800,  h: 800,  label: "Square" },
   STORY: { w: 1080, h: 1920, label: "Story" },
-  HD:    { w: 1920, h: 1080, label: "HD" },
+  HD:    { w: 1280, h: 720,  label: "HD" },
 };
 
 // ---------- IndexedDB tiny helper ----------
@@ -256,24 +256,20 @@ export function setCanvasSize(preset, doFit = true) {
 
   if (doFit) fitToScreen();
 }
-
 export function fitToScreen() {
-  const c = App.canvas;
-  if (!c) return;
+  if (!App.canvas) return;
+  const container = document.querySelector(".canvasHost");
+  if (!container) return;
 
-  const stage = getStageSize(); 
-  const pad = 100; // Αυτό το padding θα δημιουργήσει το κενό γύρω από τον καμβά
+  const pad = 80; // Αυξάνουμε το padding για να μικρύνει ο καμβάς
+  const cw = container.clientWidth - pad;
+  const ch = container.clientHeight - pad;
 
-  // ΠΑΝΤΑ υπολογίζουμε με βάση το αρχικό Α4
   const preset = PRESETS[App.preset] || PRESETS.A4P;
+  // Προσθέτουμε ένα πολλαπλασιαστή 0.8 για να είναι πάντα στο 80% του διαθέσιμου χώρου
+  const zoom = Math.min(cw / preset.w, ch / preset.h) * 0.8; 
 
-  const sx = (stage.w - pad) / preset.w;
-  const sy = (stage.h - pad) / preset.h;
-  
-  // Το z είναι το ποσοστό (π.χ. 0.25 για 25%)
-  const z = Math.min(sx, sy, 1); 
-  
-  setZoom(z); // Καλεί τη νέα setZoom που αλλάζει και τις διαστάσεις
+  setZoom(zoom);
 }
 
 export function setZoom(n) {
