@@ -144,7 +144,11 @@ on("pageSizeSelect", "change", (e) => {
   });
   on("closeFlipPreview", "click", () => closeFlipbookPreview());
   on("exportLinkBtn", "click", () => exportLink());
-  on("clearDraftBtn", "click", () => clearDraft());
+ on("clearDraftBtn", "click", () => {
+  if(confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε το προσχέδιο;")) {
+    clearDraft();
+  }
+});
 
   // Keep layers refreshed when something changes (core already listens, but this helps on UI load)
   updateLayersUI();
