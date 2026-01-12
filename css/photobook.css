@@ -121,23 +121,22 @@
   background:rgba(255,255,255,.02);
 }
 .zoomBox{display:flex; align-items:center; gap:8px}
-.canvasHost{
-  position:relative;
-  flex:1;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
+.canvasHost {
+  flex: 1;
+  position: relative;
+  background-color: #cbd5e1; /* Φόντο που αλλάζει στο dark mode */
+  display: flex !important;
+  align-items: center !important; /* Κάθετο κεντράρισμα */
+  justify-content: center !important; /* Οριζόντιο κεντράρισμα */
+  overflow: auto !important; /* ΕΔΩ ενεργοποιείται το SCROLL */
+  padding: 100px; /* Χώρος για να μπορείς να σκρολάρεις γύρω από τον καμβά */
 }
-.canvasFrame{
-  background:rgba(0,0,0,.08);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:18px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.22);
-  max-width: calc(100% - 20px);
-  max-height: calc(100% - 20px);
+.canvasFrame {
+  display: inline-block !important;
+  line-height: 0;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  background: white;
+  flex-shrink: 0; /* Σημαντικό: εμποδίζει τον καμβά από το να συμπιεστεί */
 }
 .canvas-container{ /* fabric wrapper */
   border-radius:12px;
@@ -435,6 +434,17 @@ body.theme-dark {
   --txt: #e5e7eb;
 }
 
-body.theme-dark .topbar { background: #0f172a !important; }
-body.theme-dark .leftRail { background: #111827 !important; }
-body.theme-dark .canvasHost { background: #1e293b !important; }
+
+
+/* DARK MODE ΧΡΩΜΑΤΑ */
+body.theme-dark .canvasHost {
+  background-color: #1e293b !important;
+}
+
+body.theme-dark .topbar {
+  background: #0f172a !important;
+}
+
+body.theme-dark .leftRail {
+  background: #0f172a !important;
+}
