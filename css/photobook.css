@@ -130,17 +130,18 @@
   align-items: center !important;
   /* justify-content: flex-start αντί για center για να πάει ΠΑΝΩ */
   justify-content: flex-start !important; 
-  overflow: hidden !important; /* Κρύβει τα scrollbars αν δεν τα θες */
-  padding: 30px !important;
+  overflow: auto !important; /* Κρύβει τα scrollbars αν δεν τα θες */
+  padding: 40px !important;
 }
+
 
 .canvasFrame {
   margin-top: 10px; /* Μικρό κενό από την κορυφή */
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
   /* Εμποδίζει τον καμβά να πάρει δική του πρωτοβουλία στο μέγεθος */
   max-height: 100%; 
   max-width: 100%;
-  border:1px solid var(--line);
+  border: 1px solid rgba(0,0,0,0.05);
   border-radius:18px;
   padding:18px;
   display: inline-block !important;
