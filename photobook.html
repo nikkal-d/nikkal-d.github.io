@@ -4,17 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Photobook Editor</title>
+
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
-    .modal.open{display:flex}
-    .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-    #flipPreviewFrame{flex:1;border:0;background:#000}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal.open{display:flex}
+  .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+  #flipPreviewFrame{flex:1;border:0;background:#000}
   </style>
 </head>
 
@@ -22,6 +30,11 @@
   <header class="topbar">
     <div class="topbar-left">
       <a class="brand" href="./index.html">Photobook</a>
+      <nav class="topnav">
+        <a href="./index.html">Home</a>
+        <a href="./templates.html">Templates</a>
+        <a href="./projects.html">Projects</a>
+      </nav>
     </div>
 
     <div class="topbar-right">
@@ -29,17 +42,27 @@
         <option value="A4P">A4 Portrait</option>
         <option value="A4L">A4 Landscape</option>
         <option value="SQUARE">Square</option>
+        <option value="STORY">Story</option>
+        <option value="HD">HD</option>
       </select>
+
       <div class="divider-v"></div>
-      <div class="zoom-controls" style="display:flex; align-items:center; gap:5px;">
+
+      <div class="zoom-controls" style="display:flex; align-items:center; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:8px; gap:5px;">
         <button class="iconbtn" id="zoomOutBtn">−</button>
         <span id="zoomValue">100%</span>
         <button class="iconbtn" id="zoomInBtn">+</button>
-        <button class="btn ghost" id="fitBtn">Fit</button>
+        <div class="divider-v" style="height:15px; margin:0 5px;"></div>
+        <button class="btn ghost" id="fitBtn" style="font-size:11px; padding:4px 8px;">Fit</button>
       </div>
+
       <div class="divider-v"></div>
       <button id="openExportBtn" class="btn" style="background:#2563eb; color:white;">Export</button>
       <button class="iconbtn" id="themeToggleBtn">🌙</button>
+
+      <div class="authbox">
+        <button class="btn-login" id="loginBtn">Σύνδεση</button>
+      </div>
     </div>
   </header>
 
@@ -58,21 +81,64 @@
         <h3 id="panelTitle">Pages</h3>
         <button class="iconbtn" id="closeLeftPanelBtn">✕</button>
       </div>
+
       <div class="panelBody panelView" data-view="pages">
         <div class="row gap">
           <button class="btn" id="addPageBtn">+ Page</button>
+          <button class="btn ghost" id="dupPageBtn">Duplicate</button>
           <button class="btn danger" id="delPageBtn">Delete</button>
         </div>
+        <div class="row gap" style="margin-top:10px;">
+          <button class="btn ghost" id="prevPageBtn">←</button>
+          <div class="pill" id="pageInfo">1 / 1</div>
+          <button class="btn ghost" id="nextPageBtn">→</button>
+        </div>
         <div class="thumbStrip" id="thumbStrip"></div>
+        <div class="divider"></div>
+        <button class="btn danger" id="clearDraftBtn">Clear Draft</button>
+      </div>
+
+      <div class="panelBody panelView" data-view="text" hidden>
+        <button class="btn" id="addTextBtn">➕ Add Text</button>
+        <div class="field">
+          <label>Font</label>
+          <select class="select" id="fontSelect">
+            <option value="Arial" selected>Arial</option>
+            <option value="Playfair Display, serif">Playfair</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Size</label>
+          <input class="input" id="fontSizeInput" type="number" value="48" />
+        </div>
       </div>
 
       <div class="panelBody panelView" data-view="images" hidden>
         <label class="btn">
-          Upload to Firebase
+          Upload Image
           <input type="file" id="imageInput" accept="image/*" hidden />
         </label>
+        <p class="hint">Upload via Firebase</p>
       </div>
-      </section>
+
+      <div class="panelBody panelView" data-view="colors" hidden>
+        <div class="field">
+          <label>Canvas Background</label>
+          <input class="input" id="canvasBgColor" type="color" value="#ffffff" />
+        </div>
+      </div>
+
+      <div class="panelBody panelView" data-view="shapes" hidden>
+        <div class="row gap">
+          <button class="btn" id="addRectBtn">⬛</button>
+          <button class="btn" id="addCircleBtn">⚪</button>
+        </div>
+      </div>
+
+      <div class="panelBody panelView" data-view="layers" hidden>
+        <div class="layersList" id="layersList"></div>
+      </div>
+    </section>
 
     <main class="stage">
       <div class="canvasHost" id="canvasHost">
@@ -87,23 +153,24 @@
         <h3>Export</h3>
         <button class="iconbtn" id="closeRightPanelBtn">✕</button>
       </div>
+
       <div class="panelBody">
-        <div class="grid2" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="grid2">
           <button class="btn" id="exportPdfBtn">PDF</button>
+          <button class="btn" id="exportFlipBtn">Flipbook</button>
           <button class="btn" id="exportPngBtn">PNG</button>
           <button class="btn" id="exportJpgBtn">JPG</button>
-          <button class="btn" id="exportFlipBtn" style="background:#059669; color:white;">Export Flipbook</button>
         </div>
         <div class="divider"></div>
-        <button class="btn ghost" id="previewFlipBtn" style="width:100%">Preview Flipbook</button>
+        <button class="btn ghost" id="previewFlipBtn">Preview Flipbook</button>
       </div>
     </section>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-  
-  <script type="module" src="./js/firebase-init.js"></script>
+
   <script type="module" src="./js/firebase-store.js"></script>
+
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script src="./js/sidebar.js"></script>
