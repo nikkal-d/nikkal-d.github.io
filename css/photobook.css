@@ -122,16 +122,20 @@
 }
 .zoomBox{display:flex; align-items:center; gap:8px}
 
+
 .canvasHost {
   flex: 1;
   background-color: #cbd5e1;
   display: flex !important;
   flex-direction: column;
   align-items: center !important;
-  /* justify-content: flex-start αντί για center για να πάει ΠΑΝΩ */
-  justify-content: flex-start !important; 
-  overflow: auto !important; /* Κρύβει τα scrollbars αν δεν τα θες */
-  padding: 40px !important;
+  justify-content: flex-start !important; /* Ανεβάζει τον καμβά ψηλά */
+  overflow: auto !important; /* ΕΝΕΡΓΟΠΟΙΕΙ ΤΟ SCROLL */
+  padding: 30px !important;
+}
+
+body.theme-dark .canvasHost {
+  background-color: #1e293b !important;
 }
 
 
@@ -152,17 +156,6 @@
   overflow:hidden;
   background:#fff;
 }
-
-/* Για το Dark Mode */
-body.theme-dark .canvasHost {
-  background-color: #1e293b !important;
-}
-
-body.theme-dark .canvasHost {
-  background-color: #1e293b !important;
-}
-
-
 
 
 /* Thumbnails */
