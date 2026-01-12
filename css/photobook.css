@@ -121,21 +121,23 @@
   background:rgba(255,255,255,.02);
 }
 .zoomBox{display:flex; align-items:center; gap:8px}
-.canvasHost {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #cbd5e1;
-  overflow: auto !important; /* ΕΝΕΡΓΟΠΟΙΕΙ ΤΟ SCROLL */
-  padding: 60px; /* Χώρος γύρω από τον καμβά */
+.canvasHost{
+  position:relative;
+  flex:1;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
 }
-.canvasFrame {
-  display: inline-block !important;
-  line-height: 0;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-  background: white;
-  flex-shrink: 0; /* Σημαντικό: εμποδίζει τον καμβά από το να συμπιεστεί */
+.canvasFrame{
+  background:rgba(0,0,0,.08);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.22);
+  max-width: calc(100% - 20px);
+  max-height: calc(100% - 20px);
 }
 .canvas-container{ /* fabric wrapper */
   border-radius:12px;
@@ -251,12 +253,6 @@
   background-color: #f1f5f9 !important; /* Πολύ απαλό γαλάζιο/γκρι */
   background-image: radial-gradient(#cbd5e1 1px, transparent 1px); /* Μικρές τελείες σαν σχεδιαστήριο */
   background-size: 20px 20px;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  overflow: auto !important; /* Αυτό επιτρέπει το scroll */
-  height: calc(100vh - 56px);
-  padding: 100px; /* Δίνει χώρο γύρω από τον καμβά για να σκρολάρεις */
 }
 
 /* Το αριστερό και δεξί πάνελ */
@@ -424,65 +420,3 @@
 }
 
 .btn-export:hover { background: #1d4ed8 !important; }
-
-
-/* Όταν το body έχει την κλάση theme-dark */
-body.theme-dark {
-  --bg: #0b1020;
-  --panel: #0f172a;
-  --txt: #e5e7eb;
-}
-
-
-
-/* DARK MODE ΧΡΩΜΑΤΑ */
-body.theme-dark .canvasHost {
-  background-color: #1e293b !important;
-}
-
-body.theme-dark .topbar {
-  background: #0f172a !important;
-}
-
-body.theme-dark .leftRail {
-  background: #0f172a !important;
-}
-
-.leftRail {
-  width: 56px;
-  height: 100%;
-  flex-shrink: 0;
-  background: #0f172a !important; /* Σκούρο για να μην στραβώνει */
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid rgba(255,255,255,0.1);
-  overflow: hidden; /* Κρύβει οτιδήποτε περισσεύει */
-}
-
-.railbtn {
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-/* photobook.css */
-
-.panelView {
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.danger-light {
-  background: rgba(220, 38, 38, 0.1) !important;
-  color: #dc2626 !important;
-  border: 1px solid rgba(220, 38, 38, 0.2) !important;
-  margin-top: auto; /* Σπρώχνει το κουμπί στο τέρμα κάτω του πάνελ */
-}
-
-/* Εξασφαλίζουμε ότι η αριστερή πλευρά δεν έχει "διαρροές" κειμένου */
-.appShell {
-  overflow: hidden;
-}
