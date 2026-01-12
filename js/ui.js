@@ -65,10 +65,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("fitBtn", "click", () => fitToScreen());
 
   // Page size (canvas dimensions)
-on("pageSizeSelect", "change", (e) => {
-  setCanvasSize(e.target.value, true); 
-  // Το true εδώ λέει στον κώδικα να κάνει fitToScreen αυτόματα
-});
+  on("pageSizeSelect", "change", (e) => {
+    const preset = e.target.value;
+    setCanvasSize(preset, true);
+  });
 
   // Text
   on("addTextBtn", "click", () => {
@@ -144,11 +144,7 @@ on("pageSizeSelect", "change", (e) => {
   });
   on("closeFlipPreview", "click", () => closeFlipbookPreview());
   on("exportLinkBtn", "click", () => exportLink());
- on("clearDraftBtn", "click", () => {
-  if(confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε το προσχέδιο;")) {
-    clearDraft();
-  }
-});
+  on("clearDraftBtn", "click", () => clearDraft());
 
   // Keep layers refreshed when something changes (core already listens, but this helps on UI load)
   updateLayersUI();
