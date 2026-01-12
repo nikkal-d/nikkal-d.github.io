@@ -124,13 +124,32 @@
 
 .canvasHost {
   flex: 1;
-  background-color: #cbd5e1; /* Το γκρι φόντο */
+  background-color: #cbd5e1;
   display: flex !important;
-  flex-direction: column; /* Επιτρέπει την κάθετη διάταξη */
-  align-items: center !important; /* Κεντράρισμα οριζόντια */
-  justify-content: flex-start !important; /* Σπρώχνει το περιεχόμενο ΠΑΝΩ */
-  overflow: auto !important;
-  padding: 40px 20px; /* Μικρότερο padding πάνω (40px) για να ανέβει */
+  flex-direction: column;
+  align-items: center !important;
+  /* justify-content: flex-start αντί για center για να πάει ΠΑΝΩ */
+  justify-content: flex-start !important; 
+  overflow: hidden !important; /* Κρύβει τα scrollbars αν δεν τα θες */
+  padding: 30px !important;
+}
+
+.canvasFrame {
+  margin-top: 10px; /* Μικρό κενό από την κορυφή */
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  /* Εμποδίζει τον καμβά να πάρει δική του πρωτοβουλία στο μέγεθος */
+  max-height: 100%; 
+  max-width: 100%;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  display: inline-block !important;
+  line-height: 0;
+  flex-shrink: 0;
+  display: inline-block !important; /* Αναγκάζει το frame να "σφίξει" γύρω από τον καμβά */
+  line-height: 0;
+  overflow:hidden;
+  background:#fff;
 }
 
 /* Για το Dark Mode */
@@ -143,28 +162,7 @@ body.theme-dark .canvasHost {
 }
 
 
-.canvasFrame{
-  background:rgba(0,0,0,.08);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:18px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.22);
-  max-width: calc(100% - 20px);
-  max-height: calc(100% - 20px);
-}
 
-.canvasFrame {
-  margin-top: 20px; /* Ελέγχεις ακριβώς πόσο "ψηλά" θα στέκεται */
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  display: inline-block !important;
-  line-height: 0;
-  flex-shrink: 0;
-  display: inline-block !important; /* Αναγκάζει το frame να "σφίξει" γύρω από τον καμβά */
-  line-height: 0;
-  border-radius:12px;
-  overflow:hidden;
-  background:#fff;
-}
 
 /* Thumbnails */
 .thumbStrip{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:12px}
