@@ -17,11 +17,11 @@ export const App = {
 };
 
 const PRESETS = {
-  A4P:   { w: 794,  h: 1123, label: "A4 Portrait" },   // 96 DPI (πιο διαχειρίσιμο)
+  A4P:   { w: 794,  h: 1123, label: "A4 Portrait" },
   A4L:   { w: 1123, h: 794,  label: "A4 Landscape" },
   SQUARE:{ w: 800,  h: 800,  label: "Square" },
-  STORY: { w: 1080, h: 1920, label: "Story" },
-  HD:    { w: 1280, h: 720,  label: "HD" },
+  STORY: { w: 540,  h: 960,  label: "Story" },
+  HD:    { w: 960,  h: 540,  label: "HD" },
 };
 
 // ---------- IndexedDB tiny helper ----------
