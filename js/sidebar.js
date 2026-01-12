@@ -64,17 +64,14 @@ document.addEventListener("DOMContentLoaded", () => {
   $("closeRightPanelBtn")?.addEventListener("click", ()=> rightPanel?.classList.remove("open"));
 
   // Theme toggle
-const themeToggleBtn = document.getElementById("themeToggleBtn");
-themeToggleBtn?.addEventListener("click", () => {
-  const body = document.body;
-  if (body.classList.contains("theme-light")) {
-    body.classList.replace("theme-light", "theme-dark");
-    themeToggleBtn.textContent = "☀️";
-  } else {
-    body.classList.replace("theme-dark", "theme-light");
-    themeToggleBtn.textContent = "🌙";
-  }
-});
+  const themeToggleBtn = $("themeToggleBtn");
+  themeToggleBtn?.addEventListener("click", () => {
+    const isLight = document.body.classList.contains("theme-light");
+    document.body.classList.toggle("theme-light", !isLight);
+    document.body.classList.toggle("theme-dark", isLight);
+    themeToggleBtn.textContent = isLight ? "☀️" : "🌙";
+  });
+
   // Lang toggle (UI label only for now)
   const langToggleBtn = $("langToggleBtn");
   langToggleBtn?.addEventListener("click", () => {
