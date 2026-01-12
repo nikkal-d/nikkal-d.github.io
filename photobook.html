@@ -18,10 +18,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
+  /* flipbook modal */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
   .modal.open{display:flex}
   .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
   .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .modal-title{font-weight:700; font-size:14px; color:var(--text)}
   #flipPreviewFrame{flex:1;border:0;background:#000}
   </style>
 </head>
@@ -105,6 +107,8 @@
           <select class="select" id="fontSelect">
             <option value="Arial" selected>Arial</option>
             <option value="Playfair Display, serif">Playfair</option>
+            <option value="Dancing Script, cursive">Dancing Script</option>
+            <option value="Montserrat, sans-serif">Montserrat</option>
           </select>
         </div>
         <div class="field">
@@ -118,7 +122,7 @@
           Upload Image
           <input type="file" id="imageInput" accept="image/*" hidden />
         </label>
-        <p class="hint">Upload via Firebase</p>
+        <p class="hint" style="margin-top:8px; font-size:11px; opacity:0.7;">Images are stored in Firebase Cloud.</p>
       </div>
 
       <div class="panelBody panelView" data-view="colors" hidden>
@@ -130,8 +134,8 @@
 
       <div class="panelBody panelView" data-view="shapes" hidden>
         <div class="row gap">
-          <button class="btn" id="addRectBtn">⬛</button>
-          <button class="btn" id="addCircleBtn">⚪</button>
+          <button class="btn" id="addRectBtn" title="Rectangle">⬛</button>
+          <button class="btn" id="addCircleBtn" title="Circle">⚪</button>
         </div>
       </div>
 
@@ -162,7 +166,7 @@
           <button class="btn" id="exportJpgBtn">JPG</button>
         </div>
         <div class="divider"></div>
-        <button class="btn ghost" id="previewFlipBtn">Preview Flipbook</button>
+        <button class="btn ghost" id="previewFlipBtn" style="width:100%;">Preview Flipbook</button>
       </div>
     </section>
   </div>
