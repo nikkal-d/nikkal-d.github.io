@@ -253,6 +253,12 @@
   background-color: #f1f5f9 !important; /* Πολύ απαλό γαλάζιο/γκρι */
   background-image: radial-gradient(#cbd5e1 1px, transparent 1px); /* Μικρές τελείες σαν σχεδιαστήριο */
   background-size: 20px 20px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: auto !important; /* Αυτό επιτρέπει το scroll */
+  height: calc(100vh - 56px);
+  padding: 100px; /* Δίνει χώρο γύρω από τον καμβά για να σκρολάρεις */
 }
 
 /* Το αριστερό και δεξί πάνελ */
