@@ -124,12 +124,18 @@
 
 .canvasHost {
   flex: 1;
-  background-color: #cbd5e1; /* Ένα ουδέτερο γκρι */
+  background-color: #cbd5e1; /* Το γκρι φόντο */
   display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  flex-direction: column; /* Επιτρέπει την κάθετη διάταξη */
+  align-items: center !important; /* Κεντράρισμα οριζόντια */
+  justify-content: flex-start !important; /* Σπρώχνει το περιεχόμενο ΠΑΝΩ */
   overflow: auto !important;
-  padding: 100px; /* Μεγάλο padding για να υπάρχει "αέρας" γύρω από τον καμβά */
+  padding: 40px 20px; /* Μικρότερο padding πάνω (40px) για να ανέβει */
+}
+
+/* Για το Dark Mode */
+body.theme-dark .canvasHost {
+  background-color: #1e293b !important;
 }
 
 body.theme-dark .canvasHost {
@@ -194,12 +200,6 @@ body.theme-dark .canvasHost {
 
 /* photobook_new.css */
 
-.canvasHost {
-  display: flex !important;
-  align-items: center !important; 
-  justify-content: center !important;
-  overflow: auto !important; /* Σημαντικό για να μπορείς να κουνηθείς αν κάνεις πολύ ζουμ */
-}
 
 .canvasFrame {
   display: inline-block !important; /* Αναγκάζει το frame να "σφίξει" γύρω από τον καμβά */
