@@ -78,25 +78,27 @@
       </div>
 
       <!-- PAGES -->
-      <div class="panelBody panelView" data-view="pages">
-        <div class="row gap">
-          <button class="btn" id="addPageBtn">+ Page</button>
-          <button class="btn ghost" id="dupPageBtn">Duplicate</button>
-          <button class="btn danger" id="delPageBtn">Delete</button>
-        </div>
+     <div class="panelView" data-view="pages">
+  <div class="row gap">
+    <button class="btn" id="addPageBtn">+ Add Page</button>
+    <button class="btn ghost" id="dupPageBtn">Duplicate</button>
+    <button class="btn ghost" id="delPageBtn">Delete</button>
+  </div>
 
-        <div class="row gap" style="margin-top:10px;">
-          <button class="btn ghost" id="prevPageBtn">←</button>
-          <div class="pill" id="pageInfo">1 / 1</div>
-          <button class="btn ghost" id="nextPageBtn">→</button>
-        </div>
+  <div class="row gap" style="margin-top:10px;">
+    <button class="btn ghost" id="prevPageBtn">←</button>
+    <div class="pill" id="pageInfo">1 / 1</div>
+    <button class="btn ghost" id="nextPageBtn">→</button>
+  </div>
 
-        <div class="thumbStrip" id="thumbStrip"></div>
+  <div class="thumbStrip" id="thumbStrip"></div>
 
-        <div class="divider" style="margin:12px 0;"></div>
-        <button class="btn danger" id="clearDraftBtn">Clear Draft</button>
-      </div>
-
+  <div class="divider" style="margin:12px 0;"></div>
+  
+  <button class="btn danger-light" id="clearDraftBtn" style="width:100%; font-size:12px; opacity:0.7;">
+    Clear Draft Data
+  </button>
+</div>
       <!-- TEXT -->
       <div class="panelBody panelView" data-view="text" hidden>
         <button class="btn" id="addTextBtn">➕ Add Text</button>
