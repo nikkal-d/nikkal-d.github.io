@@ -72,13 +72,6 @@
     </div>
   </header>
 
-<main class="stage">
-    <div class="canvasHost" id="canvasHost">
-      <div class="canvasFrame" id="canvasFrame">
-        <canvas id="canvas"></canvas>
-      </div>
-    </div>
-  </main>
 
 
   <div class="appShell">
@@ -248,6 +241,14 @@
       </div>
     </section>
 
+       <main class="stage">
+    <div class="canvasHost" id="canvasHost">
+      <div class="canvasFrame" id="canvasFrame">
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+  </main>
+
 
     <!-- RIGHT EXPORT RAIL -->
     <aside class="rightRail" aria-label="Export">
@@ -290,8 +291,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
   <!-- Optional Firebase (only if you add js/firebase-init.js + js/firebase-store.js) -->
-  <script src="./js/firebase-store.js"></script>
+ <script type="module" src="./js/firebase-store.js"></script>
 
+  
   <!-- App scripts -->
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
