@@ -24,11 +24,10 @@
 .userInfo{font-size:13px; opacity:.9; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 
 /* Layout */
-.appShell{
-  height:calc(100vh - 56px);
-  display:grid;
-  grid-template-columns: 56px 320px 1fr 56px 0px;
-  gap:0;
+.appShell {
+  display: flex;
+  height: calc(100vh - 56px); /* 56px είναι το ύψος της topbar */
+  overflow: hidden;
 }
 .leftRail,.rightRail{
   border-right:1px solid var(--line);
@@ -114,11 +113,13 @@
 /* Stage */
 
 .stage {
-  flex: 1;
+  flex: 1; /* Παίρνει όλο τον διαθέσιμο χώρο ανάμεσα στα panels */
   display: flex;
+  flex-direction: column;
+  background-color: #cbd5e1;
   overflow: hidden;
+  position: relative;
 }
-
 .zoomBox{display:flex; align-items:center; gap:8px}
 
 
