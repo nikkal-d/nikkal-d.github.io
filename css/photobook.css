@@ -123,13 +123,12 @@
 .zoomBox{display:flex; align-items:center; gap:8px}
 .canvasHost {
   flex: 1;
-  position: relative;
-  background-color: #cbd5e1; /* Φόντο που αλλάζει στο dark mode */
-  display: flex !important;
-  align-items: center !important; /* Κάθετο κεντράρισμα */
-  justify-content: center !important; /* Οριζόντιο κεντράρισμα */
-  overflow: auto !important; /* ΕΔΩ ενεργοποιείται το SCROLL */
-  padding: 100px; /* Χώρος για να μπορείς να σκρολάρεις γύρω από τον καμβά */
+  overflow: auto !important; /* Επιτρέπει scrollbars */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #cbd5e1;
+  padding: 80px; /* Δίνει χώρο για να μην κολλάει στις άκρες */
 }
 .canvasFrame {
   display: inline-block !important;
