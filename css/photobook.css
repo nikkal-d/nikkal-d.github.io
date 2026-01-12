@@ -123,12 +123,12 @@
 .zoomBox{display:flex; align-items:center; gap:8px}
 .canvasHost {
   flex: 1;
-  overflow: auto !important; /* Επιτρέπει scrollbars */
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   background-color: #cbd5e1;
-  padding: 80px; /* Δίνει χώρο για να μην κολλάει στις άκρες */
+  overflow: auto !important; /* ΕΝΕΡΓΟΠΟΙΕΙ ΤΟ SCROLL */
+  padding: 60px; /* Χώρος γύρω από τον καμβά */
 }
 .canvasFrame {
   display: inline-block !important;
