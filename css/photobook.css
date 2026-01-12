@@ -420,3 +420,15 @@
 }
 
 .btn-export:hover { background: #1d4ed8 !important; }
+
+
+/* Όταν το body έχει την κλάση theme-dark */
+body.theme-dark {
+  --bg: #0b1020;
+  --panel: #0f172a;
+  --txt: #e5e7eb;
+}
+
+body.theme-dark .topbar { background: #0f172a !important; }
+body.theme-dark .leftRail { background: #111827 !important; }
+body.theme-dark .canvasHost { background: #1e293b !important; }
