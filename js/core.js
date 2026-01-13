@@ -674,35 +674,16 @@ function updatePageInfoUI() {
 }
 
 // ---------- exports ----------
-export async function pageToDataURL(canvas, page, format = "png") {
+export async function pageToDataURL(canvas, page, format, multiplier = 2) {
   return new Promise((resolve) => {
-    if (!page || !canvas) {
-      resolve(null);
-      return;
-    }
-
-    const prevTransform = canvas.viewportTransform.slice();
-    const prevZoom = canvas.getZoom();
-
-    // reset view
-    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    canvas.setZoom(1);
-
     canvas.loadFromJSON(page.json, () => {
       canvas.renderAll();
-
       const dataUrl = canvas.toDataURL({
-        format,
+        format: format,
         quality: 1,
-        multiplier: 2,
+        multiplier: multiplier, // Εδώ ορίζεται η τελική διάσταση
         enableRetinaScaling: true
       });
-
-      // restore
-      canvas.setViewportTransform(prevTransform);
-      canvas.setZoom(prevZoom);
-      canvas.renderAll();
-
       resolve(dataUrl);
     });
   });
@@ -710,16 +691,17 @@ export async function pageToDataURL(canvas, page, format = "png") {
 
 
 
-export async function exportPNG() {
+export async function exportPNG(multiplier = 2) {
   saveCurrentPage();
-  const url = await pageToDataURL(App.pages[App.current], "png");
-  downloadDataURL(url, `page-${App.current+1}.png`);
+  // Περνάμε το multiplier στη βοηθητική συνάρτηση
+  const url = await pageToDataURL(App.canvas, App.pages[App.current], "png", multiplier);
+  downloadDataURL(url, `page-${App.current + 1}.png`);
 }
 
-export async function exportJPG() {
+export async function exportJPG(multiplier = 2) {
   saveCurrentPage();
-  const url = await pageToDataURL(App.pages[App.current], "jpeg", 0.92);
-  downloadDataURL(url, `page-${App.current+1}.jpg`);
+  const url = await pageToDataURL(App.canvas, App.pages[App.current], "jpeg", multiplier);
+  downloadDataURL(url, `page-${App.current + 1}.jpg`);
 }
 
 export async function exportPDF() {
