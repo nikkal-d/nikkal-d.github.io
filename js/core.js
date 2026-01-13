@@ -747,94 +747,120 @@ export async function exportPDF() {
   doc.save("photobook.pdf");
 }
 
+
+// Βοηθητική συνάρτηση για τη μετατροπή κάθε σελίδας σε εικόνα υψηλής ανάλυσης
+async function renderPageToDataURL(page) {
+  return new Promise((resolve) => {
+    const preset = PRESETS[page.preset || App.preset];
+    // Δημιουργούμε έναν προσωρινό static canvas για το rendering
+    const tempCanvas = new fabric.StaticCanvas(null, {
+      width: preset.w,
+      height: preset.h,
+      backgroundColor: page.json.backgroundColor || "#ffffff"
+    });
+
+    tempCanvas.loadFromJSON(page.json, () => {
+      tempCanvas.renderAll();
+      // multiplier: 2 για καλή ποιότητα στο export
+      const dataUrl = tempCanvas.toDataURL({
+        format: 'jpeg',
+        quality: 0.9,
+        multiplier: 2
+      });
+      tempCanvas.dispose();
+      resolve(dataUrl);
+    });
+  });
+}
+
+
 // Flipbook: builds a standalone HTML with simple page-flip animation.
 // ---------- Flipbook Export & Preview ----------
 export async function exportFlipbook() {
   saveCurrentPage();
-
-  if (!App.canvas || !App.pages.length) {
-    alert("Δεν υπάρχουν σελίδες");
-    return;
-  }
-
   const images = [];
-
-  for (let i = 0; i < App.pages.length; i++) {
-    const dataUrl = await pageToDataURL(App.canvas, App.pages[i], "png");
-    if (dataUrl) images.push(dataUrl);
+  
+  // Δείξε ένα μήνυμα αναμονής αν θες, γιατί το rendering παίρνει χρόνο
+  console.log("Rendering flipbook pages...");
+  
+  for (const p of App.pages) {
+    const dataUrl = await renderPageToDataURL(p);
+    images.push(dataUrl);
   }
 
   const html = `
 <!doctype html>
-<html>
+<html lang="el">
 <head>
-<meta charset="utf-8">
-<title>Flipbook</title>
-<style>
-body {
-  margin:0;
-  background:#111;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.book {
-  width:80vw;
-  height:80vh;
-  perspective:2000px;
-  position:relative;
-}
-.page {
-  position:absolute;
-  width:100%;
-  height:100%;
-  background:white;
-  transform-origin:left;
-  transition:transform .8s;
-}
-.page img {
-  width:100%;
-  height:100%;
-  object-fit:contain;
-}
-.page.flipped {
-  transform:rotateY(-180deg);
-}
-</style>
+  <meta charset="utf-8">
+  <title>Το Φωτοάλμπουμ μου</title>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+  <style>
+    body { margin:0; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; overflow:hidden; font-family:sans-serif; }
+    .container { width:100%; height:85vh; display:flex; justify-content:center; align-items:center; perspective: 2000px; }
+    #book { box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+    .page { background:#fff; width:100%; height:100%; }
+    .page img { width:100%; height:100%; object-fit:contain; background:#fff; }
+    .controls { position:fixed; bottom:30px; display:flex; gap:20px; z-index:100; align-items:center; }
+    .btn { background:#333; color:#fff; border:1px solid #555; padding:12px 24px; border-radius:30px; cursor:pointer; font-size:16px; transition:0.3s; }
+    .btn:hover { background:#555; transform:scale(1.05); }
+    .page-num { color: #aaa; font-size: 14px; min-width: 60px; text-align: center; }
+  </style>
 </head>
 <body>
-
-<div class="book">
-  ${images.map((src,i)=>`
-    <div class="page" style="z-index:${images.length - i}">
-      <img src="${src}">
+  <div class="container">
+    <div id="book">
+      ${images.map(src => `<div class="page"><img src="${src}"></div>`).join('')}
     </div>
-  `).join("")}
-</div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="pBtn">⬅ Πίσω</button>
+    <div class="page-num" id="pageIdx">1 / ${images.length}</div>
+    <button class="btn" id="nBtn">Επόμενο ➡</button>
+  </div>
+  <script>
+    window.onload = () => {
+      const bookElem = document.getElementById('book');
+      const pageIdxElem = document.getElementById('pageIdx');
+      
+      const pageFlip = new St.PageFlip(bookElem, {
+        width: 595, height: 842, // A4 Ratio
+        size: "stretch",
+        minWidth: 315, maxWidth: 1200,
+        minHeight: 420, maxHeight: 1500,
+        showCover: true,
+        maxShadowOpacity: 0.5,
+        mobileScrollSupport: false
+      });
 
-<script>
-let index = 0;
-const pages = document.querySelectorAll('.page');
-document.body.onclick = () => {
-  if (index < pages.length) {
-    pages[index].classList.add('flipped');
-    index++;
-  }
-};
-</script>
+      pageFlip.loadFromHTML(document.querySelectorAll('.page'));
 
+      // Ενημέρωση αριθμού σελίδας
+      pageFlip.on('flip', (e) => {
+        pageIdxElem.textContent = (e.data + 1) + " / " + ${images.length};
+      });
+
+      // Click Events
+      document.getElementById('pBtn').onclick = () => pageFlip.flipPrev();
+      document.getElementById('nBtn').onclick = () => pageFlip.flipNext();
+
+      // Keyboard Events (Βελάκια)
+      document.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft') pageFlip.flipPrev();
+        if(e.key === 'ArrowRight') pageFlip.flipNext();
+      });
+    };
+  </script>
 </body>
-</html>
-`;
+</html>`;
 
-  const blob = new Blob([html], { type: "text/html" });
+  const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
-  a.download = "flipbook.html";
+  a.download = 'photobook_flipbook.html';
   a.click();
+}
 
   URL.revokeObjectURL(url);
 }
@@ -908,9 +934,10 @@ document.body.onclick = () => {
 }
 
 
-
-
 export async function previewFlipbook() {
+  // Αντί να κατεβάζει αρχείο, θα μπορούσαμε να ανοίγουμε το modal, 
+  // αλλά η πιο σίγουρη λύση για να δεις το animation είναι το export.
+  // Προς το παρόν, ας καλούμε την exportFlipbook που δουλεύει σωστά.
   await exportFlipbook();
 }
 
