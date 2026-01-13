@@ -863,7 +863,7 @@ export async function exportFlipbook() {
 }
 
   URL.revokeObjectURL(url);
-}
+
 
 
 export function openFlipbookPreview(images) {
