@@ -1060,3 +1060,29 @@ function dataURLToImage(url) {
     img.src = url;
   });
 }
+
+// Προσθήκη ελέγχου με το πληκτρολόγιο
+document.addEventListener('keydown', (e) => {
+    if (typeof currentFlipPage === 'undefined') return; // Μόνο αν είμαστε σε mode preview
+
+    if (e.key === 'ArrowRight') {
+        goToNextPage();
+    } else if (e.key === 'ArrowLeft') {
+        goToPrevPage();
+    }
+});
+
+// Βελτιωμένη συνάρτηση για το animation
+function flipPage(pageIndex) {
+    const pages = document.querySelectorAll('.page');
+    if (pageIndex >= 0 && pageIndex < pages.length) {
+        pages[pageIndex].classList.toggle('flipped');
+        
+        // Δυναμική αλλαγή του Z-index για να μη "φαίνονται" οι πίσω σελίδες μπροστά
+        setTimeout(() => {
+            pages.forEach((p, idx) => {
+                p.style.zIndex = (idx <= pageIndex) ? idx : pages.length - idx;
+            });
+        }, 300);
+    }
+}
