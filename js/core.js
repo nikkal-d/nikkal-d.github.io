@@ -1,143 +1,126 @@
 class PhotobookCore {
     constructor() {
-        this.pages = [];
-        this.currentPageIndex = 0;
+        this.pages = []; // Κάθε σελίδα είναι {image: base64Data}
     }
 
     addPage(imageData) {
-        this.pages.push({
-            image: imageData,
-            elements: []
-        });
+        this.pages.push({ image: imageData });
+        console.log("Page added. Total pages:", this.pages.length);
     }
 
-    deletePage(index) {
-        this.pages.splice(index, 1);
+    clearPages() {
+        this.pages = [];
     }
 
     exportFlipbook() {
         if (this.pages.length === 0) {
-            alert("Προσθέστε μερικές σελίδες πρώτα!");
+            alert("Παρακαλώ προσθέστε τουλάχιστον μία σελίδα!");
             return;
         }
 
         const flipbookContent = `
 <!DOCTYPE html>
-<html lang="el">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Το Φωτοάλμπουμ μου</title>
-    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
+    <title>Το Flipbook μου</title>
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
     <style>
-        body { 
-            background: #1a1a1a; 
-            margin: 0; 
-            display: flex; 
+        body {
+            background-color: #2c2c2c;
+            margin: 0;
+            display: flex;
             flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            font-family: sans-serif;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
         }
-        
-        .container { 
-            width: 100%; 
-            height: 80vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
+        .container {
+            width: 100%;
+            height: 85vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-
-        #flipbook { 
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        #flipbook {
+            box-shadow: 0 0 100px rgba(0,0,0,0.7);
         }
-
-        .page { 
-            background: white; 
-            overflow: hidden; 
+        .page {
+            background-color: white;
+            width: 100%;
+            height: 100%;
         }
-
-        .page img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; /* Για να μην κόβεται η φωτογραφία */
-            background: #f0f0f0;
+        .page img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Αυτό εμποδίζει το "κόψιμο" της εικόνας */
+            display: block;
         }
-
-        /* Βέλη πλοήγησης */
         .controls {
-            position: fixed;
-            bottom: 30px;
+            margin-top: 20px;
             display: flex;
             gap: 20px;
-            z-index: 100;
+            z-index: 10;
         }
-
-        .nav-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
+        .btn {
+            background: #444;
             color: white;
-            padding: 12px 25px;
-            cursor: pointer;
+            border: none;
+            padding: 10px 20px;
             border-radius: 5px;
+            cursor: pointer;
             font-size: 16px;
             transition: 0.3s;
         }
-
-        .nav-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .instruction {
-            color: rgba(255,255,255,0.5);
-            margin-top: 10px;
-            font-size: 14px;
-        }
+        .btn:hover { background: #666; }
+        .hint { color: #aaa; margin-top: 10px; font-size: 13px; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div id="flipbook">
-            ${this.pages.map(page => `
-                <div class="page" data-density="hard">
-                    <img src="${page.image}" />
+            ${this.pages.map(p => `
+                <div class="page">
+                    <img src="${p.image}" alt="Page">
                 </div>
             `).join('')}
         </div>
     </div>
 
     <div class="controls">
-        <button class="nav-btn" onclick="pageFlip.flipPrev()">Προηγούμενο</button>
-        <button class="nav-btn" onclick="pageFlip.flipNext()">Επόμενο</button>
+        <button class="btn" id="prevBtn">⬅ Προηγούμενο</button>
+        <button class="btn" id="nextBtn">Επόμενο ➡</button>
     </div>
-    
-    <div class="instruction">Χρησιμοποιήστε τα βέλη στο πληκτρολόγιο ή κάντε κλικ στις άκρες των σελίδων</div>
+    <div class="hint">Χρησιμοποιήστε τα κουμπιά, το ποντίκι ή τα βέλη του πληκτρολογίου</div>
 
     <script>
-        const flipbookElement = document.getElementById('flipbook');
-        
-        // Αρχικοποίηση του PageFlip
-        const pageFlip = new St.PageFlip(flipbookElement, {
-            width: 595, // A4 Width σε pixels (περίπου)
-            height: 842, // A4 Height
-            size: "stretch",
-            minWidth: 315,
-            maxWidth: 1000,
-            minHeight: 420,
-            maxHeight: 1350,
-            maxShadowOpacity: 0.5,
-            showCover: true,
-            mobileScrollSupport: false
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const htmlElement = document.getElementById('flipbook');
+            const pageFlip = new St.PageFlip(htmlElement, {
+                width: 550, // πλάτος μιας σελίδας
+                height: 733, // ύψος μιας σελίδας (A4 ratio)
+                size: "stretch",
+                minWidth: 315, maxWidth: 1000,
+                minHeight: 420, maxHeight: 1350,
+                maxShadowOpacity: 0.5,
+                showCover: true,
+                usePortrait: true,
+                mobileScrollSupport: false
+            });
 
-        pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+            pageFlip.loadFromHTML(document.querySelectorAll('.page'));
 
-        // Λειτουργία με βελάκια πληκτρολογίου
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight') pageFlip.flipNext();
-            if (e.key === 'ArrowLeft') pageFlip.flipPrev();
+            // Κουμπιά
+            document.getElementById('prevBtn').addEventListener('click', () => pageFlip.flipPrev());
+            document.getElementById('nextBtn').addEventListener('click', () => pageFlip.flipNext());
+
+            // Βέλη Πληκτρολογίου
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') pageFlip.flipPrev();
+                if (e.key === 'ArrowRight') pageFlip.flipNext();
+            });
         });
     </script>
 </body>
@@ -147,9 +130,12 @@ class PhotobookCore {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'flipbook.html';
+        a.download = 'flipbook_animated.html';
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     }
 }
 
+// Δημιουργία global instance
 window.photobookCore = new PhotobookCore();
