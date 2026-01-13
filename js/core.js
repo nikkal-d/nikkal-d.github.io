@@ -862,9 +862,6 @@ export async function exportFlipbook() {
   a.click();
 }
 
-  URL.revokeObjectURL(url);
-
-
 
 export function openFlipbookPreview(images) {
   const frame = document.getElementById("flipPreviewFrame");
