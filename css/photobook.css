@@ -423,3 +423,46 @@ body.theme-dark .canvasHost {
 }
 
 .btn-export:hover { background: #1d4ed8 !important; }
+
+/* Διόρθωση του container για να μην κόβονται οι σελίδες */
+.flipbook-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 2000px; /* Δίνει βάθος στο animation */
+    background: #1a1a1a;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.flipbook {
+    position: relative;
+    width: 90%; /* Χρησιμοποιούμε ποσοστά για να μην βγαίνει εκτός */
+    height: 90%;
+    max-width: 1000px; /* 2 σελίδες A4 πλάτη-πλάτη */
+    aspect-ratio: 1.414 / 1; /* Αναλογία για 2 σελίδες A4 */
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease-in-out;
+}
+
+.page {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    top: 0;
+    left: 50%; /* Ξεκινάνε όλες από τη μέση */
+    transform-origin: left;
+    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    backface-visibility: hidden;
+    z-index: 1;
+}
+
+/* Εφέ για το γύρισμα */
+.page.flipped {
+    transform: rotateY(-180deg);
+}
+
+.page:not(.flipped) {
+    z-index: 2;
+}
