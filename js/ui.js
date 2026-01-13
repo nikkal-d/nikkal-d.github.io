@@ -131,8 +131,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("deleteObjBtn", "click", () => deleteSelected());
 
   // Export
-  on("exportPngBtn", "click", () => exportPNG());
-  on("exportJpgBtn", "click", () => exportJPG());
+ on("exportPngBtn", "click", async () => {
+  const multiplier = prompt("Εισάγετε κλίμακα ποιότητας (1 = Κανονική, 2 = Υψηλή, 3 = Πολύ Υψηλή):", "2");
+  if (multiplier) exportPNG(parseFloat(multiplier));
+});
+ on("exportJpgBtn", "click", async () => {
+  const multiplier = prompt("Εισάγετε κλίμακα ποιότητας (1 = Κανονική, 2 = Υψηλή, 3 = Πολύ Υψηλή):", "2");
+  if (multiplier) exportJPG(parseFloat(multiplier));
+});
   on("exportPdfBtn", "click", () => exportPDF());
   on("exportFlipBtn", "click", async () => {
     const dir = $("flipDirSelect")?.value || "horizontal";
