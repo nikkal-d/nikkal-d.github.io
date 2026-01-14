@@ -65,11 +65,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("fitBtn", "click", () => fitToScreen());
 
   // Page size (canvas dimensions)
- on("pageSizeSelect", "change", (e) => {
-  const newPreset = e.target.value;
-  setCanvasSize(newPreset); // Αυτό πρέπει να αλλάζει ΜΟΝΟ την τρέχουσα σελίδα
-  fitToScreen();
-});
+  on("pageSizeSelect", "change", (e) => {
+    const preset = e.target.value;
+    setCanvasSize(preset, true);
+  });
+
   // Text
   on("addTextBtn", "click", () => {
     const font = $("fontSelect")?.value || "Arial";
