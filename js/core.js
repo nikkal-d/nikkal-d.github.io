@@ -165,16 +165,21 @@ function makeBlankPage(preset) {
 
 // ---------- pages ----------
 export function addPage() {
-  saveCurrentPage(); // Σώζουμε την παλιά
-  const newPage = {
-    json: JSON.stringify(App.canvas.toObject()), // Ή {} για τελείως κενή
-    preset: App.preset
+  saveCurrentPage(); // Σώσε την τρέχουσα
+  
+  // Δημιούργησε μια τελείως ΚΕΝΗ σελίδα
+  const newPage = { 
+    json: JSON.stringify({ objects: [], background: "white" }), 
+    preset: App.preset 
   };
-  // Αν θέλεις η νέα σελίδα να είναι ΚΕΝΗ, χρησιμοποίησε αυτό:
-  // const newPage = { json: '{"objects":[],"background":"white"}', preset: App.preset };
   
   App.pages.push(newPage);
   App.current = App.pages.length - 1;
+  
+  // Καθάρισε τον καμβά πριν τη σχεδίαση
+  App.canvas.clear();
+  App.canvas.setBackgroundColor("white", App.canvas.renderAll.bind(App.canvas));
+  
   renderCurrentPage();
   refreshThumbnails();
 }
