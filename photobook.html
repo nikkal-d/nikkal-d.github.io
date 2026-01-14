@@ -18,7 +18,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-  /* flipbook modal */
+  /* Modal Styles */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
   .modal.open{display:flex}
   .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5)}
@@ -26,12 +26,12 @@
   .modal-body{flex:1;position:relative;background:#000}
   .modal-body iframe{width:100%;height:100%;border:none}
   
-  /* Νέα στυλ για τα κουμπιά στην Topbar */
+  /* Topbar Export Styles */
   .export-group {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-right: 15px;
+    margin-right: 10px;
   }
   .btn-export {
     background: #22c55e;
@@ -59,7 +59,6 @@
       <nav class="topnav">
         <a href="#">Αρχείο</a>
         <a href="#">Επεξεργασία</a>
-        <a href="#">Βοήθεια</a>
       </nav>
     </div>
 
@@ -70,7 +69,6 @@
         <button class="btn-export" id="exportPngBtn">PNG</button>
         <button class="btn-export" id="exportJpgBtn">JPG</button>
       </div>
-
       <div class="divider-v"></div>
       <button class="btn-login" id="themeToggleBtn">☀️</button>
     </div>
@@ -105,15 +103,12 @@
             <input type="file" id="imageUploadInput" accept="image/*" multiple hidden />
             <span>Ανεβάστε Φωτογραφίες</span>
           </label>
-          <div class="divider"></div>
-          <button class="btn ghost" id="addPdfBtn">Προσθήκη από PDF</button>
         </div>
       </div>
 
       <div class="panelView" data-view="text" hidden>
-        <div class="grid2">
-          <button class="btn ghost" onclick="Photobook.addText({fontSize:60, fontWeight:'bold', text:'Τίτλος'})">Τίτλος</button>
-          <button class="btn ghost" onclick="Photobook.addText({fontSize:40, text:'Υπότιτλος'})">Υπότιτλος</button>
+        <div class="panelBody">
+          <button class="btn ghost" style="width:100%" onclick="Photobook.addText({text:'Νέο Κείμενο'})">Προσθήκη Κειμένου</button>
         </div>
       </div>
 
@@ -121,15 +116,12 @@
         <div class="grid2">
           <button class="btn ghost" id="addRectBtn">Τετράγωνο</button>
           <button class="btn ghost" id="addCircleBtn">Κύκλος</button>
-          <button class="btn ghost" id="addTriangleBtn">Τρίγωνο</button>
-          <button class="btn ghost" id="addLineBtn">Γραμμή</button>
         </div>
       </div>
 
       <div class="panelView" data-view="colors" hidden>
         <div class="panelBody">
-          <label>Χρώμα Φόντου</label>
-          <input type="color" id="bgColorPicker" value="#ffffff" style="width:100%;height:40px;border:none;cursor:pointer" />
+          <input type="color" id="bgColorPicker" style="width:100%;height:40px" />
         </div>
       </div>
 
@@ -146,13 +138,17 @@
           <button class="toolBtn" id="zoomInBtn">+</button>
           <button class="toolBtn" id="fitScreenBtn">Fit</button>
         </div>
+        
         <div class="divider-v"></div>
+        
         <select id="pageSizeSelect" class="selectSm">
           <option value="A4P">A4 Κάθετο</option>
           <option value="A4L">A4 Οριζόντιο</option>
           <option value="SQUARE">Τετράγωνο</option>
         </select>
+        
         <div class="divider-v"></div>
+        
         <div class="pageNav">
           <button class="toolBtn" id="prevPageBtn">←</button>
           <span id="pageInfo">1 / 1</span>
@@ -163,12 +159,11 @@
       <div class="canvasHost" id="canvasHost">
         <canvas id="canvas"></canvas>
       </div>
-    </aside>
+    </main>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-  <script type="module" src="./js/firebase-store.js"></script>
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script src="./js/sidebar.js"></script>
@@ -176,7 +171,7 @@
   <div class="modal" id="flipPreviewModal">
     <div class="modal-inner">
       <div class="modal-head">
-        <div class="modal-title">Προεπισκόπηση Flipbook</div>
+        <span>Προεπισκόπηση</span>
         <button class="closeBtn" id="closeFlipModalBtn">&times;</button>
       </div>
       <div class="modal-body">
