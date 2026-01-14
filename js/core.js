@@ -17,10 +17,10 @@ export const App = {
 };
 
 const PRESETS = {
-  A4P:   { w: 794,  h: 1123, label: "A4 Portrait" },
-  A4L:   { w: 1123, h: 794,  label: "A4 Landscape" },
-  SQUARE:{ w: 800,  h: 800,  label: "Square" },
-  STORY: { w: 540,  h: 960,  label: "Story" },
+  A4P:  { w: 2480, h: 3508, label: "A4 Portrait (Print Ready)" },
+  A4L:  { w: 3508, h: 2480, label: "A4 Landscape (Print Ready)" },
+  SQUARE:{ w: 2362, h: 2362, label: "Square 20x20cm (Print Ready)" },
+  STORY: { w: 3543, h: 2362, label: "Large Landscape 3:2" }
   HD:    { w: 960,  h: 540,  label: "HD" },
 };
 
