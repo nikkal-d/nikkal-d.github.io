@@ -8,7 +8,7 @@
 
 export const App = {
   canvas: null,
-  pages: [],              // [{ json, preset }]
+  pages: [],
   current: 0,
   preset: "A4P",
   zoom: 1,
@@ -20,8 +20,8 @@ const PRESETS = {
   A4P:    { w: 2480, h: 3508, label: "A4 Portrait (Print)" },
   A4L:    { w: 3508, h: 2480, label: "A4 Landscape (Print)" },
   SQUARE: { w: 2400, h: 2400, label: "Square 20x20cm" },
-  LAND32: { w: 3600, h: 2400, label: "Photo 10x15 (3:2)" },
-  HD:     { w: 1920, h: 1080, label: "Full HD Screen" }
+  LAND32: { w: 3600, h: 2400, label: "Photo 3:2" },
+  HD:     { w: 1920, h: 1080, label: "Full HD" }
 };
 
 // ---------- IndexedDB tiny helper ----------
