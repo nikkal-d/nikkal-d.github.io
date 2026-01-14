@@ -212,21 +212,21 @@ async function renderCurrentPage() {
   const page = App.pages[App.current];
   if (!page) return;
 
-  const c = App.canvas;
-  setCanvasSize(page.preset || App.preset, false);
+  // 1. Επιβολή μεγέθους από το preset της σελίδας
+  const size = PRESETS[page.preset] || PRESETS[App.preset];
+  App.canvas.setDimensions({ width: size.w, height: size.h });
 
-  await new Promise((resolve) => {
-    c.loadFromJSON(page.json, () => {
-      c.getObjects().forEach(ensureImageCrossOrigin);
-      c.renderAll();
+  // 2. Καθαρισμός και φόρτωμα
+  App.canvas.clear();
+  return new Promise((resolve) => {
+    App.canvas.loadFromJSON(page.json, () => {
+      App.canvas.renderAll();
+      fitToScreen(); // Αυτό θα σε σώσει για να μην αλλάζουν τα μεγέθη στα μάτια σου
       resolve();
     });
   });
-
-  // ensure background
-  const bg = (page.json && (page.json.backgroundColor || page.json.background)) || "#ffffff";
-  c.setBackgroundColor(bg, c.renderAll.bind(c));
 }
+
 
 export function saveCurrentPage() {
   const c = App.canvas;
