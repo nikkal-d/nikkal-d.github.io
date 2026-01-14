@@ -132,12 +132,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Export
 on("exportPngBtn", "click", async () => {
-  const m = prompt("Ποιότητα Export (1=Standard, 2=High, 3=Ultra):", "1");
+  const m = prompt("Ποιότητα (1 = Κανονική, 2 = Υψηλή για εκτύπωση):", "1");
   if (m) exportPNG(parseFloat(m));
 });
 
 on("exportJpgBtn", "click", async () => {
-  const m = prompt("Ποιότητα Export (1=Standard, 2=High, 3=Ultra):", "1");
+  const m = prompt("Ποιότητα (1 = Κανονική, 2 = Υψηλή για εκτύπωση):", "1");
   if (m) exportJPG(parseFloat(m));
 });
   on("exportPdfBtn", "click", () => exportPDF());
