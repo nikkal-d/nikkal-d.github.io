@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
 
+  <!-- pdf.js + jsPDF for exports -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     if (window.pdfjsLib) {
@@ -18,152 +19,299 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-  /* Modal Styles */
+  /* flipbook modal */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
   .modal.open{display:flex}
-  .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5)}
-  .modal-head{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-  .modal-body{flex:1;position:relative;background:#000}
-  .modal-body iframe{width:100%;height:100%;border:none}
-  
-  /* Topbar Export Styles */
-  .export-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: 10px;
-  }
-  .btn-export {
-    background: #22c55e;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  .btn-export:hover {
-    background: #16a34a;
-    transform: translateY(-1px);
-  }
+  .modal-inner{width:min(1100px,94vw);height:min(760px,92vh);background:var(--panel,#111);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .modal-title{font-weight:700}
+  #flipPreviewFrame{flex:1;border:0;background:#000}
   </style>
 </head>
 
-<body class="theme-dark">
-
-  <header class="topbar">
-    <div class="topbar-left">
-      <span class="brand">Photobook Studio</span>
-      <nav class="topnav">
-        <a href="#">Αρχείο</a>
-        <a href="#">Επεξεργασία</a>
-      </nav>
-    </div>
-
-    <div class="topbar-right">
-      <div class="export-group">
-        <button class="btn-export" id="exportPdfBtn">PDF</button>
-        <button class="btn-export" id="exportFlipBtn">Flipbook</button>
-        <button class="btn-export" id="exportPngBtn">PNG</button>
-        <button class="btn-export" id="exportJpgBtn">JPG</button>
-      </div>
-      <div class="divider-v"></div>
-      <button class="btn-login" id="themeToggleBtn">☀️</button>
-    </div>
-  </header>
-
-  <div class="appShell">
-    <aside class="leftRail">
-      <button class="railbtn active" data-panel="pages" title="Σελίδες">📄</button>
-      <button class="railbtn" data-panel="images" title="Εικόνες">🖼️</button>
-      <button class="railbtn" data-panel="text" title="Κείμενο">T</button>
-      <button class="railbtn" data-panel="shapes" title="Σχήματα">⭐</button>
-      <button class="railbtn" data-panel="colors" title="Φόντο">🎨</button>
-      <button class="railbtn" data-panel="layers" title="Επίπεδα">📚</button>
-      <div style="margin-top:auto"></div>
-      <button class="railbtn" id="clearDraftBtn" title="Καθαρισμός">🗑️</button>
-    </aside>
-
-    <aside class="leftPanel" id="leftPanel">
-      <div class="panelHead">
-        <span id="panelTitle">Pages</span>
-        <button class="closeBtn" id="closeLeftPanelBtn">&times;</button>
-      </div>
-
-      <div class="panelView" data-view="pages">
-        <button class="btn primary" style="width:100%;margin-bottom:12px" id="addPageBtn">+ Νέα Σελίδα</button>
-        <div class="thumbStrip" id="thumbStrip"></div>
-      </div>
-
-      <div class="panelView" data-view="images" hidden>
-        <div class="panelBody">
-          <label class="uploadBox">
-            <input type="file" id="imageUploadInput" accept="image/*" multiple hidden />
-            <span>Ανεβάστε Φωτογραφίες</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="panelView" data-view="text" hidden>
-        <div class="panelBody">
-          <button class="btn ghost" style="width:100%" onclick="Photobook.addText({text:'Νέο Κείμενο'})">Προσθήκη Κειμένου</button>
-        </div>
-      </div>
-
-      <div class="panelView" data-view="shapes" hidden>
-        <div class="grid2">
-          <button class="btn ghost" id="addRectBtn">Τετράγωνο</button>
-          <button class="btn ghost" id="addCircleBtn">Κύκλος</button>
-        </div>
-      </div>
-
-      <div class="panelView" data-view="colors" hidden>
-        <div class="panelBody">
-          <input type="color" id="bgColorPicker" style="width:100%;height:40px" />
-        </div>
-      </div>
-
-      <div class="panelView" data-view="layers" hidden>
-        <div id="layersList"></div>
-      </div>
-    </aside>
-
-    <main class="canvasArea">
-      <div class="canvasToolbar">
-        <div class="zoomGroup">
-          <button class="toolBtn" id="zoomOutBtn">−</button>
-          <span id="zoomValue">100%</span>
-          <button class="toolBtn" id="zoomInBtn">+</button>
-          <button class="toolBtn" id="fitScreenBtn">Fit</button>
-        </div>
-        
-        <div class="divider-v"></div>
-        
-        <select id="pageSizeSelect" class="selectSm">
-          <option value="A4P">A4 Κάθετο</option>
-          <option value="A4L">A4 Οριζόντιο</option>
-          <option value="SQUARE">Τετράγωνο</option>
-        </select>
-        
-        <div class="divider-v"></div>
-        
-        <div class="pageNav">
-          <button class="toolBtn" id="prevPageBtn">←</button>
-          <span id="pageInfo">1 / 1</span>
-          <button class="toolBtn" id="nextPageBtn">→</button>
-        </div>
-      </div>
-
-      <div class="canvasHost" id="canvasHost">
-        <canvas id="canvas"></canvas>
-      </div>
-    </main>
+<body class="theme-light">
+ <header class="topbar">
+  <div class="topbar-left">
+    <a class="brand" href="./index.html">Photobook</a>
+    <nav class="topnav" aria-label="Site navigation">
+      <a href="./index.html">Home</a>
+      <a href="./templates.html">Templates</a>
+      <a href="./projects.html">Projects</a>
+    </nav>
   </div>
 
+ <div class="topbar-right">
+  <select id="pageSizeSelect" class="btn" style="background:#334155; color:white; border:none;">
+    <option value="A4P">A4 Portrait</option>
+    <option value="A4L">A4 Landscape</option>
+    <option value="SQUARE">Square</option>
+     <option value="STORY">Story</option>
+      <option value="HD">HD</option>
+ </div>
+
+ <div class="zoomBox">
+            <button class="iconbtn" id="zoomOutBtn" title="Zoom out">−</button>
+            <div class="pill" id="zoomValue">100%</div>
+            <button class="iconbtn" id="zoomInBtn" title="Zoom in">+</button>
+            <button class="btn ghost" id="zoomResetBtn" title="Reset zoom">Reset</button>
+            <button class="btn" id="zoomFitBtn" title="Fit">⤢</button>
+          </div>
+        </div>
+
+    
+          <button class="btn ghost" id="fitBtn" title="Fit to screen">Fit</button>
+           
+          </select>
+
+          <button class="btn" id="toggleExportBtn">Export</button>
+        </div>
+      </div>
+
+
+
+
+
+
+ </select>
+
+
+
+
+
+
+
+   
+
+  <button id="openExportBtn" class="btn" style="background:#2563eb; color:white;">Export</button>
+  
+  </div>
+
+  <button class="iconbtn" id="themeToggleBtn">🌙</button>
+  
+  <div class="authbox">
+    <button class="btn-login" id="loginBtn">Σύνδεση</button>
+  </div>
+</div>
+    </div>
+  </div>
+</header>
+
+  <div class="appShell">
+    <!-- LEFT MINI BAR -->
+    <aside class="leftRail" aria-label="Tools">
+      <button class="railbtn active" data-panel="pages" title="Pages">📄</button>
+      <button class="railbtn" data-panel="text" title="Text">🅰</button>
+      <button class="railbtn" data-panel="images" title="Images">🖼</button>
+      <button class="railbtn" data-panel="colors" title="Colors">🎨</button>
+      <button class="railbtn" data-panel="shapes" title="Shapes">⬛</button>
+      <button class="railbtn" data-panel="layers" title="Layers">📚</button>
+    </aside>
+
+    <!-- LEFT PANEL -->
+    <section class="leftPanel" id="leftPanel">
+      <div class="panelHeader">
+        <h3 id="panelTitle">Pages</h3>
+        <button class="iconbtn" id="closeLeftPanelBtn" title="Close">✕</button>
+      </div>
+
+      <!-- PAGES -->
+      <div class="panelBody panelView" data-view="pages">
+        <div class="row gap">
+          <button class="btn" id="addPageBtn">+ Page</button>
+          <button class="btn ghost" id="dupPageBtn">Duplicate</button>
+          <button class="btn danger" id="delPageBtn">Delete</button>
+        </div>
+
+        <div class="row gap" style="margin-top:10px;">
+          <button class="btn ghost" id="prevPageBtn">←</button>
+          <div class="pill" id="pageInfo">1 / 1</div>
+          <button class="btn ghost" id="nextPageBtn">→</button>
+        </div>
+
+        <div class="thumbStrip" id="thumbStrip"></div>
+
+        <div class="divider" style="margin:12px 0;"></div>
+        <button class="btn danger" id="clearDraftBtn">Clear Draft</button>
+      </div>
+
+      <!-- TEXT -->
+      <div class="panelBody panelView" data-view="text" hidden>
+        <button class="btn" id="addTextBtn">➕ Add Text</button>
+
+        <div class="field">
+          <label>Font</label>
+          <select class="select" id="fontSelect">
+            <option value="Arial" selected>Arial</option>
+            <option value="Inter, system-ui">Inter</option>
+            <option value="Roboto, Arial">Roboto</option>
+            <option value="Montserrat, Arial">Montserrat</option>
+            <option value="Playfair Display, serif">Playfair</option>
+            <option value="Merriweather, serif">Merriweather</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times</option>
+            <option value="Verdana">Verdana</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Size</label>
+          <input class="input" id="fontSizeInput" type="number" min="8" max="180" value="48" />
+        </div>
+
+        <div class="row gap">
+          <button class="btn ghost" id="boldBtn">B</button>
+          <button class="btn ghost" id="italicBtn">I</button>
+          <button class="btn ghost" id="underlineBtn">U</button>
+        </div>
+
+        <div class="field">
+          <label>Color</label>
+          <input class="input" id="textColorInput" type="color" value="#111111"/>
+        </div>
+
+        <div class="row gap">
+          <button class="btn ghost" id="alignLeftBtn">Left</button>
+          <button class="btn ghost" id="alignCenterBtn">Center</button>
+          <button class="btn ghost" id="alignRightBtn">Right</button>
+        </div>
+      </div>
+
+      <!-- IMAGES -->
+      <div class="panelBody panelView" data-view="images" hidden>
+        <label class="btn">
+          Upload Image
+          <input type="file" id="imageInput" accept="image/*" hidden />
+        </label>
+
+        <label class="btn ghost" style="margin-top:10px;">
+          Upload PDF
+          <input type="file" id="pdfInput" accept="application/pdf" hidden />
+        </label>
+
+        <div class="row gap" style="margin-top:10px;">
+          <button class="btn ghost" id="removeBgBtn">Remove BG</button>
+          <button class="btn ghost" id="cropBtn">Crop</button>
+        </div>
+
+        <p class="hint">
+          Remove BG: βασικό (λευκό background). Crop: manual.
+        </p>
+      </div>
+
+      <!-- COLORS -->
+      <div class="panelBody panelView" data-view="colors" hidden>
+        <div class="field">
+          <label>Canvas Background</label>
+          <input class="input" id="canvasBgColor" type="color" value="#ffffff" />
+        </div>
+
+        <div class="field">
+          <label>Selected Fill</label>
+          <input class="input" id="objFillColor" type="color" value="#ff0000" />
+        </div>
+
+        <div class="field">
+          <label>Selected Stroke</label>
+          <div class="row gap">
+            <input class="input" id="objStrokeColor" type="color" value="#000000" />
+            <input class="input" id="objStrokeWidth" type="number" min="0" max="40" value="4" style="width:90px"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Opacity</label>
+          <input class="input" id="objOpacity" type="range" min="0" max="1" step="0.01" value="1"/>
+        </div>
+
+        <div class="row gap">
+          <button class="btn ghost" data-bg="#ffffff">White</button>
+          <button class="btn ghost" data-bg="#f3f4f6">Gray</button>
+          <button class="btn ghost" data-bg="#111827">Dark</button>
+        </div>
+      </div>
+
+      <!-- SHAPES -->
+      <div class="panelBody panelView" data-view="shapes" hidden>
+        <div class="row gap">
+          <button class="btn" id="addRectBtn" title="Rectangle">⬛</button>
+          <button class="btn" id="addCircleBtn" title="Circle">⚪</button>
+          <button class="btn" id="addTriBtn" title="Triangle">🔺</button>
+          <button class="btn" id="addEllBtn" title="Ellipse">🥚</button>
+        </div>
+        <div class="row gap" style="margin-top:10px;">
+          <button class="btn" id="addLineBtn" title="Line">／</button>
+        </div>
+      </div>
+
+      <!-- LAYERS -->
+      <div class="panelBody panelView" data-view="layers" hidden>
+        <div class="row gap">
+          <button class="btn ghost" id="bringFwdBtn">Bring +</button>
+          <button class="btn ghost" id="sendBackBtn">Send -</button>
+          <button class="btn danger" id="deleteObjBtn">Delete</button>
+        </div>
+
+        <div class="layersList" id="layersList"></div>
+
+        <p class="hint">
+          🔒 κλειδώνει layer για να μην κουνιέται.
+        </p>
+      </div>
+    </section>
+
+
+
+      <div class="canvasHost" id="canvasHost">
+        <div class="canvasFrame" id="canvasFrame">
+          <canvas id="canvas"></canvas>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT EXPORT RAIL -->
+    <aside class="rightRail" aria-label="Export">
+      <button class="railbtn" id="openExportBtn" title="Export">⬆️</button>
+    </aside>
+
+    <!-- RIGHT EXPORT PANEL -->
+    <section class="rightPanel" id="rightPanel" aria-label="Export panel">
+      <div class="panelHeader">
+        <h3>Export</h3>
+        <button class="iconbtn" id="closeRightPanelBtn" title="Close">✕</button>
+      </div>
+
+      <div class="panelBody">
+        <div class="field">
+          <label>Flip direction</label>
+          <select class="select" id="flipDirSelect">
+            <option value="horizontal" selected>Horizontal</option>
+            <option value="vertical">Vertical</option>
+          </select>
+        </div>
+
+        <div class="grid2">
+          <button class="btn" id="exportPdfBtn">PDF</button>
+          <button class="btn" id="exportFlipBtn">Flipbook</button>
+          <button class="btn" id="exportPngBtn">PNG</button>
+          <button class="btn" id="exportJpgBtn">JPG</button>
+          <button class="btn" id="exportLinkBtn">Link</button>
+          <button class="btn" id="exportCloudBtn" disabled>Cloud</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <button class="btn ghost" id="previewFlipBtn">Preview Flipbook</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
+  <!-- Optional Firebase (only if you add js/firebase-init.js + js/firebase-store.js) -->
+  <script type="module" src="./js/firebase-store.js"></script>
+
+  <!-- App scripts -->
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script src="./js/sidebar.js"></script>
@@ -171,14 +319,11 @@
   <div class="modal" id="flipPreviewModal">
     <div class="modal-inner">
       <div class="modal-head">
-        <span>Προεπισκόπηση</span>
-        <button class="closeBtn" id="closeFlipModalBtn">&times;</button>
+        <div class="modal-title">Flipbook Preview</div>
+        <button class="btn" id="closeFlipPreview">✕</button>
       </div>
-      <div class="modal-body">
-        <iframe id="flipPreviewFrame"></iframe>
-      </div>
+      <iframe id="flipPreviewFrame" title="Flipbook preview"></iframe>
     </div>
   </div>
-
 </body>
 </html>
