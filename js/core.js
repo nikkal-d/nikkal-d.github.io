@@ -17,11 +17,11 @@ export const App = {
 };
 
 const PRESETS = {
-  A4P:  { w: 2480, h: 3508, label: "A4 Portrait (Print Ready)" },
-  A4L:  { w: 3508, h: 2480, label: "A4 Landscape (Print Ready)" },
-  SQUARE:{ w: 2362, h: 2362, label: "Square 20x20cm (Print Ready)" },
-  STORY: { w: 3543, h: 2362, label: "Large Landscape 3:2" }
-  HD:    { w: 960,  h: 540,  label: "HD" },
+  A4P:    { w: 2480, h: 3508, label: "A4 Portrait (Print)" },
+  A4L:    { w: 3508, h: 2480, label: "A4 Landscape (Print)" },
+  SQUARE: { w: 2362, h: 2362, label: "Square 20x20cm (Print)" },
+  LAND32: { w: 3543, h: 2362, label: "Large Landscape 3:2" },
+  HD:     { w: 1920, h: 1080, label: "Full HD Screen" }
 };
 
 // ---------- IndexedDB tiny helper ----------
