@@ -131,13 +131,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("deleteObjBtn", "click", () => deleteSelected());
 
   // Export
- on("exportPngBtn", "click", async () => {
-  const multiplier = prompt("Εισάγετε κλίμακα ποιότητας (1 = Κανονική, 2 = Υψηλή, 3 = Πολύ Υψηλή):", "2");
-  if (multiplier) exportPNG(parseFloat(multiplier));
+on("exportPngBtn", "click", async () => {
+  const m = prompt("Ποιότητα Export (1=Standard, 2=High, 3=Ultra):", "1");
+  if (m) exportPNG(parseFloat(m));
 });
- on("exportJpgBtn", "click", async () => {
-  const multiplier = prompt("Εισάγετε κλίμακα ποιότητας (1 = Κανονική, 2 = Υψηλή, 3 = Πολύ Υψηλή):", "2");
-  if (multiplier) exportJPG(parseFloat(multiplier));
+
+on("exportJpgBtn", "click", async () => {
+  const m = prompt("Ποιότητα Export (1=Standard, 2=High, 3=Ultra):", "1");
+  if (m) exportJPG(parseFloat(m));
 });
   on("exportPdfBtn", "click", () => exportPDF());
   on("exportFlipBtn", "click", async () => {
