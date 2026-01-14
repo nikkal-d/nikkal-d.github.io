@@ -165,14 +165,20 @@ function makeBlankPage(preset) {
 
 // ---------- pages ----------
 export function addPage() {
-  saveCurrentPage();
-  App.pages.push(makeBlankPage(App.preset));
+  saveCurrentPage(); // Σώζουμε την παλιά
+  const newPage = {
+    json: JSON.stringify(App.canvas.toObject()), // Ή {} για τελείως κενή
+    preset: App.preset
+  };
+  // Αν θέλεις η νέα σελίδα να είναι ΚΕΝΗ, χρησιμοποίησε αυτό:
+  // const newPage = { json: '{"objects":[],"background":"white"}', preset: App.preset };
+  
+  App.pages.push(newPage);
   App.current = App.pages.length - 1;
   renderCurrentPage();
   refreshThumbnails();
-  updatePageInfoUI();
-  scheduleAutosave(true);
 }
+
 
 export function duplicatePage() {
   saveCurrentPage();
