@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="./css/app.css" />
   <link rel="stylesheet" href="./css/photobook.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>if (window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
@@ -21,9 +20,7 @@
 </head>
 <body class="theme-dark">
   <header class="topbar">
-    <div class="topbar-left">
-      <span class="brand">Photobook Studio</span>
-    </div>
+    <div class="topbar-left"><span class="brand">Photobook Studio</span></div>
     <div class="topbar-right">
       <div class="export-group">
         <button class="btn-export" id="exportPdfBtn">PDF</button>
@@ -51,7 +48,7 @@
       <div class="panelHead"><span id="panelTitle">Σελίδες</span></div>
       <div class="panelView" data-view="pages">
         <button class="btn primary" id="addPageBtn" style="width:100%">+ Νέα Σελίδα</button>
-        <div class="grid2" style="margin:10px 0"><button class="btn ghost" id="dupPageBtn">Αντιγραφή</button><button class="btn ghost" id="delPageBtn">Διαγραφή</button></div>
+        <div class="grid2" style="margin:10px 0"><button class="btn ghost" id="dupPageBtn">Duplicate</button><button class="btn ghost" id="delPageBtn">Delete</button></div>
         <div class="thumbStrip" id="thumbStrip"></div>
       </div>
       </aside>
@@ -66,10 +63,10 @@
         </div>
         <div class="divider-v"></div>
         <select id="pageSizeSelect" class="selectSm">
-          <option value="A4P">A4 Κάθετο</option>
-          <option value="A4L">A4 Οριζόντιο</option>
-          <option value="SQUARE">Τετράγωνο (20x20)</option>
-          <option value="LAND32">Φωτογραφία (3:2)</option>
+          <option value="A4P">A4 Portrait</option>
+          <option value="A4L">A4 Landscape</option>
+          <option value="SQUARE">Square 20x20</option>
+          <option value="LAND32">Photo 3:2</option>
         </select>
         <div class="divider-v"></div>
         <div class="pageNav">
@@ -81,17 +78,9 @@
       <div class="canvasHost" id="canvasHost"><canvas id="canvas"></canvas></div>
     </main>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
   <script type="module" src="./js/core.js"></script>
   <script type="module" src="./js/ui.js"></script>
   <script src="./js/sidebar.js"></script>
-
-  <div class="modal" id="flipPreviewModal">
-    <div class="modal-inner">
-      <div class="modal-head"><span>Προεπισκόπηση Flipbook</span><button class="closeBtn" id="closeFlipModalBtn">&times;</button></div>
-      <div class="modal-body"><iframe id="flipPreviewFrame"></iframe></div>
-    </div>
-  </div>
 </body>
 </html>
