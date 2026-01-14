@@ -1077,3 +1077,11 @@ function dataURLToImage(url) {
     img.src = url;
   });
 }
+
+
+function requestSave(immediate = false) {
+  if (!App.autosaveEnabled) return;
+  if (saveTimeout) clearTimeout(saveTimeout);
+  // Άλλαξε το 600 σε 2000 (2 δευτερόλεπτα) για να δώσεις χρόνο στη σύνδεση
+  saveTimeout = setTimeout(() => saveDraft(), immediate ? 0 : 2000); 
+}
