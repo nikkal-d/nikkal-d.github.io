@@ -8,7 +8,7 @@
 
 export const App = {
   canvas: null,
-  pages: [],
+  pages: [],              // [{ json, preset }]
   current: 0,
   preset: "A4P",
   zoom: 1,
@@ -20,8 +20,8 @@ const PRESETS = {
   A4P:    { w: 2480, h: 3508, label: "A4 Portrait (Print)" },
   A4L:    { w: 3508, h: 2480, label: "A4 Landscape (Print)" },
   SQUARE: { w: 2400, h: 2400, label: "Square 20x20cm" },
-  LAND32: { w: 3600, h: 2400, label: "Photo 3:2" },
-  HD:     { w: 1920, h: 1080, label: "Full HD" }
+  LAND32: { w: 3600, h: 2400, label: "Photo 10x15 (3:2)" },
+  HD:     { w: 1920, h: 1080, label: "Full HD Screen" }
 };
 
 // ---------- IndexedDB tiny helper ----------
@@ -165,25 +165,15 @@ function makeBlankPage(preset) {
 
 // ---------- pages ----------
 export function addPage() {
-    saveCurrentPage(); // Σώσε την τρέχουσα πριν την "εγκαταλείψεις"
-
-    // Δημιουργία ΚΕΝΗΣ σελίδας
-    const newPage = {
-        json: JSON.stringify({ objects: [], background: "white" }),
-        preset: App.preset
-    };
-
-    App.pages.push(newPage);
-    App.current = App.pages.length - 1;
-
-    // Πλήρης καθαρισμός για να μην βλέπεις την παλιά σελίδα
-    App.canvas.clear(); 
-    App.canvas.setBackgroundColor("white", () => {
-        App.canvas.renderAll();
-        refreshThumbnails(); 
-        renderCurrentPage(); 
-    });
+  saveCurrentPage();
+  App.pages.push(makeBlankPage(App.preset));
+  App.current = App.pages.length - 1;
+  renderCurrentPage();
+  refreshThumbnails();
+  updatePageInfoUI();
+  scheduleAutosave(true);
 }
+
 export function duplicatePage() {
   saveCurrentPage();
   const src = App.pages[App.current];
@@ -252,26 +242,21 @@ export function saveCurrentPage() {
 }
 
 // ---------- size / zoom ----------
-export function setCanvasSize(presetKey) {
-  const size = PRESETS[presetKey];
-  if (!size) return;
+export function setCanvasSize(preset, doFit = true) {
+  App.preset = preset;
+  const { w, h } = getPreset(preset);
 
-  App.preset = presetKey;
-  
-  // Επιβολή διαστάσεων στον Fabric καμβά
-  App.canvas.setWidth(size.w);
-  App.canvas.setHeight(size.h);
-  App.canvas.setDimensions({ width: size.w, height: size.h });
+  const c = App.canvas;
+  c.setWidth(w);
+  c.setHeight(h);
 
-  // Ενημέρωση της τρέχουσας σελίδας
-  if (App.pages[App.current]) {
-    App.pages[App.current].preset = presetKey;
-  }
+  // make sure DOM canvas matches
+  c.calcOffset();
+  c.requestRenderAll();
 
-  fitToScreen(); // Αυτό θα το φέρει στα ίσια του οπτικά
-  App.canvas.renderAll();
-  saveDraft();
+  if (doFit) fitToScreen();
 }
+
 
 
 export function fitToScreen() {
@@ -719,60 +704,29 @@ export async function exportJPG(multiplier = 2) {
   downloadDataURL(url, `page-${App.current + 1}.jpg`);
 }
 
-
-
 export async function exportPDF() {
+  if (!window.jspdf?.jsPDF) { alert("jsPDF δεν φορτώθηκε."); return; }
   saveCurrentPage();
-  const { jsPDF } = window.jspdf;
-  
-  // 1. Παίρνουμε το μέγεθος (π.χ. A4L για οριζόντιο)
-  const size = PRESETS[App.preset];
-  const isLandscape = size.w > size.h;
+  const doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" });
 
-  // 2. Δημιουργούμε το PDF σε χιλιοστά (mm) - Αυτό είναι το κλειδί!
-  const pdf = new jsPDF({
-    orientation: isLandscape ? "l" : "p",
-    unit: "mm",
-    format: "a4"
-  });
+  for (let i=0;i<App.pages.length;i++){
+    const p = App.pages[i];
+    const url = await pageToDataURL(p, "jpeg", 0.92);
+    const img = await dataURLToImage(url);
 
-  // Διαστάσεις χαρτιού Α4 σε mm
-  const pageWidth = isLandscape ? 297 : 210;
-  const pageHeight = isLandscape ? 210 : 297;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const scale = Math.min(pageW / img.width, pageH / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    const x = (pageW - w)/2;
+    const y = (pageH - h)/2;
 
-  // Καθαρίζουμε τυχόν επιλεγμένα αντικείμενα για να μην φαίνονται τα πλαίσια
-  App.canvas.discardActiveObject();
-
-  for (let i = 0; i < App.pages.length; i++) {
-    const page = App.pages[i];
-    
-    await new Promise((resolve) => {
-      App.canvas.loadFromJSON(page.json, () => {
-        // Επιβολή των σωστών pixels στον καμβά πριν τη λήψη της φωτογραφίας
-        App.canvas.setDimensions({ width: size.w, height: size.h });
-        App.canvas.renderAll();
-        
-        // Λήψη εικόνας σε υψηλή ποιότητα
-        const imgData = App.canvas.toDataURL({
-          format: "jpeg",
-          quality: 1.0,
-          multiplier: 1
-        });
-
-        if (i > 0) {
-          pdf.addPage("a4", isLandscape ? "l" : "p");
-        }
-        
-        // Η ΕΝΤΟΛΗ ΠΟΥ ΤΟ ΦΤΙΑΧΝΕΙ: 
-        // Λέμε στην εικόνα να ξεκινήσει από το 0,0 και να απλωθεί σε ΟΛΑ τα χιλιοστά της σελίδας
-        pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
-        resolve();
-      });
-    });
+    if (i>0) doc.addPage();
+    doc.addImage(url, "JPEG", x, y, w, h);
   }
 
-  pdf.save("photobook_final.pdf");
-  renderCurrentPage(); // Επιστροφή στην κανονική προβολή
+  doc.save("photobook.pdf");
 }
 
 
@@ -805,81 +759,89 @@ async function renderPageToDataURL(page) {
 // Flipbook: builds a standalone HTML with simple page-flip animation.
 // ---------- Flipbook Export & Preview ----------
 export async function exportFlipbook() {
+  saveCurrentPage();
   const images = [];
-  // 1. Μετατροπή όλων των σελίδων σε εικόνες
-  for (const page of App.pages) {
-    await new Promise((resolve) => {
-      App.canvas.loadFromJSON(page.json, () => {
-        images.push(App.canvas.toDataURL({ format: "jpeg", quality: 0.8 }));
-        resolve();
-      });
-    });
+  
+  // Δείξε ένα μήνυμα αναμονής αν θες, γιατί το rendering παίρνει χρόνο
+  console.log("Rendering flipbook pages...");
+  
+  for (const p of App.pages) {
+    const dataUrl = await renderPageToDataURL(p);
+    images.push(dataUrl);
   }
-
-  // 2. Λήψη τρεχουσών διαστάσεων για το σωστό σχήμα
-  const size = PRESETS[App.preset] || { w: 2480, h: 3508 };
 
   const html = `
 <!doctype html>
-<html>
+<html lang="el">
 <head>
   <meta charset="utf-8">
-  <title>My Photobook Flipbook</title>
+  <title>Το Φωτοάλμπουμ μου</title>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
   <style>
-    body { margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
-    .book {
-      /* ΕΔΩ ΕΙΝΑΙ Η ΔΙΟΡΘΩΣΗ: Δυναμική αναλογία για το αρχείο export */
-      aspect-ratio: ${size.w} / ${size.h};
-      height: 90vh;
-      max-width: 95vw;
-      position: relative;
-      perspective: 2000px;
-    }
-    .page {
-      position: absolute; inset: 0; background: #fff;
-      transform-origin: left center;
-      transition: transform .8s cubic-bezier(0.645, 0.045, 0.355, 1);
-      backface-visibility: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .page img { width: 100%; height: 100%; object-fit: fill; }
-    .page.flipped { transform: rotateY(-180deg); }
+    body { margin:0; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; overflow:hidden; font-family:sans-serif; }
+    .container { width:100%; height:85vh; display:flex; justify-content:center; align-items:center; perspective: 2000px; }
+    #book { box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+    .page { background:#fff; width:100%; height:100%; }
+    .page img { width:100%; height:100%; object-fit:contain; background:#fff; }
+    .controls { position:fixed; bottom:30px; display:flex; gap:20px; z-index:100; align-items:center; }
+    .btn { background:#333; color:#fff; border:1px solid #555; padding:12px 24px; border-radius:30px; cursor:pointer; font-size:16px; transition:0.3s; }
+    .btn:hover { background:#555; transform:scale(1.05); }
+    .page-num { color: #aaa; font-size: 14px; min-width: 60px; text-align: center; }
   </style>
 </head>
 <body>
-  <div class="book" id="book">
-    ${images.map((src, i) => `
-      <div class="page" style="z-index:${images.length - i}">
-        <img src="${src}">
-      </div>
-    `).join("")}
+  <div class="container">
+    <div id="book">
+      ${images.map(src => `<div class="page"><img src="${src}"></div>`).join('')}
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="pBtn">⬅ Πίσω</button>
+    <div class="page-num" id="pageIdx">1 / ${images.length}</div>
+    <button class="btn" id="nBtn">Επόμενο ➡</button>
   </div>
   <script>
-    let index = 0;
-    const pages = document.querySelectorAll('.page');
-    document.body.onclick = () => {
-      if (index < pages.length) {
-        pages[index].classList.add('flipped');
-        index++;
-      } else {
-        // Reset αν φτάσει στο τέλος
-        pages.forEach(p => p.classList.remove('flipped'));
-        index = 0;
-      }
+    window.onload = () => {
+      const bookElem = document.getElementById('book');
+      const pageIdxElem = document.getElementById('pageIdx');
+      
+      const pageFlip = new St.PageFlip(bookElem, {
+        width: 595, height: 842, // A4 Ratio
+        size: "stretch",
+        minWidth: 315, maxWidth: 1200,
+        minHeight: 420, maxHeight: 1500,
+        showCover: true,
+        maxShadowOpacity: 0.5,
+        mobileScrollSupport: false
+      });
+
+      pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+      // Ενημέρωση αριθμού σελίδας
+      pageFlip.on('flip', (e) => {
+        pageIdxElem.textContent = (e.data + 1) + " / " + ${images.length};
+      });
+
+      // Click Events
+      document.getElementById('pBtn').onclick = () => pageFlip.flipPrev();
+      document.getElementById('nBtn').onclick = () => pageFlip.flipNext();
+
+      // Keyboard Events (Βελάκια)
+      document.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft') pageFlip.flipPrev();
+        if(e.key === 'ArrowRight') pageFlip.flipNext();
+      });
     };
   </script>
 </body>
 </html>`;
 
-  // 3. Λήψη και κατέβασμα του αρχείου
-  const blob = new Blob([html], { type: "text/html" });
+  const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
-  a.download = "photobook-flipbook.html";
+  a.download = 'photobook_flipbook.html';
   a.click();
-  
-  renderCurrentPage(); // Επιστροφή στον καμβά
 }
 
 
@@ -887,114 +849,58 @@ export function openFlipbookPreview(images) {
   const frame = document.getElementById("flipPreviewFrame");
   const modal = document.getElementById("flipPreviewModal");
 
-  if (!frame || !modal) return;
-
-  // Παίρνουμε τις διαστάσεις από το App (π.χ. A4L) για να ξέρει το Flipbook το σχήμα του
-  const size = PRESETS[App.preset] || { w: 3508, h: 2480 };
-
   const html = `
 <!doctype html>
 <html>
 <head>
 <meta charset="utf-8"/>
 <style>
-  body {
-    margin:0;
-    background:#111;
-    display:flex;
-    flex-direction: column;
-    justify-content:center;
-    align-items:center;
-    height: 100vh;
-    font-family: sans-serif;
-  }
-  /* Κουμπί για PDF */
-  .print-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 24px;
-    background: #27ae60;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    z-index: 9999;
-  }
-  .print-btn:hover { background: #2ecc71; }
-
-  .book {
-    /* Εδώ ορίζουμε το σωστό σχήμα (Landscape ή Portrait) */
-    aspect-ratio: ${size.w} / ${size.h};
-    height: 80vh;
-    max-width: 90vw;
-    perspective: 2000px;
-    position: relative;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-  }
-  .page {
-    position: absolute;
-    inset: 0;
-    background: #fff;
-    transform-origin: left;
-    transition: transform .8s ease;
-    backface-visibility: hidden;
-  }
-  .page img {
-    width: 100%;
-    height: 100%;
-    object-fit: fill; /* Γεμίζει όλη τη σελίδα χωρίς κενά */
-  }
-  .page.flipped {
-    transform: rotateY(-180deg);
-  }
-
-  /* ΡΥΘΜΙΣΕΙΣ ΓΙΑ ΤΟ PDF (PRINT) */
-  @media print {
-    body { background: white !important; }
-    .print-btn { display: none !important; }
-    .book { 
-      width: 100% !important; 
-      height: auto !important; 
-      aspect-ratio: auto !important;
-      box-shadow: none !important;
-      transform: none !important;
-    }
-    .page { 
-      position: relative !important; 
-      display: block !important;
-      page-break-after: always !important; /* Κάθε σελίδα σε νέα σελίδα PDF */
-      transform: none !important;
-      opacity: 1 !important;
-    }
-  }
+body {
+  margin:0;
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.book {
+  width:80vw;
+  height:80vh;
+  perspective:2000px;
+  position:relative;
+}
+.page {
+  position:absolute;
+  inset:0;
+  background:#fff;
+  transform-origin:left;
+  transition:transform .8s ease;
+}
+.page img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.page.flipped {
+  transform:rotateY(-180deg);
+}
 </style>
 </head>
 <body>
-  <button class="print-btn" onclick="window.print()">Download as PDF</button>
-
-  <div class="book" id="bookElement">
-    ${images.map((src, i) => `
-      <div class="page" style="z-index:${images.length - i}">
-        <img src="${src}">
-      </div>
-    `).join("")}
-  </div>
+<div class="book">
+  ${images.map((src,i)=>`
+    <div class="page" style="z-index:${images.length-i}">
+      <img src="${src}">
+    </div>
+  `).join("")}
+</div>
 
 <script>
 let index = 0;
 const pages = document.querySelectorAll('.page');
-// Κλικ οπουδήποτε για να γυρίσει η σελίδα (εκτός από το κουμπί)
-document.body.onclick = (e) => {
-  if (e.target.classList.contains('print-btn')) return;
+document.body.onclick = () => {
   if (index < pages.length) {
     pages[index].classList.add('flipped');
     index++;
-  } else {
-    // Αν τελειώσει, κάνει reset
-    pages.forEach(p => p.classList.remove('flipped'));
-    index = 0;
   }
 };
 </script>
@@ -1121,19 +1027,21 @@ export async function saveDraft() {
   }
 }
 
-// Στο core.js
 export async function loadDraft() {
-    const saved = localStorage.getItem(App.autosaveKey);
-    if (!saved) return;
-    
-    const data = JSON.parse(saved);
-    App.pages = data.pages || [];
-    App.current = 0;
-    App.preset = data.preset || "A4L";
-    
-    // Επιβολή του preset
-    setCanvasSize(App.preset);
-    renderCurrentPage();
+  try {
+    const payload = await idbGet(App.autosaveKey);
+    if (!payload || !payload.pages || !payload.pages.length) return false;
+    App.pages = payload.pages;
+    App.current = clamp(payload.current || 0, 0, App.pages.length - 1);
+    App.preset = payload.preset || App.preset;
+    await renderCurrentPage();
+    refreshThumbnails();
+    updatePageInfoUI();
+    return true;
+  } catch (e) {
+    console.warn("Draft load failed", e);
+    return false;
+  }
 }
 
 export async function clearDraft() {
@@ -1158,32 +1066,3 @@ function dataURLToImage(url) {
     img.src = url;
   });
 }
-
-
-// Διαγραφή με το πλήκτρο Delete ή Backspace
-window.addEventListener('keydown', (e) => {
-    if (e.key === "Delete" || e.key === "Backspace") {
-        const activeObjects = App.canvas.getActiveObjects();
-        if (activeObjects.length > 0) {
-            activeObjects.forEach(obj => App.canvas.remove(obj));
-            App.canvas.discardActiveObject().requestRenderAll();
-            saveCurrentPage();
-        }
-    }
-});
-
-
-// Σωστή σειρά αρχικοποίησης
-App.canvas = new fabric.Canvas('c', { // Το 'c' πρέπει να είναι το ID του canvas στο HTML
-    preserveObjectStacking: true,
-    backgroundColor: 'white'
-});
-
-// ΤΩΡΑ ρυθμίζουμε τα properties, αφού το App.canvas ΔΕΝ είναι πια null
-App.canvas.selection = true;
-App.canvas.renderOnAddRemove = false; 
-fabric.Object.prototype.objectCaching = true;
-
-App.canvas.on('image:loaded', () => {
-    console.log("Μια εικόνα μόλις φορτώθηκε από το Firebase!");
-});
