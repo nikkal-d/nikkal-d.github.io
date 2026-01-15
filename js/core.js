@@ -715,32 +715,34 @@ export async function exportPDF() {
   saveCurrentPage();
   const { jsPDF } = window.jspdf;
   
-  // 1. Παίρνουμε το preset (π.χ. A4L)
+  // 1. Παίρνουμε το μέγεθος (π.χ. A4L για οριζόντιο)
   const size = PRESETS[App.preset];
   const isLandscape = size.w > size.h;
 
-  // 2. Δημιουργούμε το PDF με βάση το χαρτί Α4 σε χιλιοστά (mm)
-  // Έτσι το PDF "ξέρει" το φυσικό μέγεθος της σελίδας
+  // 2. Δημιουργούμε το PDF σε χιλιοστά (mm) - Αυτό είναι το κλειδί!
   const pdf = new jsPDF({
     orientation: isLandscape ? "l" : "p",
     unit: "mm",
     format: "a4"
   });
 
-  // Διαστάσεις Α4 σε mm
+  // Διαστάσεις χαρτιού Α4 σε mm
   const pageWidth = isLandscape ? 297 : 210;
   const pageHeight = isLandscape ? 210 : 297;
+
+  // Καθαρίζουμε τυχόν επιλεγμένα αντικείμενα για να μην φαίνονται τα πλαίσια
+  App.canvas.discardActiveObject();
 
   for (let i = 0; i < App.pages.length; i++) {
     const page = App.pages[i];
     
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(page.json, () => {
-        // ΣΗΜΑΝΤΙΚΟ: Επιβολή μεγάλου μεγέθους στον καμβά πριν τη λήψη της εικόνας
+        // Επιβολή των σωστών pixels στον καμβά πριν τη λήψη της φωτογραφίας
         App.canvas.setDimensions({ width: size.w, height: size.h });
         App.canvas.renderAll();
         
-        // Λήψη της εικόνας (Snapshot)
+        // Λήψη εικόνας σε υψηλή ποιότητα
         const imgData = App.canvas.toDataURL({
           format: "jpeg",
           quality: 1.0,
@@ -751,16 +753,16 @@ export async function exportPDF() {
           pdf.addPage("a4", isLandscape ? "l" : "p");
         }
         
-        // Η ΛΥΣΗ: Τοποθετούμε την εικόνα στο (0,0) και της λέμε να γίνει 297mm x 210mm
-        // Όσα pixels και να είναι η εικόνα, θα αναγκαστεί να καλύψει ΟΛΟ το χαρτί.
+        // Η ΕΝΤΟΛΗ ΠΟΥ ΤΟ ΦΤΙΑΧΝΕΙ: 
+        // Λέμε στην εικόνα να ξεκινήσει από το 0,0 και να απλωθεί σε ΟΛΑ τα χιλιοστά της σελίδας
         pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
         resolve();
       });
     });
   }
 
-  pdf.save("photobook_fixed.pdf");
-  renderCurrentPage();
+  pdf.save("photobook_final.pdf");
+  renderCurrentPage(); // Επιστροφή στην κανονική προβολή
 }
 
 
