@@ -1183,3 +1183,7 @@ App.canvas = new fabric.Canvas('c', { // Το 'c' πρέπει να είναι �
 App.canvas.selection = true;
 App.canvas.renderOnAddRemove = false; 
 fabric.Object.prototype.objectCaching = true;
+
+App.canvas.on('image:loaded', () => {
+    console.log("Μια εικόνα μόλις φορτώθηκε από το Firebase!");
+});
