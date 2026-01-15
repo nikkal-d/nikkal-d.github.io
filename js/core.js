@@ -130,6 +130,22 @@ export async function initCanvas({ preset = "A4P" } = {}) {
     backgroundColor: "#ffffff",
   });
 
+// Σωστή σειρά αρχικοποίησης
+App.canvas = new fabric.Canvas('c', { // Το 'c' πρέπει να είναι το ID του canvas στο HTML
+    preserveObjectStacking: true,
+    backgroundColor: 'white'
+});
+
+// ΤΩΡΑ ρυθμίζουμε τα properties, αφού το App.canvas ΔΕΝ είναι πια null
+App.canvas.selection = true;
+App.canvas.renderOnAddRemove = false; 
+fabric.Object.prototype.objectCaching = true;
+
+App.canvas.on('image:loaded', () => {
+    console.log("Μια εικόνα μόλις φορτώθηκε από το Firebase!");
+});
+  
+
   setCanvasSize(preset);
 
   // core listeners
