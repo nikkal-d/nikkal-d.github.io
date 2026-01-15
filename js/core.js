@@ -16,7 +16,7 @@ export const App = {
   autosaveKey: "photobook_draft_v3",
 };
 
-const PRESETS = {
+export const PRESETS = {
   A4P:    { w: 2480, h: 3508, label: "A4 Portrait (Print)" },
   A4L:    { w: 3508, h: 2480, label: "A4 Landscape (Print)" },
   SQUARE: { w: 2400, h: 2400, label: "Square 20x20cm" },
