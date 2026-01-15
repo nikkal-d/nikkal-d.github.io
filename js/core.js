@@ -1120,21 +1120,19 @@ export async function saveDraft() {
   }
 }
 
+// Στο core.js
 export async function loadDraft() {
-  try {
-    const payload = await idbGet(App.autosaveKey);
-    if (!payload || !payload.pages || !payload.pages.length) return false;
-    App.pages = payload.pages;
-    App.current = clamp(payload.current || 0, 0, App.pages.length - 1);
-    App.preset = payload.preset || App.preset;
-    await renderCurrentPage();
-    refreshThumbnails();
-    updatePageInfoUI();
-    return true;
-  } catch (e) {
-    console.warn("Draft load failed", e);
-    return false;
-  }
+    const saved = localStorage.getItem(App.autosaveKey);
+    if (!saved) return;
+    
+    const data = JSON.parse(saved);
+    App.pages = data.pages || [];
+    App.current = 0;
+    App.preset = data.preset || "A4L";
+    
+    // Επιβολή του preset
+    setCanvasSize(App.preset);
+    renderCurrentPage();
 }
 
 export async function clearDraft() {
