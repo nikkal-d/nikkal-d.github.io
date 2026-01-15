@@ -900,64 +900,6 @@ window.closeFlipbookPreview = function() {
   if (modal) modal.style.display = "none";
 };
 
-export async function previewFlipbook() {
-  saveCurrentPage(); 
-  const images = [];
-  const size = PRESETS[App.preset];
-
-  // Δημιουργία εικόνων υψηλής ποιότητας
-  for (let i = 0; i < App.pages.length; i++) {
-    await new Promise((resolve) => {
-      App.canvas.loadFromJSON(App.pages[i].json, () => {
-        App.canvas.renderAll();
-        images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.95 }));
-        resolve();
-      });
-    });
-  }
-  await renderCurrentPage();
-
-  const modal = document.getElementById("flipPreviewModal");
-  const frame = document.getElementById("flipPreviewFrame");
-  if (!modal || !frame) return;
-
-  const html = `
-  <!doctype html>
-  <html>
-  <head>
-    <style>
-      /* Αφαίρεση Headers/Footers (Links, Ημερομηνίες) */
-      @page { size: auto; margin: 0mm; } 
-      @media print {
-        body { background: white !important; }
-        .no-print { display: none !important; }
-        .container { width: 100% !important; max-width: none !important; margin: 0 !important; }
-        .page-img { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
-      }
-      body { margin:0; background:#111; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
-      .nav-bar { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
-      .btn { padding:12px 24px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
-      .btn-pdf { background:#2ecc71; color:white; }
-      .btn-close { background:#e74c3c; color:white; }
-      .container { margin: 20px; width: 90%; max-width: 800px; }
-      .page-img { background:white; width:100%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-      .page-img img { width:100%; display:block; }
-    </style>
-  </head>
-  <body>
-    <div class=\"nav-bar no-print\">
-      <button class=\"btn btn-pdf\" onclick=\"window.print()\">📥 Download PDF</button>
-      <button class=\"btn btn-close\" onclick=\"window.parent.closeFlipbookPreview()\">Close</button>
-    </div>
-    <div class=\"container\">
-      ${images.map(src => `<div class=\"page-img\"><img src=\"${src}\"></div>`).join('')}
-    </div>
-  </body>
-  </html>`;
-
-  frame.srcdoc = html;
-  modal.style.display = "block";
-}
 
 // Ενοποίηση ονομάτων για να μην έχεις SyntaxError
 export const exportFlipbook = previewFlipbook;
