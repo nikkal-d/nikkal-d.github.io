@@ -886,58 +886,114 @@ export function openFlipbookPreview(images) {
   const frame = document.getElementById("flipPreviewFrame");
   const modal = document.getElementById("flipPreviewModal");
 
+  if (!frame || !modal) return;
+
+  // Παίρνουμε τις διαστάσεις από το App (π.χ. A4L) για να ξέρει το Flipbook το σχήμα του
+  const size = PRESETS[App.preset] || { w: 3508, h: 2480 };
+
   const html = `
 <!doctype html>
 <html>
 <head>
 <meta charset="utf-8"/>
 <style>
-body {
-  margin:0;
-  background:#111;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-.book {
-  width:80vw;
-  height:80vh;
-  perspective:2000px;
-  position:relative;
-}
-.page {
-  position:absolute;
-  inset:0;
-  background:#fff;
-  transform-origin:left;
-  transition:transform .8s ease;
-}
-.page img {
-  width:100%;
-  height:100%;
-  object-fit:contain;
-}
-.page.flipped {
-  transform:rotateY(-180deg);
-}
+  body {
+    margin:0;
+    background:#111;
+    display:flex;
+    flex-direction: column;
+    justify-content:center;
+    align-items:center;
+    height: 100vh;
+    font-family: sans-serif;
+  }
+  /* Κουμπί για PDF */
+  .print-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 9999;
+  }
+  .print-btn:hover { background: #2ecc71; }
+
+  .book {
+    /* Εδώ ορίζουμε το σωστό σχήμα (Landscape ή Portrait) */
+    aspect-ratio: ${size.w} / ${size.h};
+    height: 80vh;
+    max-width: 90vw;
+    perspective: 2000px;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .page {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    transform-origin: left;
+    transition: transform .8s ease;
+    backface-visibility: hidden;
+  }
+  .page img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill; /* Γεμίζει όλη τη σελίδα χωρίς κενά */
+  }
+  .page.flipped {
+    transform: rotateY(-180deg);
+  }
+
+  /* ΡΥΘΜΙΣΕΙΣ ΓΙΑ ΤΟ PDF (PRINT) */
+  @media print {
+    body { background: white !important; }
+    .print-btn { display: none !important; }
+    .book { 
+      width: 100% !important; 
+      height: auto !important; 
+      aspect-ratio: auto !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+    .page { 
+      position: relative !important; 
+      display: block !important;
+      page-break-after: always !important; /* Κάθε σελίδα σε νέα σελίδα PDF */
+      transform: none !important;
+      opacity: 1 !important;
+    }
+  }
 </style>
 </head>
 <body>
-<div class="book">
-  ${images.map((src,i)=>`
-    <div class="page" style="z-index:${images.length-i}">
-      <img src="${src}">
-    </div>
-  `).join("")}
-</div>
+  <button class="print-btn" onclick="window.print()">Download as PDF</button>
+
+  <div class="book" id="bookElement">
+    ${images.map((src, i) => `
+      <div class="page" style="z-index:${images.length - i}">
+        <img src="${src}">
+      </div>
+    `).join("")}
+  </div>
 
 <script>
 let index = 0;
 const pages = document.querySelectorAll('.page');
-document.body.onclick = () => {
+// Κλικ οπουδήποτε για να γυρίσει η σελίδα (εκτός από το κουμπί)
+document.body.onclick = (e) => {
+  if (e.target.classList.contains('print-btn')) return;
   if (index < pages.length) {
     pages[index].classList.add('flipped');
     index++;
+  } else {
+    // Αν τελειώσει, κάνει reset
+    pages.forEach(p => p.classList.remove('flipped'));
+    index = 0;
   }
 };
 </script>
