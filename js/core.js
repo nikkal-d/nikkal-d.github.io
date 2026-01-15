@@ -1172,3 +1172,10 @@ window.addEventListener('keydown', (e) => {
         }
     }
 });
+
+
+App.canvas.selection = true;
+App.canvas.renderOnAddRemove = false; // Σταματάει το αυτόματο render για κάθε προσθήκη
+fabric.Object.prototype.objectCaching = true; // Χρησιμοποιεί την προσωρινή μνήμη για ταχύτητα
+fabric.Object.prototype.statefullCache = false;
+fabric.Object.prototype.noScaleCache = true;
