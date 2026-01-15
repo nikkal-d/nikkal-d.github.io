@@ -705,28 +705,46 @@ export async function exportJPG(multiplier = 2) {
 }
 
 export async function exportPDF() {
-  if (!window.jspdf?.jsPDF) { alert("jsPDF δεν φορτώθηκε."); return; }
-  saveCurrentPage();
-  const doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" });
+  saveCurrentPage(); // Σώζουμε την τρέχουσα σελίδα πριν ξεκινήσουμε
+  
+  const { jsPDF } = window.jspdf;
+  // Παίρνουμε τις διαστάσεις από το πρώτο preset για να ορίσουμε το έγγραφο
+  const size = PRESETS[App.preset]; 
+  
+  // Δημιουργία PDF με βάση τις διαστάσεις σε pixels (μετατρέπονται εσωτερικά)
+  const pdf = new jsPDF({
+    orientation: size.w > size.h ? "l" : "p",
+    unit: "px",
+    format: [size.w, size.h]
+  });
 
-  for (let i=0;i<App.pages.length;i++){
-    const p = App.pages[i];
-    const url = await pageToDataURL(p, "jpeg", 0.92);
-    const img = await dataURLToImage(url);
+  for (let i = 0; i < App.pages.length; i++) {
+    const page = App.pages[i];
+    
+    // Καθαρισμός και φόρτωμα κάθε σελίδας στον "κρυφό" καμβά για το snapshot
+    await new Promise((resolve) => {
+      App.canvas.loadFromJSON(page.json, () => {
+        App.canvas.renderAll();
+        
+        // Μετατροπή σε εικόνα υψηλής ποιότητας
+        const imgData = App.canvas.toDataURL({
+          format: "jpeg",
+          quality: 1.0, // Μέγιστη ποιότητα για εκτύπωση
+          multiplier: 1  // Οι διαστάσεις είναι ήδη μεγάλες
+        });
 
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const scale = Math.min(pageW / img.width, pageH / img.height);
-    const w = img.width * scale;
-    const h = img.height * scale;
-    const x = (pageW - w)/2;
-    const y = (pageH - h)/2;
-
-    if (i>0) doc.addPage();
-    doc.addImage(url, "JPEG", x, y, w, h);
+        if (i > 0) pdf.addPage([size.w, size.h], size.w > size.h ? "l" : "p");
+        
+        pdf.addImage(imgData, "JPEG", 0, 0, size.w, size.h);
+        resolve();
+      });
+    });
   }
 
-  doc.save("photobook.pdf");
+  pdf.save("my-photobook.pdf");
+  
+  // Επιστροφή στην τρέχουσα σελίδα για να συνεχίσει ο χρήστης
+  renderCurrentPage();
 }
 
 
