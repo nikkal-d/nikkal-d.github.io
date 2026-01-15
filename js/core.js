@@ -242,21 +242,26 @@ export function saveCurrentPage() {
 }
 
 // ---------- size / zoom ----------
-export function setCanvasSize(preset, doFit = true) {
-  App.preset = preset;
-  const { w, h } = getPreset(preset);
+export function setCanvasSize(presetKey) {
+  const size = PRESETS[presetKey];
+  if (!size) return;
 
-  const c = App.canvas;
-  c.setWidth(w);
-  c.setHeight(h);
+  App.preset = presetKey;
+  
+  // Επιβολή διαστάσεων στον Fabric καμβά
+  App.canvas.setWidth(size.w);
+  App.canvas.setHeight(size.h);
+  App.canvas.setDimensions({ width: size.w, height: size.h });
 
-  // make sure DOM canvas matches
-  c.calcOffset();
-  c.requestRenderAll();
+  // Ενημέρωση της τρέχουσας σελίδας
+  if (App.pages[App.current]) {
+    App.pages[App.current].preset = presetKey;
+  }
 
-  if (doFit) fitToScreen();
+  fitToScreen(); // Αυτό θα το φέρει στα ίσια του οπτικά
+  App.canvas.renderAll();
+  saveDraft();
 }
-
 
 
 export function fitToScreen() {
