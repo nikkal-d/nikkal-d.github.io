@@ -91,11 +91,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("alignRightBtn", "click", () => setTextProps({ textAlign: "right" }));
 
   // Images
-  on("imageInput", "change", async (e) => {
+ on("imageInput", "change", async (e) => {
     const file = e.target.files?.[0];
-    if (file) await addImageFromFile(file);
+    if (file) {
+        document.body.style.cursor = "wait"; // Δείξε ότι κάτι γίνεται
+        await addImageFromFile(file);
+        document.body.style.cursor = "default";
+    }
     e.target.value = "";
-  });
+});
 
   // PDF upload (adds first/selected page as image)
   on("pdfInput", "change", async (e) => {
