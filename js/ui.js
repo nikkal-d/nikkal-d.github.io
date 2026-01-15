@@ -1,6 +1,4 @@
 // js/ui.js
-// Σύνδεση των UI controls με τις λειτουργίες του core.js
-
 import {
   App,
   PRESETS,
@@ -13,7 +11,6 @@ import {
   prevPage,
   nextPage,
   exportPDF,
-  previewFlipbook,
   fitToScreen,
   zoomIn,
   zoomOut,
@@ -25,113 +22,125 @@ import {
   sendBackwards
 } from "./core.js";
 
-// Helper για εύκολη σύνδεση events
-const on = (id, ev, fn) => { 
-  const el = document.getElementById(id); 
-  if (el) el.addEventListener(ev, fn); 
-};
+const $ = (id) => document.getElementById(id);
+const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
 
-// ---------- Αρχικοποίηση μόλις φορτώσει η σελίδα ----------
+// ---------- Αρχικοποίηση ----------
 document.addEventListener("DOMContentLoaded", async () => {
-  // Ξεκινάμε τον καμβά
-  const sizeSelect = document.getElementById("pageSizeSelect");
-  await initCanvas({ preset: sizeSelect?.value || "A4P" });
+  // Ξεκινάμε τον καμβά με το preset που έχει το select
+  await initCanvas({ preset: $("pageSizeSelect")?.value || "A4P" });
 
-  // --- Διαχείριση Σελίδων ---
+  // Σύνδεση Κουμπιών Σελίδων
   on("addPageBtn", "click", () => addPage());
   on("dupPageBtn", "click", () => duplicatePage());
   on("delPageBtn", "click", () => deletePage());
   on("prevPageBtn", "click", () => prevPage());
   on("nextPageBtn", "click", () => nextPage());
 
-  // --- Εργαλεία Αντικειμένων ---
+  // Σύνδεση Εργαλείων
   on("addTextBtn", "click", () => addText("Νέο Κείμενο"));
-  on("deleteBtn", "click", () => deleteSelected()); // Κουμπί διαγραφής στην οθόνη
+  on("deleteBtn", "click", () => deleteSelected());
   on("bringForwardBtn", "click", () => bringForward());
   on("sendBackwardBtn", "click", () => sendBackwards());
 
-  // --- Zoom & View ---
+  // Zoom
   on("zoomInBtn", "click", () => zoomIn());
   on("zoomOutBtn", "click", () => zoomOut());
-  on("zoomResetBtn", "click", () => zoomReset());
   on("fitScreenBtn", "click", () => fitToScreen());
 
-  // --- Exports (Εξαγωγή) ---
+  // Exports
   on("exportPdfBtn", "click", async () => {
-    const btn = document.getElementById("exportPdfBtn");
-    const originalText = btn.innerText;
-    btn.innerText = "Παρακαλώ περιμένετε...";
-    try {
-      await exportPDF();
-    } catch (err) {
-      console.error(err);
-      alert("Σφάλμα κατά την εξαγωγή PDF.");
-    }
-    btn.innerText = originalText;
+    const btn = $("exportPdfBtn");
+    btn.innerText = "Processing...";
+    await exportPDF();
+    btn.innerText = "Export PDF";
   });
 
+  // Το κουμπί για το Flipbook
   on("previewFlipbookBtn", "click", () => {
-    previewFlipbook();
+    // Παίρνουμε τα thumbnails όλων των σελίδων
+    const images = App.pages.map(p => {
+        // Αν δεν έχει thumbnail, χρησιμοποιούμε το json (χρειάζεται προσοχή εδώ)
+        return p.thumbnail || ""; 
+    });
+    openFlipbookPreview(images);
   });
 
-  // --- Draft Management ---
-  on("clearDraftBtn", "click", () => {
-    if(confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε το προσχέδιο;")) {
-      clearDraft();
-    }
-  });
-
-  // --- Upload Εικόνας ---
+  // Upload Εικόνας (imageInput)
   on("imageInput", "change", async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       document.body.style.cursor = "wait";
-      // Καλεί τη συνάρτηση που μικραίνει την εικόνα αυτόματα
-      await addImageFromFile(file); 
+      await addImageFromFile(file);
       document.body.style.cursor = "default";
     }
-    e.target.value = ""; // Reset το input για να ξαναπαίρνει την ίδια εικόνα αν χρειαστεί
+    e.target.value = ""; 
   });
 });
 
 /**
- * Μετατρέπει ένα αρχείο σε DataURL
+ * Η ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΖΗΤΗΣΕΣ: Flipbook με επιλογή για Download PDF
  */
-function fileToDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+export function openFlipbookPreview(images) {
+  const frame = $("flipPreviewFrame");
+  const modal = $("flipPreviewModal");
+  if (!frame || !modal) return;
 
-/**
- * Προσθήκη εικόνας στον καμβά με αυτόματο Resize για να μην κολλάει το σύστημα
- */
-export async function addImageFromFile(file) {
-  const dataUrl = await fileToDataURL(file);
-  
-  fabric.Image.fromURL(dataUrl, (img) => {
-    // ΚΟΦΤΗΣ ΜΕΓΕΘΟΥΣ: Αν η εικόνα είναι τεράστια, την κατεβάζουμε στα 1500px.
-    // Αυτό κάνει τον καμβά και το Flipbook να "πετάνε".
-    const maxDimension = 1500;
-    if (img.width > maxDimension || img.height > maxDimension) {
-      const scale = maxDimension / Math.max(img.width, img.height);
-      img.scale(scale);
+  const size = PRESETS[App.preset] || { w: 3508, h: 2480 };
+
+  const html = `
+<!doctype html>
+<html>
+<head>
+  <style>
+    body { margin:0; background:#111; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; }
+    .nav { position:fixed; top:10px; right:10px; z-index:100; display:flex; gap:10px; }
+    .btn { padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; }
+    .btn-pdf { background:#27ae60; }
+    .btn-close { background:#e74c3c; }
+    .book { 
+      aspect-ratio: ${size.w} / ${size.h};
+      height: 80vh; max-width: 90vw;
+      perspective: 2000px; position: relative;
     }
+    .page { position:absolute; inset:0; background:#fff; transform-origin:left; transition:transform .8s ease; backface-visibility:hidden; }
+    .page img { width:100%; height:100%; object-fit:fill; }
+    .page.flipped { transform:rotateY(-180deg); }
+    @media print {
+      body { background:white; }
+      .nav { display:none; }
+      .book { height:auto; aspect-ratio:none; }
+      .page { position:relative; display:block; page-break-after:always; transform:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <button class="btn btn-pdf" onclick="window.print()">Download as PDF</button>
+  </div>
+  <div class="book" onclick="flip()">
+    ${images.map((src, i) => `
+      <div class="page" style="z-index:${images.length - i}">
+        <img src="${src}">
+      </div>
+    `).join("")}
+  </div>
+  <script>
+    let idx = 0;
+    const pages = document.querySelectorAll('.page');
+    function flip() {
+      if (idx < pages.length) {
+        pages[idx].classList.add('flipped');
+        idx++;
+      } else {
+        pages.forEach(p => p.classList.remove('flipped'));
+        idx = 0;
+      }
+    }
+  </script>
+</body>
+</html>`;
 
-    img.set({
-      left: 50,
-      top: 50,
-      cornerColor: "#00c3ff",
-      cornerSize: 12,
-      transparentCorners: false
-    });
-
-    App.canvas.add(img);
-    App.canvas.setActiveObject(img);
-    App.canvas.renderAll();
-    saveDraft(); // Αποθήκευση αμέσως
-  });
+  frame.srcdoc = html;
+  modal.classList.add("open");
 }
