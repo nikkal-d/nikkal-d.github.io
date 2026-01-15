@@ -1139,17 +1139,16 @@ export async function saveDraft() {
 
 // Στο core.js
 export async function loadDraft() {
-    const saved = localStorage.getItem(App.autosaveKey);
-    if (!saved) return;
+    // Διαβάζουμε από την IndexedDB (idbGet) και όχι από το localStorage
+    const data = await idbGet(App.autosaveKey);
+    if (!data) return false;
     
-    const data = JSON.parse(saved);
     App.pages = data.pages || [];
-    App.current = 0;
-    App.preset = data.preset || "A4L";
+    App.current = data.current || 0;
+    App.preset = data.preset || "A4P";
     
-    // Επιβολή του preset
-    setCanvasSize(App.preset);
-    renderCurrentPage();
+    await renderCurrentPage();
+    return true;
 }
 
 export async function clearDraft() {
