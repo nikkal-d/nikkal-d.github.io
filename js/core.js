@@ -151,8 +151,7 @@ export function addPage() {
     saveCurrentPage();
     
     const newPage = {
-        // Σημαντικό: Το json πρέπει να είναι ένα καθαρό αντικείμενο fabric
-        json: { objects: [], background: "white" },
+        json: { objects: [], background: "white" }, // Καθαρό αντικείμενο
         preset: App.preset
     };
 
@@ -164,7 +163,7 @@ export function addPage() {
         App.canvas.renderAll();
         refreshThumbnails(); 
         updatePageInfoUI();
-        saveDraft(); // Σώσε αμέσως τη νέα κενή σελίδα
+        saveDraft(); // Αποθήκευση της νέας κατάστασης
     });
 }
 export function duplicatePage() {
