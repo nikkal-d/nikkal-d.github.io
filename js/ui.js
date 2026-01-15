@@ -2,6 +2,8 @@
 // Wires UI controls to core functions (safe bindings)
 
 import {
+  App,       
+  PRESETS,
   initCanvas,
   addText,
   addImageFromFile,
