@@ -914,12 +914,70 @@ document.body.onclick = () => {
 
 
 export async function previewFlipbook() {
-  // Αντί να κατεβάζει αρχείο, θα μπορούσαμε να ανοίγουμε το modal, 
-  // αλλά η πιο σίγουρη λύση για να δεις το animation είναι το export.
-  // Προς το παρόν, ας καλούμε την exportFlipbook που δουλεύει σωστά.
-  await exportFlipbook();
-}
+  saveCurrentPage();
+  const images = [];
+  const size = PRESETS[App.preset];
 
+  // 1. Δημιουργία εικόνων για κάθε σελίδα
+  for (let i = 0; i < App.pages.length; i++) {
+    await new Promise((resolve) => {
+      // Χρησιμοποιούμε ΠΑΝΤΑ το App.canvas
+      App.canvas.loadFromJSON(App.pages[i].json, () => {
+        App.canvas.renderAll();
+        // Παίρνουμε την εικόνα της σελίδας
+        images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.8 }));
+        resolve();
+      });
+    });
+  }
+
+  // Επαναφορά στην τρέχουσα σελίδα για να μη μείνει ο καμβάς στην τελευταία
+  await renderCurrentPage();
+
+  // 2. Δημιουργία του Flipbook με το κουμπί Download PDF
+  const modal = document.getElementById("flipPreviewModal");
+  const frame = document.getElementById("flipPreviewFrame");
+  if (!modal || !frame) return;
+
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <style>
+      body { margin:0; background:#1a1a1a; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
+      .nav-bar { 
+        width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; 
+        position:sticky; top:0; z-index:100;
+      }
+      .btn { padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; }
+      .btn-pdf { background:#27ae60; color:white; }
+      .btn-close { background:#e74c3c; color:white; }
+      
+      .container { margin: 20px; width: 90%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
+      .page-img { background:white; width:100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+      .page-img img { width:100%; display:block; }
+
+      @media print {
+        .nav-bar { display:none; }
+        .container { margin:0; width:100%; max-width:none; }
+        .page-img { box-shadow:none; page-break-after:always; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="nav-bar">
+      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
+    </div>
+    <div class="container">
+      ${images.map(src => `<div class="page-img"><img src="${src}"></div>`).join('')}
+    </div>
+  </body>
+  </html>`;
+
+  frame.srcdoc = html;
+  modal.style.display = "block";
+}
 
 export function closeFlipbookPreview() {
   const modal = byId("flipPreviewModal");
