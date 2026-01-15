@@ -712,48 +712,43 @@ export async function exportJPG(multiplier = 2) {
 export async function exportPDF() {
   saveCurrentPage();
   const { jsPDF } = window.jspdf;
-  
-  // Παίρνουμε τις διαστάσεις του τρέχοντος preset (π.χ. A4L ή A4P)
   const size = PRESETS[App.preset];
-  
-  // Υπολογισμός προσανατολισμού: 'l' για landscape, 'p' for portrait
-  const orientation = size.w > size.h ? "l" : "p";
 
-  // Δημιουργία PDF στις ακριβείς διαστάσεις του preset
-  // Χρησιμοποιούμε pixels (px) για να ταυτίζονται με τον καμβά
+  // Χρησιμοποιούμε mm για απόλυτη ακρίβεια στην εκτύπωση (A4 = 297x210)
+  const isLandscape = size.w > size.h;
   const pdf = new jsPDF({
-    orientation: orientation,
-    unit: "px",
-    format: [size.w, size.h]
+    orientation: isLandscape ? "l" : "p",
+    unit: "mm",
+    format: "a4"
   });
+
+  const pw = isLandscape ? 297 : 210;
+  const ph = isLandscape ? 210 : 297;
 
   for (let i = 0; i < App.pages.length; i++) {
     const page = App.pages[i];
-    
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(page.json, () => {
-        // Επιβάλλουμε τις διαστάσεις του preset στον καμβά
+        // ΕΞΑΝΑΓΚΑΣΜΟΣ ΜΕΓΕΘΟΥΣ ΠΡΙΝ ΤΗ ΦΩΤΟΓΡΑΦΙΑ
+        App.canvas.setWidth(size.w);
+        App.canvas.setHeight(size.h);
         App.canvas.setDimensions({ width: size.w, height: size.h });
         App.canvas.renderAll();
-        
+
         const imgData = App.canvas.toDataURL({
           format: "jpeg",
-          quality: 1.0
+          quality: 1.0,
+          multiplier: 1
         });
 
-        if (i > 0) {
-          pdf.addPage([size.w, size.h], orientation);
-        }
-        
-        // Τοποθέτηση της εικόνας ώστε να καλύπτει όλο το PDF page
-        pdf.addImage(imgData, "JPEG", 0, 0, size.w, size.h);
+        if (i > 0) pdf.addPage("a4", isLandscape ? "l" : "p");
+        pdf.addImage(imgData, "JPEG", 0, 0, pw, ph);
         resolve();
       });
     });
   }
-
-  pdf.save("photobook_final.pdf");
-  renderCurrentPage(); // Επιστροφή στην κανονική προβολή
+  pdf.save("photobook_fixed.pdf");
+  renderCurrentPage();
 }
 // Βοηθητική συνάρτηση για τη μετατροπή κάθε σελίδας σε εικόνα υψηλής ανάλυσης
 async function renderPageToDataURL(page) {
