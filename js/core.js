@@ -970,3 +970,83 @@ export function closeFlipbookPreview() {
 export function exportLink() {
     alert("Η λειτουργία Link δεν είναι διαθέσιμη ακόμα.");
 }
+
+
+export async function exportFlipbook() {
+  saveCurrentPage();
+  const images = [];
+  
+  // Δημιουργία μεγάλων εικόνων για κάθε σελίδα
+  for (let i = 0; i < App.pages.length; i++) {
+    await new Promise((resolve) => {
+      App.canvas.loadFromJSON(App.pages[i].json, () => {
+        App.canvas.renderAll();
+        // multiplier: 1.0 για να είναι πεντακάθαρες και μεγάλες
+        images.push(App.canvas.toDataURL({ 
+          format: 'jpeg', 
+          quality: 1.0, 
+          multiplier: 1.0 
+        }));
+        resolve();
+      });
+    });
+  }
+  
+  await renderCurrentPage();
+
+  const modal = document.getElementById("flipPreviewModal");
+  const frame = document.getElementById("flipPreviewFrame");
+  if (!modal || !frame) return;
+
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <style>
+      /* Αφαίρεση Links και Ημερομηνίας από τον browser */
+      @page { size: auto; margin: 0mm; } 
+      
+      @media print {
+        body { background: white !important; }
+        .no-print { display: none !important; }
+        .container { width: 100% !important; max-width: none !important; margin: 0 !important; }
+        .page-box { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
+      }
+
+      body { 
+        margin:0; background:#1a1a1a; color:white; font-family:sans-serif;
+        display:flex; flex-direction:column; align-items:center; 
+      }
+      .nav { 
+        width:100%; background:#000; padding:15px; display:flex; justify-content:center; 
+        gap:20px; position:sticky; top:0; z-index:100;
+      }
+      .btn { 
+        padding:12px 25px; border:none; border-radius:5px; cursor:pointer; 
+        font-weight:bold; font-size:14px; 
+      }
+      .btn-pdf { background:#27ae60; color:white; }
+      .btn-close { background:#e74c3c; color:white; }
+      
+      .container { margin: 20px; width: 95%; max-width: 1000px; }
+      .page-box { 
+        background:white; width:100%; margin-bottom: 30px; 
+        box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
+      }
+      .page-box img { width:100%; height:auto; display:block; }
+    </style>
+  </head>
+  <body>
+    <div class="nav no-print">
+      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn btn-close" onclick="window.parent.document.getElementById('flipPreviewModal').style.display='none'">Κλείσιμο</button>
+    </div>
+    <div class="container">
+      ${images.map(src => `<div class="page-box"><img src="${src}"></div>`).join('')}
+    </div>
+  </body>
+  </html>`;
+
+  frame.srcdoc = html;
+  modal.style.display = "block";
+}
