@@ -900,10 +900,6 @@ window.closeFlipbookPreview = function() {
   if (modal) modal.style.display = "none";
 };
 
-
-// Ενοποίηση ονομάτων για να μην έχεις SyntaxError
-export const exportFlipbook = previewFlipbook;
-
 export function closeFlipbookPreview() {
     window.closeFlipbookPreview();
 }
