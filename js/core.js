@@ -165,15 +165,24 @@ function makeBlankPage(preset) {
 
 // ---------- pages ----------
 export function addPage() {
-  saveCurrentPage();
-  App.pages.push(makeBlankPage(App.preset));
-  App.current = App.pages.length - 1;
-  renderCurrentPage();
-  refreshThumbnails();
-  updatePageInfoUI();
-  scheduleAutosave(true);
+    saveCurrentPage(); // Σώζουμε την τρέχουσα
+    
+    // Δημιουργούμε μια πραγματικά ΚΕΝΗ σελίδα
+    const newPage = { 
+        json: JSON.stringify({ objects: [], background: "white" }), 
+        preset: App.preset 
+    };
+    
+    App.pages.push(newPage);
+    App.current = App.pages.length - 1;
+    
+    // ΚΑΘΑΡΙΣΜΟΣ ΚΑΜΒΑ
+    App.canvas.clear(); 
+    App.canvas.setBackgroundColor("white", App.canvas.renderAll.bind(App.canvas));
+    
+    renderCurrentPage();
+    refreshThumbnails();
 }
-
 export function duplicatePage() {
   saveCurrentPage();
   const src = App.pages[App.current];
