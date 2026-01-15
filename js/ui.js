@@ -131,27 +131,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   on("deleteObjBtn", "click", () => deleteSelected());
 
   // Export
-on("exportPngBtn", "click", async () => {
-  const m = prompt("Ποιότητα (1 = Κανονική, 2 = Υψηλή για εκτύπωση):", "1");
-  if (m) exportPNG(parseFloat(m));
+ on("exportPngBtn", "click", async () => {
+  const multiplier = prompt("Εισάγετε κλίμακα ποιότητας (1 = Κανονική, 2 = Υψηλή, 3 = Πολύ Υψηλή):", "2");
+  if (multiplier) exportPNG(parseFloat(multiplier));
 });
-
-on("exportJpgBtn", "click", async () => {
-  const m = prompt("Ποιότητα (1 = Κανονική, 2 = Υψηλή για εκτύπωση):", "1");
-  if (m) exportJPG(parseFloat(m));
+ on("exportJpgBtn", "click", async () => {
+  const multiplier = prompt("Εισάγετε κλίμακα ποιότητας (1 = Κανονική, 2 = Υψηλή, 3 = Πολύ Υψηλή):", "2");
+  if (multiplier) exportJPG(parseFloat(multiplier));
 });
-on("exportPdfBtn", "click", async () => {
-  const btn = document.getElementById("exportPdfBtn");
-  const originalText = btn.innerText;
-  
-  btn.innerText = "Παρακαλώ περιμένετε..."; // Ενημέρωση για να μην πατάει ο χρήστης συνέχεια
-  btn.style.opacity = "0.5";
-  
-  await exportPDF();
-  
-  btn.innerText = originalText;
-  btn.style.opacity = "1";
-});
+  on("exportPdfBtn", "click", () => exportPDF());
   on("exportFlipBtn", "click", async () => {
     const dir = $("flipDirSelect")?.value || "horizontal";
     await exportFlipbook({ direction: dir });
@@ -192,10 +180,6 @@ export function openFlipbookPreview(images) {
     return;
   }
 
-  // ΠΑΙΡΝΟΥΜΕ ΤΙΣ ΔΙΑΣΤΑΣΕΙΣ ΑΠΟ ΤΟ CORE (π.χ. A4L ή A4P)
-  // Αν η App.preset είναι A4L, το size θα είναι {w: 3508, h: 2480}
-  const size = PRESETS[App.preset] || { w: 2480, h: 3508 }; 
-
   const html = `
   <!doctype html>
   <html>
@@ -212,13 +196,10 @@ export function openFlipbookPreview(images) {
         overflow:hidden;
       }
       .book {
-        /* ΕΔΩ ΕΙΝΑΙ Η ΑΛΛΑΓΗ: Χρησιμοποιούμε την αναλογία του preset */
-        aspect-ratio: ${size.w} / ${size.h};
-        height: 85vh; /* Το ύψος θα είναι σταθερό */
-        max-width: 90vw; /* Για να μην βγαίνει έξω από την οθόνη σε πλάτος */
+        width:80vw;
+        height:80vh;
         position:relative;
         perspective:2000px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
       }
       .page {
         position:absolute;
@@ -227,13 +208,11 @@ export function openFlipbookPreview(images) {
         transform-origin:left center;
         transition:transform .8s ease;
         backface-visibility:hidden;
-        border: 1px solid #ddd;
       }
       .page img {
         width:100%;
         height:100%;
-        /* ΑΛΛΑΓΗ: fill για να καλύπτει όλη τη σελίδα χωρίς κενά */
-        object-fit: fill; 
+        object-fit:contain;
       }
       .page.flipped {
         transform:rotateY(-180deg);
@@ -266,3 +245,4 @@ export function openFlipbookPreview(images) {
   frame.srcdoc = html;
   modal.classList.add("open");
 }
+
