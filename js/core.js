@@ -181,23 +181,23 @@ function makeBlankPage(preset) {
 
 // ---------- pages ----------
 export function addPage() {
-    saveCurrentPage(); // Σώσε την τρέχουσα πριν την "εγκαταλείψεις"
-
-    // Δημιουργία ΚΕΝΗΣ σελίδας
+    saveCurrentPage();
+    
     const newPage = {
-        json: JSON.stringify({ objects: [], background: "white" }),
+        // Σημαντικό: Το json πρέπει να είναι ένα καθαρό αντικείμενο fabric
+        json: { objects: [], background: "white" },
         preset: App.preset
     };
 
     App.pages.push(newPage);
     App.current = App.pages.length - 1;
 
-    // Πλήρης καθαρισμός για να μην βλέπεις την παλιά σελίδα
     App.canvas.clear(); 
     App.canvas.setBackgroundColor("white", () => {
         App.canvas.renderAll();
         refreshThumbnails(); 
-        renderCurrentPage(); 
+        updatePageInfoUI();
+        saveDraft(); // Σώσε αμέσως τη νέα κενή σελίδα
     });
 }
 export function duplicatePage() {
