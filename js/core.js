@@ -119,8 +119,6 @@ function enrichJSON(c) {
 // ---------- init ----------
 export async function initCanvas({ preset = "A4P" } = {}) {
   App.preset = preset;
-  const { w, h } = getPreset(preset);
-
   const el = byId("canvas");
   if (!el) throw new Error("Canvas element #canvas not found");
 
@@ -130,36 +128,12 @@ export async function initCanvas({ preset = "A4P" } = {}) {
     backgroundColor: "#ffffff",
   });
 
-// Σωστή σειρά αρχικοποίησης
-App.canvas = new fabric.Canvas('c', { // Το 'c' πρέπει να είναι το ID του canvas στο HTML
-    preserveObjectStacking: true,
-    backgroundColor: 'white'
-});
-
-// ΤΩΡΑ ρυθμίζουμε τα properties, αφού το App.canvas ΔΕΝ είναι πια null
-App.canvas.selection = true;
-App.canvas.renderOnAddRemove = false; 
-fabric.Object.prototype.objectCaching = true;
-
-App.canvas.on('image:loaded', () => {
-    console.log("Μια εικόνα μόλις φορτώθηκε από το Firebase!");
-});
-  
+  // Ρυθμίσεις για ταχύτητα στον καμβά
+  App.canvas.renderOnAddRemove = false; 
+  fabric.Object.prototype.objectCaching = true;
 
   setCanvasSize(preset);
 
-  // core listeners
-  App.canvas.on("object:added", () => { scheduleAutosave(); });
-  App.canvas.on("object:modified", () => { scheduleAutosave(); });
-  App.canvas.on("object:removed", () => { scheduleAutosave(); });
-  App.canvas.on("selection:created", () => { updateLayersUI(); });
-  App.canvas.on("selection:updated", () => { updateLayersUI(); });
-  App.canvas.on("selection:cleared", () => { updateLayersUI(); });
-
-  // right click context menu hook
-  App.canvas.upperCanvasEl.addEventListener("contextmenu", (e) => e.preventDefault());
-
-  // load draft or start new
   const loaded = await loadDraft();
   if (!loaded) {
     App.pages = [makeBlankPage(preset)];
@@ -171,14 +145,7 @@ App.canvas.on('image:loaded', () => {
   refreshThumbnails();
   updatePageInfoUI();
   updateLayersUI();
-
-  console.log("✅ Canvas initialized");
 }
-
-function makeBlankPage(preset) {
-  return { preset, json: { version: fabric.version, objects: [], background: "#ffffff" } };
-}
-
 // ---------- pages ----------
 export function addPage() {
     saveCurrentPage();
