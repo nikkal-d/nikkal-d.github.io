@@ -117,10 +117,12 @@ function enrichJSON(c) {
 }
 
 // ---------- init ----------
+
+
 export async function initCanvas({ preset = "A4P" } = {}) {
   App.preset = preset;
   const el = byId("canvas");
-  if (!el) throw new Error("Canvas element #canvas not found");
+  if (!el) return;
 
   App.canvas = new fabric.Canvas(el, {
     preserveObjectStacking: true,
@@ -128,9 +130,21 @@ export async function initCanvas({ preset = "A4P" } = {}) {
     backgroundColor: "#ffffff",
   });
 
-  // Ρυθμίσεις για ταχύτητα στον καμβά
-  App.canvas.renderOnAddRemove = false; 
+  // Ρυθμίσεις ταχύτητας
+  App.canvas.renderOnAddRemove = false;
   fabric.Object.prototype.objectCaching = true;
+
+  // Προσθήκη Διαγραφής με πλήκτρο Delete
+  window.addEventListener('keydown', (e) => {
+    if (e.key === "Delete" || e.key === "Backspace") {
+      const activeObjects = App.canvas.getActiveObjects();
+      if (activeObjects.length > 0) {
+        activeObjects.forEach(obj => App.canvas.remove(obj));
+        App.canvas.discardActiveObject().requestRenderAll();
+        saveCurrentPage();
+      }
+    }
+  });
 
   setCanvasSize(preset);
 
@@ -146,26 +160,10 @@ export async function initCanvas({ preset = "A4P" } = {}) {
   updatePageInfoUI();
   updateLayersUI();
 }
-// ---------- pages ----------
-export function addPage() {
-    saveCurrentPage();
-    
-    const newPage = {
-        json: { objects: [], background: "white" }, // Καθαρό αντικείμενο
-        preset: App.preset
-    };
 
-    App.pages.push(newPage);
-    App.current = App.pages.length - 1;
 
-    App.canvas.clear(); 
-    App.canvas.setBackgroundColor("white", () => {
-        App.canvas.renderAll();
-        refreshThumbnails(); 
-        updatePageInfoUI();
-        saveDraft(); // Αποθήκευση της νέας κατάστασης
-    });
-}
+
+
 export function duplicatePage() {
   saveCurrentPage();
   const src = App.pages[App.current];
