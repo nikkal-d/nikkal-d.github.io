@@ -165,23 +165,24 @@ function makeBlankPage(preset) {
 
 // ---------- pages ----------
 export function addPage() {
-    saveCurrentPage(); // Σώζουμε την τρέχουσα
-    
-    // Δημιουργούμε μια πραγματικά ΚΕΝΗ σελίδα
-    const newPage = { 
-        json: JSON.stringify({ objects: [], background: "white" }), 
-        preset: App.preset 
+    saveCurrentPage(); // Σώσε την τρέχουσα πριν την "εγκαταλείψεις"
+
+    // Δημιουργία ΚΕΝΗΣ σελίδας
+    const newPage = {
+        json: JSON.stringify({ objects: [], background: "white" }),
+        preset: App.preset
     };
-    
+
     App.pages.push(newPage);
     App.current = App.pages.length - 1;
-    
-    // ΚΑΘΑΡΙΣΜΟΣ ΚΑΜΒΑ
+
+    // Πλήρης καθαρισμός για να μην βλέπεις την παλιά σελίδα
     App.canvas.clear(); 
-    App.canvas.setBackgroundColor("white", App.canvas.renderAll.bind(App.canvas));
-    
-    renderCurrentPage();
-    refreshThumbnails();
+    App.canvas.setBackgroundColor("white", () => {
+        App.canvas.renderAll();
+        refreshThumbnails(); 
+        renderCurrentPage(); 
+    });
 }
 export function duplicatePage() {
   saveCurrentPage();
