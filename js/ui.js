@@ -140,7 +140,16 @@ on("exportJpgBtn", "click", async () => {
   const m = prompt("Ποιότητα (1 = Κανονική, 2 = Υψηλή για εκτύπωση):", "1");
   if (m) exportJPG(parseFloat(m));
 });
-  on("exportPdfBtn", "click", () => exportPDF());
+ on("exportPdfBtn", "click", async () => {
+  const btn = document.getElementById("exportPdfBtn");
+  btn.innerText = "Processing..."; // Ενημέρωση χρήστη γιατί το PDF αργεί
+  btn.disabled = true;
+  
+  await exportPDF();
+  
+  btn.innerText = "PDF";
+  btn.disabled = false;
+});
   on("exportFlipBtn", "click", async () => {
     const dir = $("flipDirSelect")?.value || "horizontal";
     await exportFlipbook({ direction: dir });
