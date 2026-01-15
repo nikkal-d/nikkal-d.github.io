@@ -892,15 +892,14 @@ function dataURLToImage(url) {
 }
 
 
-// --- ΣΥΝΑΡΤΗΣΕΙΣ FLIPBOOK & EXPORT PDF ---
+// --- FLIPBOOK & EXPORT PDF LOGIC ---
 
-// 1. Το κλείσιμο (Global για το iframe)
+// Global συνάρτηση για να τη βρίσκει το iframe
 window.closeFlipbookPreview = function() {
   const modal = document.getElementById("flipPreviewModal");
   if (modal) modal.style.display = "none";
 };
 
-// 2. Η ενιαία συνάρτηση για Preview και Export
 export async function previewFlipbook() {
   saveCurrentPage(); 
   const images = [];
@@ -927,7 +926,7 @@ export async function previewFlipbook() {
   <html>
   <head>
     <style>
-      /* Αφαίρεση Headers/Footers (Ημερομηνία, Link) */
+      /* Αφαίρεση Headers/Footers (Links, Ημερομηνίες) */
       @page { size: auto; margin: 0mm; } 
       @media print {
         body { background: white !important; }
@@ -946,12 +945,12 @@ export async function previewFlipbook() {
     </style>
   </head>
   <body>
-    <div class="nav-bar no-print">
-      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
-      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
+    <div class=\"nav-bar no-print\">
+      <button class=\"btn btn-pdf\" onclick=\"window.print()\">📥 Download PDF</button>
+      <button class=\"btn btn-close\" onclick=\"window.parent.closeFlipbookPreview()\">Close</button>
     </div>
-    <div class="container">
-      ${images.map(src => `<div class="page-img"><img src="${src}"></div>`).join('')}
+    <div class=\"container\">
+      ${images.map(src => `<div class=\"page-img\"><img src=\"${src}\"></div>`).join('')}
     </div>
   </body>
   </html>`;
@@ -960,10 +959,14 @@ export async function previewFlipbook() {
   modal.style.display = "block";
 }
 
-// 3. Σύνδεση των ονομάτων για να μην μπερδεύεται το ui.js
+// Ενοποίηση ονομάτων για να μην έχεις SyntaxError
 export const exportFlipbook = previewFlipbook;
-export const openFlipbookPreview = previewFlipbook;
 
 export function closeFlipbookPreview() {
     window.closeFlipbookPreview();
+}
+
+// Πρόσθεσε αυτό αν λείπει για να μην χτυπάει το ui.js
+export function exportLink() {
+    alert("Η λειτουργία Link δεν είναι διαθέσιμη ακόμα.");
 }
