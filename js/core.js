@@ -1139,16 +1139,15 @@ export async function saveDraft() {
 
 // Στο core.js
 export async function loadDraft() {
-    // Διαβάζουμε από την IndexedDB (idbGet) και όχι από το localStorage
-    const data = await idbGet(App.autosaveKey);
-    if (!data) return false;
-    
-    App.pages = data.pages || [];
-    App.current = data.current || 0;
-    App.preset = data.preset || "A4P";
-    
-    await renderCurrentPage();
-    return true;
+  const data = await idbGet(App.autosaveKey); // Χρήση IndexedDB
+  if (!data) return false;
+  
+  App.pages = data.pages || [];
+  App.current = data.current || 0;
+  App.preset = data.preset || "A4P";
+  
+  await renderCurrentPage();
+  return true;
 }
 
 export async function clearDraft() {
