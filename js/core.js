@@ -1103,3 +1103,16 @@ function dataURLToImage(url) {
     img.src = url;
   });
 }
+
+
+// Διαγραφή με το πλήκτρο Delete ή Backspace
+window.addEventListener('keydown', (e) => {
+    if (e.key === "Delete" || e.key === "Backspace") {
+        const activeObjects = App.canvas.getActiveObjects();
+        if (activeObjects.length > 0) {
+            activeObjects.forEach(obj => App.canvas.remove(obj));
+            App.canvas.discardActiveObject().requestRenderAll();
+            saveCurrentPage();
+        }
+    }
+});
