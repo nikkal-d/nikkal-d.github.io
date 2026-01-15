@@ -713,41 +713,53 @@ export async function exportPDF() {
   saveCurrentPage();
   const { jsPDF } = window.jspdf;
   const size = PRESETS[App.preset];
-
-  // Χρησιμοποιούμε mm για απόλυτη ακρίβεια στην εκτύπωση (A4 = 297x210)
+  
+  // Καθορισμός προσανατολισμού
   const isLandscape = size.w > size.h;
+  
+  // Δημιουργία PDF σε χιλιοστά (A4 Landscape = 297x210mm)
   const pdf = new jsPDF({
     orientation: isLandscape ? "l" : "p",
     unit: "mm",
     format: "a4"
   });
 
-  const pw = isLandscape ? 297 : 210;
-  const ph = isLandscape ? 210 : 297;
+  const pageWidth = isLandscape ? 297 : 210;
+  const pageHeight = isLandscape ? 210 : 297;
+
+  // Κλείνουμε τυχόν πλαίσια επιλογής αντικειμένων
+  App.canvas.discardActiveObject();
 
   for (let i = 0; i < App.pages.length; i++) {
     const page = App.pages[i];
+    
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(page.json, () => {
-        // ΕΞΑΝΑΓΚΑΣΜΟΣ ΜΕΓΕΘΟΥΣ ΠΡΙΝ ΤΗ ΦΩΤΟΓΡΑΦΙΑ
-        App.canvas.setWidth(size.w);
-        App.canvas.setHeight(size.h);
+        // Επιβολή των μεγάλων διαστάσεων στον καμβά πριν τη λήψη της εικόνας
         App.canvas.setDimensions({ width: size.w, height: size.h });
         App.canvas.renderAll();
-
+        
+        // Λήψη εικόνας στην πλήρη ανάλυση (300dpi)
         const imgData = App.canvas.toDataURL({
           format: "jpeg",
           quality: 1.0,
           multiplier: 1
         });
 
-        if (i > 0) pdf.addPage("a4", isLandscape ? "l" : "p");
-        pdf.addImage(imgData, "JPEG", 0, 0, pw, ph);
+        if (i > 0) {
+          pdf.addPage("a4", isLandscape ? "l" : "p");
+        }
+        
+        // ΤΟ ΚΛΕΙΔΙ: Τοποθέτηση από (0,0) έως το πλήρες πλάτος/ύψος της σελίδας mm
+        pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
         resolve();
       });
     });
   }
-  pdf.save("photobook_fixed.pdf");
+
+  pdf.save("photobook_final.pdf");
+  
+  // Επαναφορά στην τρέχουσα σελίδα για τον χρήστη
   renderCurrentPage();
 }
 // Βοηθητική συνάρτηση για τη μετατροπή κάθε σελίδας σε εικόνα υψηλής ανάλυσης
