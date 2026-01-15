@@ -704,57 +704,35 @@ export async function exportJPG(multiplier = 2) {
 export async function exportPDF() {
   saveCurrentPage();
   const { jsPDF } = window.jspdf;
-  
-  // 1. Παίρνουμε το μέγεθος (π.χ. A4L για οριζόντιο)
   const size = PRESETS[App.preset];
   const isLandscape = size.w > size.h;
 
-  // 2. Δημιουργούμε το PDF σε χιλιοστά (mm) - Αυτό είναι το κλειδί!
   const pdf = new jsPDF({
     orientation: isLandscape ? "l" : "p",
     unit: "mm",
     format: "a4"
   });
 
-  // Διαστάσεις χαρτιού Α4 σε mm
-  const pageWidth = isLandscape ? 297 : 210;
-  const pageHeight = isLandscape ? 210 : 297;
-
-  // Καθαρίζουμε τυχόν επιλεγμένα αντικείμενα για να μην φαίνονται τα πλαίσια
-  App.canvas.discardActiveObject();
+  const pw = isLandscape ? 297 : 210;
+  const ph = isLandscape ? 210 : 297;
 
   for (let i = 0; i < App.pages.length; i++) {
     const page = App.pages[i];
-    
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(page.json, () => {
-        // Επιβολή των σωστών pixels στον καμβά πριν τη λήψη της φωτογραφίας
         App.canvas.setDimensions({ width: size.w, height: size.h });
         App.canvas.renderAll();
         
-        // Λήψη εικόνας σε υψηλή ποιότητα
-        const imgData = App.canvas.toDataURL({
-          format: "jpeg",
-          quality: 1.0,
-          multiplier: 1
-        });
-
-        if (i > 0) {
-          pdf.addPage("a4", isLandscape ? "l" : "p");
-        }
-        
-        // Η ΕΝΤΟΛΗ ΠΟΥ ΤΟ ΦΤΙΑΧΝΕΙ: 
-        // Λέμε στην εικόνα να ξεκινήσει από το 0,0 και να απλωθεί σε ΟΛΑ τα χιλιοστά της σελίδας
-        pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
+        const imgData = App.canvas.toDataURL({ format: "jpeg", quality: 1.0 });
+        if (i > 0) pdf.addPage("a4", isLandscape ? "l" : "p");
+        pdf.addImage(imgData, "JPEG", 0, 0, pw, ph);
         resolve();
       });
     });
   }
-
-  pdf.save("photobook_final.pdf");
-  renderCurrentPage(); // Επιστροφή στην κανονική προβολή
+  pdf.save("photobook.pdf");
+  renderCurrentPage();
 }
-
 
 // Βοηθητική συνάρτηση για τη μετατροπή κάθε σελίδας σε εικόνα υψηλής ανάλυσης
 async function renderPageToDataURL(page) {
