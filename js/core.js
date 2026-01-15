@@ -1172,8 +1172,13 @@ window.addEventListener('keydown', (e) => {
 });
 
 
+// Σωστή σειρά αρχικοποίησης
+App.canvas = new fabric.Canvas('c', { // Το 'c' πρέπει να είναι το ID του canvas στο HTML
+    preserveObjectStacking: true,
+    backgroundColor: 'white'
+});
+
+// ΤΩΡΑ ρυθμίζουμε τα properties, αφού το App.canvas ΔΕΝ είναι πια null
 App.canvas.selection = true;
-App.canvas.renderOnAddRemove = false; // Σταματάει το αυτόματο render για κάθε προσθήκη
-fabric.Object.prototype.objectCaching = true; // Χρησιμοποιεί την προσωρινή μνήμη για ταχύτητα
-fabric.Object.prototype.statefullCache = false;
-fabric.Object.prototype.noScaleCache = true;
+App.canvas.renderOnAddRemove = false; 
+fabric.Object.prototype.objectCaching = true;
