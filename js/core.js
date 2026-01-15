@@ -16,7 +16,7 @@ export const App = {
   autosaveKey: "photobook_draft_v3",
 };
 
-export const PRESETS = {
+const PRESETS = {
   A4P:    { w: 2480, h: 3508, label: "A4 Portrait (Print)" },
   A4L:    { w: 3508, h: 2480, label: "A4 Landscape (Print)" },
   SQUARE: { w: 2400, h: 2400, label: "Square 20x20cm" },
@@ -117,12 +117,12 @@ function enrichJSON(c) {
 }
 
 // ---------- init ----------
-
-
 export async function initCanvas({ preset = "A4P" } = {}) {
   App.preset = preset;
+  const { w, h } = getPreset(preset);
+
   const el = byId("canvas");
-  if (!el) return;
+  if (!el) throw new Error("Canvas element #canvas not found");
 
   App.canvas = new fabric.Canvas(el, {
     preserveObjectStacking: true,
@@ -130,24 +130,20 @@ export async function initCanvas({ preset = "A4P" } = {}) {
     backgroundColor: "#ffffff",
   });
 
-  // Ρυθμίσεις ταχύτητας
-  App.canvas.renderOnAddRemove = false;
-  fabric.Object.prototype.objectCaching = true;
-
-  // Προσθήκη Διαγραφής με πλήκτρο Delete
-  window.addEventListener('keydown', (e) => {
-    if (e.key === "Delete" || e.key === "Backspace") {
-      const activeObjects = App.canvas.getActiveObjects();
-      if (activeObjects.length > 0) {
-        activeObjects.forEach(obj => App.canvas.remove(obj));
-        App.canvas.discardActiveObject().requestRenderAll();
-        saveCurrentPage();
-      }
-    }
-  });
-
   setCanvasSize(preset);
 
+  // core listeners
+  App.canvas.on("object:added", () => { scheduleAutosave(); });
+  App.canvas.on("object:modified", () => { scheduleAutosave(); });
+  App.canvas.on("object:removed", () => { scheduleAutosave(); });
+  App.canvas.on("selection:created", () => { updateLayersUI(); });
+  App.canvas.on("selection:updated", () => { updateLayersUI(); });
+  App.canvas.on("selection:cleared", () => { updateLayersUI(); });
+
+  // right click context menu hook
+  App.canvas.upperCanvasEl.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // load draft or start new
   const loaded = await loadDraft();
   if (!loaded) {
     App.pages = [makeBlankPage(preset)];
@@ -159,11 +155,35 @@ export async function initCanvas({ preset = "A4P" } = {}) {
   refreshThumbnails();
   updatePageInfoUI();
   updateLayersUI();
+
+  console.log("✅ Canvas initialized");
 }
 
+function makeBlankPage(preset) {
+  return { preset, json: { version: fabric.version, objects: [], background: "#ffffff" } };
+}
 
+// ---------- pages ----------
+export function addPage() {
+    saveCurrentPage(); // Σώσε την τρέχουσα πριν την "εγκαταλείψεις"
 
+    // Δημιουργία ΚΕΝΗΣ σελίδας
+    const newPage = {
+        json: JSON.stringify({ objects: [], background: "white" }),
+        preset: App.preset
+    };
 
+    App.pages.push(newPage);
+    App.current = App.pages.length - 1;
+
+    // Πλήρης καθαρισμός για να μην βλέπεις την παλιά σελίδα
+    App.canvas.clear(); 
+    App.canvas.setBackgroundColor("white", () => {
+        App.canvas.renderAll();
+        refreshThumbnails(); 
+        renderCurrentPage(); 
+    });
+}
 export function duplicatePage() {
   saveCurrentPage();
   const src = App.pages[App.current];
@@ -704,35 +724,57 @@ export async function exportJPG(multiplier = 2) {
 export async function exportPDF() {
   saveCurrentPage();
   const { jsPDF } = window.jspdf;
+  
+  // 1. Παίρνουμε το μέγεθος (π.χ. A4L για οριζόντιο)
   const size = PRESETS[App.preset];
   const isLandscape = size.w > size.h;
 
+  // 2. Δημιουργούμε το PDF σε χιλιοστά (mm) - Αυτό είναι το κλειδί!
   const pdf = new jsPDF({
     orientation: isLandscape ? "l" : "p",
     unit: "mm",
     format: "a4"
   });
 
-  const pw = isLandscape ? 297 : 210;
-  const ph = isLandscape ? 210 : 297;
+  // Διαστάσεις χαρτιού Α4 σε mm
+  const pageWidth = isLandscape ? 297 : 210;
+  const pageHeight = isLandscape ? 210 : 297;
+
+  // Καθαρίζουμε τυχόν επιλεγμένα αντικείμενα για να μην φαίνονται τα πλαίσια
+  App.canvas.discardActiveObject();
 
   for (let i = 0; i < App.pages.length; i++) {
     const page = App.pages[i];
+    
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(page.json, () => {
+        // Επιβολή των σωστών pixels στον καμβά πριν τη λήψη της φωτογραφίας
         App.canvas.setDimensions({ width: size.w, height: size.h });
         App.canvas.renderAll();
         
-        const imgData = App.canvas.toDataURL({ format: "jpeg", quality: 1.0 });
-        if (i > 0) pdf.addPage("a4", isLandscape ? "l" : "p");
-        pdf.addImage(imgData, "JPEG", 0, 0, pw, ph);
+        // Λήψη εικόνας σε υψηλή ποιότητα
+        const imgData = App.canvas.toDataURL({
+          format: "jpeg",
+          quality: 1.0,
+          multiplier: 1
+        });
+
+        if (i > 0) {
+          pdf.addPage("a4", isLandscape ? "l" : "p");
+        }
+        
+        // Η ΕΝΤΟΛΗ ΠΟΥ ΤΟ ΦΤΙΑΧΝΕΙ: 
+        // Λέμε στην εικόνα να ξεκινήσει από το 0,0 και να απλωθεί σε ΟΛΑ τα χιλιοστά της σελίδας
+        pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
         resolve();
       });
     });
   }
-  pdf.save("photobook.pdf");
-  renderCurrentPage();
+
+  pdf.save("photobook_final.pdf");
+  renderCurrentPage(); // Επιστροφή στην κανονική προβολή
 }
+
 
 // Βοηθητική συνάρτηση για τη μετατροπή κάθε σελίδας σε εικόνα υψηλής ανάλυσης
 async function renderPageToDataURL(page) {
@@ -1081,15 +1123,17 @@ export async function saveDraft() {
 
 // Στο core.js
 export async function loadDraft() {
-  const data = await idbGet(App.autosaveKey); // Χρήση IndexedDB
-  if (!data) return false;
-  
-  App.pages = data.pages || [];
-  App.current = data.current || 0;
-  App.preset = data.preset || "A4P";
-  
-  await renderCurrentPage();
-  return true;
+    const saved = localStorage.getItem(App.autosaveKey);
+    if (!saved) return;
+    
+    const data = JSON.parse(saved);
+    App.pages = data.pages || [];
+    App.current = 0;
+    App.preset = data.preset || "A4L";
+    
+    // Επιβολή του preset
+    setCanvasSize(App.preset);
+    renderCurrentPage();
 }
 
 export async function clearDraft() {
@@ -1114,3 +1158,32 @@ function dataURLToImage(url) {
     img.src = url;
   });
 }
+
+
+// Διαγραφή με το πλήκτρο Delete ή Backspace
+window.addEventListener('keydown', (e) => {
+    if (e.key === "Delete" || e.key === "Backspace") {
+        const activeObjects = App.canvas.getActiveObjects();
+        if (activeObjects.length > 0) {
+            activeObjects.forEach(obj => App.canvas.remove(obj));
+            App.canvas.discardActiveObject().requestRenderAll();
+            saveCurrentPage();
+        }
+    }
+});
+
+
+// Σωστή σειρά αρχικοποίησης
+App.canvas = new fabric.Canvas('c', { // Το 'c' πρέπει να είναι το ID του canvas στο HTML
+    preserveObjectStacking: true,
+    backgroundColor: 'white'
+});
+
+// ΤΩΡΑ ρυθμίζουμε τα properties, αφού το App.canvas ΔΕΝ είναι πια null
+App.canvas.selection = true;
+App.canvas.renderOnAddRemove = false; 
+fabric.Object.prototype.objectCaching = true;
+
+App.canvas.on('image:loaded', () => {
+    console.log("Μια εικόνα μόλις φορτώθηκε από το Firebase!");
+});
