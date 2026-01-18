@@ -756,8 +756,184 @@ async function renderPageToDataURL(page) {
 }
 
 
+// Flipbook: builds a standalone HTML with simple page-flip animation.
+// ---------- Flipbook Export & Preview ----------
+export async function exportFlipbook() {
+  saveCurrentPage();
+  const images = [];
+  
+  // Δείξε ένα μήνυμα αναμονής αν θες, γιατί το rendering παίρνει χρόνο
+  console.log("Rendering flipbook pages...");
+  
+  for (const p of App.pages) {
+    const dataUrl = await renderPageToDataURL(p);
+    images.push(dataUrl);
+  }
+
+  const html = `
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <title>Το Φωτοάλμπουμ μου</title>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+  <style>
+    body { margin:0; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; overflow:hidden; font-family:sans-serif; }
+    .container { width:100%; height:85vh; display:flex; justify-content:center; align-items:center; perspective: 2000px; }
+    #book { box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+    .page { background:#fff; width:100%; height:100%; }
+    .page img { width:100%; height:100%; object-fit:contain; background:#fff; }
+    .controls { position:fixed; bottom:30px; display:flex; gap:20px; z-index:100; align-items:center; }
+    .btn { background:#333; color:#fff; border:1px solid #555; padding:12px 24px; border-radius:30px; cursor:pointer; font-size:16px; transition:0.3s; }
+    .btn:hover { background:#555; transform:scale(1.05); }
+    .page-num { color: #aaa; font-size: 14px; min-width: 60px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="book">
+      ${images.map(src => `<div class="page"><img src="${src}"></div>`).join('')}
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="pBtn">⬅ Πίσω</button>
+    <div class="page-num" id="pageIdx">1 / ${images.length}</div>
+    <button class="btn" id="nBtn">Επόμενο ➡</button>
+  </div>
+  <script>
+    window.onload = () => {
+      const bookElem = document.getElementById('book');
+      const pageIdxElem = document.getElementById('pageIdx');
+      
+      const pageFlip = new St.PageFlip(bookElem, {
+        width: 595, height: 842, // A4 Ratio
+        size: "stretch",
+        minWidth: 315, maxWidth: 1200,
+        minHeight: 420, maxHeight: 1500,
+        showCover: true,
+        maxShadowOpacity: 0.5,
+        mobileScrollSupport: false
+      });
+
+      pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+      // Ενημέρωση αριθμού σελίδας
+      pageFlip.on('flip', (e) => {
+        pageIdxElem.textContent = (e.data + 1) + " / " + ${images.length};
+      });
+
+      // Click Events
+      document.getElementById('pBtn').onclick = () => pageFlip.flipPrev();
+      document.getElementById('nBtn').onclick = () => pageFlip.flipNext();
+
+      // Keyboard Events (Βελάκια)
+      document.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft') pageFlip.flipPrev();
+        if(e.key === 'ArrowRight') pageFlip.flipNext();
+      });
+    };
+  </script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'photobook_flipbook.html';
+  a.click();
+}
 
 
+export function openFlipbookPreview(images) {
+  const frame = document.getElementById("flipPreviewFrame");
+  const modal = document.getElementById("flipPreviewModal");
+
+  const html = `
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+body {
+  margin:0;
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.book {
+  width:80vw;
+  height:80vh;
+  perspective:2000px;
+  position:relative;
+}
+.page {
+  position:absolute;
+  inset:0;
+  background:#fff;
+  transform-origin:left;
+  transition:transform .8s ease;
+}
+.page img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.page.flipped {
+  transform:rotateY(-180deg);
+}
+</style>
+</head>
+<body>
+<div class="book">
+  ${images.map((src,i)=>`
+    <div class="page" style="z-index:${images.length-i}">
+      <img src="${src}">
+    </div>
+  `).join("")}
+</div>
+
+<script>
+let index = 0;
+const pages = document.querySelectorAll('.page');
+document.body.onclick = () => {
+  if (index < pages.length) {
+    pages[index].classList.add('flipped');
+    index++;
+  }
+};
+</script>
+</body>
+</html>
+  `;
+
+  frame.srcdoc = html;
+  modal.classList.add("open");
+}
+
+
+export async function previewFlipbook() {
+  // Αντί να κατεβάζει αρχείο, θα μπορούσαμε να ανοίγουμε το modal, 
+  // αλλά η πιο σίγουρη λύση για να δεις το animation είναι το export.
+  // Προς το παρόν, ας καλούμε την exportFlipbook που δουλεύει σωστά.
+  await exportFlipbook();
+}
+
+
+export function closeFlipbookPreview() {
+  const modal = byId("flipPreviewModal");
+  const frame = byId("flipPreviewFrame");
+  if (frame) frame.src = "about:blank";
+  if (modal) modal.classList.remove("open");
+}
+
+export async function exportLink() {
+  // A "temporary share" link (objectURL) – works on the same device/session.
+  const url = await exportFlipbook({ direction: "horizontal" });
+  await navigator.clipboard.writeText(url);
+  alert("Έγινε αντιγραφή link (προσωρινό / τοπικό). Για πραγματικό share, ανέβασε το flipbook.html στο hosting.");
+}
 
 function buildFlipbookHTML(pageDataURLs, direction) {
   const axis = (direction === "vertical") ? "Y" : "X";
@@ -889,102 +1065,4 @@ function dataURLToImage(url) {
     img.onerror = reject;
     img.src = url;
   });
-}
-
-
-// --- FLIPBOOK & EXPORT PDF LOGIC ---
-
-// Global συνάρτηση για να τη βρίσκει το iframe
-window.closeFlipbookPreview = function() {
-  const modal = document.getElementById("flipPreviewModal");
-  if (modal) modal.style.display = "none";
-};
-
-export function closeFlipbookPreview() {
-    window.closeFlipbookPreview();
-}
-
-// Πρόσθεσε αυτό αν λείπει για να μην χτυπάει το ui.js
-export function exportLink() {
-    alert("Η λειτουργία Link δεν είναι διαθέσιμη ακόμα.");
-}
-
-
-export async function exportFlipbook() {
-  saveCurrentPage();
-  const images = [];
-  
-  // Δημιουργία μεγάλων εικόνων για κάθε σελίδα
-  for (let i = 0; i < App.pages.length; i++) {
-    await new Promise((resolve) => {
-      App.canvas.loadFromJSON(App.pages[i].json, () => {
-        App.canvas.renderAll();
-        // multiplier: 1.0 για να είναι πεντακάθαρες και μεγάλες
-        images.push(App.canvas.toDataURL({ 
-          format: 'jpeg', 
-          quality: 1.0, 
-          multiplier: 1.0 
-        }));
-        resolve();
-      });
-    });
-  }
-  
-  await renderCurrentPage();
-
-  const modal = document.getElementById("flipPreviewModal");
-  const frame = document.getElementById("flipPreviewFrame");
-  if (!modal || !frame) return;
-
-  const html = `
-  <!doctype html>
-  <html>
-  <head>
-    <style>
-      /* Αφαίρεση Links και Ημερομηνίας από τον browser */
-      @page { size: auto; margin: 0mm; } 
-      
-      @media print {
-        body { background: white !important; }
-        .no-print { display: none !important; }
-        .container { width: 100% !important; max-width: none !important; margin: 0 !important; }
-        .page-box { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
-      }
-
-      body { 
-        margin:0; background:#1a1a1a; color:white; font-family:sans-serif;
-        display:flex; flex-direction:column; align-items:center; 
-      }
-      .nav { 
-        width:100%; background:#000; padding:15px; display:flex; justify-content:center; 
-        gap:20px; position:sticky; top:0; z-index:100;
-      }
-      .btn { 
-        padding:12px 25px; border:none; border-radius:5px; cursor:pointer; 
-        font-weight:bold; font-size:14px; 
-      }
-      .btn-pdf { background:#27ae60; color:white; }
-      .btn-close { background:#e74c3c; color:white; }
-      
-      .container { margin: 20px; width: 95%; max-width: 1000px; }
-      .page-box { 
-        background:white; width:100%; margin-bottom: 30px; 
-        box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
-      }
-      .page-box img { width:100%; height:auto; display:block; }
-    </style>
-  </head>
-  <body>
-    <div class="nav no-print">
-      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
-      <button class="btn btn-close" onclick="window.parent.document.getElementById('flipPreviewModal').style.display='none'">Κλείσιμο</button>
-    </div>
-    <div class="container">
-      ${images.map(src => `<div class="page-box"><img src="${src}"></div>`).join('')}
-    </div>
-  </body>
-  </html>`;
-
-  frame.srcdoc = html;
-  modal.style.display = "block";
 }
