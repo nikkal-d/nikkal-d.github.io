@@ -140,9 +140,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (multiplier) exportJPG(parseFloat(multiplier));
 });
   on("exportPdfBtn", "click", () => exportPDF());
- on("exportFlipbookBtn", "click", () => {
-    previewFlipbook(); // Αυτό πλέον κάνει το "Export" με το PDF μέσα
-});
+  on("exportFlipBtn", "click", async () => {
+    const dir = $("flipDirSelect")?.value || "horizontal";
+    await exportFlipbook({ direction: dir });
+  });
   on("previewFlipBtn", "click", async () => {
     const dir = $("flipDirSelect")?.value || "horizontal";
     await previewFlipbook({ direction: dir });
