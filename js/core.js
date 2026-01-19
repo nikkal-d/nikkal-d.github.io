@@ -940,11 +940,6 @@ export async function loadDraft() {
   } catch (e) { return false; }
 }
 
-export function closeFlipbookPreview() {
-  const modal = document.getElementById("flipPreviewModal");
-  if (modal) modal.style.display = "none";
-}
-window.closeFlipbookPreview = closeFlipbookPreview;
 
 export async function clearDraft() {
   if (confirm("Διαγραφή προσχεδίου;")) {
