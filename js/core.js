@@ -831,11 +831,6 @@ export function closeFlipbookPreview() {
 // Χρειάζεται για να μη χτυπάει το ui.js που κάνει import το previewFlipbook
 export const previewFlipbook = exportFlipbook;
 
-// Export για το κλείσιμο (προαιρετικό αν το καλείς από το ui.js)
-export function closeFlipbookPreview() {
-    const modal = document.getElementById("flipPreviewModal");
-    if (modal) modal.style.display = "none";
-}
 
 
 
