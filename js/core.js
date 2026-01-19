@@ -906,7 +906,7 @@ document.body.onclick = () => {
 
 
 
-// --- Η ΜΟΝΑΔΙΚΗ ΚΑΙ ΔΙΟΡΘΩΜΕΝΗ EXPORT FLIPBOOK ---
+// --- ΜΟΝΗ ΚΑΙ ΔΙΟΡΘΩΜΕΝΗ EXPORT FLIPBOOK ---
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
@@ -915,10 +915,10 @@ export async function exportFlipbook() {
     await new Promise((resolve) => {
       // Φόρτωση της σελίδας στον καμβά
       App.canvas.loadFromJSON(App.pages[i].json, () => {
-        // Διπλό render για να σιγουρευτούμε ότι η εικόνα εμφανίστηκε
+        // Επιβολή Render
         App.canvas.renderAll();
         
-        // Μικρή αναμονή για τον browser να προλάβει το σχεδιασμό
+        // Περιμένουμε ένα frame για να σιγουρευτούμε ότι η εικόνα "ζωγραφίστηκε" στον καμβά
         requestAnimationFrame(() => {
           App.canvas.renderAll();
           images.push(App.canvas.toDataURL({ 
@@ -932,6 +932,7 @@ export async function exportFlipbook() {
     });
   }
   
+  // Επιστροφή στην τρέχουσα σελίδα για να μην μείνει ο καμβάς στην τελευταία του Export
   await renderCurrentPage();
 
   const modal = document.getElementById("flipPreviewModal");
@@ -943,19 +944,36 @@ export async function exportFlipbook() {
   <html>
   <head>
     <style>
+      /* Αφαίρεση Header/Footer (Links & Ημερομηνία) από την εκτύπωση */
       @page { size: auto; margin: 0mm; } 
+      
       @media print {
         body { background: white !important; }
         .no-print { display: none !important; }
         .p-box { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
+        .container { width: 100% !important; max-width: none !important; margin: 0 !important; }
       }
-      body { margin:0; background:#111; display:flex; flex-direction:column; align-items:center; font-family:sans-serif; }
-      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
-      .btn { padding:12px 25px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; font-size:14px; }
+
+      body { 
+        margin:0; background:#111; color:white; font-family:sans-serif;
+        display:flex; flex-direction:column; align-items:center; 
+      }
+      .nav { 
+        width:100%; background:#000; padding:15px; display:flex; justify-content:center; 
+        gap:20px; position:sticky; top:0; z-index:100;
+      }
+      .btn { 
+        padding:12px 25px; border:none; border-radius:5px; cursor:pointer; 
+        font-weight:bold; font-size:14px; color:white;
+      }
       .btn-pdf { background:#27ae60; }
       .btn-close { background:#e74c3c; }
+      
       .container { margin: 20px; width: 95%; max-width: 1000px; }
-      .p-box { background:white; width:100%; margin-bottom: 30px; box-shadow: 0 10px 50px rgba(0,0,0,0.8); }
+      .p-box { 
+        background:white; width:100%; margin-bottom: 30px; 
+        box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
+      }
       .p-box img { width:100%; height:auto; display:block; }
     </style>
   </head>
@@ -974,7 +992,7 @@ export async function exportFlipbook() {
   modal.style.display = "block";
 }
 
-// --- ΣΥΝΑΡΤΗΣΕΙΣ ΠΟΥ ΧΡΕΙΑΖΕΤΑΙ ΤΟ UI.JS ΓΙΑ ΝΑ ΜΗΝ ΒΓΑΖΕΙ ERROR ---
+// --- ΑΠΑΡΑΙΤΗΤΑ EXPORTS ΓΙΑ ΤΟ UI.JS ---
 
 export const previewFlipbook = exportFlipbook;
 
@@ -982,7 +1000,7 @@ export function closeFlipbookPreview() {
   const modal = document.getElementById("flipPreviewModal");
   if (modal) modal.style.display = "none";
 }
-// Την κάνουμε global για το iframe
+// Κάνουμε τη συνάρτηση διαθέσιμη στο iframe
 window.closeFlipbookPreview = closeFlipbookPreview;
 
-export function exportLink() { console.log("Link export not active"); }
+export function exportLink() { console.log("Link export feature is coming soon."); }
