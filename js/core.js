@@ -898,8 +898,7 @@ export async function exportFlipbook() {
   modal.style.display = "block";
 }
 
-// Χρειάζεται για να παίζουν και τα δύο κουμπιά στο ui.js
-export const previewFlipbook = exportFlipbook;
+
 
 export function closeFlipbookPreview() {
   const modal = document.getElementById("flipPreviewModal");
