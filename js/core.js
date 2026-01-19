@@ -830,7 +830,6 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // Λήψη εικόνων από όλες τις σελίδες
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -839,7 +838,7 @@ export async function exportFlipbook() {
           App.canvas.renderAll();
           images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.0 }));
           resolve();
-        }, 200);
+        }, 250);
       });
     });
   }
@@ -851,47 +850,27 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  const html = `
+  // Δημιουργία του HTML - Προσοχή στα backslashes (\$)
+  const htmlContent = `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
-    <title>My Photobook Flipbook</title>
     <style>
       @page { size: auto; margin: 0mm; }
-      @media print { .no-print { display: none !important; } body { background:white; } .print-page { display:block; page-break-after:always; } .print-page img { width:100%; } }
-      
+      @media print { .no-print { display: none !important; } body { background:white; } .print-page { display:block; page-break-after:always; } }
       body { margin:0; background:#111; color:white; font-family:sans-serif; overflow:hidden; }
       .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
-      
       .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:13px; }
       .btn-pdf { background:#27ae60; }
       .btn-save { background:#3498db; }
       .btn-close { background:#e74c3c; }
-
       .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2000px; }
-      
       .book { position:relative; width:60vh; height:85vh; transform-style:preserve-3d; }
-      
-      .page { 
-        position:absolute; inset:0; background:white; transform-origin:left center; 
-        transition:transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
-        backface-visibility:hidden; box-shadow:0 0 20px rgba(0,0,0,0.5);
-        display:flex; justify-content:center; align-items:center;
-      }
+      .page { position:absolute; inset:0; background:white; transform-origin:left center; transition:transform 0.6s ease; backface-visibility:hidden; box-shadow:0 0 20px rgba(0,0,0,0.5); }
       .page img { width:100%; height:100%; object-fit:contain; }
       .page.flipped { transform:rotateY(-180deg); }
-
-      /* Βελάκια */
-      .arrow { 
-        position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); 
-        color:white; border:none; width:60px; height:60px; border-radius:50%; 
-        font-size:30px; cursor:pointer; z-index:2000; transition:0.3s;
-      }
-      .arrow:hover { background:rgba(255,255,255,0.3); }
-      .arrow-left { left:30px; }
-      .arrow-right { right:30px; }
-
+      .arrow { position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); color:white; border:none; width:60px; height:60px; border-radius:50%; font-size:30px; cursor:pointer; z-index:2000; }
       .print-page { display:none; }
     </style>
   </head>
@@ -901,66 +880,32 @@ export async function exportFlipbook() {
       <button class="btn btn-save" id="downloadHtml">💾 Save as HTML file</button>
       <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
     </div>
-
-    <button class="arrow arrow-left no-print" onclick="prevPage()">❮</button>
-    <button class="arrow arrow-right no-print" onclick="nextPage()">❯</button>
-
+    <button class="arrow no-print" style="left:30px" onclick="prevPage()">❮</button>
+    <button class="arrow no-print" style="right:30px" onclick="nextPage()">❯</button>
     <div class="viewport no-print">
       <div class="book" id="book">
-        ${images.map((src, i) => \`
-          <div class="page" style="z-index: \${images.length - i};">
-            <img src="\${src}">
-          </div>
-        \`).reverse().join('')}
+        ${images.map((src, i) => `<div class="page" style="z-index: ${images.length - i}"><img src="${src}"></div>`).reverse().join('')}
       </div>
     </div>
-
-    <div class="no-print" style="position:fixed; bottom:20px; width:100%; text-align:center; color:#666;">
-      Σελίδα: <span id="pageIdx">1</span> / ${images.length}
-    </div>
-
     <div class="print-only">
-      ${images.map(src => \`<div class="print-page"><img src="\${src}"></div>\`).join('')}
+      ${images.map(src => `<div class="print-page"><img src="${src}" style="width:100%"></div>`).join('')}
     </div>
-
     <script>
       let current = 0;
       const pages = document.querySelectorAll('.page');
-      const total = pages.length;
-
-      function updateUI() {
-        document.getElementById('pageIdx').innerText = current + 1;
-      }
-
-      function nextPage() {
-        if (current < total) {
-          pages[total - 1 - current].classList.add('flipped');
-          current++;
-          updateUI();
-        }
-      }
-
-      function prevPage() {
-        if (current > 0) {
-          current--;
-          pages[total - 1 - current].classList.remove('flipped');
-          updateUI();
-        }
-      }
-
+      function nextPage() { if (current < pages.length) { pages[pages.length - 1 - current].classList.add('flipped'); current++; } }
+      function prevPage() { if (current > 0) { current--; pages[pages.length - 1 - current].classList.remove('flipped'); } }
       document.getElementById('downloadHtml').onclick = () => {
-        const fullHtml = document.documentElement.outerHTML;
-        const blob = new Blob([fullHtml], { type: 'text/html' });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'Photobook_Flipbook.html';
+        a.href = URL.createObjectURL(new Blob([document.documentElement.outerHTML], { type: 'text/html' }));
+        a.download = 'Photobook.html';
         a.click();
       };
     </script>
   </body>
-  </html>\`;
+  </html>`;
 
-  frame.srcdoc = html;
+  frame.srcdoc = htmlContent;
   modal.style.display = "block";
 }
 
