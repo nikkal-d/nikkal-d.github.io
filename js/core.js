@@ -1,167 +1,20 @@
-// js/core.js
-export const App = {
-  canvas: null,
-  pages: [],
-  current: 0,
-  preset: "A4P",
-  zoom: 1,
-  autosaveEnabled: true,
-  autosaveKey: "photobook_draft_v3",
-};
-
-export const PRESETS = {
-  A4P:    { w: 2480, h: 3508, label: "A4 Portrait" },
-  A4L:    { w: 3508, h: 2480, label: "A4 Landscape" },
-  SQUARE: { w: 2400, h: 2400, label: "Square" }
-};
-
-// --- IndexedDB Helpers ---
-async function idbOpen() {
-  return new Promise((res) => {
-    const req = indexedDB.open("photobook_db", 1);
-    req.onupgradeneeded = () => req.result.createObjectStore("drafts");
-    req.onsuccess = () => res(req.result);
-  });
-}
-async function idbSet(key, val) {
-  const db = await idbOpen();
-  db.transaction("drafts", "readwrite").objectStore("drafts").put(val, key);
-}
-async function idbGet(key) {
-  const db = await idbOpen();
-  return new Promise((res) => {
-    const req = db.transaction("drafts").objectStore("drafts").get(key);
-    req.onsuccess = () => res(req.result);
-  });
-}
-
-// --- Συναρτήσεις που κάνει Import το ui.js ---
-export async function initCanvas({ preset = "A4P" } = {}) {
-  App.preset = preset;
-  const el = document.getElementById("canvas");
-  App.canvas = new fabric.Canvas(el, { preserveObjectStacking: true, backgroundColor: "#fff" });
-
-  // Διορθωμένη Διαγραφή
-  window.addEventListener('keydown', (e) => {
-    if ((e.key === "Delete" || e.key === "Backspace") && document.activeElement.tagName !== "INPUT") {
-      App.canvas.getActiveObjects().forEach(obj => App.canvas.remove(obj));
-      App.canvas.discardActiveObject().requestRenderAll();
-      saveDraft();
-    }
-  });
-
-  await loadDraft() || addPage();
-}
-
-export function addPage() {
-  saveCurrentPage();
-  App.pages.push({ json: JSON.stringify({ objects: [] }), preset: App.preset });
-  App.current = App.pages.length - 1;
-  App.canvas.clear();
-  App.canvas.setBackgroundColor("#fff", () => App.canvas.renderAll());
-  saveDraft();
-}
-
-export function duplicatePage() {
-    saveCurrentPage();
-    const currentPage = App.pages[App.current];
-    App.pages.splice(App.current + 1, 0, JSON.parse(JSON.stringify(currentPage)));
-    App.current++;
-    renderCurrentPage();
-    saveDraft();
-}
-
-export function deletePage() {
-    if (App.pages.length <= 1) return;
-    App.pages.splice(App.current, 1);
-    App.current = Math.max(0, App.current - 1);
-    renderCurrentPage();
-    saveDraft();
-}
-
-export function prevPage() { if (App.current > 0) { saveCurrentPage(); App.current--; renderCurrentPage(); } }
-export function nextPage() { if (App.current < App.pages.length - 1) { saveCurrentPage(); App.current++; renderCurrentPage(); } }
-
-export async function renderCurrentPage() {
-  const page = App.pages[App.current];
-  App.canvas.loadFromJSON(page.json, () => App.canvas.renderAll());
-}
-
-export function saveCurrentPage() {
-  if (App.canvas) App.pages[App.current].json = JSON.stringify(App.canvas.toJSON());
-}
-
-export async function saveDraft() {
-  saveCurrentPage();
-  await idbSet(App.autosaveKey, { pages: App.pages, current: App.current, preset: App.preset });
-}
-
-export async function loadDraft() {
-  const data = await idbGet(App.autosaveKey);
-  if (!data) return false;
-  App.pages = data.pages; App.current = data.current; App.preset = data.preset;
-  await renderCurrentPage();
-  return true;
-}
-
-export async function exportPDF() {
-  const { jsPDF } = window.jspdf;
-  const size = PRESETS[App.preset];
-  const pdf = new jsPDF({ orientation: size.w > size.h ? "l" : "p", unit: "px", format: [size.w, size.h] });
-
-  for (let i = 0; i < App.pages.length; i++) {
-    if (i > 0) pdf.addPage([size.w, size.h], size.w > size.h ? "l" : "p");
-    // Εδώ ήταν το λάθος: Χρησιμοποιούμε App.canvas
-    await new Promise(res => {
-      App.canvas.loadFromJSON(App.pages[i].json, () => {
-        App.canvas.renderAll();
-        pdf.addImage(App.canvas.toDataURL({format:'jpeg', quality:0.8}), 'JPEG', 0, 0, size.w, size.h);
-        res();
-      });
-    });
-  }
-  pdf.save("photobook.pdf");
-  renderCurrentPage();
-}
-
-// Λείπουν οι βοηθητικές που καλεί το ui.js
-export function addText(txt) { 
-    const t = new fabric.IText(txt, { left: 100, top: 100 }); 
-    App.canvas.add(t); 
-    saveDraft(); 
-}
-export function deleteSelected() { 
-    App.canvas.getActiveObjects().forEach(obj => App.canvas.remove(obj)); 
-    App.canvas.discardActiveObject().requestRenderAll(); 
-    saveDraft(); 
-}
-
 export async function previewFlipbook() {
   saveCurrentPage();
-  
-  // Δημιουργούμε προσωρινά thumbnails για όλες τις σελίδες
   const images = [];
   const size = PRESETS[App.preset];
 
-  for (const page of App.pages) {
+  // Δημιουργία εικόνων
+  for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
-      App.canvas.loadFromJSON(page.json, () => {
+      App.canvas.loadFromJSON(App.pages[i].json, () => {
         App.canvas.renderAll();
-        images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.8 }));
+        images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.9 }));
         resolve();
       });
     });
   }
+  await renderCurrentPage();
 
-  // Επιστροφή στην κανονική προβολή
-  renderCurrentPage();
-
-  // Ανοίγουμε το παράθυρο (modal)
-  openFlipbookModal(images, size);
-}
-
-// Βοηθητική συνάρτηση για το UI (μπορείς να την βάλεις στο τέλος του core.js ή στο ui.js)
-function openFlipbookModal(images, size) {
   const modal = document.getElementById("flipPreviewModal");
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
@@ -171,41 +24,36 @@ function openFlipbookModal(images, size) {
   <html>
   <head>
     <style>
-      body { margin:0; background:#222; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; }
-      .toolbar { 
-        width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:20px; 
-        position:sticky; top:0; z-index:1000;
-      }
-      .btn-download { 
-        background:#27ae60; color:white; border:none; padding:10px 20px; 
-        cursor:pointer; font-weight:bold; border-radius:5px;
-      }
-      .book { 
-        margin: 20px; display: flex; flex-direction: column; gap: 10px; 
-        width: 80%; max-width: 800px;
-      }
-      .page-preview { 
-        background: white; width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        page-break-after: always;
-      }
-      .page-preview img { width: 100%; display: block; }
-      
-      /* Ρυθμίσεις για το PDF */
+      /* ΚΡΥΒΕΙ ΗΜΕΡΟΜΗΝΙΕΣ ΚΑΙ LINKS ΣΤΗΝ ΕΚΤΥΠΩΣΗ */
+      @page { size: auto; margin: 0mm; } 
       @media print {
-        body { background: white; }
-        .toolbar { display: none; }
-        .book { margin: 0; width: 100%; max-width: none; }
-        .page-preview { box-shadow: none; }
+        body { margin: 0; background: white; }
+        .no-print { display: none !important; }
+        .page-img { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
       }
+
+      body { margin:0; background:#1a1a1a; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
+      .nav-bar { 
+        width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; 
+        position:sticky; top:0; z-index:100; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      }
+      .btn { padding:12px 25px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size:14px; transition: 0.2s; }
+      .btn-pdf { background:#27ae60; color:white; }
+      .btn-pdf:hover { background:#2ecc71; }
+      .btn-close { background:#e74c3c; color:white; }
+      
+      .container { margin: 20px; width: 90%; max-width: 800px; display: flex; flex-direction: column; gap: 0; }
+      .page-img { background:white; width:100%; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+      .page-img img { width:100%; display:block; }
     </style>
   </head>
   <body>
-    <div class="toolbar">
-      <button class="btn-download" onclick="window.print()">📥 Λήψη ως PDF (Print to PDF)</button>
-      <button style="background:#e74c3c; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:5px;" onclick="window.parent.closeFlipbookPreview()">Κλείσιμο</button>
+    <div class="nav-bar no-print">
+      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF (Χωρίς Link/Ημερομηνία)</button>
+      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Κλείσιμο</button>
     </div>
-    <div class="book">
-      ${images.map(src => `<div class="page-preview"><img src="${src}"></div>`).join('')}
+    <div class="container">
+      ${images.map(src => `<div class="page-img"><img src="${src}"></div>`).join('')}
     </div>
   </body>
   </html>`;
@@ -213,3 +61,6 @@ function openFlipbookModal(images, size) {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
+
+// export την ίδια συνάρτηση και ως exportFlipbook αν το χρησιμοποιείς έτσι στο ui.js
+export const exportFlipbook = previewFlipbook;
