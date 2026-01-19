@@ -223,10 +223,6 @@ export async function renderCurrentPage() {
   });
 }
 
-  // ensure background
-  const bg = (page.json && (page.json.backgroundColor || page.json.background)) || "#ffffff";
-  c.setBackgroundColor(bg, c.renderAll.bind(c));
-}
 
 export function saveCurrentPage() {
   const c = App.canvas;
