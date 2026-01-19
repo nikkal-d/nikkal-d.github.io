@@ -867,25 +867,23 @@ export async function exportFlipbook() {
       </div>`;
   }
 
-  const html = `
+ const html = `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
+    <title>My Photobook Flipbook</title>
     <style>
       body { margin:0; background:#1a1a1a; color:white; font-family:sans-serif; overflow:hidden; }
       .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
-      .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; }
-      
+      .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:13px; }
+      .btn-pdf { background:#27ae60; }
+      .btn-save { background:#3498db; }
+      .btn-close { background:#e74c3c; }
+
       .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+      .book { position:relative; width:40vh; height:60vh; transform-style:preserve-3d; transition:transform 0.5s ease; }
       
-      /* Το βιβλίο */
-      .book { 
-        position:relative; width:40vh; height:60vh; 
-        transform-style:preserve-3d; transition:transform 0.5s ease;
-      }
-      
-      /* Το κάθε φύλλο (δεξιά πλευρά αρχικά) */
       .leaf { 
         position:absolute; width:100%; height:100%; top:0; left:0;
         transform-origin: left center; transform-style: preserve-3d;
@@ -900,21 +898,29 @@ export async function exportFlipbook() {
 
       .front { z-index: 2; }
       .back { transform: rotateY(180deg); z-index: 1; }
-
       .page img { width:100%; height:100%; object-fit:contain; }
-      
       .leaf.flipped { transform: rotateY(-180deg); }
 
       .arrow { 
         position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); 
         color:white; border:none; width:60px; height:60px; border-radius:50%; font-size:30px; cursor:pointer; z-index:2000;
       }
+      .arrow:hover { background:rgba(255,255,255,0.3); }
+
+      @media print {
+        .nav, .arrow, .viewport { display:none !important; }
+        .print-only { display:block !important; }
+        .print-page { page-break-after:always; }
+        .print-page img { width:100%; }
+      }
+      .print-only { display:none; }
     </style>
   </head>
   <body>
     <div class="nav">
-      <button class="btn" style="background:#27ae60" onclick="window.print()">📥 PDF</button>
-      <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">Close</button>
+      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn btn-save" id="downloadHtml">💾 Save as HTML file</button>
+      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
     </div>
 
     <button class="arrow" style="left:30px" onclick="prevPage()">❮</button>
@@ -924,6 +930,10 @@ export async function exportFlipbook() {
       <div class="book" id="book">
         ${leafHtml}
       </div>
+    </div>
+
+    <div class="print-only">
+      ${images.map(src => `<div class="print-page"><img src="${src}"></div>`).join('')}
     </div>
 
     <script>
@@ -948,13 +958,21 @@ export async function exportFlipbook() {
 
       function updateView() {
         const book = document.getElementById('book');
-        // Αν έχουμε ανοίξει το εξώφυλλο, μετακινούμε το βιβλίο δεξιά για να κεντράρει η ράχη
         book.style.transform = currentLeaf > 0 ? "translateX(50%)" : "translateX(0)";
       }
+
+      // ΛΕΙΤΟΥΡΓΙΑ ΚΑΤΕΒΑΣΜΑΤΟΣ
+      document.getElementById('downloadHtml').onclick = () => {
+        const fullHtml = document.documentElement.outerHTML;
+        const blob = new Blob([fullHtml], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'Photobook_Spread.html';
+        a.click();
+      };
     </script>
   </body>
   </html>`;
-
   frame.srcdoc = html;
   modal.style.display = "block";
 }
