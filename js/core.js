@@ -829,7 +829,7 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Λήψη όλων των σελίδων ως εικόνες
+  // 1. Συλλογή εικόνων από όλες τις σελίδες
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -850,14 +850,16 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // Κατασκευή των "φύλλων" (Leafs). Κάθε φύλλο έχει Front και Back πλευρά.
-// --- ΔΙΟΡΘΩΜΕΝΗ ΛΟΓΙΚΗ ΦΥΛΛΩΝ ---
+  // 2. Κατασκευή των φύλλων (Leafs) - Διόρθωση επανάληψης σελίδας
   let leafHtml = "";
+  // Ομαδοποίηση ανά δύο: i=0 (εξώφυλλο/πίσω), i=2 (σελ3/σελ4) κλπ.
   for (let i = 0; i < images.length; i += 2) {
     const zIndex = Math.ceil((images.length - i) / 2);
-    // Ελέγχουμε αν υπάρχει επόμενη εικόνα, αλλιώς βάζουμε κενό (λευκό)
     const frontImg = images[i];
-    const backImg = images[i + 1] ? `<img src="${images[i+1]}">` : `<div style="background:white;height:100%;width:100%;"></div>`;
+    // Αν δεν υπάρχει επόμενη εικόνα (μονός αριθμός), βάλε λευκό κενό
+    const backImg = (i + 1 < images.length) 
+      ? `<img src="${images[i+1]}">` 
+      : `<div style="background:white;width:100%;height:100%;"></div>`;
 
     leafHtml += `
       <div class="leaf" style="z-index: ${zIndex}">
@@ -878,14 +880,14 @@ export async function exportFlipbook() {
     <style>
       body { margin:0; background:#1a1a1a; color:white; font-family:sans-serif; overflow:hidden; }
       .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
-      .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:13px; }
+      .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:13px; text-decoration:none; }
       
       .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:3000px; }
       
-      /* ΔΙΟΡΘΩΜΕΝΟ ΜΕΓΕΘΟΣ: Πιο οριζόντιο και μεγάλο */
+      /* ΜΕΓΕΘΟΣ: Οριζόντιο και Μεγάλο */
       .book { 
         position:relative; 
-        width:60vh; height:45vh; /* Αλλαγή σε Landscape αναλογία */
+        width:70vh; height:50vh; 
         transform-style:preserve-3d; transition:transform 0.6s ease;
       }
       
@@ -898,7 +900,7 @@ export async function exportFlipbook() {
       .page { 
         position:absolute; width:100%; height:100%; 
         backface-visibility:hidden; background:white;
-        box-shadow: inset 3px 0 10px rgba(0,0,0,0.1), 5px 5px 20px rgba(0,0,0,0.4);
+        box-shadow: inset 3px 0 10px rgba(0,0,0,0.1), 5px 5px 25px rgba(0,0,0,0.5);
         display:flex; align-items:center; justify-content:center;
       }
 
@@ -910,7 +912,8 @@ export async function exportFlipbook() {
 
       .arrow { 
         position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); 
-        color:white; border:none; width:70px; height:70px; border-radius:50%; font-size:40px; cursor:pointer; z-index:2000;
+        color:white; border:none; width:80px; height:80px; border-radius:50%; font-size:45px; cursor:pointer; z-index:2000;
+        transition: 0.3s;
       }
       .arrow:hover { background:rgba(255,255,255,0.3); }
 
@@ -965,6 +968,7 @@ export async function exportFlipbook() {
 
       function updateView() {
         const book = document.getElementById('book');
+        // Κεντράρισμα της "ράχης" όταν το βιβλίο είναι ανοιχτό
         book.style.transform = currentLeaf > 0 ? "translateX(50%)" : "translateX(0)";
       }
 
@@ -978,6 +982,7 @@ export async function exportFlipbook() {
     </script>
   </body>
   </html>`;
+
   frame.srcdoc = html;
   modal.style.display = "block";
 }
