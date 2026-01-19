@@ -832,35 +832,23 @@ document.body.onclick = () => {
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
-
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
-      // Φόρτωση της σελίδας στον καμβά
       App.canvas.loadFromJSON(App.pages[i].json, () => {
-        // Επιβολή Render
         App.canvas.renderAll();
-        
-        // Περιμένουμε ένα frame για να σιγουρευτούμε ότι η εικόνα "ζωγραφίστηκε" στον καμβά
+        // Δίνουμε χρόνο στον browser να κάνει render την εικόνα
         requestAnimationFrame(() => {
           App.canvas.renderAll();
-          images.push(App.canvas.toDataURL({ 
-            format: 'jpeg', 
-            quality: 1.0, 
-            multiplier: 1.0 
-          }));
+          images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 1.0, multiplier: 1.0 }));
           resolve();
         });
       });
     });
   }
-  
-  // Επιστροφή στην τρέχουσα σελίδα για να μην μείνει ο καμβάς στην τελευταία του Export
   await renderCurrentPage();
-
   const modal = document.getElementById("flipPreviewModal");
   const frame = document.getElementById("flipPreviewFrame");
-  if (!modal || !frame) return;
-
+  if(modal && frame) {
   const html = `
   <!doctype html>
   <html>
@@ -927,6 +915,32 @@ window.closeFlipbookPreview = closeFlipbookPreview;
 
 // --- ΠΡΟΣΘΗΚΗ ΤΩΝ ΣΥΝΑΡΤΗΣΕΩΝ ΠΟΥ ΛΕΙΠΟΥΝ ---
 
+// --- ΕΠΑΝΑΦΟΡΑ ΣΥΝΑΡΤΗΣΕΩΝ ΠΟΥ ΛΕΙΠΟΥΝ (Autosave & Draft) ---
+
+let autosaveTimeout = null;
+export function scheduleAutosave(immediate = false) {
+  if (!App.autosaveEnabled) return;
+  if (autosaveTimeout) clearTimeout(autosaveTimeout);
+  autosaveTimeout = setTimeout(() => saveDraft(), immediate ? 0 : 1000);
+}
+
+export async function saveDraft() {
+  try {
+    saveCurrentPage();
+    const payload = {
+      v: 1,
+      preset: App.preset,
+      current: App.current,
+      pages: App.pages,
+      ts: Date.now(),
+    };
+    await idbSet(App.autosaveKey, payload);
+    console.log("Autosave complete");
+  } catch (e) {
+    console.warn("Draft save failed", e);
+  }
+}
+
 export async function loadDraft() {
   try {
     const payload = await idbGet(App.autosaveKey);
@@ -935,22 +949,20 @@ export async function loadDraft() {
     App.current = Math.max(0, Math.min(payload.current || 0, App.pages.length - 1));
     App.preset = payload.preset || App.preset;
     await renderCurrentPage();
-    if (typeof refreshThumbnails === "function") refreshThumbnails();
-    if (typeof updatePageInfoUI === "function") updatePageInfoUI();
+    if (window.refreshThumbnails) refreshThumbnails();
     return true;
   } catch (e) {
-    console.warn("Draft load failed", e);
     return false;
   }
 }
 
 export async function clearDraft() {
-  if (confirm("Θέλετε σίγουρα να διαγράψετε το προσχέδιο;")) {
+  if (confirm("Θέλετε σίγουρα να καθαρίσετε το προσχέδιο;")) {
     await idbDel(App.autosaveKey);
-    location.reload(); 
+    location.reload();
   }
 }
 
 export function exportLink() {
-  alert("Η λειτουργία Link θα είναι σύντομα διαθέσιμη.");
+  alert("Η λειτουργία Link θα προστεθεί σύντομα.");
 }
