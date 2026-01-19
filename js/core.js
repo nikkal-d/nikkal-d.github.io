@@ -906,141 +906,83 @@ document.body.onclick = () => {
 
 
 
-export async function exportLink() {
-  // A "temporary share" link (objectURL) – works on the same device/session.
-  const url = await exportFlipbook({ direction: "horizontal" });
-  await navigator.clipboard.writeText(url);
-  alert("Έγινε αντιγραφή link (προσωρινό / τοπικό). Για πραγματικό share, ανέβασε το flipbook.html στο hosting.");
-}
+// --- Η ΜΟΝΑΔΙΚΗ ΚΑΙ ΔΙΟΡΘΩΜΕΝΗ EXPORT FLIPBOOK ---
+export async function exportFlipbook() {
+  saveCurrentPage();
+  const images = [];
 
-function buildFlipbookHTML(pageDataURLs, direction) {
-  const axis = (direction === "vertical") ? "Y" : "X";
-  const rotate = (direction === "vertical") ? "rotateY(180deg)" : "rotateY(180deg)";
-  // simple book-style flip with CSS 3D
-  const pagesJson = JSON.stringify(pageDataURLs);
-  return `<!doctype html>
-<html><head><meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Flipbook</title>
-<style>
-  html,body{margin:0;height:100%;background:#0b0b0f;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  .wrap{height:100%;display:flex;align-items:center;justify-content:center;gap:16px;padding:16px}
-  .book{width:min(900px,92vw);aspect-ratio: 3/2;position:relative;perspective:1800px}
-  .page{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 650ms cubic-bezier(.2,.7,.1,1)}
-  .page img{width:100%;height:100%;object-fit:contain;background:#fff;border-radius:12px}
-  .page.flipped{transform: rotate${axis}(180deg)}
-  .controls{display:flex;flex-direction:column;gap:10px}
-  button{background:#1f2937;color:#fff;border:1px solid rgba(255,255,255,.14);padding:10px 12px;border-radius:12px;cursor:pointer}
-</style>
-</head><body>
-<div class="wrap">
-  <div class="controls">
-    <button id="prev">← Prev</button>
-    <button id="next">Next →</button>
-    <div id="info" style="opacity:.85"></div>
-  </div>
-  <div class="book" id="book"></div>
-</div>
-<script>
-  const PAGES = ${pagesJson};
-  const book = document.getElementById('book');
-  let idx = 0;
-
-  function render(){
-    book.innerHTML = '';
-    // stack pages so that current is top
-    for(let i=PAGES.length-1;i>=0;i--){
-      const d = document.createElement('div');
-      d.className = 'page' + (i < idx ? ' flipped' : '');
-      const img = document.createElement('img');
-      img.src = PAGES[i];
-      d.appendChild(img);
-      book.appendChild(d);
-    }
-    document.getElementById('info').textContent = (idx+1) + ' / ' + PAGES.length;
+  for (let i = 0; i < App.pages.length; i++) {
+    await new Promise((resolve) => {
+      // Φόρτωση της σελίδας στον καμβά
+      App.canvas.loadFromJSON(App.pages[i].json, () => {
+        // Διπλό render για να σιγουρευτούμε ότι η εικόνα εμφανίστηκε
+        App.canvas.renderAll();
+        
+        // Μικρή αναμονή για τον browser να προλάβει το σχεδιασμό
+        requestAnimationFrame(() => {
+          App.canvas.renderAll();
+          images.push(App.canvas.toDataURL({ 
+            format: 'jpeg', 
+            quality: 1.0, 
+            multiplier: 1.0 
+          }));
+          resolve();
+        });
+      });
+    });
   }
-  function next(){ if(idx < PAGES.length-1){ idx++; render(); } }
-  function prev(){ if(idx > 0){ idx--; render(); } }
-  document.getElementById('next').onclick = next;
-  document.getElementById('prev').onclick = prev;
-  document.addEventListener('keydown', (e)=>{ if(e.key==='ArrowRight')next(); if(e.key==='ArrowLeft')prev(); });
-  render();
-</script>
-</body></html>`;
+  
+  await renderCurrentPage();
+
+  const modal = document.getElementById("flipPreviewModal");
+  const frame = document.getElementById("flipPreviewFrame");
+  if (!modal || !frame) return;
+
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <style>
+      @page { size: auto; margin: 0mm; } 
+      @media print {
+        body { background: white !important; }
+        .no-print { display: none !important; }
+        .p-box { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
+      }
+      body { margin:0; background:#111; display:flex; flex-direction:column; align-items:center; font-family:sans-serif; }
+      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
+      .btn { padding:12px 25px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; font-size:14px; }
+      .btn-pdf { background:#27ae60; }
+      .btn-close { background:#e74c3c; }
+      .container { margin: 20px; width: 95%; max-width: 1000px; }
+      .p-box { background:white; width:100%; margin-bottom: 30px; box-shadow: 0 10px 50px rgba(0,0,0,0.8); }
+      .p-box img { width:100%; height:auto; display:block; }
+    </style>
+  </head>
+  <body>
+    <div class="nav no-print">
+      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
+    </div>
+    <div class="container">
+      ${images.map(src => `<div class="p-box"><img src="${src}"></div>`).join('')}
+    </div>
+  </body>
+  </html>`;
+
+  frame.srcdoc = html;
+  modal.style.display = "block";
 }
 
-function downloadDataURL(dataURL, filename) {
-  const a = document.createElement("a");
-  a.href = dataURL;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
+// --- ΣΥΝΑΡΤΗΣΕΙΣ ΠΟΥ ΧΡΕΙΑΖΕΤΑΙ ΤΟ UI.JS ΓΙΑ ΝΑ ΜΗΝ ΒΓΑΖΕΙ ERROR ---
 
-// ---------- autosave ----------
-let autosaveTimer = null;
+export const previewFlipbook = exportFlipbook;
 
-function scheduleAutosave(immediate = false) {
-  if (!App.autosaveEnabled) return;
-  clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(() => saveDraft(), immediate ? 0 : 600);
+export function closeFlipbookPreview() {
+  const modal = document.getElementById("flipPreviewModal");
+  if (modal) modal.style.display = "none";
 }
+// Την κάνουμε global για το iframe
+window.closeFlipbookPreview = closeFlipbookPreview;
 
-export async function saveDraft() {
-  try {
-    saveCurrentPage();
-    const payload = {
-      v: 1,
-      preset: App.preset,
-      current: App.current,
-      pages: App.pages,
-      ts: Date.now(),
-    };
-    await idbSet(App.autosaveKey, payload);
-  } catch (e) {
-    console.warn("Draft save failed", e);
-    App.autosaveEnabled = false;
-    console.warn("Draft too large or blocked, autosave disabled.");
-  }
-}
-
-export async function loadDraft() {
-  try {
-    const payload = await idbGet(App.autosaveKey);
-    if (!payload || !payload.pages || !payload.pages.length) return false;
-    App.pages = payload.pages;
-    App.current = clamp(payload.current || 0, 0, App.pages.length - 1);
-    App.preset = payload.preset || App.preset;
-    await renderCurrentPage();
-    refreshThumbnails();
-    updatePageInfoUI();
-    return true;
-  } catch (e) {
-    console.warn("Draft load failed", e);
-    return false;
-  }
-}
-
-export async function clearDraft() {
-  await idbDel(App.autosaveKey);
-  alert("Draft cleared.");
-}
-
-// ---------- util ----------
-function fileToDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-}
-function dataURLToImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
-  });
-}
+export function exportLink() { console.log("Link export not active"); }
