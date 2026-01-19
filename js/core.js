@@ -824,13 +824,9 @@ document.body.onclick = () => {
 
 
 // --- ΜΟΝΗ ΚΑΙ ΔΙΟΡΘΩΜΕΝΗ EXPORT FLIPBOOK ---
-// --- Η ΟΛΟΚΛΗΡΩΜΕΝΗ ΛΥΣΗ ΓΙΑ EXPORT & PREVIEW ---
-
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
-
-  // Απενεργοποίηση autosave για να μην κολλάει
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
@@ -838,7 +834,7 @@ export async function exportFlipbook() {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
         App.canvas.renderAll();
-        // Περιμένουμε λίγο για να φορτώσουν οι εικόνες σε κάθε σελίδα
+        // Αναμονή 250ms για να προλάβουν οι μεγάλες εικόνες να εμφανιστούν
         setTimeout(() => {
           App.canvas.renderAll();
           images.push(App.canvas.toDataURL({ 
@@ -847,7 +843,7 @@ export async function exportFlipbook() {
             multiplier: 1.0 
           }));
           resolve();
-        }, 200); 
+        }, 250);
       });
     });
   }
@@ -859,33 +855,26 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // Δημιουργούμε το περιεχόμενο που έχει ΚΑΙ Download ΚΑΙ Flipbook Preview
   const html = `
   <!doctype html>
   <html>
   <head>
     <style>
       @page { size: auto; margin: 0mm; } 
-      @media print { .no-print { display: none !important; } body { background:white; } .p-box { box-shadow:none; margin:0; page-break-after:always; } }
+      @media print { .no-print { display: none !important; } body { background:white; } }
       body { margin:0; background:#111; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
       .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
       .btn { padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; }
       .btn-pdf { background:#27ae60; }
       .btn-close { background:#e74c3c; }
-      .btn-view { background:#3498db; }
-      .container { margin: 20px; width: 90%; max-width: 800px; display: block; }
+      .container { margin: 20px; width: 90%; max-width: 800px; }
       .p-box { background:white; margin-bottom: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
       .p-box img { width:100%; height:auto; display:block; }
-      
-      /* Simple Flip Preview Mode */
-      .flip-mode .container { display: flex; overflow-x: auto; gap: 10px; padding: 20px; max-width: 100%; }
-      .flip-mode .p-box { min-width: 400px; margin: 0; }
     </style>
   </head>
   <body>
     <div class="nav no-print">
       <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
-      <button class="btn btn-view" onclick="document.body.classList.toggle('flip-mode')">↔️ Toggle View</button>
       <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
     </div>
     <div class="container">
@@ -898,16 +887,14 @@ export async function exportFlipbook() {
   modal.style.display = "block";
 }
 
-
+// Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
+export const previewFlipbook = exportFlipbook;
 
 export function closeFlipbookPreview() {
   const modal = document.getElementById("flipPreviewModal");
   if (modal) modal.style.display = "none";
 }
 window.closeFlipbookPreview = closeFlipbookPreview;
-
-
-
 
 export async function saveDraft() {
   try {
@@ -929,12 +916,17 @@ export async function loadDraft() {
   } catch (e) { return false; }
 }
 
+let autosaveTimeout = null;
+export function scheduleAutosave(immediate = false) {
+  if (!App.autosaveEnabled) return;
+  if (autosaveTimeout) clearTimeout(autosaveTimeout);
+  autosaveTimeout = setTimeout(() => saveDraft(), immediate ? 0 : 1000);
+}
+
 export async function clearDraft() {
   if (confirm("Διαγραφή προσχεδίου;")) {
     await idbDel(App.autosaveKey);
     location.reload();
   }
 }
-
-export const previewFlipbook = exportFlipbook;
 export function exportLink() { alert("Coming soon"); }
