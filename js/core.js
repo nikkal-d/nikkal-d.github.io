@@ -830,20 +830,16 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
+  // Λήψη εικόνων από όλες τις σελίδες
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
         App.canvas.renderAll();
-        // Αναμονή 250ms για να προλάβουν οι μεγάλες εικόνες να εμφανιστούν
         setTimeout(() => {
           App.canvas.renderAll();
-          images.push(App.canvas.toDataURL({ 
-            format: 'jpeg', 
-            quality: 0.9, 
-            multiplier: 1.0 
-          }));
+          images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.0 }));
           resolve();
-        }, 250);
+        }, 200);
       });
     });
   }
@@ -855,77 +851,114 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
- const html = `
+  const html = `
   <!doctype html>
   <html>
   <head>
+    <meta charset="utf-8">
+    <title>My Photobook Flipbook</title>
     <style>
-      @page { size: auto; margin: 0mm; } 
-      @media print { .no-print { display: none !important; } body { background:white; } }
+      @page { size: auto; margin: 0mm; }
+      @media print { .no-print { display: none !important; } body { background:white; } .print-page { display:block; page-break-after:always; } .print-page img { width:100%; } }
       
-      body { 
-        margin:0; background:#111; color:white; font-family:sans-serif; 
-        display:flex; flex-direction:column; align-items:center; overflow-x:hidden;
-      }
-      .nav { 
-        width:100%; background:#000; padding:15px; display:flex; justify-content:center; 
-        gap:20px; position:sticky; top:0; z-index:1000; 
-      }
-      .btn { padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; }
+      body { margin:0; background:#111; color:white; font-family:sans-serif; overflow:hidden; }
+      .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
+      
+      .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:13px; }
       .btn-pdf { background:#27ae60; }
+      .btn-save { background:#3498db; }
       .btn-close { background:#e74c3c; }
 
-      /* Flipbook Style */
-      .stage { 
-        perspective: 2000px; padding: 50px; 
-        display: flex; justify-content: center; align-items: center; min-height: 80vh;
-      }
-      .book { 
-        position: relative; width: 500px; height: 700px; 
-        transform-style: preserve-3d; transition: transform 0.5s;
-      }
-      .page { 
-        position: absolute; inset: 0; background: white; 
-        transform-origin: left center; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        backface-visibility: hidden; cursor: pointer;
-        box-shadow: 0 5px 25px rgba(0,0,0,0.5);
-      }
-      .page img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-      .page.flipped { transform: rotateY(-180deg); }
+      .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2000px; }
       
-      .hint { margin-top: 10px; color: #888; font-size: 0.9em; }
+      .book { position:relative; width:60vh; height:85vh; transform-style:preserve-3d; }
+      
+      .page { 
+        position:absolute; inset:0; background:white; transform-origin:left center; 
+        transition:transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+        backface-visibility:hidden; box-shadow:0 0 20px rgba(0,0,0,0.5);
+        display:flex; justify-content:center; align-items:center;
+      }
+      .page img { width:100%; height:100%; object-fit:contain; }
+      .page.flipped { transform:rotateY(-180deg); }
+
+      /* Βελάκια */
+      .arrow { 
+        position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); 
+        color:white; border:none; width:60px; height:60px; border-radius:50%; 
+        font-size:30px; cursor:pointer; z-index:2000; transition:0.3s;
+      }
+      .arrow:hover { background:rgba(255,255,255,0.3); }
+      .arrow-left { left:30px; }
+      .arrow-right { right:30px; }
+
+      .print-page { display:none; }
     </style>
   </head>
   <body>
     <div class="nav no-print">
-      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn btn-pdf" onclick="window.print()">📥 PDF</button>
+      <button class="btn btn-save" id="downloadHtml">💾 Save as HTML file</button>
       <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
     </div>
-    
-    <div class="hint no-print">Κάντε κλικ στις σελίδες για να τις γυρίσετε</div>
-    
-    <div class="stage no-print">
-      <div class="book">
-        ${images.map((src, i) => `
-          <div class="page" style="z-index: ${images.length - i};" onclick="this.classList.toggle('flipped')">
-            <img src="${src}">
+
+    <button class="arrow arrow-left no-print" onclick="prevPage()">❮</button>
+    <button class="arrow arrow-right no-print" onclick="nextPage()">❯</button>
+
+    <div class="viewport no-print">
+      <div class="book" id="book">
+        ${images.map((src, i) => \`
+          <div class="page" style="z-index: \${images.length - i};">
+            <img src="\${src}">
           </div>
-        `).reverse().join('')} 
+        \`).reverse().join('')}
       </div>
     </div>
 
-    <div class="print-only" style="display:none;">
-       ${images.map(src => `<div style="page-break-after:always;"><img src="${src}" style="width:100%;"></div>`).join('')}
+    <div class="no-print" style="position:fixed; bottom:20px; width:100%; text-align:center; color:#666;">
+      Σελίδα: <span id="pageIdx">1</span> / ${images.length}
     </div>
 
-    <style>
-      @media print {
-        .stage, .hint { display:none !important; }
-        .print-only { display:block !important; }
+    <div class="print-only">
+      ${images.map(src => \`<div class="print-page"><img src="\${src}"></div>\`).join('')}
+    </div>
+
+    <script>
+      let current = 0;
+      const pages = document.querySelectorAll('.page');
+      const total = pages.length;
+
+      function updateUI() {
+        document.getElementById('pageIdx').innerText = current + 1;
       }
-    </style>
+
+      function nextPage() {
+        if (current < total) {
+          pages[total - 1 - current].classList.add('flipped');
+          current++;
+          updateUI();
+        }
+      }
+
+      function prevPage() {
+        if (current > 0) {
+          current--;
+          pages[total - 1 - current].classList.remove('flipped');
+          updateUI();
+        }
+      }
+
+      document.getElementById('downloadHtml').onclick = () => {
+        const fullHtml = document.documentElement.outerHTML;
+        const blob = new Blob([fullHtml], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'Photobook_Flipbook.html';
+        a.click();
+      };
+    </script>
   </body>
-  </html>`;
+  </html>\`;
 
   frame.srcdoc = html;
   modal.style.display = "block";
