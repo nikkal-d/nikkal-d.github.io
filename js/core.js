@@ -759,16 +759,17 @@ async function renderPageToDataURL(page) {
 
 
 // --- ΜΟΝΗ ΚΑΙ ΔΙΟΡΘΩΜΕΝΗ EXPORT FLIPBOOK ---
+// --- ΜΟΝΗ ΚΑΙ ΚΑΘΑΡΗ EXPORT FLIPBOOK ---
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
 
-  // 1. Παραγωγή εικόνων υψηλής ανάλυσης
+  // Δημιουργία μεγάλων εικόνων
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
         App.canvas.renderAll();
-        // Multiplier 1.0 για να βγαίνουν μεγάλες και καθαρές στην εκτύπωση
+        // multiplier 1.0 για να είναι πεντακάθαρες
         images.push(App.canvas.toDataURL({ 
           format: 'jpeg', 
           quality: 1.0, 
@@ -790,37 +791,20 @@ export async function exportFlipbook() {
   <html>
   <head>
     <style>
-      /* Αφαίρεση Header/Footer (Links & Ημερομηνία) */
+      /* Αφαίρεση Link/Ημερομηνίας */
       @page { size: auto; margin: 0mm; } 
-      
       @media print {
         body { background: white !important; }
         .no-print { display: none !important; }
-        .page-box { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
-        .container { width: 100% !important; max-width: none !important; margin: 0 !important; }
+        .p-box { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
       }
-
-      body { 
-        margin:0; background:#111; color:white; font-family:sans-serif;
-        display:flex; flex-direction:column; align-items:center; 
-      }
-      .nav { 
-        width:100%; background:#000; padding:15px; display:flex; justify-content:center; 
-        gap:20px; position:sticky; top:0; z-index:100;
-      }
-      .btn { 
-        padding:12px 25px; border:none; border-radius:5px; cursor:pointer; 
-        font-weight:bold; font-size:14px; 
-      }
-      .btn-pdf { background:#27ae60; color:white; }
-      .btn-close { background:#e74c3c; color:white; }
-      
-      .container { margin: 20px; width: 95%; max-width: 1000px; }
-      .page-box { 
-        background:white; width:100%; margin-bottom: 30px; 
-        box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
-      }
-      .page-box img { width:100%; height:auto; display:block; }
+      body { margin:0; background:#111; display:flex; flex-direction:column; align-items:center; font-family:sans-serif; }
+      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
+      .btn { padding:12px 25px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; }
+      .btn-pdf { background:#27ae60; }
+      .btn-close { background:#e74c3c; }
+      .p-box { background:white; width:95%; max-width:1000px; margin: 20px 0; box-shadow: 0 10px 50px rgba(0,0,0,0.5); }
+      .p-box img { width:100%; height:auto; display:block; }
     </style>
   </head>
   <body>
@@ -828,14 +812,20 @@ export async function exportFlipbook() {
       <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
       <button class="btn btn-close" onclick="window.parent.document.getElementById('flipPreviewModal').style.display='none'">Κλείσιμο</button>
     </div>
-    <div class="container">
-      ${images.map(src => `<div class="page-box"><img src="${src}"></div>`).join('')}
+    <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
+      ${images.map(src => `<div class="p-box"><img src="${src}"></div>`).join('')}
     </div>
   </body>
   </html>`;
 
   frame.srcdoc = html;
   modal.style.display = "block";
+}
+
+// Προσθέτουμε αυτό ΜΙΑ ΦΟΡΑ στο τέλος για να μη χτυπάει το ui.js
+export function closeFlipbookPreview() {
+  const modal = document.getElementById("flipPreviewModal");
+  if (modal) modal.style.display = "none";
 }
 
 // Χρειάζεται για να μη χτυπάει το ui.js που κάνει import το previewFlipbook
