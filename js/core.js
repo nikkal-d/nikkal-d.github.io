@@ -829,7 +829,7 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Συλλογή εικόνων
+  // 1. Καθαρή λήψη όλων των σελίδων
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -850,14 +850,12 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Κατασκευή των φύλλων (Leafs) για το Flipbook
+  // 2. Σωστή ομαδοποίηση για το Flipbook (ΜΟΝΟ ΓΙΑ ΤΗΝ ΟΘΟΝΗ)
   let leafHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const zIndex = Math.ceil((images.length - i) / 2);
     const frontImg = images[i];
-    // Χρήση τοπικής σταθεράς για να μην μπερδεύεται το loop
-    const backImgIdx = i + 1;
-    const hasBackPage = backImgIdx < images.length;
+    const backImg = images[i + 1]; // Εδώ παίρνουμε την επόμενη
 
     leafHtml += `
       <div class="leaf" style="z-index: ${zIndex}">
@@ -865,10 +863,18 @@ export async function exportFlipbook() {
           <img src="${frontImg}">
         </div>
         <div class="page back">
-          ${hasBackPage ? `<img src="${images[backImgIdx]}">` : `<div style="background:white;width:100%;height:100%;"></div>`}
+          ${backImg ? `<img src="${backImg}">` : `<div style="background:white;width:100%;height:100%;"></div>`}
         </div>
       </div>`;
   }
+
+  // 3. Καθαρό HTML για την εκτύπωση (ΜΟΝΟ ΓΙΑ ΤΟ PDF)
+  // Εδώ βάζουμε τις εικόνες ΜΙΑ-ΜΙΑ χωρίς καμία άλλη επεξεργασία
+  const printHtml = images.map(src => `
+    <div class="print-section">
+      <img src="${src}">
+    </div>
+  `).join('');
 
   const html = `
   <!doctype html>
@@ -876,32 +882,35 @@ export async function exportFlipbook() {
   <head>
     <meta charset="utf-8">
     <style>
-      /* Reset για καθαρή εκτύπωση */
-      @page { size: auto; margin: 0; }
-      body { margin:0; background:#1a1a1a; color:white; font-family:sans-serif; overflow-x:hidden; }
-      
+      /* Ρυθμίσεις Εκτύπωσης - Διορθώνουν τα κενά στο PDF */
+      @page { size: A4 landscape; margin: 0; }
+      @media print {
+        body { background: white !important; margin: 0 !important; }
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        .print-section { 
+          display: block !important; 
+          page-break-after: always !important; 
+          width: 100vw; height: 100vh;
+          overflow: hidden;
+        }
+        .print-section img { width: 100%; height: 100%; object-fit: contain; }
+      }
+
+      /* Ρυθμίσεις Οθόνης (Flipbook) */
+      body { margin:0; background:#1a1a1a; color:white; font-family:sans-serif; overflow:hidden; }
       .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
       .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:13px; }
-      
-      /* Flipbook Styles */
       .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:3000px; }
-      .book { position:relative; width:70vh; height:50vh; transform-style:preserve-3d; transition:transform 0.6s ease; }
+      .book { position:relative; width:75vh; height:50vh; transform-style:preserve-3d; transition:transform 0.6s ease; }
       .leaf { position:absolute; width:100%; height:100%; top:0; left:0; transform-origin: left center; transform-style: preserve-3d; transition: transform 0.8s ease; }
-      .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; display:flex; align-items:center; justify-content:center; box-shadow: inset 3px 0 10px rgba(0,0,0,0.1), 5px 5px 25px rgba(0,0,0,0.5); }
+      .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
       .front { z-index: 2; }
       .back { transform: rotateY(180deg); z-index: 1; }
       .page img { width:100%; height:100%; object-fit:contain; }
       .leaf.flipped { transform: rotateY(-180deg); }
       .arrow { position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); color:white; border:none; width:80px; height:80px; border-radius:50%; font-size:45px; cursor:pointer; z-index:2000; }
-
-      /* ΔΙΟΡΘΩΣΗ PDF: Εμφανίζεται μόνο στην εκτύπωση */
       .print-only { display: none; }
-      @media print {
-        .nav, .arrow, .viewport { display:none !important; }
-        .print-only { display:block !important; background: white; }
-        .print-page { display: block; width: 100vw; height: 100vh; page-break-after: always; overflow: hidden; }
-        .print-page img { width: 100%; height: 100%; object-fit: contain; }
-      }
     </style>
   </head>
   <body>
@@ -921,7 +930,7 @@ export async function exportFlipbook() {
     </div>
 
     <div class="print-only">
-      ${images.map(src => `<div class="print-page"><img src="${src}"></div>`).join('')}
+      ${printHtml}
     </div>
 
     <script>
@@ -935,7 +944,7 @@ export async function exportFlipbook() {
         const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'Photobook_Spread.html';
+        a.download = 'Photobook_Final.html';
         a.click();
       };
     </script>
