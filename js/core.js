@@ -135,3 +135,81 @@ export function deleteSelected() {
     App.canvas.discardActiveObject().requestRenderAll(); 
     saveDraft(); 
 }
+
+export async function previewFlipbook() {
+  saveCurrentPage();
+  
+  // Δημιουργούμε προσωρινά thumbnails για όλες τις σελίδες
+  const images = [];
+  const size = PRESETS[App.preset];
+
+  for (const page of App.pages) {
+    await new Promise((resolve) => {
+      App.canvas.loadFromJSON(page.json, () => {
+        App.canvas.renderAll();
+        images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.8 }));
+        resolve();
+      });
+    });
+  }
+
+  // Επιστροφή στην κανονική προβολή
+  renderCurrentPage();
+
+  // Ανοίγουμε το παράθυρο (modal)
+  openFlipbookModal(images, size);
+}
+
+// Βοηθητική συνάρτηση για το UI (μπορείς να την βάλεις στο τέλος του core.js ή στο ui.js)
+function openFlipbookModal(images, size) {
+  const modal = document.getElementById("flipPreviewModal");
+  const frame = document.getElementById("flipPreviewFrame");
+  if (!modal || !frame) return;
+
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <style>
+      body { margin:0; background:#222; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; }
+      .toolbar { 
+        width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:20px; 
+        position:sticky; top:0; z-index:1000;
+      }
+      .btn-download { 
+        background:#27ae60; color:white; border:none; padding:10px 20px; 
+        cursor:pointer; font-weight:bold; border-radius:5px;
+      }
+      .book { 
+        margin: 20px; display: flex; flex-direction: column; gap: 10px; 
+        width: 80%; max-width: 800px;
+      }
+      .page-preview { 
+        background: white; width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        page-break-after: always;
+      }
+      .page-preview img { width: 100%; display: block; }
+      
+      /* Ρυθμίσεις για το PDF */
+      @media print {
+        body { background: white; }
+        .toolbar { display: none; }
+        .book { margin: 0; width: 100%; max-width: none; }
+        .page-preview { box-shadow: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <button class="btn-download" onclick="window.print()">📥 Λήψη ως PDF (Print to PDF)</button>
+      <button style="background:#e74c3c; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:5px;" onclick="window.parent.closeFlipbookPreview()">Κλείσιμο</button>
+    </div>
+    <div class="book">
+      ${images.map(src => `<div class="page-preview"><img src="${src}"></div>`).join('')}
+    </div>
+  </body>
+  </html>`;
+
+  frame.srcdoc = html;
+  modal.style.display = "block";
+}
