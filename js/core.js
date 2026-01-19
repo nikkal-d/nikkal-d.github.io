@@ -904,8 +904,6 @@ export async function exportFlipbook() {
 
 // --- ΑΠΑΡΑΙΤΗΤΑ EXPORTS ΓΙΑ ΤΟ UI.JS ---
 
-export const previewFlipbook = exportFlipbook;
-
 export function closeFlipbookPreview() {
   const modal = document.getElementById("flipPreviewModal");
   if (modal) modal.style.display = "none";
@@ -913,9 +911,7 @@ export function closeFlipbookPreview() {
 // Κάνουμε τη συνάρτηση διαθέσιμη στο iframe
 window.closeFlipbookPreview = closeFlipbookPreview;
 
-// --- ΠΡΟΣΘΗΚΗ ΤΩΝ ΣΥΝΑΡΤΗΣΕΩΝ ΠΟΥ ΛΕΙΠΟΥΝ ---
-
-// --- ΕΠΑΝΑΦΟΡΑ ΣΥΝΑΡΤΗΣΕΩΝ ΠΟΥ ΛΕΙΠΟΥΝ (Autosave & Draft) ---
+  // --- ΑΠΑΡΑΙΤΗΤΑ ΓΙΑ ΝΑ ΜΗΝ ΚΟΛΛΑΕΙ Ο ΚΑΜΒΑΣ ΣΤΗΝ ΑΡΧΗ ---
 
 let autosaveTimeout = null;
 export function scheduleAutosave(immediate = false) {
@@ -927,18 +923,9 @@ export function scheduleAutosave(immediate = false) {
 export async function saveDraft() {
   try {
     saveCurrentPage();
-    const payload = {
-      v: 1,
-      preset: App.preset,
-      current: App.current,
-      pages: App.pages,
-      ts: Date.now(),
-    };
+    const payload = { v: 1, preset: App.preset, current: App.current, pages: App.pages, ts: Date.now() };
     await idbSet(App.autosaveKey, payload);
-    console.log("Autosave complete");
-  } catch (e) {
-    console.warn("Draft save failed", e);
-  }
+  } catch (e) { console.warn("Save failed", e); }
 }
 
 export async function loadDraft() {
@@ -949,20 +936,23 @@ export async function loadDraft() {
     App.current = Math.max(0, Math.min(payload.current || 0, App.pages.length - 1));
     App.preset = payload.preset || App.preset;
     await renderCurrentPage();
-    if (window.refreshThumbnails) refreshThumbnails();
     return true;
-  } catch (e) {
-    return false;
-  }
+  } catch (e) { return false; }
 }
 
+export function closeFlipbookPreview() {
+  const modal = document.getElementById("flipPreviewModal");
+  if (modal) modal.style.display = "none";
+}
+window.closeFlipbookPreview = closeFlipbookPreview;
+
 export async function clearDraft() {
-  if (confirm("Θέλετε σίγουρα να καθαρίσετε το προσχέδιο;")) {
+  if (confirm("Διαγραφή προσχεδίου;")) {
     await idbDel(App.autosaveKey);
     location.reload();
   }
 }
+export const previewFlipbook = exportFlipbook; // Για να δουλεύουν και τα δύο κουμπιά το ίδιο
+export function exportLink() { alert("Coming soon"); }
 
-export function exportLink() {
-  alert("Η λειτουργία Link θα προστεθεί σύντομα.");
-}
+
