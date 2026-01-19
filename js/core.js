@@ -921,14 +921,6 @@ document.body.onclick = () => {
 
 
 
-
-export function closeFlipbookPreview() {
-  const modal = byId("flipPreviewModal");
-  const frame = byId("flipPreviewFrame");
-  if (frame) frame.src = "about:blank";
-  if (modal) modal.classList.remove("open");
-}
-
 export async function exportLink() {
   // A "temporary share" link (objectURL) – works on the same device/session.
   const url = await exportFlipbook({ direction: "horizontal" });
