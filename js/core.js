@@ -832,24 +832,36 @@ export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
 
+  // 1. Προσωρινή απενεργοποίηση autosave για να μην έχουμε καθυστερήσεις
+  const wasAutosave = App.autosaveEnabled;
+  App.autosaveEnabled = false;
+
+  // Εμφάνιση ενός απλού loading (προαιρετικά στην κονσόλα)
+  console.log("Exporting all pages, please wait...");
+
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
+      // Φόρτωση της κάθε σελίδας
       App.canvas.loadFromJSON(App.pages[i].json, () => {
+        // Πρώτο render
         App.canvas.renderAll();
-        // Δίνουμε χρόνο στον browser να κάνει render την εικόνα
-        requestAnimationFrame(() => {
+
+        // 2. Η κρίσιμη καθυστέρηση: Περιμένουμε 250ms για να φορτώσουν οι εικόνες
+        setTimeout(() => {
           App.canvas.renderAll();
           images.push(App.canvas.toDataURL({ 
             format: 'jpeg', 
-            quality: 1.0, 
+            quality: 0.9, // Λίγο χαμηλότερο quality για ταχύτητα και μέγεθος αρχείου
             multiplier: 1.0 
           }));
           resolve();
-        });
+        }, 250); 
       });
     });
   }
-  
+
+  // 3. Επαναφορά στην τρέχουσα σελίδα και ενεργοποίηση autosave
+  App.autosaveEnabled = wasAutosave;
   await renderCurrentPage();
 
   const modal = document.getElementById("flipPreviewModal");
@@ -869,7 +881,7 @@ export async function exportFlipbook() {
         }
         body { margin:0; background:#111; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
         .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
-        .btn { padding:12px 25px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size:14px; color:white; text-decoration:none; }
+        .btn { padding:12px 25px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size:14px; color:white; }
         .btn-pdf { background:#27ae60; }
         .btn-close { background:#e74c3c; }
         .container { margin: 20px; width: 95%; max-width: 1000px; }
@@ -892,7 +904,6 @@ export async function exportFlipbook() {
     modal.style.display = "block";
   }
 }
-
 // --- ΣΥΝΑΡΤΗΣΕΙΣ ΥΠΟΣΤΗΡΙΞΗΣ (AUTOSAVE & UI) ---
 
 export function closeFlipbookPreview() {
