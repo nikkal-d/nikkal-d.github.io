@@ -925,13 +925,32 @@ export function closeFlipbookPreview() {
 // Κάνουμε τη συνάρτηση διαθέσιμη στο iframe
 window.closeFlipbookPreview = closeFlipbookPreview;
 
-export function exportLink() { console.log("Link export feature is coming soon."); }
+// --- ΠΡΟΣΘΗΚΗ ΤΩΝ ΣΥΝΑΡΤΗΣΕΩΝ ΠΟΥ ΛΕΙΠΟΥΝ ---
 
+export async function loadDraft() {
+  try {
+    const payload = await idbGet(App.autosaveKey);
+    if (!payload || !payload.pages || !payload.pages.length) return false;
+    App.pages = payload.pages;
+    App.current = Math.max(0, Math.min(payload.current || 0, App.pages.length - 1));
+    App.preset = payload.preset || App.preset;
+    await renderCurrentPage();
+    if (typeof refreshThumbnails === "function") refreshThumbnails();
+    if (typeof updatePageInfoUI === "function") updatePageInfoUI();
+    return true;
+  } catch (e) {
+    console.warn("Draft load failed", e);
+    return false;
+  }
+}
 
-// Προσθήκη της clearDraft που λείπει
 export async function clearDraft() {
   if (confirm("Θέλετε σίγουρα να διαγράψετε το προσχέδιο;")) {
     await idbDel(App.autosaveKey);
-    location.reload(); // Ανανέωση για να καθαρίσει ο καμβάς
+    location.reload(); 
   }
+}
+
+export function exportLink() {
+  alert("Η λειτουργία Link θα είναι σύντομα διαθέσιμη.");
 }
