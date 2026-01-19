@@ -208,20 +208,20 @@ export function goToPage(index) {
 export function prevPage() { goToPage(App.current - 1); }
 export function nextPage() { goToPage(App.current + 1); }
 
-async function renderCurrentPage() {
-  const page = App.pages[App.current];
-  if (!page) return;
-
-  const c = App.canvas;
-  setCanvasSize(page.preset || App.preset, false);
-
-  await new Promise((resolve) => {
-    c.loadFromJSON(page.json, () => {
-      c.getObjects().forEach(ensureImageCrossOrigin);
-      c.renderAll();
+export async function renderCurrentPage() {
+  if (!App.pages[App.current]) return;
+  
+  // Καθαρισμός καμβά πριν τη φόρτωση νέας σελίδας
+  App.canvas.clear(); 
+  
+  return new Promise((resolve) => {
+    App.canvas.loadFromJSON(App.pages[App.current].json, () => {
+      App.canvas.renderAll();
+      updatePageInfoUI();
       resolve();
     });
   });
+}
 
   // ensure background
   const bg = (page.json && (page.json.backgroundColor || page.json.background)) || "#ffffff";
@@ -828,83 +828,82 @@ document.body.onclick = () => {
 
 
 // --- ΜΟΝΗ ΚΑΙ ΔΙΟΡΘΩΜΕΝΗ EXPORT FLIPBOOK ---
+// --- Η ΟΛΟΚΛΗΡΩΜΕΝΗ ΛΥΣΗ ΓΙΑ EXPORT & PREVIEW ---
+
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
 
-  // 1. Προσωρινή απενεργοποίηση autosave για να μην έχουμε καθυστερήσεις
+  // Απενεργοποίηση autosave για να μην κολλάει
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // Εμφάνιση ενός απλού loading (προαιρετικά στην κονσόλα)
-  console.log("Exporting all pages, please wait...");
-
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
-      // Φόρτωση της κάθε σελίδας
       App.canvas.loadFromJSON(App.pages[i].json, () => {
-        // Πρώτο render
         App.canvas.renderAll();
-
-        // 2. Η κρίσιμη καθυστέρηση: Περιμένουμε 250ms για να φορτώσουν οι εικόνες
+        // Περιμένουμε λίγο για να φορτώσουν οι εικόνες σε κάθε σελίδα
         setTimeout(() => {
           App.canvas.renderAll();
           images.push(App.canvas.toDataURL({ 
             format: 'jpeg', 
-            quality: 0.9, // Λίγο χαμηλότερο quality για ταχύτητα και μέγεθος αρχείου
+            quality: 0.9, 
             multiplier: 1.0 
           }));
           resolve();
-        }, 250); 
+        }, 200); 
       });
     });
   }
-
-  // 3. Επαναφορά στην τρέχουσα σελίδα και ενεργοποίηση autosave
+  
   App.autosaveEnabled = wasAutosave;
   await renderCurrentPage();
 
   const modal = document.getElementById("flipPreviewModal");
   const frame = document.getElementById("flipPreviewFrame");
-  if (modal && frame) {
-    const html = `
-    <!doctype html>
-    <html>
-    <head>
-      <style>
-        @page { size: auto; margin: 0mm; } 
-        @media print {
-          body { background: white !important; }
-          .no-print { display: none !important; }
-          .p-box { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
-          .container { width: 100% !important; max-width: none !important; margin: 0 !important; }
-        }
-        body { margin:0; background:#111; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
-        .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
-        .btn { padding:12px 25px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size:14px; color:white; }
-        .btn-pdf { background:#27ae60; }
-        .btn-close { background:#e74c3c; }
-        .container { margin: 20px; width: 95%; max-width: 1000px; }
-        .p-box { background:white; width:100%; margin-bottom: 30px; box-shadow: 0 10px 50px rgba(0,0,0,0.8); }
-        .p-box img { width:100%; height:auto; display:block; }
-      </style>
-    </head>
-    <body>
-      <div class="nav no-print">
-        <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
-        <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
-      </div>
-      <div class="container">
-        ${images.map(src => `<div class="p-box"><img src="${src}"></div>`).join('')}
-      </div>
-    </body>
-    </html>`;
+  if (!modal || !frame) return;
 
-    frame.srcdoc = html;
-    modal.style.display = "block";
-  }
+  // Δημιουργούμε το περιεχόμενο που έχει ΚΑΙ Download ΚΑΙ Flipbook Preview
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <style>
+      @page { size: auto; margin: 0mm; } 
+      @media print { .no-print { display: none !important; } body { background:white; } .p-box { box-shadow:none; margin:0; page-break-after:always; } }
+      body { margin:0; background:#111; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
+      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
+      .btn { padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; }
+      .btn-pdf { background:#27ae60; }
+      .btn-close { background:#e74c3c; }
+      .btn-view { background:#3498db; }
+      .container { margin: 20px; width: 90%; max-width: 800px; display: block; }
+      .p-box { background:white; margin-bottom: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+      .p-box img { width:100%; height:auto; display:block; }
+      
+      /* Simple Flip Preview Mode */
+      .flip-mode .container { display: flex; overflow-x: auto; gap: 10px; padding: 20px; max-width: 100%; }
+      .flip-mode .p-box { min-width: 400px; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="nav no-print">
+      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn btn-view" onclick="document.body.classList.toggle('flip-mode')">↔️ Toggle View</button>
+      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
+    </div>
+    <div class="container">
+      ${images.map(src => `<div class="p-box"><img src="${src}"></div>`).join('')}
+    </div>
+  </body>
+  </html>`;
+
+  frame.srcdoc = html;
+  modal.style.display = "block";
 }
-// --- ΣΥΝΑΡΤΗΣΕΙΣ ΥΠΟΣΤΗΡΙΞΗΣ (AUTOSAVE & UI) ---
+
+// Χρειάζεται για να παίζουν και τα δύο κουμπιά στο ui.js
+export const previewFlipbook = exportFlipbook;
 
 export function closeFlipbookPreview() {
   const modal = document.getElementById("flipPreviewModal");
@@ -912,12 +911,8 @@ export function closeFlipbookPreview() {
 }
 window.closeFlipbookPreview = closeFlipbookPreview;
 
-let autosaveTimeout = null;
-export function scheduleAutosave(immediate = false) {
-  if (!App.autosaveEnabled) return;
-  if (autosaveTimeout) clearTimeout(autosaveTimeout);
-  autosaveTimeout = setTimeout(() => saveDraft(), immediate ? 0 : 1000);
-}
+
+
 
 export async function saveDraft() {
   try {
