@@ -926,3 +926,12 @@ export function closeFlipbookPreview() {
 window.closeFlipbookPreview = closeFlipbookPreview;
 
 export function exportLink() { console.log("Link export feature is coming soon."); }
+
+
+// Προσθήκη της clearDraft που λείπει
+export async function clearDraft() {
+  if (confirm("Θέλετε σίγουρα να διαγράψετε το προσχέδιο;")) {
+    await idbDel(App.autosaveKey);
+    location.reload(); // Ανανέωση για να καθαρίσει ο καμβάς
+  }
+}
