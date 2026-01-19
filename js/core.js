@@ -851,38 +851,43 @@ export async function exportFlipbook() {
   if (!modal || !frame) return;
 
   // Κατασκευή των "φύλλων" (Leafs). Κάθε φύλλο έχει Front και Back πλευρά.
+// --- ΔΙΟΡΘΩΜΕΝΗ ΛΟΓΙΚΗ ΦΥΛΛΩΝ ---
   let leafHtml = "";
-  // Το 1ο φύλλο: Front = Εξώφυλλο (images[0]), Back = Σελίδα 2 (images[1])
-  // Το 2ο φύλλο: Front = Σελίδα 3 (images[2]), Back = Σελίδα 4 (images[3]) κ.ο.κ.
   for (let i = 0; i < images.length; i += 2) {
     const zIndex = Math.ceil((images.length - i) / 2);
+    // Ελέγχουμε αν υπάρχει επόμενη εικόνα, αλλιώς βάζουμε κενό (λευκό)
+    const frontImg = images[i];
+    const backImg = images[i + 1] ? `<img src="${images[i+1]}">` : `<div style="background:white;height:100%;width:100%;"></div>`;
+
     leafHtml += `
       <div class="leaf" style="z-index: ${zIndex}">
         <div class="page front">
-          <img src="${images[i]}">
+          <img src="${frontImg}">
         </div>
         <div class="page back">
-          ${images[i+1] ? `<img src="${images[i+1]}">` : `<div style="background:#eee;height:100%"></div>`}
+          ${backImg}
         </div>
       </div>`;
   }
 
- const html = `
+  const html = `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
-    <title>My Photobook Flipbook</title>
     <style>
       body { margin:0; background:#1a1a1a; color:white; font-family:sans-serif; overflow:hidden; }
       .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
       .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:13px; }
-      .btn-pdf { background:#27ae60; }
-      .btn-save { background:#3498db; }
-      .btn-close { background:#e74c3c; }
-
-      .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
-      .book { position:relative; width:40vh; height:60vh; transform-style:preserve-3d; transition:transform 0.5s ease; }
+      
+      .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:3000px; }
+      
+      /* ΔΙΟΡΘΩΜΕΝΟ ΜΕΓΕΘΟΣ: Πιο οριζόντιο και μεγάλο */
+      .book { 
+        position:relative; 
+        width:60vh; height:45vh; /* Αλλαγή σε Landscape αναλογία */
+        transform-style:preserve-3d; transition:transform 0.6s ease;
+      }
       
       .leaf { 
         position:absolute; width:100%; height:100%; top:0; left:0;
@@ -893,17 +898,19 @@ export async function exportFlipbook() {
       .page { 
         position:absolute; width:100%; height:100%; 
         backface-visibility:hidden; background:white;
-        box-shadow: inset 3px 0 10px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.3);
+        box-shadow: inset 3px 0 10px rgba(0,0,0,0.1), 5px 5px 20px rgba(0,0,0,0.4);
+        display:flex; align-items:center; justify-content:center;
       }
 
       .front { z-index: 2; }
       .back { transform: rotateY(180deg); z-index: 1; }
       .page img { width:100%; height:100%; object-fit:contain; }
+      
       .leaf.flipped { transform: rotateY(-180deg); }
 
       .arrow { 
         position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); 
-        color:white; border:none; width:60px; height:60px; border-radius:50%; font-size:30px; cursor:pointer; z-index:2000;
+        color:white; border:none; width:70px; height:70px; border-radius:50%; font-size:40px; cursor:pointer; z-index:2000;
       }
       .arrow:hover { background:rgba(255,255,255,0.3); }
 
@@ -911,20 +918,20 @@ export async function exportFlipbook() {
         .nav, .arrow, .viewport { display:none !important; }
         .print-only { display:block !important; }
         .print-page { page-break-after:always; }
-        .print-page img { width:100%; }
+        .print-page img { width:100%; height:auto; }
       }
       .print-only { display:none; }
     </style>
   </head>
   <body>
     <div class="nav">
-      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
-      <button class="btn btn-save" id="downloadHtml">💾 Save as HTML file</button>
-      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
+      <button class="btn" style="background:#27ae60" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn" style="background:#3498db" id="downloadHtml">💾 Save as HTML file</button>
+      <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">Close</button>
     </div>
 
-    <button class="arrow" style="left:30px" onclick="prevPage()">❮</button>
-    <button class="arrow" style="right:30px" onclick="nextPage()">❯</button>
+    <button class="arrow" style="left:40px" onclick="prevPage()">❮</button>
+    <button class="arrow" style="right:40px" onclick="nextPage()">❯</button>
 
     <div class="viewport">
       <div class="book" id="book">
@@ -961,13 +968,11 @@ export async function exportFlipbook() {
         book.style.transform = currentLeaf > 0 ? "translateX(50%)" : "translateX(0)";
       }
 
-      // ΛΕΙΤΟΥΡΓΙΑ ΚΑΤΕΒΑΣΜΑΤΟΣ
       document.getElementById('downloadHtml').onclick = () => {
-        const fullHtml = document.documentElement.outerHTML;
-        const blob = new Blob([fullHtml], { type: 'text/html' });
+        const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'Photobook_Spread.html';
+        a.download = 'Photobook_Final.html';
         a.click();
       };
     </script>
