@@ -13,9 +13,11 @@ export const App = {
   preset: "A4P",
   zoom: 1,
   autosaveEnabled: true,
-  autosaveKey: "photobook_draft_v3",
-  window.App = App; // Αυτό κάνει το App ορατό παντού
-};
+  autosaveKey: "photobook_draft_v3"
+}; // <--- Εδώ κλείνει το αντικείμενο
+
+window.App = App; // <--- Μετά το κλείσιμο, το κάνουμε ορατό παντού
+
 
 const PRESETS = {
   A4P:    { w: 2480, h: 3508, label: "A4 Portrait (Print)" },
