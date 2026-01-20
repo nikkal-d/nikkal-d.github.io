@@ -824,40 +824,56 @@ document.body.onclick = () => {
 
 
 export async function exportFlipbook() {
-    // 1. Αποθήκευση της τρέχουσας σελίδας
     saveCurrentPage();
-    
-    // 2. Δημιουργία των εικόνων από το App.pages (που είναι ήδη στη μνήμη)
-    // Χρησιμοποιούμε έναν "αόρατο" καμβά για να μην περιμένουμε το UI
-    const images = App.pages.map(page => {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = App.canvas.width;
-        tempCanvas.height = App.canvas.height;
-        const staticCanvas = new fabric.StaticCanvas(tempCanvas);
-        
-        // Φορτώνουμε το JSON άμεσα
-        staticCanvas.loadFromJSON(page.json);
-        staticCanvas.renderAll();
-        
-        return staticCanvas.toDataURL({
-            format: 'jpeg',
-            quality: 0.5,
-            multiplier: 0.8
+    const images = [];
+    const wasAutosave = App.autosaveEnabled;
+    App.autosaveEnabled = false;
+
+    // Δημιουργούμε έναν μόνιμο "κρυφό" καμβά για όλη τη διαδικασία
+    const tempCanvasEl = document.createElement('canvas');
+    tempCanvasEl.width = App.canvas.width;
+    tempCanvasEl.height = App.canvas.height;
+    const staticCanvas = new fabric.StaticCanvas(tempCanvasEl);
+
+    // 1. Σειριακή επεξεργασία (μία-μία σελίδα με επιβεβαίωση render)
+    for (let i = 0; i < App.pages.length; i++) {
+        await new Promise((resolve) => {
+            staticCanvas.clear();
+            staticCanvas.loadFromJSON(App.pages[i].json, () => {
+                // Επιβολή render και μικρή αναμονή για τα images
+                staticCanvas.renderAll();
+                
+                // Δίνουμε 200ms σε κάθε σελίδα να "κάτσει" στη μνήμη
+                setTimeout(() => {
+                    const dataUrl = staticCanvas.toDataURL({
+                        format: 'jpeg',
+                        quality: 0.7,
+                        multiplier: 0.8
+                    });
+                    images.push(dataUrl);
+                    resolve();
+                }, 200);
+            });
         });
-    });
+    }
 
-    const modal = document.getElementById("flipPreviewModal");
-    const frame = document.getElementById("flipPreviewFrame");
+    staticCanvas.dispose();
+    App.autosaveEnabled = wasAutosave;
+    await renderCurrentPage();
 
-    // 3. Κατασκευή Φύλλων (Στατικά - χωρίς JavaScript loops μέσα στο iframe)
+    // 2. Κατασκευή του HTML (Σταθερή δομή)
     let leafHtml = "";
     for (let j = 0; j < images.length; j += 2) {
         const front = images[j];
         const back = images[j+1] || null;
+        const zIndex = 100 - j;
+
         leafHtml += `
-            <div class="leaf" style="z-index: ${100-j}">
+            <div class="leaf" style="z-index: ${zIndex}">
                 <div class="page front"><img src="${front}"></div>
-                <div class="page back">${back ? `<img src="${back}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
+                <div class="page back">
+                    ${back ? `<img src="${back}">` : '<div style="background:white;width:100%;height:100%"></div>'}
+                </div>
             </div>`;
     }
 
@@ -871,9 +887,9 @@ export async function exportFlipbook() {
             .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
             .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:12px; }
             .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
-            .book { position:relative; width:75vh; height:50vh; transform-style:preserve-3d; transition:transform 0.4s ease; }
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transform-style:preserve-3d; transition:transform 0.6s ease; }
-            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow: 5px 5px 20px rgba(0,0,0,0.5); }
+            .book { position:relative; width:80vh; height:55vh; transform-style:preserve-3d; transition:transform 0.5s ease; }
+            .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transform-style:preserve-3d; transition:transform 0.7s ease; }
+            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow: 0 5px 20px rgba(0,0,0,0.4); }
             .front { z-index:2; }
             .back { transform:rotateY(180deg); z-index:1; }
             .page img { width:100%; height:100%; object-fit:contain; }
@@ -912,10 +928,11 @@ export async function exportFlipbook() {
     </body>
     </html>`;
 
+    const modal = document.getElementById("flipPreviewModal");
+    const frame = document.getElementById("flipPreviewFrame");
     frame.srcdoc = html;
     modal.style.display = "block";
 }
-
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
 export const previewFlipbook = exportFlipbook;
 
