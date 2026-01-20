@@ -924,11 +924,6 @@ export async function exportFlipbook() {
     modal.style.display = "block";
 }
 
-    const frame = document.getElementById("flipPreviewFrame");
-    if(frame) frame.srcdoc = html;
-    const modal = document.getElementById("flipPreviewModal");
-    if(modal) modal.style.display = "block";
-}
 
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
