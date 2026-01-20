@@ -829,38 +829,50 @@ export async function exportFlipbook() {
     const totalPages = App.pages.length;
     const originalPageIndex = App.currentPageIndex;
 
-    // 1. ΑΠΕΝΕΡΓΟΠΟΙΗΣΗ UI ΓΙΑ ΤΑΧΥΤΗΤΑ
-    const modal = document.getElementById("flipPreviewModal");
-    const frame = document.getElementById("flipPreviewFrame");
-    
-    console.log("Starting Forced Screen Capture...");
+    console.log("Starting Deep Capture...");
 
-    // 2. ΣΑΡΩΣΗ ΟΛΩΝ ΤΩΝ ΣΕΛΙΔΩΝ ΜΙΑ ΠΡΟΣ ΜΙΑ
+    // 1. ΣΑΡΩΣΗ ΜΕ ΠΛΗΡΗ ΕΠΑΝΑΦΟΡΤΩΣΗ
     for (let i = 0; i < totalPages; i++) {
-        // Αλλαγή σελίδας στον πραγματικό editor
-        App.currentPageIndex = i;
-        await renderCurrentPage(); // Περιμένουμε να εμφανιστεί στην οθόνη
-
+        // Εξαναγκάζουμε τον καμβά να φορτώσει το JSON της συγκεκριμένης σελίδας
         await new Promise((resolve) => {
-            // Μικρή αναμονή για να προλάβει το GPU render
-            setTimeout(() => {
-                const dataUrl = App.canvas.toDataURL({
-                    format: 'jpeg',
-                    quality: 0.7,
-                    multiplier: 1
-                });
-                images.push(dataUrl);
-                console.log(`Captured Page ${i}`);
-                resolve();
-            }, 300);
+            const pageData = App.pages[i].json;
+            // Μετατροπή σε αντικείμενο αν είναι string
+            const parsedData = typeof pageData === 'string' ? JSON.parse(pageData) : pageData;
+
+            App.canvas.clear(); // Καθαρίζουμε τον τρέχοντα καμβά
+            App.canvas.loadFromJSON(parsedData, () => {
+                App.canvas.renderAll();
+                
+                // Δίνουμε χρόνο στα images να εμφανιστούν
+                setTimeout(() => {
+                    const dataUrl = App.canvas.toDataURL({
+                        format: 'jpeg',
+                        quality: 0.8,
+                        multiplier: 1
+                    });
+                    images.push(dataUrl);
+                    console.log(`Page ${i} rendered and captured.`);
+                    resolve();
+                }, 500); // 0.5 δευτερόλεπτο αναμονή ανά σελίδα για σιγουριά
+            });
         });
     }
 
-    // 3. ΕΠΙΣΤΡΟΦΗ ΣΤΗΝ ΑΡΧΙΚΗ ΣΕΛΙΔΑ
-    App.currentPageIndex = originalPageIndex;
-    await renderCurrentPage();
+    // 2. ΕΠΑΝΑΦΟΡΑ ΤΟΥ EDITOR ΣΤΗΝ ΚΑΤΑΣΤΑΣΗ ΠΟΥ ΗΤΑΝ
+    const originalData = typeof App.pages[originalPageIndex].json === 'string' 
+        ? JSON.parse(App.pages[originalPageIndex].json) 
+        : App.pages[originalPageIndex].json;
+        
+    App.canvas.clear();
+    App.canvas.loadFromJSON(originalData, () => {
+        App.canvas.renderAll();
+        App.currentPageIndex = originalPageIndex;
+    });
 
-    // 4. ΚΑΤΑΣΚΕΥΗ ΤΟΥ HTML (ΣΕ LANDSCAPE)
+    // 3. ΔΗΜΙΟΥΡΓΙΑ ΤΟΥ FLIPBOOK
+    const modal = document.getElementById("flipPreviewModal");
+    const frame = document.getElementById("flipPreviewFrame");
+
     let leafHtml = "";
     for (let j = 0; j < images.length; j += 2) {
         const front = images[j];
@@ -880,18 +892,18 @@ export async function exportFlipbook() {
     <head>
         <meta charset="utf-8">
         <style>
-            body { margin:0; background:#111; font-family:sans-serif; overflow:hidden; display:flex; flex-direction:column; align-items:center; }
-            .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; z-index:1000; }
-            .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:12px; text-decoration:none; }
-            .viewport { width:100vw; height:calc(100vh - 60px); display:flex; justify-content:center; align-items:center; perspective:2500px; }
+            body { margin:0; background:#111; font-family:sans-serif; overflow:hidden; }
+            .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
+            .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:12px; }
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
             .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition:transform 0.5s ease; }
             .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transform-style:preserve-3d; transition:0.7s ease; }
             .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow:0 0 20px rgba(0,0,0,0.5); }
-            .front { z-index:2; }
-            .back { transform:rotateY(180deg); z-index:1; }
+            .front { z-index:2; border-right:1px solid #eee; }
+            .back { transform:rotateY(180deg); z-index:1; border-left:1px solid #eee; }
             .page img { width:100%; height:100%; object-fit:contain; }
             .leaf.flipped { transform:rotateY(-180deg); }
-            .arrow { position:fixed; top:55%; transform:translateY(-50%); background:rgba(255,255,255,0.1); color:white; border:none; width:60px; height:60px; border-radius:50%; cursor:pointer; z-index:2000; font-size:30px; }
+            .arrow { position:fixed; top:50%; background:rgba(255,255,255,0.1); color:white; border:none; width:60px; height:60px; border-radius:50%; cursor:pointer; z-index:2000; font-size:30px; }
             @media print {
                 @page { size: A4 landscape; margin:0; }
                 .no-print { display:none !important; }
