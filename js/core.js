@@ -828,63 +828,108 @@ document.body.onclick = () => {
 
 
 export async function exportFlipbook() {
-    // 1. Σιγουρευόμαστε ότι το App υπάρχει
-    const myApp = window.App || App; 
-    
-    if (!myApp || !myApp.pages) {
-        console.error("App context not found");
+    const myApp = window.App || App;
+    const images = [];
+
+    // 1. Έλεγχος αν υπάρχουν σελίδες
+    if (!myApp.pages || myApp.pages.length === 0) {
+        alert("Δεν βρέθηκαν σελίδες για το Flipbook.");
         return;
     }
 
-    const images = [];
-
-    // 2. Δημιουργία εικόνων ΧΩΡΙΣ να πειράξουμε τον κεντρικό καμβά
+    // 2. Δημιουργία εικόνων (Μία προς μία)
     for (let i = 0; i < myApp.pages.length; i++) {
-        const json = myApp.pages[i].json;
-        if (!json) continue;
-
-        const tempCanvas = new fabric.StaticCanvas(null, {
-            width: myApp.canvas.width,
-            height: myApp.canvas.height
-        });
-
+        const pageData = myApp.pages[i].json;
+        
         await new Promise((resolve) => {
-            tempCanvas.loadFromJSON(json, () => {
+            // Δημιουργούμε έναν αόρατο καμβά για να μην "παγώνει" ο editor
+            const tempCanvas = new fabric.StaticCanvas(null, {
+                width: myApp.canvas.width,
+                height: myApp.canvas.height
+            });
+
+            tempCanvas.loadFromJSON(pageData, () => {
+                // Εξαναγκάζουμε το Fabric να φορτώσει όλες τις εξωτερικές εικόνες
                 tempCanvas.renderAll();
-                // Παίρνουμε την εικόνα αμέσως
-                images.push(tempCanvas.toDataURL({ format: 'jpeg', quality: 0.5 }));
-                tempCanvas.dispose(); // Καθαρισμός μνήμης αμέσως
-                resolve();
+                
+                // Περιμένουμε λίγο παραπάνω (600ms) για να σιγουρευτούμε ότι 
+                // οι εικόνες δεν θα βγουν λευκές
+                setTimeout(() => {
+                    const dataUrl = tempCanvas.toDataURL({
+                        format: 'jpeg',
+                        quality: 0.8,
+                        multiplier: 1 // Κανονική ανάλυση για ταχύτητα
+                    });
+                    images.push(dataUrl);
+                    tempCanvas.dispose();
+                    resolve();
+                }, 600);
             });
         });
     }
 
-    // 3. Απλό Preview
-    if (images.length === 0) {
-        alert("Δεν βρέθηκαν δεδομένα στις σελίδες.");
-        return;
-    }
-
+    // 3. Κατασκευή του Flipbook (Landscape Διάταξη)
     const modal = document.getElementById("flipPreviewModal");
     const frame = document.getElementById("flipPreviewFrame");
-    
-    // Κατασκευή HTML (μόνο οι εικόνες, χωρίς πολύπλοκα CSS)
-    let htmlContent = images.map(src => `<div style="page-break-after:always; text-align:center;"><img src="${src}" style="max-width:100%; height:auto; box-shadow:0 0 10px #000;"></div>`).join('');
+
+    let leafHtml = "";
+    for (let j = 0; j < images.length; j += 2) {
+        const front = images[j];
+        const back = images[j + 1] || null;
+        leafHtml += `
+            <div class="leaf" style="z-index: ${100 - j}">
+                <div class="page front"><img src="${front}"></div>
+                <div class="page back">
+                    ${back ? `<img src="${back}">` : '<div style="background:white;width:100%;height:100%"></div>'}
+                </div>
+            </div>`;
+    }
 
     frame.srcdoc = `
-        <html>
-            <body style="background:#222; margin:0; padding:20px;">
-                <div style="position:fixed; top:0; left:0; width:100%; background:#000; padding:10px; text-align:center;">
-                    <button onclick="window.print()" style="padding:10px;">Εκτύπωση / PDF</button>
-                    <button onclick="window.parent.closeFlipbookPreview()" style="padding:10px; background:red; color:white;">Κλείσιμο</button>
-                </div>
-                <div style="margin-top:60px;">${htmlContent}</div>
-            </body>
-        </html>
-    `;
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; font-family:sans-serif; }
+            .nav { position:fixed; top:10px; z-index:1000; display:flex; gap:10px; }
+            button { padding:10px 20px; cursor:pointer; background:#444; color:white; border:none; border-radius:4px; font-weight:bold; }
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2000px; }
+            
+            /* Σταθερές διαστάσεις για να μην χαλάει το layout */
+            .book { position:relative; width:80vh; height:56vh; transform-style:preserve-3d; transition:transform 0.5s; }
+            
+            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s; transform-style:preserve-3d; }
+            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow:0 0 15px rgba(0,0,0,0.4); }
+            .back { transform:rotateY(180deg); }
+            img { width:100%; height:100%; object-fit:contain; background:white; }
+            .flipped { transform:rotateY(-180deg); }
+            @media print { .no-print { display:none; } .p-pg { page-break-after:always; } img { width:100%; } }
+        </style>
+    </head>
+    <body>
+        <div class="nav no-print">
+            <button onclick="p()">❮ Πίσω</button>
+            <button onclick="n()">Επόμενο ❯</button>
+            <button style="background:#27ae60" onclick="window.print()">📥 PDF</button>
+            <button style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">X</button>
+        </div>
+        <div class="viewport no-print">
+            <div class="book" id="book">${leafHtml}</div>
+        </div>
+        <div class="print-only" style="display:none;">
+            ${images.map(src => `<div class="p-pg"><img src="${src}"></div>`).join('')}
+        </div>
+        <script>
+            let cur=0; const leafs=document.querySelectorAll('.leaf');
+            function n(){ if(cur<leafs.length){ leafs[cur].classList.add('flipped'); cur++; update(); } }
+            function p(){ if(cur>0){ cur--; leafs[cur].classList.remove('flipped'); update(); } }
+            function update(){ document.getElementById('book').style.transform=cur>0?"translateX(50%)":"translateX(0)"; }
+        </script>
+    </body>
+    </html>`;
+
     modal.style.display = "block";
 }
-
 
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
