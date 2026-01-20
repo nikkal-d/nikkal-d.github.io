@@ -842,18 +842,14 @@ export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
     
-    // Υπολογισμός αναλογίας (Ratio) από τον καμβά του editor
-    const canvasRatio = myApp.canvas.height / myApp.canvas.width;
-
-    // 1. Λήψη εικόνων - Μία προς μία με απόλυτη σειρά
+    // 1. Λήψη των εικόνων από το App.pages (πηγή: core (18).js)
     for (let i = 0; i < myApp.pages.length; i++) {
-        const json = myApp.pages[i].json;
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
                 width: myApp.canvas.width,
                 height: myApp.canvas.height
             });
-            tempCanvas.loadFromJSON(json, () => {
+            tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
                 tempCanvas.renderAll();
                 setTimeout(() => {
                     images.push(tempCanvas.toDataURL({ format: 'jpeg', quality: 0.9 }));
@@ -864,15 +860,20 @@ export async function exportFlipbook() {
         });
     }
 
-    // 2. Κατασκευή Φύλλων - ΜΙΑ εικόνα ανά φύλλο (Front) για να μη χάνεται η σειρά
+    // 2. Κατασκευή του HTML με τις διαστάσεις και το στυλ από το core (12).js
     let leafHtml = "";
-    images.forEach((img, idx) => {
+    for (let i = 0; i < images.length; i += 2) {
+        const frontImg = images[i];
+        const backImg = images[i + 1] || null;
+        
         leafHtml += `
-            <div class="leaf" style="z-index: ${100 - idx}">
-                <div class="page front"><img src="${img}"></div>
-                <div class="page back"><div style="background:#fff;width:100%;height:100%"></div></div>
+            <div class="leaf">
+                <div class="page front"><img src="${frontImg}"></div>
+                <div class="page back">
+                    ${backImg ? `<img src="${backImg}">` : '<div style="background:#fff;width:100%;height:100%"></div>'}
+                </div>
             </div>`;
-    });
+    }
 
     const modal = document.getElementById("flipPreviewModal");
     const frame = document.getElementById("flipPreviewFrame");
@@ -882,30 +883,24 @@ export async function exportFlipbook() {
     <html>
     <head>
         <style>
-            body { margin:0; background:#1a1a1a; font-family:sans-serif; overflow:hidden; display:flex; flex-direction:column; align-items:center; }
-            .nav { position:fixed; top:0; width:100%; background:#000; padding:12px; display:flex; justify-content:center; gap:15px; z-index:9999; }
-            button { padding:10px 20px; cursor:pointer; border:none; border-radius:5px; font-weight:bold; color:white; background:#444; }
-            .save-btn { background:#27ae60 !important; }
+            body { margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; font-family:sans-serif; }
+            .nav { position:fixed; top:10px; z-index:1000; display:flex; gap:10px; }
+            button { padding:10px 20px; cursor:pointer; background:#444; color:white; border:none; border-radius:4px; font-weight:bold; }
             
-            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2000px; }
             
-            /* Δυναμικές Διαστάσεις βάσει του Ratio του καμβά */
+            /* Διαστάσεις από το core (12).js */
             .book { 
                 position:relative; 
-                width: 75vh; /* Βασικό πλάτος */
-                height: calc(75vh * ${canvasRatio}); /* Ύψος που προκύπτει από το ratio */
-                max-width: 45vw; 
-                transform-style:preserve-3d; transition:transform 0.6s ease-out; 
+                width: 80vh; 
+                height: 56vh; 
+                transform-style:preserve-3d; transition:transform 0.5s; 
             }
             
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transform-style:preserve-3d; transition:0.8s cubic-bezier(0.4, 0, 0.2, 1); cursor:pointer; }
-            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:#fff; box-shadow:5px 5px 20px rgba(0,0,0,0.4); }
-            .front { z-index: 2; border-right: 1px solid rgba(0,0,0,0.1); }
-            .back { transform:rotateY(180deg); z-index: 1; border-left: 1px solid rgba(0,0,0,0.1); }
-            
-            /* Σωστή προσαρμογή εικόνας */
-            img { width:100%; height:100%; object-fit: contain; background:#fff; }
-            
+            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s; transform-style:preserve-3d; }
+            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow:0 0 15px rgba(0,0,0,0.4); }
+            .back { transform:rotateY(180deg); }
+            img { width:100%; height:100%; object-fit:contain; background:white; }
             .flipped { transform:rotateY(-180deg); }
         </style>
     </head>
@@ -913,8 +908,8 @@ export async function exportFlipbook() {
         <div class="nav">
             <button onclick="p()">❮ Πίσω</button>
             <button onclick="n()">Επόμενο ❯</button>
-            <button class="save-btn" onclick="save()">💾 Αποθήκευση</button>
-            <button style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">X</button>
+            <button style="background:#27ae60" onclick="save()">💾 Αποθήκευση</button>
+            <button style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">Κλείσιμο</button>
         </div>
         <div class="viewport">
             <div class="book" id="book">${leafHtml}</div>
@@ -929,7 +924,7 @@ export async function exportFlipbook() {
                 const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = 'Photobook_Final.html';
+                a.download = 'Photobook_Combined.html';
                 a.click();
             }
         </script>
@@ -938,9 +933,6 @@ export async function exportFlipbook() {
 
     modal.style.display = "block";
 }
-
-
-
 
 
 
