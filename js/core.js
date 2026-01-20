@@ -826,57 +826,68 @@ document.body.onclick = () => {
 
 export async function exportFlipbook() {
     const images = [];
-    const totalPages = App.pages.length;
+    const totalPages = App.pages ? App.pages.length : 0;
     const originalPageIndex = App.currentPageIndex;
 
-    console.log("Starting Deep Capture...");
-
-    // 1. ΣΑΡΩΣΗ ΜΕ ΠΛΗΡΗ ΕΠΑΝΑΦΟΡΤΩΣΗ
-    for (let i = 0; i < totalPages; i++) {
-        // Εξαναγκάζουμε τον καμβά να φορτώσει το JSON της συγκεκριμένης σελίδας
-        await new Promise((resolve) => {
-            const pageData = App.pages[i].json;
-            // Μετατροπή σε αντικείμενο αν είναι string
-            const parsedData = typeof pageData === 'string' ? JSON.parse(pageData) : pageData;
-
-            App.canvas.clear(); // Καθαρίζουμε τον τρέχοντα καμβά
-            App.canvas.loadFromJSON(parsedData, () => {
-                App.canvas.renderAll();
-                
-                // Δίνουμε χρόνο στα images να εμφανιστούν
-                setTimeout(() => {
-                    const dataUrl = App.canvas.toDataURL({
-                        format: 'jpeg',
-                        quality: 0.8,
-                        multiplier: 1
-                    });
-                    images.push(dataUrl);
-                    console.log(`Page ${i} rendered and captured.`);
-                    resolve();
-                }, 500); // 0.5 δευτερόλεπτο αναμονή ανά σελίδα για σιγουριά
-            });
-        });
+    if (totalPages === 0) {
+        alert("Δεν βρέθηκαν σελίδες!");
+        return;
     }
 
-    // 2. ΕΠΑΝΑΦΟΡΑ ΤΟΥ EDITOR ΣΤΗΝ ΚΑΤΑΣΤΑΣΗ ΠΟΥ ΗΤΑΝ
-    const originalData = typeof App.pages[originalPageIndex].json === 'string' 
-        ? JSON.parse(App.pages[originalPageIndex].json) 
-        : App.pages[originalPageIndex].json;
-        
-    App.canvas.clear();
-    App.canvas.loadFromJSON(originalData, () => {
-        App.canvas.renderAll();
-        App.currentPageIndex = originalPageIndex;
-    });
+    console.log("Starting Emergency Capture...");
 
-    // 3. ΔΗΜΙΟΥΡΓΙΑ ΤΟΥ FLIPBOOK
+    // 1. ΔΙΑΔΙΚΑΣΙΑ ΛΗΨΗΣ
+    for (let i = 0; i < totalPages; i++) {
+        // ΕΛΕΓΧΟΣ: Αν η σελίδα i είναι undefined, την προσπερνάμε
+        if (!App.pages[i]) continue;
+
+        // Χρησιμοποιούμε τη συνάρτηση του ίδιου του Editor για αλλαγή σελίδας
+        // Αν η συνάρτηση λέγεται διαφορετικά (π.χ. App.loadPage), άλλαξέ το εδώ
+        App.currentPageIndex = i;
+        
+        try {
+            // Προσπάθεια ανάκτησης δεδομένων: προτιμάμε το json αν υπάρχει, 
+            // αλλιώς προσπαθούμε να κάνουμε render την τρέχουσα κατάσταση
+            const pageData = App.pages[i].json || '{"objects":[],"background":"white"}';
+            const parsedData = typeof pageData === 'string' ? JSON.parse(pageData) : pageData;
+
+            await new Promise((resolve) => {
+                App.canvas.clear();
+                App.canvas.loadFromJSON(parsedData, () => {
+                    App.canvas.renderAll();
+                    
+                    // Δίνουμε χρόνο για το "ζωγράφισμα"
+                    setTimeout(() => {
+                        const dataUrl = App.canvas.toDataURL({
+                            format: 'jpeg',
+                            quality: 0.7,
+                            multiplier: 1
+                        });
+                        images.push(dataUrl);
+                        console.log(`Captured Page ${i} successfully.`);
+                        resolve();
+                    }, 600); // Αυξημένος χρόνος για βαριές εικόνες
+                });
+            });
+        } catch (err) {
+            console.error(`Error on page ${i}:`, err);
+            // Αν αποτύχει, βάζουμε μια κενή λευκή εικόνα για να μην χαλάσει η σειρά
+            images.push("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=");
+        }
+    }
+
+    // 2. ΕΠΑΝΑΦΟΡΑ EDITOR
+    App.currentPageIndex = originalPageIndex;
+    await renderCurrentPage();
+
+    // 3. ΔΗΜΙΟΥΡΓΙΑ HTML
     const modal = document.getElementById("flipPreviewModal");
     const frame = document.getElementById("flipPreviewFrame");
-
+    
     let leafHtml = "";
     for (let j = 0; j < images.length; j += 2) {
         const front = images[j];
-        const back = images[j + 1] || null;
+        const back = images[j+1] || null;
         leafHtml += `
             <div class="leaf" style="z-index: ${100 - j}">
                 <div class="page front"><img src="${front}"></div>
@@ -892,26 +903,19 @@ export async function exportFlipbook() {
     <head>
         <meta charset="utf-8">
         <style>
-            body { margin:0; background:#111; font-family:sans-serif; overflow:hidden; }
-            .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:15px; position:fixed; top:0; z-index:1000; }
-            .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; font-size:12px; }
+            body { margin:0; background:#111; color:white; font-family:sans-serif; overflow:hidden; }
+            .nav { width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:10px; position:fixed; top:0; z-index:1000; }
+            .btn { padding:10px 18px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; color:white; }
             .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
-            .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition:transform 0.5s ease; }
+            .book { position:relative; width: 85vh; height: 60vh; transform-style:preserve-3d; transition:transform 0.5s ease; }
             .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transform-style:preserve-3d; transition:0.7s ease; }
-            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow:0 0 20px rgba(0,0,0,0.5); }
-            .front { z-index:2; border-right:1px solid #eee; }
-            .back { transform:rotateY(180deg); z-index:1; border-left:1px solid #eee; }
+            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; }
+            .front { z-index:2; border-right:1px solid #ddd; }
+            .back { transform:rotateY(180deg); z-index:1; border-left:1px solid #ddd; }
             .page img { width:100%; height:100%; object-fit:contain; }
             .leaf.flipped { transform:rotateY(-180deg); }
-            .arrow { position:fixed; top:50%; background:rgba(255,255,255,0.1); color:white; border:none; width:60px; height:60px; border-radius:50%; cursor:pointer; z-index:2000; font-size:30px; }
-            @media print {
-                @page { size: A4 landscape; margin:0; }
-                .no-print { display:none !important; }
-                .print-only { display:block !important; }
-                .p-pg { page-break-after:always; width:100vw; height:100vh; }
-                .p-pg img { width:100%; height:100%; object-fit:contain; }
-            }
-            .print-only { display:none; }
+            .arrow { position:fixed; top:50%; background:rgba(255,255,255,0.1); color:white; border:none; width:60px; height:60px; border-radius:50%; font-size:30px; cursor:pointer; z-index:2000; }
+            @media print { .no-print { display:none; } .p-pg { page-break-after:always; } .p-pg img { width:100%; } }
         </style>
     </head>
     <body>
@@ -935,7 +939,6 @@ export async function exportFlipbook() {
     frame.srcdoc = html;
     modal.style.display = "block";
 }
-
 
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
