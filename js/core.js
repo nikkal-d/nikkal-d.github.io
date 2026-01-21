@@ -841,7 +841,7 @@ export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
 
-    // 1. Λήψη εικόνων
+    // 1. Λήψη εικόνων (Multiplier 0.5 για να μην επηρεάζει το Reset του καμβά)
     for (let i = 0; i < myApp.pages.length; i++) {
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
@@ -851,7 +851,11 @@ export async function exportFlipbook() {
             tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
                 tempCanvas.renderAll();
                 setTimeout(() => {
-                    images.push(tempCanvas.toDataURL({ format: 'jpeg', quality: 0.8 }));
+                    images.push(tempCanvas.toDataURL({ 
+                        format: 'jpeg', 
+                        quality: 0.8,
+                        multiplier: 0.5 
+                    }));
                     tempCanvas.dispose();
                     resolve();
                 }, 100);
@@ -859,7 +863,7 @@ export async function exportFlipbook() {
         });
     }
 
-    // 2. Κατασκευή HTML - ΕΔΩ ΕΙΝΑΙ ΟΙ ΣΩΣΤΕΣ ΔΙΑΣΤΑΣΕΙΣ
+    // 2. Κατασκευή Φύλλων (Διπλό βιβλίο)
     let leafHtml = "";
     for (let i = 0; i < images.length; i += 2) {
         const frontImg = images[i];
@@ -881,73 +885,81 @@ export async function exportFlipbook() {
     <html>
     <head>
         <style>
-            body { margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
-            .nav { position:fixed; top:10px; z-index:999; display:flex; gap:10px; }
-            button { padding:8px 15px; cursor:pointer; background:#333; color:white; border:none; border-radius:4px; }
+            body { margin:0; background:#1a1a1a; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
             
-            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2000px; }
+            /* VIEWPORT: Εδώ ορίζουμε το βάθος */
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
             
-            /* ΑΥΣΤΗΡΟ ΚΛΕΙΔΩΜΑ ΔΙΑΣΤΑΣΕΩΝ 80vh x 56vh */
+            /* ΤΟ ΒΙΒΛΙΟ (Διπλό πλάτος όταν είναι ανοιχτό) */
             .book { 
                 position:relative; 
-                width: 80vh !important; 
-                height: 56vh !important; 
-                transform-style:preserve-3d; transition:transform 0.6s ease;
+                width: 80vh; /* Πλάτος μίας σελίδας */
+                height: 56vh; /* Ύψος από core 12 */
+                transform-style:preserve-3d; 
+                transition:transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                /* Μετατόπιση για να φαίνεται κεντραρισμένο το διπλό άνοιγμα */
+                transform: translateX(0px);
             }
             
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s; transform-style:preserve-3d; }
+            .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transition:0.8s; transform-style:preserve-3d; z-index:1; }
+            
             .page { 
-                position:absolute; 
-                width: 100% !important; 
-                height: 100% !important; 
-                backface-visibility:hidden; 
-                background:white; 
-                box-shadow:0 0 10px rgba(0,0,0,0.5);
-                overflow: hidden; /* Δεν αφήνει τίποτα να βγει έξω */
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                position:absolute; width:100%; height:100%; backface-visibility:hidden; 
+                background:white; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+                display:flex; align-items:center; justify-content:center; overflow:hidden;
             }
+            
             .back { transform:rotateY(180deg); }
             
-            /* ΑΥΤΟ ΔΙΟΡΘΩΝΕΙ ΤΙΣ ΕΙΚΟΝΕΣ */
-            img { 
-                max-width: 100% !important; 
-                max-height: 100% !important; 
-                width: auto !important; 
-                height: auto !important; 
-                object-fit: contain !important; 
-            }
+            /* ΕΙΚΟΝΕΣ: Contain για να μην ξεχειλίζουν ποτέ */
+            img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
             
+            /* ΟΤΑΝ ΓΥΡΝΑΕΙ: Το βιβλίο μετακινείται δεξιά για να φαίνονται και οι δύο σελίδες */
             .flipped { transform:rotateY(-180deg); }
         </style>
     </head>
     <body>
-        <div class="nav">
-            <button onclick="p()">❮ Πίσω</button>
-            <button onclick="n()">Επόμενο ❯</button>
-            <button style="background:#27ae60" onclick="save()">💾 Save</button>
-            <button style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">X</button>
-        </div>
         <div class="viewport">
             <div class="book" id="book">${leafHtml}</div>
         </div>
         <script>
             let cur=0; const leafs=document.querySelectorAll('.leaf');
-            function n(){ if(cur<leafs.length){ leafs[cur].style.zIndex=100+cur; leafs[cur].classList.add('flipped'); cur++; u(); } }
-            function p(){ if(cur>0){ cur--; leafs[cur].classList.remove('flipped'); setTimeout(()=>{leafs[cur].style.zIndex=100-cur;},300); u(); } }
-            function u(){ document.getElementById('book').style.transform=cur>0?"translateX(50%)":"translateX(0)"; }
-            function save(){
-                const b=new Blob([document.documentElement.outerHTML],{type:'text/html'});
-                const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='book.html'; a.click();
+            const book=document.getElementById('book');
+
+            window.addEventListener('keydown', e => { if(e.key==='ArrowRight') n(); if(e.key==='ArrowLeft') p(); });
+
+            function n(){ 
+                if(cur < leafs.length){ 
+                    leafs[cur].style.zIndex = 100 + cur;
+                    leafs[cur].classList.add('flipped'); 
+                    cur++; update(); 
+                } 
             }
+            function p(){ 
+                if(cur > 0){ 
+                    cur--; 
+                    leafs[cur].classList.remove('flipped'); 
+                    setTimeout(() => { leafs[cur].style.zIndex = 100 - cur; }, 300);
+                    update(); 
+                } 
+            }
+            // Η μαγεία για το "Διπλό" βιβλίο:
+            function update(){ 
+                if(cur > 0) {
+                    book.style.transform = "translateX(50%)"; // Μετακινεί το κέντρο για να βλέπεις το άνοιγμα
+                } else {
+                    book.style.transform = "translateX(0)"; // Εξώφυλλο κλειστό
+                }
+            }
+            
+            // Click πάνω στις σελίδες για γύρισμα
+            leafs.forEach(l => l.onclick = n);
         </script>
     </body>
     </html>`;
 
     modal.style.display = "block";
 }
-
 
 
 
