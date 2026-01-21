@@ -893,12 +893,14 @@ export async function exportFlipbook() {
             .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:3000px; }
             
             /* Διορθωμένο Book Container */
-            .book { 
-                position:relative; 
-                width: 70vh; 
-                height: 50vh; 
-                transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            }
+           .book {
+  position: relative;
+  height: 80vh;
+  aspect-ratio: 3 / 2; /* ΒΑΛΕ ΕΔΩ ΤΟ RATIO ΤΟΥ CANVAS ΣΟΥ */
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
             
             .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
             .page { 
