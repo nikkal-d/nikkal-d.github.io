@@ -841,7 +841,7 @@ export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
 
-    // 1. Λήψη εικόνων με περιορισμό ανάλυσης για ταχύτητα
+    // 1. Λήψη εικόνων (Multiplier για ταχύτητα και σωστό μέγεθος)
     for (let i = 0; i < myApp.pages.length; i++) {
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
@@ -851,20 +851,19 @@ export async function exportFlipbook() {
             tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
                 tempCanvas.renderAll();
                 setTimeout(() => {
-                    // Χρησιμοποιούμε multiplier για να μικρύνουμε το αρχείο (ταχύτερο φόρτωμα)
                     images.push(tempCanvas.toDataURL({ 
                         format: 'jpeg', 
-                        quality: 0.7,
-                        multiplier: 0.4 // Μειώνει την ανάλυση μόνο για το preview
+                        quality: 0.8,
+                        multiplier: 0.5 // Εξασφαλίζει ότι η εικόνα δεν είναι τεράστια για τον browser
                     }));
                     tempCanvas.dispose();
                     resolve();
-                }, 100); // Μικρότερη αναμονή
+                }, 100);
             });
         });
     }
 
-    // 2. Κατασκευή Φύλλων (Σωστή σειρά χωρίς κενά)
+    // 2. Κατασκευή HTML (Διαστάσεις από core 12)
     let leafHtml = "";
     for (let i = 0; i < images.length; i += 2) {
         const frontImg = images[i];
@@ -892,7 +891,7 @@ export async function exportFlipbook() {
             
             .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2000px; }
             
-            /* ΑΚΡΙΒΕΙΣ ΔΙΑΣΤΑΣΕΙΣ ΑΠΟ CORE (12) */
+            /* ΑΥΣΤΗΡΕΣ ΔΙΑΣΤΑΣΕΙΣ 80x56 */
             .book { 
                 position:relative; 
                 width: 80vh; 
@@ -900,16 +899,21 @@ export async function exportFlipbook() {
                 transform-style:preserve-3d; transition:transform 0.6s ease;
             }
             
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
+            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s; transform-style:preserve-3d; }
             .page { 
                 position:absolute; width:100%; height:100%; backface-visibility:hidden; 
                 background:white; box-shadow:0 0 15px rgba(0,0,0,0.5); 
-                display:flex; align-items:center; justify-content:center;
+                display:flex; align-items:center; justify-content:center; overflow:hidden;
             }
             .back { transform:rotateY(180deg); }
             
-            /* Fix για να μην ξεχειλίζουν οι εικόνες */
-            img { width: 100%; height: 100%; object-fit: contain; background:#fff; }
+            /* Κλείδωμα εικόνας μέσα στη σελίδα */
+            img { 
+                width: 100%; 
+                height: 100%; 
+                object-fit: contain; 
+                background: white;
+            }
             
             .flipped { transform:rotateY(-180deg); }
         </style>
@@ -933,7 +937,7 @@ export async function exportFlipbook() {
                 const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = 'Photobook_Fast.html';
+                a.download = 'Photobook_Final.html';
                 a.click();
             }
         </script>
@@ -942,7 +946,6 @@ export async function exportFlipbook() {
 
     modal.style.display = "block";
 }
-
 
 
 
