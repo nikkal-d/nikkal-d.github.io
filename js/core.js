@@ -837,12 +837,11 @@ document.body.onclick = () => {
 
 
 
-
 export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
 
-    // 1. Λήψη εικόνων από το App.pages (core 18)
+    // 1. Λήψη εικόνων με περιορισμό ανάλυσης για ταχύτητα
     for (let i = 0; i < myApp.pages.length; i++) {
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
@@ -852,23 +851,32 @@ export async function exportFlipbook() {
             tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
                 tempCanvas.renderAll();
                 setTimeout(() => {
-                    images.push(tempCanvas.toDataURL({ format: 'jpeg', quality: 0.8 }));
+                    // Χρησιμοποιούμε multiplier για να μικρύνουμε το αρχείο (ταχύτερο φόρτωμα)
+                    images.push(tempCanvas.toDataURL({ 
+                        format: 'jpeg', 
+                        quality: 0.7,
+                        multiplier: 0.4 // Μειώνει την ανάλυση μόνο για το preview
+                    }));
                     tempCanvas.dispose();
                     resolve();
-                }, 500);
+                }, 100); // Μικρότερη αναμονή
             });
         });
     }
 
-    // 2. Κατασκευή Φύλλων: ΜΙΑ εικόνα ανά φύλλο (για να μην υπάρχουν κενά)
+    // 2. Κατασκευή Φύλλων (Σωστή σειρά χωρίς κενά)
     let leafHtml = "";
-    images.forEach((img, idx) => {
+    for (let i = 0; i < images.length; i += 2) {
+        const frontImg = images[i];
+        const backImg = images[i + 1] || null;
         leafHtml += `
-            <div class="leaf" style="z-index: ${100 - idx}">
-                <div class="page front"><img src="${img}"></div>
-                <div class="page back"><div style="background:#fff;width:100%;height:100%"></div></div>
+            <div class="leaf">
+                <div class="page front"><img src="${frontImg}"></div>
+                <div class="page back">
+                    ${backImg ? `<img src="${backImg}">` : '<div style="background:#fff;width:100%;height:100%"></div>'}
+                </div>
             </div>`;
-    });
+    }
 
     const modal = document.getElementById("flipPreviewModal");
     const frame = document.getElementById("flipPreviewFrame");
@@ -882,7 +890,7 @@ export async function exportFlipbook() {
             .nav { position:fixed; top:15px; z-index:9999; display:flex; gap:10px; }
             button { padding:10px 20px; cursor:pointer; background:#333; color:white; border:none; border-radius:4px; font-weight:bold; }
             
-            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2000px; }
             
             /* ΑΚΡΙΒΕΙΣ ΔΙΑΣΤΑΣΕΙΣ ΑΠΟ CORE (12) */
             .book { 
@@ -898,16 +906,10 @@ export async function exportFlipbook() {
                 background:white; box-shadow:0 0 15px rgba(0,0,0,0.5); 
                 display:flex; align-items:center; justify-content:center;
             }
-            .back { transform:rotateY(180deg); border-left: 1px solid #ddd; }
+            .back { transform:rotateY(180deg); }
             
-            /* ΠΕΡΙΟΡΙΣΜΟΣ ΕΙΚΟΝΑΣ ΓΙΑ ΝΑ ΜΗΝ ΞΕΧΕΙΛΙΖΕΙ */
-            img { 
-                max-width: 100%; 
-                max-height: 100%; 
-                width: auto; 
-                height: auto; 
-                object-fit: contain; 
-            }
+            /* Fix για να μην ξεχειλίζουν οι εικόνες */
+            img { width: 100%; height: 100%; object-fit: contain; background:#fff; }
             
             .flipped { transform:rotateY(-180deg); }
         </style>
@@ -924,27 +926,14 @@ export async function exportFlipbook() {
         </div>
         <script>
             let cur=0; const leafs=document.querySelectorAll('.leaf');
-            function n(){ 
-                if(cur<leafs.length){ 
-                    leafs[cur].classList.add('flipped'); 
-                    cur++; update(); 
-                } 
-            }
-            function p(){ 
-                if(cur>0){ 
-                    cur--; 
-                    leafs[cur].classList.remove('flipped'); 
-                    update(); 
-                } 
-            }
-            function update(){ 
-                document.getElementById('book').style.transform = cur>0 ? "translateX(50%)" : "translateX(0)"; 
-            }
+            function n(){ if(cur<leafs.length){ leafs[cur].style.zIndex=100+cur; leafs[cur].classList.add('flipped'); cur++; update(); } }
+            function p(){ if(cur>0){ cur--; leafs[cur].classList.remove('flipped'); setTimeout(()=>{leafs[cur].style.zIndex=100-cur;},300); update(); } }
+            function update(){ document.getElementById('book').style.transform=cur>0?\"translateX(50%)\":\"translateX(0)\"; }
             function save() {
-                const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+                const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = 'Photobook_Final_NoGaps.html';
+                a.download = 'Photobook_Fast.html';
                 a.click();
             }
         </script>
