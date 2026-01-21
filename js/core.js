@@ -840,8 +840,8 @@ document.body.onclick = () => {
 export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
-
-    // 1. Λήψη εικόνων (Multiplier 0.5 για ταχύτητα και σωστό κλιμακωτό μέγεθος)
+    
+    // 1. Λήψη εικόνων - Εδώ ορίζουμε το μέγεθος εξαγωγής να ταιριάζει με την οθόνη
     for (let i = 0; i < myApp.pages.length; i++) {
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
@@ -851,10 +851,12 @@ export async function exportFlipbook() {
             tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
                 tempCanvas.renderAll();
                 setTimeout(() => {
+                    // Χρησιμοποιούμε multiplier για να έρθει η εικόνα σε λογικά pixels (π.χ. ~1200px πλάτος)
+                    // Αν ο καμβάς σου είναι 3500px, το 0.3 τον κάνει ~1000px.
                     images.push(tempCanvas.toDataURL({ 
                         format: 'jpeg', 
                         quality: 0.8,
-                        multiplier: 0.5 
+                        multiplier: 0.3 
                     }));
                     tempCanvas.dispose();
                     resolve();
@@ -885,31 +887,43 @@ export async function exportFlipbook() {
     <html>
     <head>
         <style>
+            * { box-sizing: border-box; }
             body { margin:0; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; font-family:sans-serif; }
             
-            /* NAVIGATION BAR */
-            .nav { position:fixed; top:0; width:100%; background:rgba(0,0,0,0.9); padding:15px; display:flex; justify-content:center; gap:12px; z-index:9999; border-bottom:1px solid #333; }
-            button { padding:10px 20px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; background:#444; transition:0.2s; }
-            button:hover { background:#666; }
+            .nav { position:fixed; top:0; width:100%; background:rgba(0,0,0,0.95); padding:10px; display:flex; justify-content:center; gap:10px; z-index:9999; }
+            button { padding:8px 18px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; background:#444; }
             .btn-save { background:#27ae60 !important; }
             .btn-pdf { background:#2980b9 !important; }
             .btn-close { background:#e74c3c !important; }
             
-            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; padding-top:60px; }
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; padding-top:50px; }
             
-            /* ΔΙΑΣΤΑΣΕΙΣ CORE 12 */
+            /* ΚΡΙΣΙΜΟ: Το book ορίζει το αυστηρό μέγεθος του "μισού" βιβλίου */
             .book { 
                 position:relative; 
-                width: 80vh; 
-                height: 56vh; 
+                width: 80vh !important; 
+                height: 56vh !important; 
                 transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transition:0.8s; transform-style:preserve-3d; z-index:1; cursor:pointer; }
-            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow: 5px 0 15px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+            .leaf { position:absolute; width:100% !important; height:100% !important; transform-origin:left center; transition:0.8s; transform-style:preserve-3d; z-index:1; }
+            
+            .page { 
+                position:absolute; width:100% !important; height:100% !important; 
+                backface-visibility:hidden; background:white; 
+                box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+                display:flex; align-items:center; justify-content:center; overflow:hidden;
+            }
+            
             .back { transform:rotateY(180deg); }
             
-            img { width: 100%; height: 100%; object-fit: contain; background:white; }
+            /* ΑΝΑΓΚΑΣΤΙΚΟ ΜΕΓΕΘΟΣ ΕΙΚΟΝΑΣ */
+            img { 
+                width: 100% !important; 
+                height: 100% !important; 
+                object-fit: contain !important; /* Διατηρεί την αναλογία χωρίς να εξέχει */
+                display: block;
+            }
             
             .flipped { transform:rotateY(-180deg); }
         </style>
@@ -919,7 +933,7 @@ export async function exportFlipbook() {
             <button onclick="p()">❮ Πίσω</button>
             <button onclick="n()">Επόμενο ❯</button>
             <button class="btn-save" onclick="saveFlip()">💾 Λήψη Flipbook</button>
-            <button class="btn-pdf" onclick="window.parent.exportPDF()">📄 Λήψη PDF</button>
+            <button class="btn-pdf" onclick="window.parent.exportPDF()">📄 PDF</button>
             <button class="btn-close" onclick="window.parent.closeFlipbookPreview()">X</button>
         </div>
         
@@ -947,19 +961,18 @@ export async function exportFlipbook() {
                 } 
             }
             function update(){ 
-                // Εφέ διπλού ανοίγματος
+                // Διπλό άνοιγμα
                 book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)"; 
             }
             
             function saveFlip() {
-                const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+                const b = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
                 const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'MyPhotobook_Final.html';
+                a.href = URL.createObjectURL(b);
+                a.download = 'Photobook.html';
                 a.click();
             }
 
-            // Keyboard navigation
             document.addEventListener('keydown', e => {
                 if(e.key === 'ArrowRight') n();
                 if(e.key === 'ArrowLeft') p();
@@ -970,7 +983,6 @@ export async function exportFlipbook() {
 
     modal.style.display = "block";
 }
-
 
 
 
