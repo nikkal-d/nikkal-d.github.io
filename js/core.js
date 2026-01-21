@@ -953,11 +953,13 @@ button:hover { background: #666; }
 
 /* BOOK */
 .book {
-  height: 80vh;
-  aspect-ratio: ${canvasW} / ${canvasH};
   position: relative;
+  height: 80vh;
+  aspect-ratio: 3 / 2; /* ΒΑΛΕ ΕΔΩ ΤΟ RATIO ΤΟΥ CANVAS ΣΟΥ */
   transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 
 /* LEAF */
 .leaf {
