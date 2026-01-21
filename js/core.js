@@ -843,7 +843,7 @@ export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
     
-    // 1. Λήψη εικόνων
+    // 1. Εξαγωγή εικόνων
     for (let i = 0; i < myApp.pages.length; i++) {
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
@@ -853,22 +853,24 @@ export async function exportFlipbook() {
             tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
                 tempCanvas.renderAll();
                 setTimeout(() => {
-                    images.push(tempCanvas.toDataURL({ format: 'jpeg', quality: 0.9 }));
+                    images.push(tempCanvas.toDataURL({ 
+                        format: 'jpeg', 
+                        quality: 0.8,
+                        multiplier: 0.4 
+                    }));
                     tempCanvas.dispose();
                     resolve();
-                }, 500);
+                }, 100);
             });
         });
     }
 
-    // 2. Κατασκευή Φύλλων (Σωστή σειρά & Διάταξη)
     let leafHtml = "";
     for (let i = 0; i < images.length; i += 2) {
         const frontImg = images[i];
         const backImg = images[i + 1] || null;
-        
         leafHtml += `
-            <div class="leaf" style="z-index: ${100 - i}">
+            <div class="leaf">
                 <div class="page front"><img src="${frontImg}"></div>
                 <div class="page back">
                     ${backImg ? `<img src="${backImg}">` : '<div style="background:#fff;width:100%;height:100%"></div>'}
@@ -884,45 +886,33 @@ export async function exportFlipbook() {
     <html>
     <head>
         <style>
-            body { margin:0; background:#1a1a1a; font-family:sans-serif; overflow:hidden; color:white; }
-            .nav { position:fixed; top:0; width:100%; background:rgba(0,0,0,0.8); padding:15px; display:flex; justify-content:center; gap:15px; z-index:9999; }
-            button { padding:12px 25px; cursor:pointer; border:none; border-radius:6px; font-weight:bold; color:white; background:#444; transition: 0.2s; }
-            button:hover { background:#666; }
-            .save-btn { background:#27ae60 !important; }
+            body { margin:0; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; font-family:sans-serif; }
+            .nav { position:fixed; top:0; width:100%; background:#000; padding:10px; display:flex; justify-content:center; gap:10px; z-index:9999; }
+            button { padding:8px 15px; cursor:pointer; color:white; background:#444; border:none; border-radius:4px; font-weight:bold; }
             
-            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:3000px; }
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
             
-            /* Διορθωμένο Book Container */
-           .book {
-  position: relative;
-  height: 80vh;
-  aspect-ratio: 3 / 2; /* ΒΑΛΕ ΕΔΩ ΤΟ RATIO ΤΟΥ CANVAS ΣΟΥ */
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-            
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
-            .page { 
-                position:absolute; width:100%; height:100%; backface-visibility:hidden; 
-                background:#fff; display:flex; align-items:center; justify-content:center;
-                box-shadow: inset 0 0 50px rgba(0,0,0,0.1), 5px 5px 20px rgba(0,0,0,0.5);
+            /* ΧΡΗΣΗ ΣΤΑΘΕΡΩΝ PIXELS ΑΝΤΙ ΓΙΑ VH */
+            .book { 
+                position:relative; 
+                width: 600px;  /* Σταθερό πλάτος */
+                height: 420px; /* Σταθερό ύψος (αναλογία core 12) */
+                transform-style:preserve-3d; transition:transform 0.6s ease;
             }
             
-            .front { z-index: 2; border-radius: 0 5px 5px 0; }
-            .back { transform:rotateY(180deg); z-index: 1; border-radius: 5px 0 0 5px; }
-            
-            /* Διόρθωση παραμόρφωσης εικόνας */
-            img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit: contain; }
-            
+            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s; transform-style:preserve-3d; }
+            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow:0 0 15px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; }
+            .back { transform:rotateY(180deg); }
+            img { width: 100%; height: 100%; object-fit: contain; }
             .flipped { transform:rotateY(-180deg); }
         </style>
     </head>
     <body>
         <div class="nav">
-            <button onclick="p()">❮ Προηγούμενο</button>
+            <button onclick="p()">❮ Πίσω</button>
             <button onclick="n()">Επόμενο ❯</button>
-            <button class="save-btn" onclick="save()">💾 Αποθήκευση</button>
+            <button style="background:#27ae60" onclick="saveFlip()">💾 Λήψη Flipbook</button>
+            <button style="background:#2980b9" onclick="window.parent.exportPDF()">📄 PDF</button>
             <button style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">X</button>
         </div>
         <div class="viewport">
@@ -930,34 +920,16 @@ export async function exportFlipbook() {
         </div>
         <script>
             let cur=0; const leafs=document.querySelectorAll('.leaf');
-            function n(){ if(cur<leafs.length){ 
-                leafs[cur].classList.add('flipped'); 
-                leafs[cur].style.zIndex = 100 + cur; // Διόρθωση σειράς στο γύρισμα
-                cur++; update(); 
-            } }
-            function p(){ if(cur>0){ 
-                cur--; 
-                leafs[cur].classList.remove('flipped'); 
-                leafs[cur].style.zIndex = 100 - cur; // Επαναφορά σειράς
-                update(); 
-            } }
-            function update(){ document.getElementById('book').style.transform=cur>0?"translateX(50%)":"translateX(0)"; }
-            
-            function save() {
-                const html = document.documentElement.outerHTML;
-                const blob = new Blob([html], {type: 'text/html'});
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'MyPhotobook.html';
-                a.click();
-            }
+            function n(){ if(cur<leafs.length){ leafs[cur].style.zIndex=100+cur; leafs[cur].classList.add('flipped'); cur++; u(); } }
+            function p(){ if(cur>0){ cur--; leafs[cur].classList.remove('flipped'); setTimeout(()=>{leafs[cur].style.zIndex=100-cur;},300); u(); } }
+            function u(){ document.getElementById('book').style.transform=cur>0?"translateX(50%)":"translateX(0)"; }
+            function saveFlip(){ const b=new Blob([document.documentElement.outerHTML],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='book.html'; a.click(); }
         </script>
     </body>
     </html>`;
 
     modal.style.display = "block";
 }
-
 
 
 
