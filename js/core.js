@@ -841,7 +841,7 @@ export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
 
-    // 1. Λήψη εικόνων (Multiplier 0.5 για να μην επηρεάζει το Reset του καμβά)
+    // 1. Λήψη εικόνων (Multiplier 0.5 για ταχύτητα και σωστό κλιμακωτό μέγεθος)
     for (let i = 0; i < myApp.pages.length; i++) {
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
@@ -863,7 +863,7 @@ export async function exportFlipbook() {
         });
     }
 
-    // 2. Κατασκευή Φύλλων (Διπλό βιβλίο)
+    // 2. Κατασκευή Φύλλων
     let leafHtml = "";
     for (let i = 0; i < images.length; i += 2) {
         const frontImg = images[i];
@@ -885,48 +885,51 @@ export async function exportFlipbook() {
     <html>
     <head>
         <style>
-            body { margin:0; background:#1a1a1a; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
+            body { margin:0; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; font-family:sans-serif; }
             
-            /* VIEWPORT: Εδώ ορίζουμε το βάθος */
-            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+            /* NAVIGATION BAR */
+            .nav { position:fixed; top:0; width:100%; background:rgba(0,0,0,0.9); padding:15px; display:flex; justify-content:center; gap:12px; z-index:9999; border-bottom:1px solid #333; }
+            button { padding:10px 20px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; background:#444; transition:0.2s; }
+            button:hover { background:#666; }
+            .btn-save { background:#27ae60 !important; }
+            .btn-pdf { background:#2980b9 !important; }
+            .btn-close { background:#e74c3c !important; }
             
-            /* ΤΟ ΒΙΒΛΙΟ (Διπλό πλάτος όταν είναι ανοιχτό) */
+            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; padding-top:60px; }
+            
+            /* ΔΙΑΣΤΑΣΕΙΣ CORE 12 */
             .book { 
                 position:relative; 
-                width: 80vh; /* Πλάτος μίας σελίδας */
-                height: 56vh; /* Ύψος από core 12 */
-                transform-style:preserve-3d; 
-                transition:transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-                /* Μετατόπιση για να φαίνεται κεντραρισμένο το διπλό άνοιγμα */
-                transform: translateX(0px);
+                width: 80vh; 
+                height: 56vh; 
+                transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transition:0.8s; transform-style:preserve-3d; z-index:1; }
-            
-            .page { 
-                position:absolute; width:100%; height:100%; backface-visibility:hidden; 
-                background:white; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-                display:flex; align-items:center; justify-content:center; overflow:hidden;
-            }
-            
+            .leaf { position:absolute; width:100%; height:100%; transform-origin:left center; transition:0.8s; transform-style:preserve-3d; z-index:1; cursor:pointer; }
+            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow: 5px 0 15px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; overflow:hidden; }
             .back { transform:rotateY(180deg); }
             
-            /* ΕΙΚΟΝΕΣ: Contain για να μην ξεχειλίζουν ποτέ */
-            img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+            img { width: 100%; height: 100%; object-fit: contain; background:white; }
             
-            /* ΟΤΑΝ ΓΥΡΝΑΕΙ: Το βιβλίο μετακινείται δεξιά για να φαίνονται και οι δύο σελίδες */
             .flipped { transform:rotateY(-180deg); }
         </style>
     </head>
     <body>
+        <div class="nav">
+            <button onclick="p()">❮ Πίσω</button>
+            <button onclick="n()">Επόμενο ❯</button>
+            <button class="btn-save" onclick="saveFlip()">💾 Λήψη Flipbook</button>
+            <button class="btn-pdf" onclick="window.parent.exportPDF()">📄 Λήψη PDF</button>
+            <button class="btn-close" onclick="window.parent.closeFlipbookPreview()">X</button>
+        </div>
+        
         <div class="viewport">
             <div class="book" id="book">${leafHtml}</div>
         </div>
+
         <script>
             let cur=0; const leafs=document.querySelectorAll('.leaf');
             const book=document.getElementById('book');
-
-            window.addEventListener('keydown', e => { if(e.key==='ArrowRight') n(); if(e.key==='ArrowLeft') p(); });
 
             function n(){ 
                 if(cur < leafs.length){ 
@@ -943,24 +946,30 @@ export async function exportFlipbook() {
                     update(); 
                 } 
             }
-            // Η μαγεία για το "Διπλό" βιβλίο:
             function update(){ 
-                if(cur > 0) {
-                    book.style.transform = "translateX(50%)"; // Μετακινεί το κέντρο για να βλέπεις το άνοιγμα
-                } else {
-                    book.style.transform = "translateX(0)"; // Εξώφυλλο κλειστό
-                }
+                // Εφέ διπλού ανοίγματος
+                book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)"; 
             }
             
-            // Click πάνω στις σελίδες για γύρισμα
-            leafs.forEach(l => l.onclick = n);
+            function saveFlip() {
+                const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'MyPhotobook_Final.html';
+                a.click();
+            }
+
+            // Keyboard navigation
+            document.addEventListener('keydown', e => {
+                if(e.key === 'ArrowRight') n();
+                if(e.key === 'ArrowLeft') p();
+            });
         </script>
     </body>
     </html>`;
 
     modal.style.display = "block";
 }
-
 
 
 
