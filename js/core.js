@@ -852,18 +852,14 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων (Κρατάμε ακριβώς τη μέθοδο από το core (19).js)
+  // 1. Εξαγωγή (Ακριβώς οι διαστάσεις σου)
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
         App.canvas.renderAll();
         setTimeout(() => {
           App.canvas.renderAll();
-          images.push(App.canvas.toDataURL({ 
-            format: 'jpeg', 
-            quality: 0.9, 
-            multiplier: 1.0 
-          }));
+          images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.0 }));
           resolve();
         }, 250);
       });
@@ -877,19 +873,20 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Δημιουργία Φύλλων (Σωστή σειρά & Hardcover class)
+  // 2. Δημιουργία Φύλλων με απόλυτο Z-INDEX
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
-    const isLast = (i >= images.length - 2);
+    // Υπολογισμός z-index: Η πρώτη σελίδα παίρνει το μεγαλύτερο νούμερο
+    const zIndex = Math.floor((images.length - i) / 2) + 50;
+    
     leavesHtml += `
-      <div class="leaf ${isCover ? 'hardcover' : ''}" style="z-index: ${images.length - i}">
+      <div class="leaf ${isCover ? 'hardcover' : ''}" style="z-index: ${zIndex}">
         <div class="page front"><img src="${images[i]}"></div>
         <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
       </div>`;
   }
 
-  // 3. Το HTML με όλες τις "ομορφιές"
   const html = `
   <!doctype html>
   <html>
@@ -901,70 +898,40 @@ export async function exportFlipbook() {
         color:white; font-family: sans-serif; 
         display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; 
       }
-      
-      .nav { 
-        width:100%; background: rgba(0,0,0,0.85); padding:15px; 
-        display:flex; justify-content:center; gap:15px; z-index:9999;
-        box-shadow: 0 2px 15px rgba(0,0,0,0.5);
-      }
-      
-      .btn { 
-        padding:12px 25px; border:none; border-radius:30px; cursor:pointer; 
-        font-weight:bold; color:white; background: #444; transition: 0.3s;
-        display:flex; align-items:center; gap:8px; text-transform: uppercase; font-size:12px;
-      }
-      .btn:hover { background: #666; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+      .nav { width:100%; background: rgba(0,0,0,0.9); padding:15px; display:flex; justify-content:center; gap:15px; z-index:9999; }
+      .btn { padding:12px 25px; border:none; border-radius:30px; cursor:pointer; font-weight:bold; color:white; background:#444; transition:0.3s; display:flex; align-items:center; gap:8px; text-transform:uppercase; font-size:12px; }
+      .btn:hover { background:#666; transform:translateY(-2px); }
       .btn-save { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
       .btn-pdf { background: linear-gradient(135deg, #2980b9 0%, #3498db 100%); }
 
-      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; }
       
-      /* ΔΙΑΣΤΑΣΕΙΣ ΑΠΟ CORE (19) */
-      .book { 
-        position:relative; width: 80vh; height: 56vh; 
-        transform-style:preserve-3d; transition:transform 0.8s ease;
-      }
-      
-      .leaf { 
-        position:absolute; inset:0; transform-origin:left center; 
-        transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-        transform-style:preserve-3d;
-      }
-      
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
+      /* ΔΙΑΣΤΑΣΕΙΣ CORE 19 */
+      .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); }
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style:preserve-3d; }
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.1); }
       .page img { width:100%; height:100%; object-fit:contain; }
 
-      /* Hardcover Εφέ */
-      .hardcover .front { border-right: 4px solid #1a1a1a; box-shadow: 10px 0 20px rgba(0,0,0,0.4); }
+      /* Hardcover Look */
+      .hardcover .front { border-right: 4px solid #1a1a1a; box-shadow: 15px 0 25px rgba(0,0,0,0.5); }
+      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 30px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0) 100%); }
       
-      /* Σκιά στη ράχη για βάθος */
-      .page.front::after {
-        content: ""; position: absolute; top: 0; left: 0; width: 30px; height: 100%;
-        background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
-      }
-      .page.back::after {
-        content: ""; position: absolute; top: 0; right: 0; width: 30px; height: 100%;
-        background: linear-gradient(to left, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
-      }
-
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
-      /* PDF Print Layout */
       @media print {
         @page { size: auto; margin: 0mm; }
         .nav { display:none; }
         body { background: white; overflow: visible; }
         .viewport { display: block; perspective: none; }
         .book { transform: none !important; width: 100% !important; height: auto !important; }
-        .leaf { position: relative !important; width: 100% !important; height: 100vh !important; transform: none !important; page-break-after: always; }
+        .leaf { position: relative !important; width: 100% !important; height: 100vh !important; transform: none !important; page-break-after: always; z-index: auto !important; }
         .page.back { transform: none !important; }
       }
     </style>
   </head>
   <body>
     <audio id="flipSnd" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
-
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
@@ -972,10 +939,7 @@ export async function exportFlipbook() {
       <button class="btn btn-pdf" onclick="window.print()">📄 PDF</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
-
-    <div class="viewport">
-      <div class="book" id="book">${leavesHtml}</div>
-    </div>
+    <div class="viewport"><div class="book" id="book">${leavesHtml}</div></div>
 
     <script>
       let cur = 0;
@@ -986,9 +950,10 @@ export async function exportFlipbook() {
       function n() {
         if (cur < leafs.length) {
           snd.play().catch(()=>{});
-          leafs[cur].classList.add('flipped');
-          const idx = cur;
-          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 400);
+          const target = leafs[cur];
+          target.classList.add('flipped');
+          // ΚΛΕΙΔΩΜΑ: Χαμηλώνουμε το z-index ΜΟΝΟ αφού ολοκληρωθεί σχεδόν η κίνηση
+          setTimeout(() => { target.style.zIndex = cur; }, 500);
           cur++;
           u();
         }
@@ -998,7 +963,8 @@ export async function exportFlipbook() {
         if (cur > 0) {
           snd.play().catch(()=>{});
           cur--;
-          leafs[cur].style.zIndex = leafs.length + cur;
+          // ΚΛΕΙΔΩΜΑ: Επαναφέρουμε το υψηλό z-index ΑΜΕΣΩΣ πριν ξεκινήσει η αντίστροφη κίνηση
+          leafs[cur].style.zIndex = leafs.length + 50 - cur;
           leafs[cur].classList.remove('flipped');
           u();
         }
@@ -1011,7 +977,7 @@ export async function exportFlipbook() {
       function saveH() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = 'Album.html'; a.click();
+        a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
       }
     </script>
   </body>
@@ -1020,7 +986,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 
 
