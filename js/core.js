@@ -843,7 +843,11 @@ export async function exportFlipbook() {
     const myApp = window.App || App;
     const images = [];
 
-    // 1. Λήψη των εικόνων από όλες τις σελίδες
+    // 1. Υπολογισμός multiplier για να βγει η εικόνα σε φυσιολογικό μέγεθος
+    // Αν ο καμβάς είναι 3500px, το 1200/3500 θα την κάνει ~1200px πλάτος
+    const targetWidth = 1200; 
+    const multiplier = targetWidth / myApp.canvas.width;
+
     for (let i = 0; i < myApp.pages.length; i++) {
         await new Promise((resolve) => {
             const tempCanvas = new fabric.StaticCanvas(null, {
@@ -853,10 +857,11 @@ export async function exportFlipbook() {
             tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
                 tempCanvas.renderAll();
                 setTimeout(() => {
-                    // Παίρνουμε την εικόνα
+                    // ΕΔΩ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ: multiplier
                     images.push(tempCanvas.toDataURL({ 
                         format: 'jpeg', 
-                        quality: 0.8 
+                        quality: 0.8,
+                        multiplier: multiplier 
                     }));
                     tempCanvas.dispose();
                     resolve();
@@ -865,12 +870,9 @@ export async function exportFlipbook() {
         });
     }
 
-    // 2. Η ΚΛΗΣΗ ΠΟΥ ΧΡΕΙΑΖΕΣΑΙ:
-    // Στέλνουμε τις εικόνες στη συνάρτηση του ui.js για να τις ανοίξει σε νέο tab
     if (typeof openFlipbookPreview === "function") {
         openFlipbookPreview(images);
     } else {
-        // Αν για κάποιο λόγο δεν την βρίσκει ως export, την καλούμε μέσω window
         window.openFlipbookPreview(images);
     }
 }
