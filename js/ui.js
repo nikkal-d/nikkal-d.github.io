@@ -168,7 +168,6 @@ function toggleTextProp(key, onVal, offVal) {
 }
 
 export function openFlipbookPreview(images) {
-    // Ανοίγουμε νέο παράθυρο για να έχουμε άπλετο χώρο
     const win = window.open("", "_blank");
     
     const html = `
@@ -176,34 +175,34 @@ export function openFlipbookPreview(images) {
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Flipbook Preview</title>
+    <title>Flipbook Final</title>
     <style>
         body { 
-            margin:0; background:#1a1a1a; color:white;
+            margin:0; background:#1a1a1a; 
             display:flex; flex-direction:column; align-items:center; 
             height:100vh; overflow:hidden; font-family:sans-serif; 
         }
-        /* Toolbar με κουμπιά */
         .toolbar { 
-            width:100%; background:#000; padding:10px; 
+            width:100%; background:#000; padding:15px; 
             display:flex; justify-content:center; gap:15px; z-index:1000;
         }
         button { 
-            padding:10px 20px; cursor:pointer; border:none; border-radius:4px; 
-            font-weight:bold; color:white; background:#444; 
+            padding:12px 25px; cursor:pointer; border:none; border-radius:5px; 
+            font-weight:bold; color:white; background:#444; font-size:14px;
         }
-        .btn-download { background:#27ae60; }
-        .btn-pdf { background:#2980b9; }
+        .btn-download { background:#27ae60 !important; }
+        .btn-pdf { background:#2980b9 !important; }
 
         .viewport { 
             flex:1; width:100%; display:flex; justify-content:center; 
-            align-items:center; perspective:2500px; 
+            align-items:center; perspective:2500px; padding-bottom:50px;
         }
         
-        /* ΔΙΑΣΤΑΣΕΙΣ: Διπλή σελίδα (Landscape) */
+        /* ΚΛΕΙΔΩΜΑ ΔΙΑΣΤΑΣΕΩΝ 80x56 */
         .book { 
             position:relative; 
-            width: 80vh; height: 56vh; 
+            width: 80vh !important; 
+            height: 56vh !important; 
             transform-style:preserve-3d; transition:transform 0.6s ease;
         }
         
@@ -214,16 +213,18 @@ export function openFlipbookPreview(images) {
         .page { 
             position:absolute; width:100%; height:100%; 
             backface-visibility:hidden; background:white; 
-            box-shadow:0 0 15px rgba(0,0,0,0.5);
+            box-shadow:0 0 20px rgba(0,0,0,0.5);
             display:flex; align-items:center; justify-content:center;
+            overflow:hidden; /* Δεν αφήνει την εικόνα να βγει έξω */
         }
         .back { transform:rotateY(180deg); }
         
-        /* ΔΙΟΡΘΩΣΗ: Η εικόνα γεμίζει το πλαίσιο χωρίς να κόβεται */
+        /* ΕΔΩ ΕΙΝΑΙ Η ΔΙΟΡΘΩΣΗ ΓΙΑ ΤΗΝ ΕΙΚΟΝΑ */
         img { 
-            width:100%; height:100%; 
-            object-fit:contain; /* Δείχνει ΟΛΗ την εικόνα */
-            background:#fff;
+            width: 100% !important; 
+            height: 100% !important; 
+            display: block;
+            object-fit: fill; /* Αναγκάζει την εικόνα να "κουμπώσει" στις διαστάσεις 80x56 */
         }
         
         .flipped { transform:rotateY(-180deg); }
@@ -274,7 +275,7 @@ export function openFlipbookPreview(images) {
             const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'Photobook.html';
+            a.download = 'Photobook_Final.html';
             a.click();
         }
     </script>
@@ -284,5 +285,4 @@ export function openFlipbookPreview(images) {
     win.document.write(html);
     win.document.close();
 }
-
 
