@@ -891,76 +891,144 @@ export async function exportFlipbook() {
   }
 
   // 3. Το νέο HTML με εφέ Flipbook
-  const html = `
+ const html = `
   <!doctype html>
   <html>
   <head>
+    <meta charset="utf-8">
     <style>
-      body { margin:0; background:#111; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
-      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; z-index:100; }
-      .btn { padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; background:#444; }
-      .btn-save { background:#27ae60; }
-      
-      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:2500px; }
-      
-      /* Χρησιμοποιούμε vh για να χωράει πάντα στην οθόνη χωρίς scroll */
-      .book { 
-        position:relative; 
-        width: 80vh; height: 56vh; 
-        transform-style:preserve-3d; transition:transform 0.6s ease;
+      body { 
+        margin:0; 
+        background: radial-gradient(circle, #2c2c2c 0%, #000000 100%); 
+        color:white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; 
       }
       
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; z-index:1; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow:0 0 15px rgba(0,0,0,0.5); }
-      .page img { width:100%; height:100%; object-fit:contain; }
-      .back { transform:rotateY(180deg); }
+      /* Modern Navigation Bar */
+      .nav { 
+        width:100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+        padding:15px; display:flex; justify-content:center; gap:15px; z-index:9999;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      }
       
-      .flipped { transform:rotateY(-180deg); }
+      .btn { 
+        padding:12px 24px; border:none; border-radius:30px; cursor:pointer; 
+        font-weight:600; color:white; background: #333; transition: all 0.3s ease;
+        text-transform: uppercase; font-size: 12px; letter-spacing: 1px;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .btn:hover { background: #555; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+      .btn:active { transform: translateY(0); }
+      
+      .btn-save { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
+      .btn-pdf { background: linear-gradient(135deg, #2980b9 0%, #3498db 100%); }
+      .btn-close { background: #e74c3c; }
+
+      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+      
+      .book { 
+        position:relative; width: 80vh; height: 56vh; 
+        transform-style:preserve-3d; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+      }
+      
+      .leaf { 
+        position:absolute; inset:0; transform-origin:left center; 
+        transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
+        transform-style:preserve-3d; 
+      }
+      
+      .page { 
+        position:absolute; inset:0; background:white; backface-visibility:hidden; 
+        box-shadow: inset -1px 0 5px rgba(0,0,0,0.1); display:flex;
+      }
+      
+      .page img { width:100%; height:100%; object-fit:contain; background:#fff; }
+      
+      /* Η ράχη του βιβλίου (Σκιά στο κέντρο) */
+      .page.front::after {
+        content: ""; position: absolute; top: 0; left: 0; width: 40px; height: 100%;
+        background: linear-gradient(to right, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
+      }
+      .page.back::after {
+        content: ""; position: absolute; top: 0; right: 0; width: 40px; height: 100%;
+        background: linear-gradient(to left, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
+      }
+
+      .back { transform:rotateY(180deg); }
+      .flipped { transform:rotateY(-180deg) !important; }
+      
+      /* Εφέ "σελίδας που ανασηκώνεται" */
+      .leaf.flipped { box-shadow: 20px 0 50px rgba(0,0,0,0.3); }
     </style>
   </head>
   <body>
+    <audio id="pageSound" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
+
     <div class="nav">
-      <button class="btn" onclick="p()">❮ Πίσω</button>
-      <button class="btn" onclick="n()">Επόμενο ❯</button>
-      <button class="btn btn-save" onclick="saveAsHtml()">💾 Λήψη Flipbook</button>
-      <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">Κλείσιμο</button>
+      <button class="btn" onclick="p()">❮ ΠΡΟΗΓ.</button>
+      <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
+      <div style="width:2px; background:#444; margin:0 10px;"></div>
+      <button class="btn btn-save" onclick="saveAsHtml()">💾 HTML BOOK</button>
+      <button class="btn btn-pdf" onclick="window.parent.exportPDF()">📄 DOWNLOAD PDF</button>
+      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
+
     <div class="viewport">
-      <div class="book" id="book">${leavesHtml}</div>
+      <div class="book" id="book">
+        ${images.map((img, i) => i % 2 === 0 ? `
+          <div class="leaf" style="z-index: ${images.length - i}">
+            <div class="page front"><img src="${img}"></div>
+            <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
+          </div>` : '').join('')}
+      </div>
     </div>
 
     <script>
       let cur = 0;
       const leafs = document.querySelectorAll('.leaf');
       const book = document.getElementById('book');
+      const sound = document.getElementById('pageSound');
+
+      function playSound() {
+        sound.currentTime = 0;
+        sound.play().catch(e => {}); // Αποφυγή error αν ο browser μπλοκάρει τον ήχο
+      }
 
       function n() {
         if (cur < leafs.length) {
-          leafs[cur].style.zIndex = 100 + cur;
+          playSound();
           leafs[cur].classList.add('flipped');
+          const targetLeaf = leafs[cur];
+          setTimeout(() => { targetLeaf.style.zIndex = cur; }, 300);
           cur++;
           updatePos();
         }
       }
+
       function p() {
         if (cur > 0) {
+          playSound();
           cur--;
           leafs[cur].classList.remove('flipped');
-          setTimeout(() => { leafs[cur].style.zIndex = 100 - cur; }, 300);
+          leafs[cur].style.zIndex = leafs.length + cur;
           updatePos();
         }
       }
+
       function updatePos() {
-        // Μετακίνηση του βιβλίου στο κέντρο όταν ανοίγει
         book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)";
       }
+
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(b);
-        a.download = 'flipbook.html';
+        a.download = 'Premium_Photobook.html';
         a.click();
       }
+
+      // Αρχικοποίηση
+      leafs.forEach((leaf, i) => { leaf.style.zIndex = leafs.length - i; });
     </script>
   </body>
   </html>`;
