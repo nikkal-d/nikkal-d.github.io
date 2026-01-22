@@ -220,12 +220,16 @@ export function openFlipbookPreview(images) {
         .back { transform:rotateY(180deg); }
         
         /* ΕΔΩ ΕΙΝΑΙ Η ΔΙΟΡΘΩΣΗ ΓΙΑ ΤΗΝ ΕΙΚΟΝΑ */
-        img { 
-            width: 100% !important; 
-            height: 100% !important; 
-            display: block;
-            object-fit: fill; /* Αναγκάζει την εικόνα να "κουμπώσει" στις διαστάσεις 80x56 */
-        }
+       // Μέσα στο template string του ui.js, άλλαξε το στυλ της img:
+img { 
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important; 
+    height: 100% !important; 
+    object-fit: contain !important; /* Για να μην κόβεται τίποτα */
+    display: block;
+}
         
         .flipped { transform:rotateY(-180deg); }
     </style>
