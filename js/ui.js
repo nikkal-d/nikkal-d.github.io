@@ -167,4 +167,122 @@ function toggleTextProp(key, onVal, offVal) {
   setTimeout(() => setTextProps({ [key]: onVal }), 0);
 }
 
+export function openFlipbookPreview(images) {
+    // Ανοίγουμε νέο παράθυρο για να έχουμε άπλετο χώρο
+    const win = window.open("", "_blank");
+    
+    const html = `
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flipbook Preview</title>
+    <style>
+        body { 
+            margin:0; background:#1a1a1a; color:white;
+            display:flex; flex-direction:column; align-items:center; 
+            height:100vh; overflow:hidden; font-family:sans-serif; 
+        }
+        /* Toolbar με κουμπιά */
+        .toolbar { 
+            width:100%; background:#000; padding:10px; 
+            display:flex; justify-content:center; gap:15px; z-index:1000;
+        }
+        button { 
+            padding:10px 20px; cursor:pointer; border:none; border-radius:4px; 
+            font-weight:bold; color:white; background:#444; 
+        }
+        .btn-download { background:#27ae60; }
+        .btn-pdf { background:#2980b9; }
+
+        .viewport { 
+            flex:1; width:100%; display:flex; justify-content:center; 
+            align-items:center; perspective:2500px; 
+        }
+        
+        /* ΔΙΑΣΤΑΣΕΙΣ: Διπλή σελίδα (Landscape) */
+        .book { 
+            position:relative; 
+            width: 80vh; height: 56vh; 
+            transform-style:preserve-3d; transition:transform 0.6s ease;
+        }
+        
+        .leaf { 
+            position:absolute; width:100%; height:100%; 
+            transform-origin:left; transition:0.8s; transform-style:preserve-3d; 
+        }
+        .page { 
+            position:absolute; width:100%; height:100%; 
+            backface-visibility:hidden; background:white; 
+            box-shadow:0 0 15px rgba(0,0,0,0.5);
+            display:flex; align-items:center; justify-content:center;
+        }
+        .back { transform:rotateY(180deg); }
+        
+        /* ΔΙΟΡΘΩΣΗ: Η εικόνα γεμίζει το πλαίσιο χωρίς να κόβεται */
+        img { 
+            width:100%; height:100%; 
+            object-fit:contain; /* Δείχνει ΟΛΗ την εικόνα */
+            background:#fff;
+        }
+        
+        .flipped { transform:rotateY(-180deg); }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="p()">❮ Πίσω</button>
+        <button onclick="n()">Επόμενο ❯</button>
+        <button class="btn-download" onclick="saveHTML()">💾 Αποθήκευση Flipbook</button>
+        <button class="btn-pdf" onclick="window.opener.exportPDF()">📄 Λήψη PDF</button>
+    </div>
+
+    <div class="viewport">
+        <div class="book" id="book">
+            ${images.map((img, i) => i % 2 === 0 ? `
+            <div class="leaf">
+                <div class="page front"><img src="${img}"></div>
+                <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:#fff;width:100%;height:100%"></div>'}</div>
+            </div>` : '').join('')}
+        </div>
+    </div>
+
+    <script>
+        let cur=0; 
+        const leafs=document.querySelectorAll('.leaf');
+        const book=document.getElementById('book');
+
+        function n(){ 
+            if(cur < leafs.length){ 
+                leafs[cur].style.zIndex = 100 + cur;
+                leafs[cur].classList.add('flipped'); 
+                cur++; update(); 
+            } 
+        }
+        function p(){ 
+            if(cur > 0){ 
+                cur--; 
+                leafs[cur].classList.remove('flipped'); 
+                setTimeout(() => { leafs[cur].style.zIndex = 100 - cur; }, 300);
+                update(); 
+            } 
+        }
+        function update(){ 
+            book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)"; 
+        }
+        function saveHTML() {
+            const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Photobook.html';
+            a.click();
+        }
+    </script>
+</body>
+</html>`;
+
+    win.document.write(html);
+    win.document.close();
+}
+
 
