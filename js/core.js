@@ -840,131 +840,67 @@ document.body.onclick = () => {
 
 
 export async function exportFlipbook() {
-    const myApp = window.App || App;
-    const images = [];
+  saveCurrentPage();
+  const images = [];
+  const wasAutosave = App.autosaveEnabled;
+  App.autosaveEnabled = false;
 
-    // 1. Εξαγωγή εικόνων με έλεγχο μεγέθους για να μη "σπάει" το CSS
-    const multiplier = 1200 / myApp.canvas.width;
+  for (let i = 0; i < App.pages.length; i++) {
+    await new Promise((resolve) => {
+      App.canvas.loadFromJSON(App.pages[i].json, () => {
+        App.canvas.renderAll();
+        // Αναμονή 250ms για να προλάβουν οι μεγάλες εικόνες να εμφανιστούν
+        setTimeout(() => {
+          App.canvas.renderAll();
+          images.push(App.canvas.toDataURL({ 
+            format: 'jpeg', 
+            quality: 0.9, 
+            multiplier: 1.0 
+          }));
+          resolve();
+        }, 250);
+      });
+    });
+  }
+  
+  App.autosaveEnabled = wasAutosave;
+  await renderCurrentPage();
 
-    for (let i = 0; i < myApp.pages.length; i++) {
-        await new Promise((resolve) => {
-            const tempCanvas = new fabric.StaticCanvas(null, {
-                width: myApp.canvas.width,
-                height: myApp.canvas.height
-            });
-            tempCanvas.loadFromJSON(myApp.pages[i].json, () => {
-                tempCanvas.renderAll();
-                setTimeout(() => {
-                    images.push(tempCanvas.toDataURL({ 
-                        format: 'jpeg', 
-                        quality: 0.8,
-                        multiplier: multiplier 
-                    }));
-                    tempCanvas.dispose();
-                    resolve();
-                }, 100);
-            });
-        });
-    }
+  const modal = document.getElementById("flipPreviewModal");
+  const frame = document.getElementById("flipPreviewFrame");
+  if (!modal || !frame) return;
 
-    // 2. Δημιουργία των Φύλλων (Σωστό ζευγάρωμα: Σελίδα 1 | Σελίδα 2 κλπ)
-    let leafHtml = "";
-    for (let i = 0; i < images.length; i += 2) {
-        const frontImg = images[i];
-        const backImg = images[i + 1] || null;
-        leafHtml += `
-            <div class="leaf">
-                <div class="page front"><img src="${frontImg}"></div>
-                <div class="page back">
-                    ${backImg ? `<img src="${backImg}">` : '<div style="background:#fff;width:100%;height:100%"></div>'}
-                </div>
-            </div>`;
-    }
+  const html = `
+  <!doctype html>
+  <html>
+  <head>
+    <style>
+      @page { size: auto; margin: 0mm; } 
+      @media print { .no-print { display: none !important; } body { background:white; } }
+      body { margin:0; background:#111; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; }
+      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; position:sticky; top:0; z-index:100; }
+      .btn { padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; }
+      .btn-pdf { background:#27ae60; }
+      .btn-close { background:#e74c3c; }
+      .container { margin: 20px; width: 90%; max-width: 800px; }
+      .p-box { background:white; margin-bottom: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+      .p-box img { width:100%; height:auto; display:block; }
+    </style>
+  </head>
+  <body>
+    <div class="nav no-print">
+      <button class="btn btn-pdf" onclick="window.print()">📥 Download PDF</button>
+      <button class="btn btn-close" onclick="window.parent.closeFlipbookPreview()">Close</button>
+    </div>
+    <div class="container">
+      ${images.map(src => `<div class="p-box"><img src="${src}"></div>`).join('')}
+    </div>
+  </body>
+  </html>`;
 
-    const modal = document.getElementById("flipPreviewModal");
-    const frame = document.getElementById("flipPreviewFrame");
-
-    // 3. Απευθείας εγγραφή στο iframe (παρακάμπτουμε το ui.js)
-    frame.srcdoc = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body { margin:0; background:#111; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; font-family:sans-serif; }
-            .nav { position:fixed; top:0; width:100%; background:#000; padding:12px; display:flex; justify-content:center; gap:12px; z-index:9999; }
-            button { padding:10px 18px; cursor:pointer; color:white; background:#333; border:none; border-radius:4px; font-weight:bold; }
-            .btn-save { background:#27ae60 !important; }
-            .btn-pdf { background:#2980b9 !important; }
-            
-            .viewport { width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; perspective:2500px; padding-top:40px; }
-            
-            /* Κλείδωμα διαστάσεων που δούλεψαν */
-            .book { 
-                position:relative; 
-                width: 80vh; 
-                height: 56vh; 
-                transform-style:preserve-3d; transition:transform 0.6s ease;
-            }
-            
-            .leaf { position:absolute; width:100%; height:100%; transform-origin:left; transition:0.8s; transform-style:preserve-3d; z-index:1; }
-            .page { position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; box-shadow:0 0 15px rgba(0,0,0,0.5); display:flex; }
-            .back { transform:rotateY(180deg); }
-            
-            img { width: 100%; height: 100%; object-fit: contain; }
-            
-            .flipped { transform:rotateY(-180deg); }
-        </style>
-    </head>
-    <body>
-        <div class="nav">
-            <button onclick="p()">❮ Πίσω</button>
-            <button onclick="n()">Επόμενο ❯</button>
-            <button class="btn-save" onclick="saveFlip()">💾 Λήψη Flipbook</button>
-            <button class="btn-pdf" onclick="window.parent.exportPDF()">📄 Λήψη PDF</button>
-            <button style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">X</button>
-        </div>
-        
-        <div class="viewport">
-            <div class="book" id="book">${leafHtml}</div>
-        </div>
-
-        <script>
-            let cur=0; const leafs=document.querySelectorAll('.leaf');
-            const book=document.getElementById('book');
-
-            function n(){ 
-                if(cur < leafs.length){ 
-                    leafs[cur].style.zIndex = 100 + cur;
-                    leafs[cur].classList.add('flipped'); 
-                    cur++; update(); 
-                } 
-            }
-            function p(){ 
-                if(cur > 0){ 
-                    cur--; 
-                    leafs[cur].classList.remove('flipped'); 
-                    setTimeout(() => { leafs[cur].style.zIndex = 100 - cur; }, 300);
-                    update(); 
-                } 
-            }
-            function update(){ 
-                book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)"; 
-            }
-            function saveFlip() {
-                const b = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(b);
-                a.download = 'flipbook.html';
-                a.click();
-            }
-        </script>
-    </body>
-    </html>`;
-
-    modal.style.display = "block";
-    modal.classList.add("open");
+  frame.srcdoc = html;
+  modal.style.display = "block";
 }
-
 
 
 
