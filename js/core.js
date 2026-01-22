@@ -893,7 +893,7 @@ const html = `
   <head>
     <meta charset="utf-8">
     <style>
-      /* --- PDF PRINT (Όλες οι σελίδες) --- */
+      /* ... (Κρατάμε το media print όπως ήταν για τέλειο PDF) ... */
       @media print {
         @page { size: auto; margin: 0mm; }
         body { background: white !important; }
@@ -906,52 +906,68 @@ const html = `
         .page img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
       }
 
-      /* --- SCREEN FLIPBOOK (Premium Look) --- */
       @media screen {
         body { margin:0; background: radial-gradient(circle, #2c2c2c 0%, #000 100%); color:white; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
-        .nav { width:100%; background: rgba(0,0,0,0.9); padding:15px; display:flex; justify-content:center; gap:15px; z-index:9999; }
-        .btn { padding:12px 25px; border:none; border-radius:30px; cursor:pointer; font-weight:bold; color:white; background:#444; transition:0.3s; display:flex; align-items:center; gap:8px; text-transform:uppercase; font-size:12px; }
-        .btn:hover { background:#666; transform:translateY(-2px); }
-        .btn-save { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
-        .btn-pdf { background: linear-gradient(135deg, #2980b9 0%, #3498db 100%); }
-
-        .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; }
         
-        /* ΔΙΑΣΤΑΣΕΙΣ ΑΠΟ CORE 19 */
-        .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition:transform 0.8s ease; }
+        /* Navigation με Zoom και Color Picker */
+        .nav { width:100%; background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999; flex-wrap: wrap; }
+        
+        .btn { padding:10px 18px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background:#444; transition:0.3s; display:flex; align-items:center; gap:5px; font-size:11px; text-transform:uppercase; }
+        .btn:hover { background:#666; transform:translateY(-2px); }
+        .btn-zoom { background:#555; font-size:16px; padding: 8px 15px; }
+        
+        .color-label { font-size: 11px; font-weight: bold; margin-left: 10px; }
+        .color-picker { border: none; width: 30px; height: 30px; cursor: pointer; background: none; }
+
+        .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; overflow: auto; }
+        
+        /* Το βιβλίο με υποστήριξη Zoom */
+        .book { 
+          position:relative; 
+          width: 80vh; height: 56vh; 
+          transform-style:preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+          transform: scale(1); /* Αρχικό Zoom */
+        }
+
         .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style:preserve-3d; }
         .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
         .page img { width:100%; height:100%; object-fit:contain; }
 
-        /* --- ΕΦΕ ΚΟΥΒΕΡΤΑΣ (HARDCOVER) --- */
-        .hard-cover-front .front { 
-          border-radius: 0 4px 4px 0; 
-          border-right: 8px solid #1a1a1a; /* Το "πάχος" του εξωφύλλου */
-          box-shadow: 15px 0 35px rgba(0,0,0,0.6); 
-        }
-        .hard-cover-back .back { 
-          border-radius: 4px 0 0 4px; 
-          border-left: 8px solid #1a1a1a; 
-        }
+        /* Hardcover styles με μεταβλητό χρώμα */
+        .hard-cover-front .front { border-radius: 0 4px 4px 0; border-right: 8px solid var(--cover-color, #1a1a1a); box-shadow: 15px 0 35px rgba(0,0,0,0.6); }
+        .hard-cover-back .back { border-radius: 4px 0 0 4px; border-left: 8px solid var(--cover-color, #1a1a1a); }
 
-        /* Σκιά στη ράχη για ρεαλισμό */
-        .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 40px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 100%); }
-        .page.back::after { content: ""; position: absolute; top: 0; right: 0; width: 40px; height: 100%; background: linear-gradient(to left, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 100%); }
-
+        .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
         .back { transform:rotateY(180deg); }
         .flipped { transform:rotateY(-180deg) !important; }
       }
     </style>
   </head>
-  <body>
+  <body style="--cover-color: #1a1a1a;">
     <audio id="flipSnd" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
+    
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
-      <button class="btn btn-save" onclick="saveH()">💾 HTML</button>
-      <button class="btn btn-pdf" onclick="window.print()">📄 PDF</button>
+      
+      <div style="width:1px; height:25px; background:#444;"></div>
+      
+      <button class="btn btn-zoom" onclick="changeZoom(-0.1)">−</button>
+      <span style="font-size:12px; min-width:40px; text-align:center;" id="zoomLevel">100%</span>
+      <button class="btn btn-zoom" onclick="changeZoom(0.1)">+</button>
+      
+      <div style="width:1px; height:25px; background:#444;"></div>
+      
+      <span class="color-label">ΕΞΩΦΥΛΛΟ:</span>
+      <input type="color" class="color-picker" value="#1a1a1a" onchange="changeCoverColor(this.value)">
+      
+      <div style="width:1px; height:25px; background:#444;"></div>
+      
+      <button class="btn" style="background:#27ae60" onclick="saveH()">💾 HTML</button>
+      <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
+
     <div class="viewport">
       <div class="book" id="book">
         ${images.map((img, i) => i % 2 === 0 ? `
@@ -964,9 +980,20 @@ const html = `
 
     <script>
       let cur = 0;
+      let zoom = 1.0;
       const leafs = document.querySelectorAll('.leaf');
       const book = document.getElementById('book');
       const snd = document.getElementById('flipSnd');
+
+      function changeZoom(val) {
+        zoom = Math.max(0.5, Math.min(2.0, zoom + val));
+        document.getElementById('zoomLevel').innerText = Math.round(zoom * 100) + '%';
+        updateTransform();
+      }
+
+      function changeCoverColor(color) {
+        document.body.style.setProperty('--cover-color', color);
+      }
 
       function n() {
         if (cur < leafs.length) {
@@ -975,7 +1002,7 @@ const html = `
           target.classList.add('flipped');
           setTimeout(() => { target.style.zIndex = cur; }, 500);
           cur++;
-          u();
+          updateTransform();
         }
       }
 
@@ -985,18 +1012,20 @@ const html = `
           cur--;
           leafs[cur].style.zIndex = leafs.length + 50 - cur;
           leafs[cur].classList.remove('flipped');
-          u();
+          updateTransform();
         }
       }
 
-      function u() {
-        book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)";
+      function updateTransform() {
+        let xShift = cur > 0 ? "50%" : "0%";
+        // Συνδυάζουμε το Zoom με τη μετατόπιση για τις σελίδες
+        book.style.transform = \`scale(\${zoom}) translateX(\${xShift})\`;
       }
 
       function saveH() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = 'Photobook_Elite.html'; a.click();
+        a.href = URL.createObjectURL(b); a.download = 'Photobook_Final.html'; a.click();
       }
     </script>
   </body>
