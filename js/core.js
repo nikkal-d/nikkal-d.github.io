@@ -335,41 +335,49 @@ export function addText(opts = {}) {
   scheduleAutosave(true);
 }
 
-export async function addImageFromFile(file) {
-  const c = App.canvas;
-  if (!c || !file) return;
+export function addImageFromFile(file) {
+  const reader = new FileReader();
+  reader.onload = (f) => {
+    const data = f.target.result;
+    
+    const imgObj = new Image();
+    imgObj.src = data;
+    imgObj.onload = function () {
+      // 1. Υπολογισμός μέγιστης διάστασης (π.χ. 1600px) για ταχύτητα
+      const maxSide = 1600;
+      let w = imgObj.width;
+      let h = imgObj.height;
 
-  const pos = centerPos();
+      if (w > maxSide || h > maxSide) {
+        if (w > h) {
+          h = (maxSide / w) * h;
+          w = maxSide;
+        } else {
+          w = (maxSide / h) * w;
+          h = maxSide;
+        }
+      }
 
-  // Try Firebase upload first (optional)
-  let url = null;
-  if (window.FirebaseStore && typeof window.FirebaseStore.uploadImage === "function") {
-    try {
-      url = await window.FirebaseStore.uploadImage(file);
-    } catch (e) {
-      console.warn("Firebase upload failed, fallback to local dataURL", e);
-    }
-  }
+      // 2. Δημιουργία προσωρινού καμβά για το Resize
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgObj, 0, 0, w, h);
 
-  if (!url) {
-    url = await fileToDataURL(file);
-  }
-
-  return new Promise((resolve) => {
-    fabric.Image.fromURL(url, (img) => {
-      ensureImageCrossOrigin(img);
-      // scale to fit ~60% of page
-      const maxW = c.getWidth() * 0.6;
-      const maxH = c.getHeight() * 0.6;
-      const s = Math.min(maxW / img.width, maxH / img.height, 1);
-      img.set({ ...pos, scaleX: s, scaleY: s });
-      c.add(img);
-      c.setActiveObject(img);
-      c.requestRenderAll();
-      scheduleAutosave(true);
-      resolve(img);
-    }, { crossOrigin: "anonymous" });
-  });
+      // 3. Ανέβασμα της "ελαφριάς" εικόνας στον Fabric Canvas
+      const resizedData = canvas.toDataURL('image/jpeg', 0.8);
+      
+      fabric.Image.fromURL(resizedData, (img) => {
+        img.scaleToWidth(App.canvas.width * 0.5);
+        App.canvas.add(img);
+        App.canvas.setActiveObject(img);
+        App.canvas.renderAll();
+        scheduleAutosave();
+      });
+    };
+  };
+  reader.readAsDataURL(file);
 }
 
 export function addRect() {
