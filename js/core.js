@@ -894,68 +894,59 @@ export async function exportFlipbook() {
   }
 
   // 3. Το Premium HTML
-  const html = `
+const html = `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
     <style>
-      body { 
-        margin:0; background: radial-gradient(circle, #2c2c2c 0%, #000 100%); 
-        color:white; font-family: sans-serif; 
-        display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; 
-      }
-      .nav { 
-        width:100%; background: rgba(0,0,0,0.9); padding:15px; 
-        display:flex; justify-content:center; gap:15px; z-index:9999;
-      }
-      .btn { 
-        padding:12px 20px; border:none; border-radius:25px; cursor:pointer; 
-        font-weight:bold; color:white; background: #444; transition: 0.3s;
-        display:flex; align-items:center; gap:8px; font-size:13px;
-      }
-      .btn:hover { background: #666; transform: translateY(-2px); }
-      .btn-save { background: #27ae60; }
-      .btn-pdf { background: #2980b9; }
-
-      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:2500px; }
-      
-      .book { 
-        position:relative; width: 80vh; height: 56vh; 
-        transform-style:preserve-3d; transition:transform 0.8s ease;
-      }
-      
-      .leaf { 
-        position:absolute; inset:0; transform-origin:left center; 
-        transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-        transform-style:preserve-3d;
-      }
-      
-      .page { 
-        position:absolute; inset:0; background:white; backface-visibility:hidden; 
-        box-shadow: inset 0 0 100px rgba(0,0,0,0.05);
-      }
-      
-      .page img { width:100%; height:100%; object-fit:contain; }
-
-      /* Εφέ Σκληρού Εξωφύλλου */
-      .hardcover-front .front { border-radius: 0 5px 5px 0; border: 2px solid #333; }
-      .hardcover-back .back { border-radius: 5px 0 0 5px; border: 2px solid #333; }
-
-      /* Σκιά στη ράχη */
-      .page.front::after {
-        content: ""; position: absolute; top: 0; left: 0; width: 30px; height: 100%;
-        background: linear-gradient(to right, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 100%);
-      }
-      .page.back::after {
-        content: ""; position: absolute; top: 0; right: 0; width: 30px; height: 100%;
-        background: linear-gradient(to left, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 100%);
+      /* --- CSS ΓΙΑ ΕΚΤΥΠΩΣΗ PDF --- */
+      @media print {
+        @page { size: auto; margin: 0mm; }
+        body { background: white !important; overflow: visible !important; }
+        .nav { display: none !important; }
+        .viewport { display: block !important; padding: 0 !important; perspective: none !important; }
+        .book { transform: none !important; width: 100vw !important; height: auto !important; display: block !important; }
+        .leaf { 
+          position: relative !important; width: 100vw !important; height: 100vh !important; 
+          transform: none !important; display: block !important; page-break-after: always !important;
+          z-index: auto !important;
+        }
+        .page { position: relative !important; width: 100% !important; height: 50% !important; display: block !important; border: none !important; box-shadow: none !important; }
+        .page.back { transform: none !important; } /* Στο PDF βγαίνουν η μία κάτω από την άλλη */
+        .page img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+        .hardcover-front, .hardcover-back { border: none !important; }
       }
 
-      .back { transform:rotateY(180deg); }
-      .flipped { transform:rotateY(-180deg) !important; }
-      
-      @media print { .nav { display:none; } body { background:none; } .book { transform:none !important; } }
+      /* --- CSS ΓΙΑ FLIPBOOK ΣΤΗΝ ΟΘΟΝΗ --- */
+      @media screen {
+        body { 
+          margin:0; background: radial-gradient(circle, #2c2c2c 0%, #000 100%); 
+          color:white; font-family: sans-serif; 
+          display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; 
+        }
+        .nav { width:100%; background: rgba(0,0,0,0.9); padding:15px; display:flex; justify-content:center; gap:15px; z-index:9999; }
+        .btn { padding:12px 20px; border:none; border-radius:25px; cursor:pointer; font-weight:bold; color:white; background: #444; transition: 0.3s; display:flex; align-items:center; gap:8px; font-size:13px; }
+        .btn:hover { background: #666; transform: translateY(-2px); }
+        .btn-save { background: #27ae60; }
+        .btn-pdf { background: #2980b9; }
+
+        .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+        
+        /* ΕΠΑΝΑΦΟΡΑ ΔΙΑΣΤΑΣΕΩΝ */
+        .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition:transform 0.8s ease; }
+        .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style:preserve-3d; }
+        .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.1); }
+        .page img { width:100%; height:100%; object-fit:contain; }
+
+        /* Hardcover Look */
+        .hardcover-front .front { border-right: 5px solid #222; box-shadow: 10px 0 20px rgba(0,0,0,0.5); }
+        .hardcover-back .back { border-left: 5px solid #222; }
+
+        .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 30px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
+        .back { transform:rotateY(180deg); }
+        .flipped { transform:rotateY(-180deg) !important; }
+      }
     </style>
   </head>
   <body>
@@ -964,8 +955,8 @@ export async function exportFlipbook() {
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
-      <button class="btn btn-save" onclick="saveH()">💾 ΑΠΟΘΗΚΕΥΣΗ</button>
-      <button class="btn btn-pdf" onclick="window.print()">📄 PDF / ΕΚΤΥΠΩΣΗ</button>
+      <button class="btn btn-save" onclick="saveH()">💾 HTML</button>
+      <button class="btn btn-pdf" onclick="window.print()">📄 PDF</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
@@ -980,6 +971,7 @@ export async function exportFlipbook() {
       const snd = document.getElementById('flipSound');
 
       function init() {
+        // Σωστό στοίβαγμα εξαρχής: Σελίδα 1 πάνω-πάνω
         leafs.forEach((l, i) => {
           l.style.zIndex = leafs.length - i;
         });
@@ -990,7 +982,8 @@ export async function exportFlipbook() {
           snd.play().catch(()=>{});
           leafs[cur].classList.add('flipped');
           const idx = cur;
-          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 300);
+          // Το z-index αλλάζει ΜΕΤΑ την κίνηση για να μη βλέπουμε την 3η σελίδα από κάτω
+          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 400);
           cur++;
           u();
         }
@@ -1000,8 +993,8 @@ export async function exportFlipbook() {
         if (cur > 0) {
           snd.play().catch(()=>{});
           cur--;
-          leafs[cur].classList.remove('flipped');
           leafs[cur].style.zIndex = leafs.length + cur;
+          leafs[cur].classList.remove('flipped');
           u();
         }
       }
@@ -1013,14 +1006,13 @@ export async function exportFlipbook() {
       function saveH() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = 'Photobook_Final.html'; a.click();
+        a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
       }
 
       init();
     </script>
   </body>
   </html>`;
-
   frame.srcdoc = html;
   modal.style.display = "block";
 }
