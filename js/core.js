@@ -845,34 +845,23 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // Δημιουργούμε έναν κρυφό Static Canvas (πολύ πιο γρήγορος από τον κανονικό)
-  const tempCanvas = new fabric.StaticCanvas(null, {
-    width: App.canvas.width,
-    height: App.canvas.height
-  });
-
+  // 1. Εξαγωγή εικόνων (Κρατάμε το multiplier: 1.0 που δουλεύει)
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
-      // Φορτώνουμε τα δεδομένα στον Static Canvas
-      tempCanvas.loadFromJSON(App.pages[i].json, () => {
-        // Επιβολή render
-        tempCanvas.renderAll();
-        
-        // Μειώνουμε το χρόνο αναμονής στα 60ms (αρκετό για Static Canvas)
+      App.canvas.loadFromJSON(App.pages[i].json, () => {
+        App.canvas.renderAll();
         setTimeout(() => {
-          images.push(tempCanvas.toDataURL({ 
+          App.canvas.renderAll();
+          images.push(App.canvas.toDataURL({ 
             format: 'jpeg', 
-            quality: 0.8, // 0.8 είναι η χρυσή τομή ποιότητας/ταχύτητας
+            quality: 0.9, 
             multiplier: 1.0 
           }));
           resolve();
-        }, 60); 
+        }, 250);
       });
     });
   }
-  
-  // Καθαρίζουμε τον προσωρινό καμβά
-  tempCanvas.dispose();
   
   App.autosaveEnabled = wasAutosave;
   await renderCurrentPage();
@@ -894,38 +883,31 @@ export async function exportFlipbook() {
   }
 
   // 3. Το νέο HTML με εφέ Flipbook
- // 3. Το διορθωμένο HTML με σωστή σειρά εξωφύλλου
   const html = `
   <!doctype html>
   <html>
   <head>
     <style>
       body { margin:0; background:#111; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
-      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; z-index:9999; }
+      .nav { width:100%; background:#000; padding:15px; display:flex; justify-content:center; gap:20px; z-index:100; }
       .btn { padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; color:white; background:#444; }
       .btn-save { background:#27ae60; }
       
       .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:2500px; }
       
+      /* Χρησιμοποιούμε vh για να χωράει πάντα στην οθόνη χωρίς scroll */
       .book { 
         position:relative; 
         width: 80vh; height: 56vh; 
         transform-style:preserve-3d; transition:transform 0.6s ease;
       }
       
-      /* Διορθωμένο Z-INDEX για να μη φαίνονται οι εσωτερικές σελίδες στην αρχή */
-      .leaf { 
-        position:absolute; inset:0; 
-        transform-origin:left center; 
-        transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
-        transform-style:preserve-3d; 
-      }
-      
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; z-index:1; }
       .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow:0 0 15px rgba(0,0,0,0.5); }
       .page img { width:100%; height:100%; object-fit:contain; }
       .back { transform:rotateY(180deg); }
       
-      .flipped { transform:rotateY(-180deg) !important; }
+      .flipped { transform:rotateY(-180deg); }
     </style>
   </head>
   <body>
@@ -936,13 +918,7 @@ export async function exportFlipbook() {
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">Κλείσιμο</button>
     </div>
     <div class="viewport">
-      <div class="book" id="book">
-        ${images.map((img, i) => i % 2 === 0 ? `
-          <div class="leaf" style="z-index: ${images.length - i}">
-            <div class="page front"><img src="${img}"></div>
-            <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
-          </div>` : '').join('')}
-      </div>
+      <div class="book" id="book">${leavesHtml}</div>
     </div>
 
     <script>
@@ -950,39 +926,26 @@ export async function exportFlipbook() {
       const leafs = document.querySelectorAll('.leaf');
       const book = document.getElementById('book');
 
-      // Αρχική ρύθμιση για να βλέπουμε το εξώφυλλο
-      function init() {
-          leafs.forEach((leaf, i) => {
-              leaf.classList.remove('flipped');
-              leaf.style.zIndex = leafs.length - i;
-          });
-          updatePos();
-      }
-
       function n() {
         if (cur < leafs.length) {
+          leafs[cur].style.zIndex = 100 + cur;
           leafs[cur].classList.add('flipped');
-          // Χαμηλώνουμε το z-index αφού γυρίσει η σελίδα για να μη "πετάγεται" μπροστά
-          const targetLeaf = leafs[cur];
-          setTimeout(() => { targetLeaf.style.zIndex = cur; }, 300);
           cur++;
           updatePos();
         }
       }
-
       function p() {
         if (cur > 0) {
           cur--;
           leafs[cur].classList.remove('flipped');
-          leafs[cur].style.zIndex = leafs.length + cur;
+          setTimeout(() => { leafs[cur].style.zIndex = 100 - cur; }, 300);
           updatePos();
         }
       }
-
       function updatePos() {
+        // Μετακίνηση του βιβλίου στο κέντρο όταν ανοίγει
         book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)";
       }
-
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a');
@@ -990,9 +953,6 @@ export async function exportFlipbook() {
         a.download = 'flipbook.html';
         a.click();
       }
-
-      // Εκτέλεση του init για να "στρώσουν" οι σελίδες αμέσως
-      init();
     </script>
   </body>
   </html>`;
