@@ -845,23 +845,34 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων (Κρατάμε το multiplier: 1.0 που δουλεύει)
+  // Δημιουργούμε έναν κρυφό Static Canvas (πολύ πιο γρήγορος από τον κανονικό)
+  const tempCanvas = new fabric.StaticCanvas(null, {
+    width: App.canvas.width,
+    height: App.canvas.height
+  });
+
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
-      App.canvas.loadFromJSON(App.pages[i].json, () => {
-        App.canvas.renderAll();
+      // Φορτώνουμε τα δεδομένα στον Static Canvas
+      tempCanvas.loadFromJSON(App.pages[i].json, () => {
+        // Επιβολή render
+        tempCanvas.renderAll();
+        
+        // Μειώνουμε το χρόνο αναμονής στα 60ms (αρκετό για Static Canvas)
         setTimeout(() => {
-          App.canvas.renderAll();
-          images.push(App.canvas.toDataURL({ 
+          images.push(tempCanvas.toDataURL({ 
             format: 'jpeg', 
-            quality: 0.9, 
+            quality: 0.8, // 0.8 είναι η χρυσή τομή ποιότητας/ταχύτητας
             multiplier: 1.0 
           }));
           resolve();
-        }, 250);
+        }, 60); 
       });
     });
   }
+  
+  // Καθαρίζουμε τον προσωρινό καμβά
+  tempCanvas.dispose();
   
   App.autosaveEnabled = wasAutosave;
   await renderCurrentPage();
