@@ -852,7 +852,6 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -873,7 +872,7 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Δημιουργία Φύλλων Flipbook (χωρίς διπλές σελίδες)
+  // Καθαρή δομή φύλλων
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
@@ -887,69 +886,69 @@ export async function exportFlipbook() {
       </div>`;
   }
 
-  // 3. Δημιουργία Λίστας για PDF (όλες οι σελίδες στη σειρά)
-  let pdfHtml = images.map(img => `<div class="pdf-page"><img src="${img}"></div>`).join("");
-
   const html = `
-  <!doctype html>
-  <html>
-  <head>
+  <html><head>
     <meta charset="utf-8">
     <style>
-      :root { 
-        --bg-grad: linear-gradient(135deg, #1e1e1e 0%, #000000 100%); 
-        --cover-grad: linear-gradient(to bottom, #444 0%, #111 100%); 
+      /* GRADIENTS ΣΤΟ ΦΟΝΤΟ ΚΑΙ ΣΤΗΝ ΚΟΥΒΕΡΤΑ */
+      body { 
+        margin:0; 
+        background: radial-gradient(circle, #2c3e50 0%, #000000 100%); 
+        color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; 
       }
+      .nav { width:100%; background: rgba(0,0,0,0.8); padding:15px; display:flex; justify-content:center; gap:20px; z-index:100; }
+      .btn { padding:10px 20px; border:none; border-radius:30px; cursor:pointer; font-weight:bold; color:white; background:#444; transition: 0.3s; }
+      .btn:hover { background:#666; transform: translateY(-2px); }
       
-      body { margin:0; background: var(--bg-grad); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-      
-      .nav { width:100%; background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:10px; z-index:9999; }
-      .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #333; font-size:11px; transition: 0.2s; }
-      .btn:hover { background: #555; }
-
-      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; overflow: auto; padding: 40px; }
-      .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition: transform 0.6s ease; }
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.7s ease-in-out; transform-style:preserve-3d; }
+      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:2500px; }
+      .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition:transform 0.6s ease; }
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
       .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
-      .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
+      .page img { width:100%; height:100%; object-fit:contain; }
 
-      /* Hardcover με Gradient */
-      .hard-cover-front .front { border-radius: 0 4px 4px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; box-shadow: 20px 0 40px rgba(0,0,0,0.7); }
+      /* ΕΦΕ ΚΟΥΒΕΡΤΑΣ ΜΕ GRADIENT */
+      .hard-cover-front .front { 
+        border-radius: 0 5px 5px 0; 
+        border-right: 12px solid transparent;
+        border-image: linear-gradient(to bottom, #555, #111) 1;
+        box-shadow: 15px 0 35px rgba(0,0,0,0.6); 
+      }
       .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
-      
+
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
-      /* PDF PRINT LOGIC */
       @media print {
-        body { background: white !important; overflow: visible !important; }
-        .nav, .viewport { display: none !important; }
-        .pdf-container { display: block !important; }
-        .pdf-page { width: 100%; height: 100vh; page-break-after: always; display: flex; align-items: center; justify-content: center; }
-        .pdf-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        @page { size: auto; margin: 0mm; }
+        body { background: white !important; }
+        .nav { display: none !important; }
+        .viewport { display: block !important; perspective: none !important; }
+        .book { display: block !important; width: 100% !important; height: auto !important; transform: none !important; }
+        .leaf { position: relative !important; display: block !important; width: 100% !important; transform: none !important; z-index: auto !important; }
+        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; }
+        .page.back { display: block !important; transform: none !important; }
       }
-      @media screen { .pdf-container { display: none; } }
     </style>
   </head>
   <body>
-    <audio id="snd" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
-
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ (←)</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ (→)</button>
-      <button class="btn" style="background:#27ae60" onclick="saveH()">💾 HTML</button>
+      <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
-    <div class="viewport"><div class="book" id="book">${leavesHtml}</div></div>
-    <div class="pdf-container">${pdfHtml}</div>
+    <div class="viewport">
+      <div class="book" id="book">${leavesHtml}</div>
+    </div>
 
     <script>
       let cur = 0;
-      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book'), snd = document.getElementById('snd');
+      const leafs = document.querySelectorAll('.leaf');
+      const book = document.getElementById('book');
 
-      // ΒΕΛΑΚΙΑ ΠΛΗΚΤΡΟΛΟΓΙΟΥ
+      // ΛΕΙΤΟΥΡΓΙΑ ΓΙΑ ΒΕΛΑΚΙΑ ΠΛΗΚΤΡΟΛΟΓΙΟΥ
       window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') n();
         if (e.key === 'ArrowLeft') p();
@@ -957,41 +956,38 @@ export async function exportFlipbook() {
 
       function n() {
         if (cur < leafs.length) {
-          snd.currentTime=0; snd.play().catch(()=>{});
           leafs[cur].classList.add('flipped');
-          const idx = cur;
-          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 400);
-          cur++; u();
+          const target = leafs[cur];
+          setTimeout(() => { target.style.zIndex = cur; }, 300);
+          cur++;
+          updatePos();
         }
       }
 
       function p() {
         if (cur > 0) {
-          snd.currentTime=0; snd.play().catch(()=>{});
           cur--;
-          leafs[cur].style.zIndex = leafs.length + 50 - cur;
           leafs[cur].classList.remove('flipped');
-          u();
+          leafs[cur].style.zIndex = leafs.length + 50 - cur;
+          updatePos();
         }
       }
 
-      function u() {
+      function updatePos() {
         book.style.transform = cur > 0 ? "translateX(50%)" : "translateX(0)";
       }
 
-      function saveH() {
+      function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
       }
     </script>
-  </body>
-  </html>`;
+  </body></html>`;
 
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
-
 
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
