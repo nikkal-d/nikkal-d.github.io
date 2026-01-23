@@ -852,7 +852,6 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων (Κρατάμε τις διαστάσεις σου)
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -873,7 +872,6 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Δημιουργία Φύλλων
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
@@ -891,79 +889,92 @@ export async function exportFlipbook() {
   <head>
     <meta charset="utf-8">
     <style>
-      :root { --bg-color: #1a1a1a; --cover-color: #000000; }
-      body { margin:0; background: var(--bg-color); transition: background 0.5s; color:white; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
+      :root { --bg-grad: linear-gradient(135deg, #2c3e50, #000000); --cover-grad: linear-gradient(to bottom, #333, #000); }
       
-      .nav { width:100%; background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:8px; z-index:9999; flex-wrap: wrap; border-bottom: 1px solid #333; }
+      body { 
+        margin:0; background: var(--bg-grad); background-attachment: fixed;
+        color:white; font-family: 'Segoe UI', sans-serif; 
+        display:flex; flex-direction:column; height:100vh; overflow:hidden; 
+      }
       
-      .btn { padding:10px 14px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background:#444; transition:0.3s; display:flex; align-items:center; gap:5px; font-size:11px; text-transform:uppercase; }
-      .btn:hover { background:#666; transform:translateY(-2px); }
+      .nav { 
+        width:100%; background: rgba(0,0,0,0.85); padding:10px; 
+        display:flex; justify-content:center; align-items:center; gap:10px; z-index:9999;
+        backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
       
-      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 25px; }
-      
-      select, input[type="color"] { background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 10px; padding: 2px; }
+      .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: linear-gradient(to bottom, #555, #333); transition:0.3s; display:flex; align-items:center; gap:5px; font-size:11px; }
+      .btn:hover { transform:translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+      .btn-primary { background: linear-gradient(135deg, #27ae60, #1e8449); }
+      .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
 
-      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; }
-      .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); }
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
-      .page img { width:100%; height:100%; object-fit:contain; }
+      /* VIEWPORT ΜΕ SCROLLBAR ΓΙΑ ZOOM */
+      .viewport { 
+        flex:1; width:100%; display:flex; justify-content:center; align-items:center; 
+        perspective:3000px; overflow: auto; padding: 50px;
+        scrollbar-width: thin; scrollbar-color: #555 transparent;
+      }
+      .viewport::-webkit-scrollbar { height: 8px; width: 8px; }
+      .viewport::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 
-      .hard-cover-front .front { border-radius: 0 4px 4px 0; border-right: 12px solid var(--cover-color); box-shadow: 15px 0 35px rgba(0,0,0,0.6); }
-      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
+      .book { 
+        position:relative; width: 80vh; height: 56vh; 
+        transform-style:preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+        transform-origin: center center;
+      }
+
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.7s ease-in-out; transform-style:preserve-3d; }
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.05); }
+      .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
+
+      .hard-cover-front .front { 
+        border-radius: 0 4px 4px 0; 
+        border-right: 12px solid transparent;
+        border-image: var(--cover-grad) 1;
+        box-shadow: 20px 0 40px rgba(0,0,0,0.7); 
+      }
+      
+      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 40px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
       @media print {
-        @page { size: auto; margin: 0mm; }
-        .nav { display:none; }
-        body { background: white !important; overflow: visible; }
-        .viewport { display: block; perspective: none; }
+        @page { size: portrait; margin: 0; }
+        .nav { display:none !important; }
+        body { background: white !important; overflow: visible !important; }
+        .viewport { display: block !important; overflow: visible !important; padding: 0 !important; }
         .book { transform: none !important; width: 100% !important; height: auto !important; }
-        .leaf { position: relative !important; width: 100% !important; height: 100vh !important; transform: none !important; page-break-after: always; z-index: auto !important; }
+        .leaf { position: relative !important; width: 100% !important; transform: none !important; display: block !important; z-index: auto !important; }
+        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; transform: none !important; }
         .page.back { transform: none !important; }
       }
     </style>
   </head>
   <body>
     <audio id="snd1" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
-    <audio id="snd2" src="https://www.soundjay.com/misc/sounds/page-flip-03.mp3"></audio>
-    <audio id="snd3" src="https://www.soundjay.com/misc/sounds/page-flip-4.mp3"></audio>
 
     <div class="nav">
-      <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
-      <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
+      <button class="btn" onclick="p()">❮ ΠΙΣΩ (←)</button>
+      <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ (→)</button>
       
-      <div class="control-group">
-        <button class="btn" style="width:30px;justify-content:center" onclick="changeZoom(-0.1)">−</button>
-        <span id="zoomLevel" style="font-size:10px">100%</span>
-        <button class="btn" style="width:30px;justify-content:center" onclick="changeZoom(0.1)">+</button>
+      <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:20px; display:flex; align-items:center; gap:10px;">
+        <button class="btn" style="width:30px" onclick="changeZoom(-0.2)">−</button>
+        <span id="zoomLvl" style="font-size:12px; font-weight:bold; min-width:40px; text-align:center">100%</span>
+        <button class="btn" style="width:30px" onclick="changeZoom(0.2)">+</button>
       </div>
 
-      <div class="control-group">
-        <span style="font-size:9px">🔊 ΗΧΟΣ:</span>
-        <select id="soundSelect">
-          <option value="snd1">Κλασικός</option>
-          <option value="snd2">Ελαφρύς</option>
-          <option value="snd3">Χαρτί</option>
-          <option value="none">Σίγαση</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <span style="font-size:9px">🎨 ΦΟΝΤΟ</span>
-        <input type="color" value="#1a1a1a" onchange="document.documentElement.style.setProperty('--bg-color', this.value)">
-        <span style="font-size:9px">📘 ΕΞΩΦΥΛΛΟ</span>
-        <input type="color" value="#000000" onchange="document.documentElement.style.setProperty('--cover-color', this.value)">
+      <div style="font-size:10px; display:flex; gap:10px;">
+        🎨 ΦΟΝΤΟ <input type="color" value="#2c3e50" onchange="updateColors(this.value, 'bg')">
+        📘 ΕΞΩΦΥΛΛΟ <input type="color" value="#333333" onchange="updateColors(this.value, 'cover')">
       </div>
 
       <button class="btn" onclick="toggleFS()">📺 FULL SCREEN</button>
-      <button class="btn" style="background:#27ae60" onclick="saveH()">💾 HTML</button>
-      <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
-      <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
+      <button class="btn btn-primary" onclick="saveH()">💾 HTML</button>
+      <button class="btn" style="background: #2980b9" onclick="window.print()">📄 PDF</button>
+      <button class="btn btn-danger" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
-    <div class="viewport">
+    <div class="viewport" id="vp">
       <div class="book" id="book">${leavesHtml}</div>
     </div>
 
@@ -971,27 +982,25 @@ export async function exportFlipbook() {
       let cur = 0, zoom = 1.0;
       const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book');
 
-      function playSound() {
-        const id = document.getElementById('soundSelect').value;
-        if (id !== 'none') {
-          const s = document.getElementById(id);
-          s.currentTime = 0; s.play().catch(()=>{});
-        }
-      }
+      // 1. Έλεγχος Πληκτρολογίου
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') n();
+        if (e.key === 'ArrowLeft') p();
+      });
 
       function n() {
         if (cur < leafs.length) {
-          playSound();
+          document.getElementById('snd1').currentTime=0; document.getElementById('snd1').play().catch(()=>{});
           const target = leafs[cur];
           target.classList.add('flipped');
-          setTimeout(() => { target.style.zIndex = cur; }, 500);
+          setTimeout(() => { target.style.zIndex = cur; }, 400);
           cur++; u();
         }
       }
 
       function p() {
         if (cur > 0) {
-          playSound();
+          document.getElementById('snd1').currentTime=0; document.getElementById('snd1').play().catch(()=>{});
           cur--;
           leafs[cur].style.zIndex = leafs.length + 50 - cur;
           leafs[cur].classList.remove('flipped');
@@ -999,22 +1008,30 @@ export async function exportFlipbook() {
         }
       }
 
-      function changeZoom(v) { zoom = Math.max(0.5, Math.min(2, zoom + v)); document.getElementById('zoomLevel').innerText = Math.round(zoom*100)+'%'; u(); }
-      
+      function changeZoom(v) {
+        zoom = Math.max(0.5, Math.min(3, zoom + v));
+        document.getElementById('zoomLvl').innerText = Math.round(zoom*100)+'%';
+        u();
+      }
+
+      function updateColors(val, type) {
+        if(type === 'bg') document.documentElement.style.setProperty('--bg-grad', \`linear-gradient(135deg, \${val}, #000)\`);
+        else document.documentElement.style.setProperty('--cover-grad', \`linear-gradient(to bottom, \${val}, #000)\`);
+      }
+
       function toggleFS() {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
         else document.exitFullscreen();
       }
 
       function u() {
-        let x = cur > 0 ? "50%" : "0%";
+        let x = cur > 0 ? "25%" : "0%"; // Μικρότερο shift για να μην βγαίνει εκτός οθόνης στο zoom
         book.style.transform = \`scale(\${zoom}) translateX(\${x})\`;
       }
 
       function saveH() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = 'Photobook_Premium.html'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Premium_Album.html'; a.click();
       }
     </script>
   </body>
@@ -1023,7 +1040,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 
 
