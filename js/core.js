@@ -852,7 +852,7 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή (Ακριβώς οι διαστάσεις σου)
+  // 1. Εξαγωγή εικόνων (Κρατάμε τις διαστάσεις σου)
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -873,168 +873,156 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Δημιουργία Φύλλων με απόλυτο Z-INDEX
+  // 2. Δημιουργία Φύλλων
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
-    // Υπολογισμός z-index: Η πρώτη σελίδα παίρνει το μεγαλύτερο νούμερο
     const zIndex = Math.floor((images.length - i) / 2) + 50;
-    
     leavesHtml += `
-      <div class="leaf ${isCover ? 'hardcover' : ''}" style="z-index: ${zIndex}">
+      <div class="leaf ${isCover ? 'hard-cover-front' : ''}" style="z-index: ${zIndex}">
         <div class="page front"><img src="${images[i]}"></div>
         <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
       </div>`;
   }
 
-const html = `
+  const html = `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
     <style>
-      /* ... (Κρατάμε το media print όπως ήταν για τέλειο PDF) ... */
+      :root { --bg-color: #1a1a1a; --cover-color: #000000; }
+      body { margin:0; background: var(--bg-color); transition: background 0.5s; color:white; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
+      
+      .nav { width:100%; background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:8px; z-index:9999; flex-wrap: wrap; border-bottom: 1px solid #333; }
+      
+      .btn { padding:10px 14px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background:#444; transition:0.3s; display:flex; align-items:center; gap:5px; font-size:11px; text-transform:uppercase; }
+      .btn:hover { background:#666; transform:translateY(-2px); }
+      
+      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 25px; }
+      
+      select, input[type="color"] { background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 10px; padding: 2px; }
+
+      .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; }
+      .book { position:relative; width: 80vh; height: 56vh; transform-style:preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); }
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style:preserve-3d; }
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
+      .page img { width:100%; height:100%; object-fit:contain; }
+
+      .hard-cover-front .front { border-radius: 0 4px 4px 0; border-right: 12px solid var(--cover-color); box-shadow: 15px 0 35px rgba(0,0,0,0.6); }
+      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
+      .back { transform:rotateY(180deg); }
+      .flipped { transform:rotateY(-180deg) !important; }
+
       @media print {
         @page { size: auto; margin: 0mm; }
-        body { background: white !important; }
-        .nav { display: none !important; }
-        .viewport { display: block !important; perspective: none !important; padding: 0 !important; }
-        .book { display: block !important; width: 100% !important; height: auto !important; transform: none !important; }
-        .leaf { position: relative !important; display: block !important; width: 100% !important; height: auto !important; transform: none !important; z-index: auto !important; }
-        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; transform: none !important; border: none !important; box-shadow: none !important; }
-        .page.back { transform: none !important; display: block !important; }
-        .page img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
-      }
-
-      @media screen {
-        body { margin:0; background: radial-gradient(circle, #2c2c2c 0%, #000 100%); color:white; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
-        
-        /* Navigation με Zoom και Color Picker */
-        .nav { width:100%; background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999; flex-wrap: wrap; }
-        
-        .btn { padding:10px 18px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background:#444; transition:0.3s; display:flex; align-items:center; gap:5px; font-size:11px; text-transform:uppercase; }
-        .btn:hover { background:#666; transform:translateY(-2px); }
-        .btn-zoom { background:#555; font-size:16px; padding: 8px 15px; }
-        
-        .color-label { font-size: 11px; font-weight: bold; margin-left: 10px; }
-        .color-picker { border: none; width: 30px; height: 30px; cursor: pointer; background: none; }
-
-        .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; overflow: auto; }
-        
-        /* Το βιβλίο με υποστήριξη Zoom */
-        .book { 
-          position:relative; 
-          width: 80vh; height: 56vh; 
-          transform-style:preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
-          transform: scale(1); /* Αρχικό Zoom */
-        }
-
-        .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style:preserve-3d; }
-        .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
-        .page img { width:100%; height:100%; object-fit:contain; }
-
-        /* Hardcover styles με μεταβλητό χρώμα */
-        .hard-cover-front .front { border-radius: 0 4px 4px 0; border-right: 8px solid var(--cover-color, #1a1a1a); box-shadow: 15px 0 35px rgba(0,0,0,0.6); }
-        .hard-cover-back .back { border-radius: 4px 0 0 4px; border-left: 8px solid var(--cover-color, #1a1a1a); }
-
-        .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
-        .back { transform:rotateY(180deg); }
-        .flipped { transform:rotateY(-180deg) !important; }
+        .nav { display:none; }
+        body { background: white !important; overflow: visible; }
+        .viewport { display: block; perspective: none; }
+        .book { transform: none !important; width: 100% !important; height: auto !important; }
+        .leaf { position: relative !important; width: 100% !important; height: 100vh !important; transform: none !important; page-break-after: always; z-index: auto !important; }
+        .page.back { transform: none !important; }
       }
     </style>
   </head>
-  <body style="--cover-color: #1a1a1a;">
-    <audio id="flipSnd" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
-    
+  <body>
+    <audio id="snd1" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
+    <audio id="snd2" src="https://www.soundjay.com/misc/sounds/page-flip-03.mp3"></audio>
+    <audio id="snd3" src="https://www.soundjay.com/misc/sounds/page-flip-4.mp3"></audio>
+
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
       
-      <div style="width:1px; height:25px; background:#444;"></div>
-      
-      <button class="btn btn-zoom" onclick="changeZoom(-0.1)">−</button>
-      <span style="font-size:12px; min-width:40px; text-align:center;" id="zoomLevel">100%</span>
-      <button class="btn btn-zoom" onclick="changeZoom(0.1)">+</button>
-      
-      <div style="width:1px; height:25px; background:#444;"></div>
-      
-      <span class="color-label">ΕΞΩΦΥΛΛΟ:</span>
-      <input type="color" class="color-picker" value="#1a1a1a" onchange="changeCoverColor(this.value)">
-      
-      <div style="width:1px; height:25px; background:#444;"></div>
-      
+      <div class="control-group">
+        <button class="btn" style="width:30px;justify-content:center" onclick="changeZoom(-0.1)">−</button>
+        <span id="zoomLevel" style="font-size:10px">100%</span>
+        <button class="btn" style="width:30px;justify-content:center" onclick="changeZoom(0.1)">+</button>
+      </div>
+
+      <div class="control-group">
+        <span style="font-size:9px">🔊 ΗΧΟΣ:</span>
+        <select id="soundSelect">
+          <option value="snd1">Κλασικός</option>
+          <option value="snd2">Ελαφρύς</option>
+          <option value="snd3">Χαρτί</option>
+          <option value="none">Σίγαση</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <span style="font-size:9px">🎨 ΦΟΝΤΟ</span>
+        <input type="color" value="#1a1a1a" onchange="document.documentElement.style.setProperty('--bg-color', this.value)">
+        <span style="font-size:9px">📘 ΕΞΩΦΥΛΛΟ</span>
+        <input type="color" value="#000000" onchange="document.documentElement.style.setProperty('--cover-color', this.value)">
+      </div>
+
+      <button class="btn" onclick="toggleFS()">📺 FULL SCREEN</button>
       <button class="btn" style="background:#27ae60" onclick="saveH()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
     <div class="viewport">
-      <div class="book" id="book">
-        ${images.map((img, i) => i % 2 === 0 ? `
-          <div class="leaf ${i === 0 ? 'hard-cover-front' : ''} ${i >= images.length - 2 ? 'hard-cover-back' : ''}" style="z-index: ${images.length - i + 50}">
-            <div class="page front"><img src="${img}"></div>
-            <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
-          </div>` : '').join('')}
-      </div>
+      <div class="book" id="book">${leavesHtml}</div>
     </div>
 
     <script>
-      let cur = 0;
-      let zoom = 1.0;
-      const leafs = document.querySelectorAll('.leaf');
-      const book = document.getElementById('book');
-      const snd = document.getElementById('flipSnd');
+      let cur = 0, zoom = 1.0;
+      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book');
 
-      function changeZoom(val) {
-        zoom = Math.max(0.5, Math.min(2.0, zoom + val));
-        document.getElementById('zoomLevel').innerText = Math.round(zoom * 100) + '%';
-        updateTransform();
-      }
-
-      function changeCoverColor(color) {
-        document.body.style.setProperty('--cover-color', color);
+      function playSound() {
+        const id = document.getElementById('soundSelect').value;
+        if (id !== 'none') {
+          const s = document.getElementById(id);
+          s.currentTime = 0; s.play().catch(()=>{});
+        }
       }
 
       function n() {
         if (cur < leafs.length) {
-          snd.play().catch(()=>{});
+          playSound();
           const target = leafs[cur];
           target.classList.add('flipped');
           setTimeout(() => { target.style.zIndex = cur; }, 500);
-          cur++;
-          updateTransform();
+          cur++; u();
         }
       }
 
       function p() {
         if (cur > 0) {
-          snd.play().catch(()=>{});
+          playSound();
           cur--;
           leafs[cur].style.zIndex = leafs.length + 50 - cur;
           leafs[cur].classList.remove('flipped');
-          updateTransform();
+          u();
         }
       }
 
-      function updateTransform() {
-        let xShift = cur > 0 ? "50%" : "0%";
-        // Συνδυάζουμε το Zoom με τη μετατόπιση για τις σελίδες
-        book.style.transform = \`scale(\${zoom}) translateX(\${xShift})\`;
+      function changeZoom(v) { zoom = Math.max(0.5, Math.min(2, zoom + v)); document.getElementById('zoomLevel').innerText = Math.round(zoom*100)+'%'; u(); }
+      
+      function toggleFS() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+
+      function u() {
+        let x = cur > 0 ? "50%" : "0%";
+        book.style.transform = \`scale(\${zoom}) translateX(\${x})\`;
       }
 
       function saveH() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = 'Photobook_Final.html'; a.click();
+        a.href = URL.createObjectURL(b); a.download = 'Photobook_Premium.html'; a.click();
       }
     </script>
   </body>
   </html>`;
-  
+
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 
 
