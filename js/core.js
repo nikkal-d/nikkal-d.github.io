@@ -872,7 +872,7 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // Καθαρή δομή φύλλων
+  // Δημιουργία Φύλλων
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
@@ -887,16 +887,18 @@ export async function exportFlipbook() {
   }
 
   const html = `
-  <html><head>
+  <!doctype html>
+  <html>
+  <head>
     <meta charset="utf-8">
     <style>
-      /* GRADIENTS ΣΤΟ ΦΟΝΤΟ ΚΑΙ ΣΤΗΝ ΚΟΥΒΕΡΤΑ */
+      /* GRADIENTS ΣΤΟ ΦΟΝΤΟ ΚΑΙ ΤΟ ΕΞΩΦΥΛΛΟ */
       body { 
         margin:0; 
         background: radial-gradient(circle, #2c3e50 0%, #000000 100%); 
         color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; 
       }
-      .nav { width:100%; background: rgba(0,0,0,0.8); padding:15px; display:flex; justify-content:center; gap:20px; z-index:100; }
+      .nav { width:100%; background: rgba(0,0,0,0.9); padding:15px; display:flex; justify-content:center; gap:20px; z-index:100; border-bottom: 1px solid #333; }
       .btn { padding:10px 20px; border:none; border-radius:30px; cursor:pointer; font-weight:bold; color:white; background:#444; transition: 0.3s; }
       .btn:hover { background:#666; transform: translateY(-2px); }
       
@@ -922,11 +924,12 @@ export async function exportFlipbook() {
         @page { size: auto; margin: 0mm; }
         body { background: white !important; }
         .nav { display: none !important; }
-        .viewport { display: block !important; perspective: none !important; }
+        .viewport { display: block !important; perspective: none !important; padding: 0 !important; }
         .book { display: block !important; width: 100% !important; height: auto !important; transform: none !important; }
-        .leaf { position: relative !important; display: block !important; width: 100% !important; transform: none !important; z-index: auto !important; }
-        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; }
-        .page.back { display: block !important; transform: none !important; }
+        .leaf { position: relative !important; display: block !important; width: 100% !important; height: auto !important; transform: none !important; z-index: auto !important; }
+        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; transform: none !important; border: none !important; box-shadow: none !important; }
+        .page.back { transform: none !important; display: block !important; }
+        .page img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
       }
     </style>
   </head>
@@ -948,7 +951,7 @@ export async function exportFlipbook() {
       const leafs = document.querySelectorAll('.leaf');
       const book = document.getElementById('book');
 
-      // ΛΕΙΤΟΥΡΓΙΑ ΓΙΑ ΒΕΛΑΚΙΑ ΠΛΗΚΤΡΟΛΟΓΙΟΥ
+      // ΒΕΛΑΚΙΑ ΠΛΗΚΤΡΟΛΟΓΙΟΥ
       window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') n();
         if (e.key === 'ArrowLeft') p();
@@ -983,7 +986,8 @@ export async function exportFlipbook() {
         a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
       }
     </script>
-  </body></html>`;
+  </body>
+  </html>`;
 
   frame.srcdoc = html;
   modal.style.display = "block";
