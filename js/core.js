@@ -844,15 +844,13 @@ document.body.onclick = () => {
 
 
 
-
-
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων
+  // 1. Εξαγωγή εικόνων από το Canvas
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -873,7 +871,7 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Δημιουργία Φύλλων
+  // 2. Δημιουργία Φύλλων Flipbook
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
@@ -905,14 +903,16 @@ export async function exportFlipbook() {
       
       .nav { 
         width:100%; background: rgba(0,0,0,0.9); padding:10px; 
-        display:flex; justify-content:center; align-items:center; gap:10px; z-index:9999;
+        display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999;
         border-bottom: 1px solid #333;
       }
       
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
       .btn:hover { background: #666; transform: translateY(-2px); }
 
-      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
+      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+      
+      select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
       .viewport { 
         flex:1; width:100%; display:flex; justify-content:center; align-items:center; 
@@ -928,6 +928,7 @@ export async function exportFlipbook() {
       .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
 
+      /* Εφέ Κουβέρτας */
       .hard-cover-front .front { 
         border-radius: 0 5px 5px 0; border-right: 12px solid transparent;
         border-image: var(--cover-grad) 1; box-shadow: 15px 0 35px rgba(0,0,0,0.6); 
@@ -939,18 +940,19 @@ export async function exportFlipbook() {
 
       @media print {
         @page { size: auto; margin: 0mm; }
-        body { background: white !important; }
+        body { background: white !important; overflow: visible !important; }
         .nav { display: none !important; }
-        .viewport { display: block !important; perspective: none !important; }
+        .viewport { display: block !important; perspective: none !important; padding: 0 !important; }
         .book { display: block !important; width: 100% !important; height: auto !important; transform: none !important; }
         .leaf { position: relative !important; display: block !important; width: 100% !important; transform: none !important; z-index: auto !important; }
-        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; }
+        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; transform: none !important; }
         .page.back { transform: none !important; display: block !important; }
       }
     </style>
   </head>
   <body>
-    <audio id="pageSnd" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
+    <audio id="snd1" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
+    <audio id="snd2" src="https://www.soundjay.com/misc/sounds/page-flip-03.mp3"></audio>
 
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ (←)</button>
@@ -958,8 +960,22 @@ export async function exportFlipbook() {
       
       <div class="control-group">
         <button class="btn" style="padding:5px 10px" onclick="changeZoom(-0.2)">−</button>
-        <span id="zoomLvl" style="font-size:12px; min-width:40px; text-align:center">100%</span>
+        <span id="zoomLvl" style="font-size:12px; min-width:35px; text-align:center">100%</span>
         <button class="btn" style="padding:5px 10px" onclick="changeZoom(0.2)">+</button>
+      </div>
+
+      <div class="control-group">
+        <span style="font-size:10px">🔊 Ήχος:</span>
+        <select id="soundType">
+          <option value="snd1">Κλασικός</option>
+          <option value="snd2">Απαλός</option>
+          <option value="none">Σίγαση</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-grad', 'radial-gradient(circle,'+this.value+' 0%,#000 100%)')">
+        📘 <input type="color" value="#444444" onchange="document.documentElement.style.setProperty('--cover-grad', 'linear-gradient(to bottom,'+this.value+',#111)')">
       </div>
 
       <button class="btn" onclick="toggleFS()">📺 FULL SCREEN</button>
@@ -974,16 +990,25 @@ export async function exportFlipbook() {
 
     <script>
       let cur = 0, zoom = 1.0;
-      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book'), snd = document.getElementById('pageSnd');
+      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book');
 
+      // Βελάκια πληκτρολογίου
       window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') n();
         if (e.key === 'ArrowLeft') p();
       });
 
+      function playSound() {
+        const type = document.getElementById('soundType').value;
+        if (type !== 'none') {
+          const s = document.getElementById(type);
+          s.currentTime = 0; s.play().catch(()=>{});
+        }
+      }
+
       function n() {
         if (cur < leafs.length) {
-          snd.currentTime=0; snd.play().catch(()=>{});
+          playSound();
           leafs[cur].classList.add('flipped');
           const target = leafs[cur];
           setTimeout(() => { target.style.zIndex = cur; }, 300);
@@ -993,7 +1018,7 @@ export async function exportFlipbook() {
 
       function p() {
         if (cur > 0) {
-          snd.currentTime=0; snd.play().catch(()=>{});
+          playSound();
           cur--;
           leafs[cur].classList.remove('flipped');
           leafs[cur].style.zIndex = leafs.length + 50 - cur;
@@ -1008,7 +1033,7 @@ export async function exportFlipbook() {
       }
 
       function toggleFS() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
         else document.exitFullscreen();
       }
 
@@ -1019,8 +1044,7 @@ export async function exportFlipbook() {
 
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
       }
     </script>
   </body>
@@ -1029,6 +1053,8 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
+
+
 
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
