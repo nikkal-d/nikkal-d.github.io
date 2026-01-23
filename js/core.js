@@ -852,7 +852,7 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων (Κρατάμε ακριβώς τις διαστάσεις σου)
+  // 1. Εξαγωγή (Ακριβώς οι διαστάσεις σου)
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -873,194 +873,169 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Δημιουργία Φύλλων για το Flipbook (ΠΡΟΣΕΚΤΙΚΑ ΓΙΑ ΝΑ ΜΗΝ ΕΠΑΝΑΛΑΜΒΑΝΟΝΤΑΙ)
+  // 2. Δημιουργία Φύλλων με απόλυτο Z-INDEX
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
+    // Υπολογισμός z-index: Η πρώτη σελίδα παίρνει το μεγαλύτερο νούμερο
     const zIndex = Math.floor((images.length - i) / 2) + 50;
+    
     leavesHtml += `
-      <div class="leaf ${isCover ? 'hard-cover-front' : ''}" style="z-index: ${zIndex}">
+      <div class="leaf ${isCover ? 'hardcover' : ''}" style="z-index: ${zIndex}">
         <div class="page front"><img src="${images[i]}"></div>
-        <div class="page back">
-          ${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}
-        </div>
+        <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
       </div>`;
   }
 
-  // 3. Δημιουργία καθαρής λίστας για το PDF (Μία εικόνα ανά σελίδα - Καμία επανάληψη)
-  let pdfHtml = images.map(img => `<div class="pdf-page"><img src="${img}"></div>`).join("");
-
-  const html = `
+const html = `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
     <style>
-      :root { 
-        --bg-grad: linear-gradient(135deg, #2c3e50, #000); 
-        --cover-grad: linear-gradient(to bottom, #444, #000); 
-      }
-      
-      body { 
-        margin:0; background: var(--bg-grad); background-attachment: fixed;
-        color:white; font-family: 'Segoe UI', sans-serif; 
-        display:flex; flex-direction:column; height:100vh; overflow:hidden; 
-      }
-      
-      /* Navigation Bar */
-      .nav { 
-        width:100%; background: rgba(0,0,0,0.9); padding:10px; 
-        display:flex; justify-content:center; align-items:center; gap:10px; z-index:9999;
-        backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1);
-      }
-      
-      .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #333; transition:0.3s; display:flex; align-items:center; gap:5px; font-size:11px; text-transform:uppercase; }
-      .btn:hover { background:#555; transform:translateY(-2px); }
-
-      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 25px; }
-
-      /* Viewport με Scrollbar για το Zoom */
-      .viewport { 
-        flex:1; width:100%; display:flex; justify-content:center; align-items:center; 
-        perspective:3000px; overflow: auto; padding: 40px;
-      }
-      .viewport::-webkit-scrollbar { height: 8px; width: 8px; }
-      .viewport::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
-
-      .book { 
-        position:relative; width: 80vh; height: 56vh; 
-        transform-style:preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
-      }
-
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.7s ease-in-out; transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
-      .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
-
-      /* Hardcover με Gradient */
-      .hard-cover-front .front { 
-        border-radius: 0 4px 4px 0; 
-        border-right: 12px solid transparent;
-        border-image: var(--cover-grad) 1;
-        box-shadow: 20px 0 40px rgba(0,0,0,0.7); 
-      }
-      
-      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
-      .back { transform:rotateY(180deg); }
-      .flipped { transform:rotateY(-180deg) !important; }
-
-      /* PDF PRINT - ΚΑΘΑΡΟ ΚΑΙ ΣΩΣΤΟ */
+      /* ... (Κρατάμε το media print όπως ήταν για τέλειο PDF) ... */
       @media print {
-        body { background: white !important; overflow: visible !important; }
-        .nav, .viewport { display: none !important; }
-        .pdf-container { display: block !important; }
-        .pdf-page { width: 100%; height: 100vh; page-break-after: always; display: flex; align-items: center; justify-content: center; }
-        .pdf-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        @page { size: auto; margin: 0mm; }
+        body { background: white !important; }
+        .nav { display: none !important; }
+        .viewport { display: block !important; perspective: none !important; padding: 0 !important; }
+        .book { display: block !important; width: 100% !important; height: auto !important; transform: none !important; }
+        .leaf { position: relative !important; display: block !important; width: 100% !important; height: auto !important; transform: none !important; z-index: auto !important; }
+        .page { position: relative !important; display: block !important; width: 100% !important; height: 100vh !important; page-break-after: always !important; transform: none !important; border: none !important; box-shadow: none !important; }
+        .page.back { transform: none !important; display: block !important; }
+        .page img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
       }
-      @media screen { .pdf-container { display: none; } }
+
+      @media screen {
+        body { margin:0; background: radial-gradient(circle, #2c2c2c 0%, #000 100%); color:white; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; height:100vh; overflow:hidden; }
+        
+        /* Navigation με Zoom και Color Picker */
+        .nav { width:100%; background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999; flex-wrap: wrap; }
+        
+        .btn { padding:10px 18px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background:#444; transition:0.3s; display:flex; align-items:center; gap:5px; font-size:11px; text-transform:uppercase; }
+        .btn:hover { background:#666; transform:translateY(-2px); }
+        .btn-zoom { background:#555; font-size:16px; padding: 8px 15px; }
+        
+        .color-label { font-size: 11px; font-weight: bold; margin-left: 10px; }
+        .color-picker { border: none; width: 30px; height: 30px; cursor: pointer; background: none; }
+
+        .viewport { flex:1; width:100%; display:flex; justify-content:center; align-items:center; perspective:3000px; overflow: auto; }
+        
+        /* Το βιβλίο με υποστήριξη Zoom */
+        .book { 
+          position:relative; 
+          width: 80vh; height: 56vh; 
+          transform-style:preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+          transform: scale(1); /* Αρχικό Zoom */
+        }
+
+        .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style:preserve-3d; }
+        .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
+        .page img { width:100%; height:100%; object-fit:contain; }
+
+        /* Hardcover styles με μεταβλητό χρώμα */
+        .hard-cover-front .front { border-radius: 0 4px 4px 0; border-right: 8px solid var(--cover-color, #1a1a1a); box-shadow: 15px 0 35px rgba(0,0,0,0.6); }
+        .hard-cover-back .back { border-radius: 4px 0 0 4px; border-left: 8px solid var(--cover-color, #1a1a1a); }
+
+        .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
+        .back { transform:rotateY(180deg); }
+        .flipped { transform:rotateY(-180deg) !important; }
+      }
     </style>
   </head>
-  <body>
-    <audio id="snd1" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
-    <audio id="snd2" src="https://www.soundjay.com/misc/sounds/page-flip-03.mp3"></audio>
-
+  <body style="--cover-color: #1a1a1a;">
+    <audio id="flipSnd" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
+    
     <div class="nav">
-      <button class="btn" onclick="p()">❮ ΠΙΣΩ (←)</button>
-      <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ (→)</button>
+      <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
+      <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
       
-      <div class="control-group">
-        <button class="btn" style="width:30px" onclick="changeZoom(-0.2)">−</button>
-        <span id="zoomLvl" style="font-size:12px; font-weight:bold;">100%</span>
-        <button class="btn" style="width:30px" onclick="changeZoom(0.2)">+</button>
-      </div>
-
-      <div class="control-group">
-        <span style="font-size:10px">🔊</span>
-        <select id="sndSel" style="background:#333; color:white; border:none; font-size:10px;">
-          <option value="snd1">Ήχος 1</option>
-          <option value="snd2">Ήχος 2</option>
-          <option value="none">Σίγαση</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-grad', 'linear-gradient(135deg,'+this.value+',#000)')">
-        📘 <input type="color" value="#444444" onchange="document.documentElement.style.setProperty('--cover-grad', 'linear-gradient(to bottom,'+this.value+',#000)')">
-      </div>
-
-      <button class="btn" onclick="toggleFS()">📺 FULL SCREEN</button>
+      <div style="width:1px; height:25px; background:#444;"></div>
+      
+      <button class="btn btn-zoom" onclick="changeZoom(-0.1)">−</button>
+      <span style="font-size:12px; min-width:40px; text-align:center;" id="zoomLevel">100%</span>
+      <button class="btn btn-zoom" onclick="changeZoom(0.1)">+</button>
+      
+      <div style="width:1px; height:25px; background:#444;"></div>
+      
+      <span class="color-label">ΕΞΩΦΥΛΛΟ:</span>
+      <input type="color" class="color-picker" value="#1a1a1a" onchange="changeCoverColor(this.value)">
+      
+      <div style="width:1px; height:25px; background:#444;"></div>
+      
       <button class="btn" style="background:#27ae60" onclick="saveH()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
-    <div class="viewport" id="vp">
-      <div class="book" id="book">${leavesHtml}</div>
+    <div class="viewport">
+      <div class="book" id="book">
+        ${images.map((img, i) => i % 2 === 0 ? `
+          <div class="leaf ${i === 0 ? 'hard-cover-front' : ''} ${i >= images.length - 2 ? 'hard-cover-back' : ''}" style="z-index: ${images.length - i + 50}">
+            <div class="page front"><img src="${img}"></div>
+            <div class="page back">${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}</div>
+          </div>` : '').join('')}
+      </div>
     </div>
 
-    <div class="pdf-container">${pdfHtml}</div>
-
     <script>
-      let cur = 0, zoom = 1.0;
-      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book');
+      let cur = 0;
+      let zoom = 1.0;
+      const leafs = document.querySelectorAll('.leaf');
+      const book = document.getElementById('book');
+      const snd = document.getElementById('flipSnd');
 
-      // Βελάκια πληκτρολογίου
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight') n();
-        if (e.key === 'ArrowLeft') p();
-      });
+      function changeZoom(val) {
+        zoom = Math.max(0.5, Math.min(2.0, zoom + val));
+        document.getElementById('zoomLevel').innerText = Math.round(zoom * 100) + '%';
+        updateTransform();
+      }
 
-      function playSnd() {
-        const s = document.getElementById(document.getElementById('sndSel').value);
-        if(s) { s.currentTime=0; s.play().catch(()=>{}); }
+      function changeCoverColor(color) {
+        document.body.style.setProperty('--cover-color', color);
       }
 
       function n() {
         if (cur < leafs.length) {
-          playSnd();
-          leafs[cur].classList.add('flipped');
-          const idx = cur;
-          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 400);
-          cur++; u();
+          snd.play().catch(()=>{});
+          const target = leafs[cur];
+          target.classList.add('flipped');
+          setTimeout(() => { target.style.zIndex = cur; }, 500);
+          cur++;
+          updateTransform();
         }
       }
 
       function p() {
         if (cur > 0) {
-          playSnd();
+          snd.play().catch(()=>{});
           cur--;
           leafs[cur].style.zIndex = leafs.length + 50 - cur;
           leafs[cur].classList.remove('flipped');
-          u();
+          updateTransform();
         }
       }
 
-      function changeZoom(v) {
-        zoom = Math.max(0.5, Math.min(3, zoom + v));
-        document.getElementById('zoomLvl').innerText = Math.round(zoom*100)+'%';
-        u();
-      }
-
-      function u() {
-        let x = cur > 0 ? "50%" : "0%";
-        book.style.transform = \`scale(\${zoom}) translateX(\${x})\`;
-      }
-
-      function toggleFS() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
+      function updateTransform() {
+        let xShift = cur > 0 ? "50%" : "0%";
+        // Συνδυάζουμε το Zoom με τη μετατόπιση για τις σελίδες
+        book.style.transform = \`scale(\${zoom}) translateX(\${xShift})\`;
       }
 
       function saveH() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = 'Photobook_Final.html'; a.click();
       }
     </script>
   </body>
   </html>`;
-
+  
   frame.srcdoc = html;
   modal.style.display = "block";
 }
+
+
 
 
 
