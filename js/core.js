@@ -915,9 +915,15 @@ export async function exportFlipbook() {
       select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
       .viewport { 
-        flex:1; width:100%; display:flex; justify-content:center; align-items:center; 
-        perspective:3000px; overflow: auto; padding: 40px;
-      }
+  flex:1; 
+  width:100%; 
+  display:flex; 
+  justify-content:center; 
+  align-items:center; 
+  perspective:3000px; 
+  overflow: auto; /* Επιτρέπει το scroll */
+  padding: 100px; /* Δίνουμε αέρα για να μην κολλάει το βιβλίο στις άκρες στο zoom */
+}
 
       .book { 
         position:relative; width: 80vh; height: 56vh; 
@@ -996,6 +1002,23 @@ export async function exportFlipbook() {
         }
         .page.front::after { display: none !important; }
       }
+
+      /* Custom Scrollbars */
+.viewport::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.viewport::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.2);
+}
+.viewport::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+  border: 2px solid #222;
+}
+.viewport::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
     </style>
   </head>
   <body>
@@ -1085,11 +1108,14 @@ export async function exportFlipbook() {
         else document.exitFullscreen();
       }
 
-      function updatePos() {
-        let x = cur > 0 ? "50%" : "0%";
-        book.style.transform = \`scale(\${zoom}) translateX(\${x})\`;
-      }
-
+     function updatePos() {
+  // Αν το βιβλίο είναι ανοιχτό (cur > 0), το μετακινούμε δεξιά για να φαίνονται και οι δύο σελίδες
+  let x = cur > 0 ? (book.offsetWidth / 2) + "px" : "0px";
+  
+  // Εφαρμόζουμε το Zoom και τη μετατόπιση
+  book.style.transform = `scale(${zoom})`;
+  book.style.marginLeft = x;
+}
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
