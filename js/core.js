@@ -1109,13 +1109,13 @@ export async function exportFlipbook() {
       }
 
      function updatePos() {
-  // Αν το βιβλίο είναι ανοιχτό (cur > 0), το μετακινούμε δεξιά για να φαίνονται και οι δύο σελίδες
-  let x = cur > 0 ? (book.offsetWidth / 2) + "px" : "0px";
-  
-  // Εφαρμόζουμε το Zoom και τη μετατόπιση
-  book.style.transform = `scale(${zoom})`;
-  book.style.marginLeft = x;
-}
+        // Υπολογίζουμε τη μετατόπιση αν το βιβλίο είναι ανοιχτό
+        let x = cur > 0 ? (book.offsetWidth / 2) + "px" : "0px";
+        
+        // ΠΡΟΣΟΧΗ: Βάζουμε \ πριν το $ για να μην βγάζει error το core.js
+        book.style.transform = "scale(" + zoom + ")";
+        book.style.marginLeft = x;
+      }
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
