@@ -915,15 +915,15 @@ export async function exportFlipbook() {
       select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
       .viewport { 
-  flex:1; 
-  width:100%; 
-  display:flex; 
-  justify-content:center; 
-  align-items:center; 
-  perspective:3000px; 
-  overflow: auto; /* Επιτρέπει το scroll */
-  padding: 100px; /* Δίνουμε αέρα για να μην κολλάει το βιβλίο στις άκρες στο zoom */
-}
+        flex:1; width:100%; 
+        display:flex; 
+        justify-content: center; 
+        align-items: center; /* Αρχικό κεντράρισμα */
+        perspective:3000px; 
+        overflow: auto !important; 
+        padding: 150px; 
+        box-sizing: border-box;
+      }
 
       .book { 
         position:relative; width: 80vh; height: 56vh; 
@@ -1108,14 +1108,27 @@ export async function exportFlipbook() {
         else document.exitFullscreen();
       }
 
-     function updatePos() {
-        // Υπολογίζουμε τη μετατόπιση αν το βιβλίο είναι ανοιχτό
+     
+function updatePos() {
+        // Αν το βιβλίο είναι ανοιχτό, το μετατοπίζουμε
         let x = cur > 0 ? (book.offsetWidth / 2) + "px" : "0px";
         
-        // ΠΡΟΣΟΧΗ: Βάζουμε \ πριν το $ για να μην βγάζει error το core.js
+        // Ορίζουμε το κέντρο του zoom για να ξέρει το scroll πού να εστιάσει
+        book.style.transformOrigin = "center center"; 
         book.style.transform = "scale(" + zoom + ")";
         book.style.marginLeft = x;
+
+        // Αν το zoom είναι μεγάλο, αλλάζουμε το ευθυγράμμιση για να δουλέψει το scroll
+        const v = document.querySelector('.viewport');
+        if(zoom > 1) {
+            v.style.alignItems = "flex-start";
+        } else {
+            v.style.alignItems = "center";
+        }
       }
+
+
+     
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
