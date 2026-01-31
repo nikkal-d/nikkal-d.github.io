@@ -1095,10 +1095,27 @@ export async function exportFlipbook() {
         else document.exitFullscreen();
       }
 
-      function updatePos() {
-        let x = cur > 0 ? "50%" : "0%";
-        book.style.transform = \`scale(\${zoom}) translateX(\${x})\`;
-      }
+     function updatePos() {
+  const layer = document.getElementById('zoom-layer');
+  
+  // Μεγαλώνουμε το layer για να "πιάσει" χώρο και να βγουν οι μπάρες
+  layer.style.width = (100 * zoom) + "%";
+  layer.style.height = (100 * zoom) + "%";
+  layer.style.transform = "scale(" + zoom + ")";
+  
+  // Κεντράρισμα του βιβλίου
+  let x = cur > 0 ? "25%" : "0%"; 
+  book.style.transform = "translateX(" + x + ")";
+  
+  // Αν είναι zoomed, ξεκινάμε από πάνω αριστερά για να δουλεύει το scroll
+  if (zoom > 1) {
+    layer.style.alignItems = "flex-start";
+    layer.style.justifyContent = "flex-start";
+  } else {
+    layer.style.alignItems = "center";
+    layer.style.justifyContent = "center";
+  }
+}
 
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
