@@ -924,7 +924,7 @@ export async function exportFlipbook() {
   place-items: center;
   min-width: 100%;
   min-height: 100%;
-  padding: 100px;
+  padding: 100px 100px 100px 50px;
   box-sizing: border-box;
   transition: transform 0.3s ease;
   /* Αφαιρούμε το στατικό transform-origin από εδώ */
@@ -1096,20 +1096,16 @@ export async function exportFlipbook() {
         else document.exitFullscreen();
       }
 
-
 function updatePos() {
   const layer = document.getElementById('zoom-layer');
   const book = document.getElementById('book');
   
-  // 1. Ρύθμιση του σημείου αναφοράς
+  // 1. Ρύθμιση του σημείου αναφοράς για το Zoom
   if (zoom > 1) {
-    // Όταν έχει ζουμ, το σημείο αναφοράς πάει πάνω αριστερά 
-    // για να επιτρέψει στον browser να κάνει σωστό scrolling προς τα δεξιά/κάτω
     layer.style.transformOrigin = "top left";
-    layer.style.justifySelf = "start"; // Ευθυγράμμιση στην αρχή
+    layer.style.justifySelf = "start";
     layer.style.alignSelf = "start";
   } else {
-    // Όταν είναι κανονικό μέγεθος, επανέρχεται στο κέντρο
     layer.style.transformOrigin = "center center";
     layer.style.justifySelf = "center";
     layer.style.alignSelf = "center";
@@ -1118,9 +1114,12 @@ function updatePos() {
   // 2. Εφαρμογή του Zoom
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 3. Μετατόπιση βιβλίου (βάσει του κώδικα που ήδη έχεις)
+  // 3. ΔΙΟΡΘΩΣΗ ΓΙΑ ΤΟ "ΑΚΟΜΑ ΠΙΟ ΑΡΙΣΤΕΡΑ"
   if (cur > 0) {
-    book.style.transform = "translateX(25%)"; 
+    // Αντί για 25%, χρησιμοποιούμε 20% ή 15% για να σπρώξουμε 
+    // το βιβλίο πιο αριστερά προς την αρχή της οθόνης.
+    // Επίσης προσθέτουμε ένα μικρό αρνητικό margin αν χρειαστεί.
+    book.style.transform = "translateX(18%)"; 
   } else {
     book.style.transform = "translateX(0%)";
   }
