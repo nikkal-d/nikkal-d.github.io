@@ -920,10 +920,15 @@ export async function exportFlipbook() {
 }
 
 #zoom-layer {
-  display: flex; justify-content: center; align-items: center;
-  min-width: 100%; min-height: 100%; padding: 150px;
-  box-sizing: border-box; transition: transform 0.3s ease;
-  transform-origin: center center;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  min-width: 100%; 
+  min-height: 100%; 
+  padding: 150px;
+  box-sizing: border-box; 
+  transition: transform 0.3s ease;
+  transform-origin: top left; /* ΑΛΛΑΓΗ ΕΔΩ */
 }
 
       .book { 
@@ -1098,25 +1103,27 @@ export async function exportFlipbook() {
      function updatePos() {
   const layer = document.getElementById('zoom-layer');
   
-  // Μεγαλώνουμε το layer για να "πιάσει" χώρο και να βγουν οι μπάρες
-  layer.style.width = (100 * zoom) + "%";
-  layer.style.height = (100 * zoom) + "%";
+  // 1. Εφαρμόζουμε το zoom
   layer.style.transform = "scale(" + zoom + ")";
   
-  // Κεντράρισμα του βιβλίου
+  // 2. Διορθώνουμε την ευθυγράμμιση για να μην "φεύγει" αριστερά
+  if (zoom > 1) {
+    layer.style.justifyContent = "flex-start";
+    layer.style.alignItems = "flex-start";
+    // Δίνουμε πλάτος στο layer ώστε να δημιουργηθεί η περιοχή για scroll δεξιά
+    layer.style.width = (100 * zoom) + "%";
+    layer.style.height = (100 * zoom) + "%";
+  } else {
+    layer.style.justifyContent = "center";
+    layer.style.alignItems = "center";
+    layer.style.width = "100%";
+    layer.style.height = "100%";
+  }
+
+  // 3. Μετατόπιση του βιβλίου (το translateX παραμένει ως έχει)
   let x = cur > 0 ? "25%" : "0%"; 
   book.style.transform = "translateX(" + x + ")";
-  
-  // Αν είναι zoomed, ξεκινάμε από πάνω αριστερά για να δουλεύει το scroll
-  if (zoom > 1) {
-    layer.style.alignItems = "flex-start";
-    layer.style.justifyContent = "flex-start";
-  } else {
-    layer.style.alignItems = "center";
-    layer.style.justifyContent = "center";
-  }
 }
-
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
