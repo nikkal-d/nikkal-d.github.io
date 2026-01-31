@@ -1138,10 +1138,9 @@ function updatePos() {
   const layer = document.getElementById('zoom-layer');
   const book = document.getElementById('book');
   
-  // 1. Εφαρμογή Zoom
+  // 1. Zoom Logic
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Δυναμικό Origin για να μη χάνεις το scroll
   if (zoom > 1) {
     layer.style.transformOrigin = "top left";
     layer.style.justifyContent = "flex-start";
@@ -1152,15 +1151,17 @@ function updatePos() {
     layer.style.alignItems = "center";
   }
 
-  // 3. Μετατόπιση βιβλίου χωρίς να αλλάζουν οι διαστάσεις
+  // 2. Position Logic (Διόρθωση για το κεντράρισμα)
   if (cur > 0) {
-    // Το translateX(25%) είναι το ιδανικό για να κεντράρει το άνοιγμα
-    // χωρίς να "σπρώχνει" το περιεχόμενο έξω από το PDF box
-    book.style.transform = "translateX(25%)"; 
+    // Αντί για margin, χρησιμοποιούμε left για να το φέρουμε στο κέντρο οπτικά
+    book.style.left = "20vh"; 
+    book.style.margin = "0";
   } else {
-    book.style.transform = "translateX(0%)";
+    book.style.left = "0";
+    book.style.margin = "0";
   }
 }
+
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
