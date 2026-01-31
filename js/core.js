@@ -915,14 +915,8 @@ export async function exportFlipbook() {
       select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
       .viewport { 
-        flex:1; width:100%; 
-        display:flex; 
-        justify-content: center; 
-        align-items: center; /* Αρχικό κεντράρισμα */
-        perspective:3000px; 
-        overflow: auto !important; 
-        padding: 150px; 
-        box-sizing: border-box;
+        flex:1; width:100%; display:flex; justify-content:center; align-items:center; 
+        perspective:3000px; overflow: auto; padding: 40px;
       }
 
       .book { 
@@ -1002,23 +996,6 @@ export async function exportFlipbook() {
         }
         .page.front::after { display: none !important; }
       }
-
-      /* Custom Scrollbars */
-.viewport::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-.viewport::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.2);
-}
-.viewport::-webkit-scrollbar-thumb {
-  background: #555;
-  border-radius: 10px;
-  border: 2px solid #222;
-}
-.viewport::-webkit-scrollbar-thumb:hover {
-  background: #888;
-}
     </style>
   </head>
   <body>
@@ -1108,27 +1085,11 @@ export async function exportFlipbook() {
         else document.exitFullscreen();
       }
 
-     
-function updatePos() {
-        // Αν το βιβλίο είναι ανοιχτό, το μετατοπίζουμε
-        let x = cur > 0 ? (book.offsetWidth / 2) + "px" : "0px";
-        
-        // Ορίζουμε το κέντρο του zoom για να ξέρει το scroll πού να εστιάσει
-        book.style.transformOrigin = "center center"; 
-        book.style.transform = "scale(" + zoom + ")";
-        book.style.marginLeft = x;
-
-        // Αν το zoom είναι μεγάλο, αλλάζουμε το ευθυγράμμιση για να δουλέψει το scroll
-        const v = document.querySelector('.viewport');
-        if(zoom > 1) {
-            v.style.alignItems = "flex-start";
-        } else {
-            v.style.alignItems = "center";
-        }
+      function updatePos() {
+        let x = cur > 0 ? "50%" : "0%";
+        book.style.transform = \`scale(\${zoom}) translateX(\${x})\`;
       }
 
-
-     
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
