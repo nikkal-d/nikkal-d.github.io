@@ -921,13 +921,13 @@ export async function exportFlipbook() {
 
 #zoom-layer {
   display: grid;
-  place-items: center; /* Τέλειο κεντράρισμα */
+  place-items: center;
   min-width: 100%;
   min-height: 100%;
   padding: 100px;
   box-sizing: border-box;
   transition: transform 0.3s ease;
-  transform-origin: center center; /* Zoom από το κέντρο για να μη χάνεται η ισορροπία */
+  /* Αφαιρούμε το στατικό transform-origin από εδώ */
 }
 
 .book { 
@@ -1101,24 +1101,28 @@ function updatePos() {
   const layer = document.getElementById('zoom-layer');
   const book = document.getElementById('book');
   
-  // 1. Εφαρμογή του Zoom
+  // 1. Ρύθμιση του σημείου αναφοράς
+  if (zoom > 1) {
+    // Όταν έχει ζουμ, το σημείο αναφοράς πάει πάνω αριστερά 
+    // για να επιτρέψει στον browser να κάνει σωστό scrolling προς τα δεξιά/κάτω
+    layer.style.transformOrigin = "top left";
+    layer.style.justifySelf = "start"; // Ευθυγράμμιση στην αρχή
+    layer.style.alignSelf = "start";
+  } else {
+    // Όταν είναι κανονικό μέγεθος, επανέρχεται στο κέντρο
+    layer.style.transformOrigin = "center center";
+    layer.style.justifySelf = "center";
+    layer.style.alignSelf = "center";
+  }
+
+  // 2. Εφαρμογή του Zoom
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Μετατόπιση βιβλίου μόνο όταν είναι ανοιχτό
-  // Αντί για translateX, χρησιμοποιούμε margin-left για να "νιώθει" ο browser την αλλαγή στο μέγεθος
+  // 3. Μετατόπιση βιβλίου (βάσει του κώδικα που ήδη έχεις)
   if (cur > 0) {
     book.style.transform = "translateX(25%)"; 
   } else {
     book.style.transform = "translateX(0%)";
-  }
-
-  // 3. Διόρθωση για το Scroll
-  // Αν το zoom είναι πάνω από 1, αλλάζουμε το padding ώστε να μπορείς να κάνεις scroll 
-  // γύρω από το αντικείμενο χωρίς να "κλειδώνει" στην άκρη
-  if (zoom > 1) {
-    layer.style.padding = (200 * zoom) + "px";
-  } else {
-    layer.style.padding = "100px";
   }
 }
 
