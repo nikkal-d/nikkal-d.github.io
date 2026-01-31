@@ -1041,8 +1041,9 @@ export async function exportFlipbook() {
     </div>
 
     
-    <div class="viewport">
+   <div class="viewport">
   <div id="zoom-layer">
+    <div id="scroll-spacer" style="width: 50vh; flex-shrink: 0;"></div>
     <div class="book" id="book">${leavesHtml}</div>
   </div>
 </div>
@@ -1099,28 +1100,26 @@ export async function exportFlipbook() {
 function updatePos() {
   const layer = document.getElementById('zoom-layer');
   const book = document.getElementById('book');
+  const spacer = document.getElementById('scroll-spacer');
   
-  // 1. Zoom logic
+  // 1. Εφαρμογή Zoom
   layer.style.transform = "scale(" + zoom + ")";
   
+  // 2. Ρύθμιση του αέρα στα αριστερά
   if (zoom > 1) {
     layer.style.transformOrigin = "top left";
-    layer.style.justifySelf = "start";
-    layer.style.alignSelf = "start";
-    
-    // Εδώ είναι το μυστικό: Σπρώχνουμε το layer λίγο αριστερά 
-    // για να μη χάνεται η αριστερή σελίδα στο Zoom
-    layer.style.marginLeft = "-50px"; 
+    layer.style.justifyContent = "flex-start";
+    // Όσο μεγαλώνει το zoom, μεγαλώνουμε και τον κενό χώρο αριστερά
+    spacer.style.display = "block";
+    spacer.style.width = (40 * zoom) + "vh"; 
   } else {
     layer.style.transformOrigin = "center center";
-    layer.style.justifySelf = "center";
-    layer.style.alignSelf = "center";
-    layer.style.marginLeft = "0";
+    layer.style.justifyContent = "center";
+    spacer.style.display = "none"; // Εξαφανίζεται όταν δεν έχει zoom για να είναι κέντρο
   }
 
-  // 2. Position logic
+  // 3. Μετατόπιση βιβλίου (η κλασική σου ρύθμιση)
   if (cur > 0) {
-    // Επαναφορά στο 25% για να είναι σωστά κεντραρισμένη η "ραφή"
     book.style.transform = "translateX(25%)"; 
   } else {
     book.style.transform = "translateX(0%)";
