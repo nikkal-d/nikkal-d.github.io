@@ -914,10 +914,17 @@ export async function exportFlipbook() {
       
       select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
-      .viewport { 
-        flex:1; width:100%; display:flex; justify-content:center; align-items:center; 
-        perspective:3000px; overflow: auto; padding: 40px;
-      }
+     .viewport { 
+  flex:1; width:100%; overflow: auto !important; 
+  display: block; position: relative;
+}
+
+#zoom-layer {
+  display: flex; justify-content: center; align-items: center;
+  min-width: 100%; min-height: 100%; padding: 150px;
+  box-sizing: border-box; transition: transform 0.3s ease;
+  transform-origin: center center;
+}
 
       .book { 
         position:relative; width: 80vh; height: 56vh; 
@@ -1032,9 +1039,12 @@ export async function exportFlipbook() {
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
+    
     <div class="viewport">
-      <div class="book" id="book">${leavesHtml}</div>
-    </div>
+  <div id="zoom-layer">
+    <div class="book" id="book">${leavesHtml}</div>
+  </div>
+</div>
 
     <script>
       let cur = 0, zoom = 1.0;
