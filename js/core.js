@@ -922,11 +922,11 @@ export async function exportFlipbook() {
 
 #zoom-layer {
   display: flex;
-  justify-content: center; /* Κεντράρισμα οριζόντια */
-  align-items: center;     /* Κεντράρισμα κάθετα */
+  justify-content: center;
+  align-items: center;
   min-width: 100%;
   min-height: 100%;
-  padding: 150px;          /* Εξασφαλίζει χώρο για scroll παντού */
+  padding: 100px; /* Ο αέρας γύρω από το βιβλίο */
   box-sizing: border-box;
   transition: transform 0.3s ease;
   transform-origin: center center;
@@ -934,11 +934,17 @@ export async function exportFlipbook() {
 
 .book { 
   position: relative; 
+  /* Εδώ ορίζεις την αναλογία σου - π.χ. 80vh πλάτος, 56vh ύψος */
   width: 80vh; 
   height: 56vh; 
   transform-style: preserve-3d;
-  flex-shrink: 0; /* Εμποδίζει το "πάτημα" του βιβλίου */
-  transition: margin 0.6s ease; /* Ομαλή κίνηση στο άνοιγμα */
+  flex-shrink: 0; 
+}
+
+/* Για την εκτύπωση/PDF, βεβαιωνόμαστε ότι δεν υπάρχουν μετατοπίσεις */
+@media print {
+  #zoom-layer { padding: 0; transform: none !important; }
+  .book { transform: none !important; margin: 0 !important; }
 }
       
 
