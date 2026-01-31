@@ -920,15 +920,13 @@ export async function exportFlipbook() {
 }
 
 #zoom-layer {
-  display: flex; 
-  justify-content: center; 
-  align-items: center;
+  display: block; /* Αλλάζουμε σε block για να ελέγχουμε τα περιθώρια χειροκίνητα */
   min-width: 100%; 
   min-height: 100%; 
-  padding: 150px;
+  padding: 100px; /* Λίγο λιγότερο padding για να ξεκινάει πιο αριστερά */
   box-sizing: border-box; 
   transition: transform 0.3s ease;
-  transform-origin: top left; /* ΑΛΛΑΓΗ ΕΔΩ */
+  transform-origin: top left; 
 }
 
       .book { 
@@ -1100,26 +1098,38 @@ export async function exportFlipbook() {
         else document.exitFullscreen();
       }
 
-     function updatePos() {
+
+function updatePos() {
   const layer = document.getElementById('zoom-layer');
   
-  // 1. Εφαρμόζουμε το zoom
+  // 1. Εφαρμόζουμε το zoom scale
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Διορθώνουμε την ευθυγράμμιση για να μην "φεύγει" αριστερά
-  if (zoom > 1) {
-    layer.style.justifyContent = "flex-start";
-    layer.style.alignItems = "flex-start";
-    // Δίνουμε πλάτος στο layer ώστε να δημιουργηθεί η περιοχή για scroll δεξιά
-    layer.style.width = (100 * zoom) + "%";
-    layer.style.height = (100 * zoom) + "%";
+  // 2. Υπολογίζουμε το πραγματικό μέγεθος που πρέπει να πιάσει το layer για το scroll
+  // Αν το zoom είναι 2, το πλάτος πρέπει να είναι 200%
+  layer.style.width = (100 * zoom) + "%";
+  layer.style.height = (100 * zoom) + "%";
+
+  // 3. ΔΙΟΡΘΩΣΗ ΓΙΑ ΤΟ "ΤΕΡΜΑ ΑΡΙΣΤΕΡΑ":
+  // Αντί για translateX, χρησιμοποιούμε margin.
+  // Όταν το βιβλίο είναι ανοιχτό (cur > 0), το σπρώχνουμε προς τα δεξιά 
+  // κατά το ήμισυ του πλάτους του για να κεντραριστεί η "ραφή".
+  if (cur > 0) {
+    // Σπρώχνουμε το βιβλίο δεξιά όσο είναι το μισό του πλάτους του
+    book.style.marginLeft = "40vh"; 
+    book.style.transform = "none"; // Καταργούμε το translateX που δημιουργούσε το πρόβλημα
   } else {
-    layer.style.justifyContent = "center";
-    layer.style.alignItems = "center";
-    layer.style.width = "100%";
-    layer.style.height = "100%";
+    book.style.marginLeft = "auto";
+    book.style.marginRight = "auto";
+    book.style.transform = "none";
   }
 
+  // 4. Εξασφαλίζουμε ότι το layer ξεκινάει από την αρχή
+  layer.style.display = "block";
+}
+
+
+     
   // 3. Μετατόπιση του βιβλίου (το translateX παραμένει ως έχει)
   let x = cur > 0 ? "25%" : "0%"; 
   book.style.transform = "translateX(" + x + ")";
