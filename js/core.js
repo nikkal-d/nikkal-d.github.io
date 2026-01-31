@@ -941,11 +941,7 @@ export async function exportFlipbook() {
   flex-shrink: 0; 
 }
 
-/* Για την εκτύπωση/PDF, βεβαιωνόμαστε ότι δεν υπάρχουν μετατοπίσεις */
-@media print {
-  #zoom-layer { padding: 0; transform: none !important; }
-  .book { transform: none !important; margin: 0 !important; }
-}
+
       
 
       .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
@@ -962,11 +958,43 @@ export async function exportFlipbook() {
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
-      @media print {
-        @page { size: auto; margin: 0mm; }
-        body { background: white !important; overflow: visible !important; }
-        .nav { display: none !important; }
-        .viewport { display: block !important; perspective: none !important; padding: 0 !important; overflow: visible !important; }
+     @media print {
+  /* Κρύβουμε τα κουμπιά και το background */
+  .nav, .viewport::-webkit-scrollbar { display: none !important; }
+  
+  body, .viewport { 
+    background: white !important; 
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Ακυρώνουμε το zoom και τα margins στο layer */
+  #zoom-layer { 
+    transform: none !important; 
+    padding: 0 !important; 
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  /* Κάνουμε το βιβλίο να πιάνει όλη τη σελίδα στην εκτύπωση */
+  .book { 
+    transform: none !important; 
+    margin: 0 !important; 
+    width: 100% !important; 
+    height: 100% !important;
+    position: relative !important;
+  }
+
+  /* Διασφαλίζουμε ότι κάθε φύλλο είναι επίπεδο και ορατό */
+  .leaf { 
+    position: relative !important; 
+    transform: none !important; 
+    display: block !important; 
+    page-break-after: always; /* Κάθε σελίδα σε νέο χαρτί PDF */
+  }
+  
+  .flipped { transform: none !important; }
+}
       
         
         /* Τα φύλλα γίνονται στατικά, το ένα κάτω από το άλλο */
