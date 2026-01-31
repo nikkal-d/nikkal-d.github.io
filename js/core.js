@@ -920,19 +920,24 @@ export async function exportFlipbook() {
 }
 
 #zoom-layer {
-  display: block; /* Αλλάζουμε σε block για να ελέγχουμε τα περιθώρια χειροκίνητα */
-  min-width: 100%; 
-  min-height: 100%; 
-  padding: 100px; /* Λίγο λιγότερο padding για να ξεκινάει πιο αριστερά */
-  box-sizing: border-box; 
+  position: relative;
+  width: 100%;
+  height: 100%;
   transition: transform 0.3s ease;
-  transform-origin: top left; 
+  transform-origin: top left; /* Πολύ σημαντικό για το scroll */
 }
 
-      .book { 
-        position:relative; width: 80vh; height: 56vh; 
-        transform-style:preserve-3d; transition: transform 0.6s ease;
-      }
+.book { 
+  position: absolute; 
+  left: 0; 
+  top: 50%;
+  transform: translateY(-50%); /* Κεντράρισμα μόνο καθ' ύψος */
+  width: 80vh; 
+  height: 56vh; 
+  transform-style: preserve-3d;
+  transition: left 0.6s ease, transform 0.6s ease;
+}
+      
 
       .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
       .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
@@ -1101,39 +1106,27 @@ export async function exportFlipbook() {
 
 function updatePos() {
   const layer = document.getElementById('zoom-layer');
+  const book = document.getElementById('book');
   
-  // 1. Εφαρμόζουμε το zoom scale
+  // 1. Εφαρμόζουμε το zoom scale στο layer
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Υπολογίζουμε το πραγματικό μέγεθος που πρέπει να πιάσει το layer για το scroll
-  // Αν το zoom είναι 2, το πλάτος πρέπει να είναι 200%
+  // 2. Ορίζουμε το ΠΡΑΓΜΑΤΙΚΟ μέγεθος του layer για να βγουν οι μπάρες scroll
+  // Προσθέτουμε λίγο έξτρα πλάτος (padding) για να μην κολλάει δεξιά
   layer.style.width = (100 * zoom) + "%";
   layer.style.height = (100 * zoom) + "%";
 
-  // 3. ΔΙΟΡΘΩΣΗ ΓΙΑ ΤΟ "ΤΕΡΜΑ ΑΡΙΣΤΕΡΑ":
-  // Αντί για translateX, χρησιμοποιούμε margin.
-  // Όταν το βιβλίο είναι ανοιχτό (cur > 0), το σπρώχνουμε προς τα δεξιά 
-  // κατά το ήμισυ του πλάτους του για να κεντραριστεί η "ραφή".
+  // 3. ΕΛΕΓΧΟΣ ΘΕΣΗΣ ΒΙΒΛΙΟΥ:
   if (cur > 0) {
-    // Σπρώχνουμε το βιβλίο δεξιά όσο είναι το μισό του πλάτους του
-    book.style.marginLeft = "40vh"; 
-    book.style.transform = "none"; // Καταργούμε το translateX που δημιουργούσε το πρόβλημα
+    // Όταν το βιβλίο ανοίγει, το μετακινούμε δεξιά κατά 40vh (το μισό του πλάτους του)
+    // ώστε η "ραφή" να είναι στο κέντρο, αλλά η αριστερή σελίδα να ξεκινά από το 0
+    book.style.left = "40vh";
   } else {
-    book.style.marginLeft = "auto";
-    book.style.marginRight = "auto";
-    book.style.transform = "none";
+    // Όταν είναι κλειστό (εξώφυλλο), το βάζουμε στο κέντρο του πλάτους
+    book.style.left = "calc(50% - 40vh)";
   }
-
-  // 4. Εξασφαλίζουμε ότι το layer ξεκινάει από την αρχή
-  layer.style.display = "block";
 }
 
-
-     
-  // 3. Μετατόπιση του βιβλίου (το translateX παραμένει ως έχει)
-  let x = cur > 0 ? "25%" : "0%"; 
-  book.style.transform = "translateX(" + x + ")";
-}
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
