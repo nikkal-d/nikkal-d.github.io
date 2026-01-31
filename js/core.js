@@ -914,28 +914,28 @@ export async function exportFlipbook() {
       
       select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
-     .viewport { 
+   .viewport { 
   flex:1; width:100%; overflow: auto !important; 
-  display: block; position: relative;
+  display: block; /* Επιτρέπει το ελεύθερο scrolling */
+  background: var(--bg-grad);
 }
 
 #zoom-layer {
-  display: grid;
-  place-items: center;
+  display: inline-block; /* Το layer μεγαλώνει όσο το περιεχόμενό του */
+  padding: 150px; /* Ο "αέρας" για να μπορείς να σκρολάρεις γύρω-γύρω */
   min-width: 100%;
-  min-height: 100%;
-  /* Μειωμένο padding για να μη "ταξιδεύεις" πολύ με το scroll */
-  padding: 40px; 
-  box-sizing: border-box;
+  text-align: center; /* Κεντράρει το βιβλίο όταν δεν έχει zoom */
   transition: transform 0.3s ease;
+  transform-origin: top left;
 }
 
 .book { 
+  display: inline-block; /* Πλέον το βιβλίο "πιάνει" πραγματικό χώρο */
   position: relative; 
   width: 80vh; 
   height: 56vh; 
   transform-style: preserve-3d;
-  flex-shrink: 0; /* Απαγορεύει στο flexbox να μικρύνει το βιβλίο */
+  vertical-align: middle;
 }
       
 
@@ -1100,29 +1100,29 @@ export async function exportFlipbook() {
 function updatePos() {
   const layer = document.getElementById('zoom-layer');
   const book = document.getElementById('book');
-  const spacer = document.getElementById('scroll-spacer');
   
   // 1. Εφαρμογή Zoom
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Ρύθμιση του αέρα στα αριστερά
-  if (zoom > 1) {
-    layer.style.transformOrigin = "top left";
-    layer.style.justifyContent = "flex-start";
-    // Όσο μεγαλώνει το zoom, μεγαλώνουμε και τον κενό χώρο αριστερά
-    spacer.style.display = "block";
-    spacer.style.width = (40 * zoom) + "vh"; 
+  // 2. Διαχείριση θέσης βιβλίου
+  if (cur > 0) {
+    // Όταν το βιβλίο ανοίγει, δίνουμε padding αριστερά 
+    // για να έρθει η "ραφή" στο κέντρο, αλλά η αριστερή σελίδα 
+    // να είναι πλέον "πραγματικό" περιεχόμενο που σκρολάρεται.
+    book.style.marginLeft = "40vh"; 
+    book.style.transform = "none"; 
   } else {
-    layer.style.transformOrigin = "center center";
-    layer.style.justifyContent = "center";
-    spacer.style.display = "none"; // Εξαφανίζεται όταν δεν έχει zoom για να είναι κέντρο
+    book.style.marginLeft = "0";
+    book.style.transform = "none";
   }
 
-  // 3. Μετατόπιση βιβλίου (η κλασική σου ρύθμιση)
-  if (cur > 0) {
-    book.style.transform = "translateX(25%)"; 
+  // 3. Διόρθωση για το κεντράρισμα όταν δεν έχει zoom
+  if (zoom <= 1) {
+    layer.style.width = "100%";
+    layer.style.textAlign = "center";
   } else {
-    book.style.transform = "translateX(0%)";
+    layer.style.width = "auto";
+    layer.style.textAlign = "left";
   }
 }
 
