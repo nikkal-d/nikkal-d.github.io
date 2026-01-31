@@ -1113,26 +1113,26 @@ function updatePos() {
   // 1. Εφαρμογή Zoom
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Έλεγχος Scrollbar στο Zoom
+  // 2. Δυναμικό Origin για να μη χάνεις το scroll
   if (zoom > 1) {
-    layer.style.justifyContent = "flex-start"; // Επιτρέπει τη μπάρα να ξεκινήσει από την αρχή
+    layer.style.transformOrigin = "top left";
+    layer.style.justifyContent = "flex-start";
+    layer.style.alignItems = "flex-start";
   } else {
-    layer.style.justifyContent = "center"; // Τέλειο κέντρο όταν δεν έχει ζουμ
+    layer.style.transformOrigin = "center center";
+    layer.style.justifyContent = "center";
+    layer.style.alignItems = "center";
   }
 
-  // 3. ΔΙΟΡΘΩΣΗ ΘΕΣΗΣ (Αριστερά-Δεξιά)
+  // 3. Μετατόπιση βιβλίου χωρίς να αλλάζουν οι διαστάσεις
   if (cur > 0) {
-    // Όταν ανοίγει το βιβλίο, προσθέτουμε margin ίσο με το μισό πλάτος του (40vh).
-    // Αυτό κεντράρει τη ραφή, αλλά ο browser βλέπει ότι το βιβλίο 
-    // "πιάνει χώρο" και στα αριστερά, οπότε σου δίνει scrollbar!
-    book.style.marginLeft = "40vh";
-    book.style.transform = "none"; 
+    // Το translateX(25%) είναι το ιδανικό για να κεντράρει το άνοιγμα
+    // χωρίς να "σπρώχνει" το περιεχόμενο έξω από το PDF box
+    book.style.transform = "translateX(25%)"; 
   } else {
-    book.style.marginLeft = "0";
-    book.style.transform = "none";
+    book.style.transform = "translateX(0%)";
   }
 }
-
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
