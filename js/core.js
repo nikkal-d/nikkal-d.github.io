@@ -920,22 +920,23 @@ export async function exportFlipbook() {
 }
 
 #zoom-layer {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  justify-content: center; /* Κεντράρισμα οριζόντια */
+  align-items: center;     /* Κεντράρισμα κάθετα */
+  min-width: 100%;
+  min-height: 100%;
+  padding: 150px;          /* Αέρας για το scroll */
+  box-sizing: border-box;
   transition: transform 0.3s ease;
-  transform-origin: top left; /* Πολύ σημαντικό για το scroll */
+  transform-origin: center center; /* Zoom από το κέντρο */
 }
 
 .book { 
-  position: absolute; 
-  left: 0; 
-  top: 50%;
-  transform: translateY(-50%); /* Κεντράρισμα μόνο καθ' ύψος */
+  position: relative; 
   width: 80vh; 
   height: 56vh; 
   transform-style: preserve-3d;
-  transition: left 0.6s ease, transform 0.6s ease;
+  flex-shrink: 0; /* Απαγορεύει στο flexbox να μικρύνει το βιβλίο */
 }
       
 
@@ -1108,22 +1109,27 @@ function updatePos() {
   const layer = document.getElementById('zoom-layer');
   const book = document.getElementById('book');
   
-  // 1. Εφαρμόζουμε το zoom scale στο layer
+  // 1. Εφαρμόζουμε το zoom scale
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Ορίζουμε το ΠΡΑΓΜΑΤΙΚΟ μέγεθος του layer για να βγουν οι μπάρες scroll
-  // Προσθέτουμε λίγο έξτρα πλάτος (padding) για να μην κολλάει δεξιά
-  layer.style.width = (100 * zoom) + "%";
-  layer.style.height = (100 * zoom) + "%";
-
-  // 3. ΕΛΕΓΧΟΣ ΘΕΣΗΣ ΒΙΒΛΙΟΥ:
+  // 2. Διορθώνουμε τη μετατόπιση για το άνοιγμα του βιβλίου
   if (cur > 0) {
-    // Όταν το βιβλίο ανοίγει, το μετακινούμε δεξιά κατά 40vh (το μισό του πλάτους του)
-    // ώστε η "ραφή" να είναι στο κέντρο, αλλά η αριστερή σελίδα να ξεκινά από το 0
-    book.style.left = "40vh";
+    // Όταν ανοίγει, μετακινούμε το βιβλίο ώστε η "ραφή" να είναι στο κέντρο.
+    // Χρησιμοποιούμε translateX(25%) γιατί το βιβλίο οπτικά διπλασιάζεται σε πλάτος.
+    book.style.transform = "translateX(25%)";
   } else {
-    // Όταν είναι κλειστό (εξώφυλλο), το βάζουμε στο κέντρο του πλάτους
-    book.style.left = "calc(50% - 40vh)";
+    book.style.transform = "translateX(0%)";
+  }
+
+  // 3. ΕΥΘΥΓΡΑΜΜΙΣΗ ΓΙΑ ΤΟ SCROLL:
+  // Αν το zoom είναι μεγάλο, αλλάζουμε την ευθυγράμμιση σε flex-start 
+  // ώστε να εμφανιστούν οι μπάρες scroll και να μπορείς να πας τέρμα αριστερά/πάνω.
+  if (zoom > 1) {
+    layer.style.justifyContent = "flex-start";
+    layer.style.alignItems = "flex-start";
+  } else {
+    layer.style.justifyContent = "center";
+    layer.style.alignItems = "center";
   }
 }
 
