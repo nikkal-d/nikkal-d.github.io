@@ -921,21 +921,24 @@ export async function exportFlipbook() {
 }
 
 #zoom-layer {
-  display: inline-block; /* Το layer μεγαλώνει όσο το περιεχόμενό του */
-  padding: 150px; /* Ο "αέρας" για να μπορείς να σκρολάρεις γύρω-γύρω */
+  display: flex;
+  justify-content: center; /* Κεντράρισμα οριζόντια */
+  align-items: center;     /* Κεντράρισμα κάθετα */
   min-width: 100%;
-  text-align: center; /* Κεντράρει το βιβλίο όταν δεν έχει zoom */
+  min-height: 100%;
+  padding: 150px;          /* Εξασφαλίζει χώρο για scroll παντού */
+  box-sizing: border-box;
   transition: transform 0.3s ease;
-  transform-origin: top left;
+  transform-origin: center center;
 }
 
 .book { 
-  display: inline-block; /* Πλέον το βιβλίο "πιάνει" πραγματικό χώρο */
   position: relative; 
   width: 80vh; 
   height: 56vh; 
   transform-style: preserve-3d;
-  vertical-align: middle;
+  flex-shrink: 0; /* Εμποδίζει το "πάτημα" του βιβλίου */
+  transition: margin 0.6s ease; /* Ομαλή κίνηση στο άνοιγμα */
 }
       
 
@@ -1104,25 +1107,23 @@ function updatePos() {
   // 1. Εφαρμογή Zoom
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Διαχείριση θέσης βιβλίου
+  // 2. Έλεγχος Scrollbar στο Zoom
+  if (zoom > 1) {
+    layer.style.justifyContent = "flex-start"; // Επιτρέπει τη μπάρα να ξεκινήσει από την αρχή
+  } else {
+    layer.style.justifyContent = "center"; // Τέλειο κέντρο όταν δεν έχει ζουμ
+  }
+
+  // 3. ΔΙΟΡΘΩΣΗ ΘΕΣΗΣ (Αριστερά-Δεξιά)
   if (cur > 0) {
-    // Όταν το βιβλίο ανοίγει, δίνουμε padding αριστερά 
-    // για να έρθει η "ραφή" στο κέντρο, αλλά η αριστερή σελίδα 
-    // να είναι πλέον "πραγματικό" περιεχόμενο που σκρολάρεται.
-    book.style.marginLeft = "40vh"; 
+    // Όταν ανοίγει το βιβλίο, προσθέτουμε margin ίσο με το μισό πλάτος του (40vh).
+    // Αυτό κεντράρει τη ραφή, αλλά ο browser βλέπει ότι το βιβλίο 
+    // "πιάνει χώρο" και στα αριστερά, οπότε σου δίνει scrollbar!
+    book.style.marginLeft = "40vh";
     book.style.transform = "none"; 
   } else {
     book.style.marginLeft = "0";
     book.style.transform = "none";
-  }
-
-  // 3. Διόρθωση για το κεντράρισμα όταν δεν έχει zoom
-  if (zoom <= 1) {
-    layer.style.width = "100%";
-    layer.style.textAlign = "center";
-  } else {
-    layer.style.width = "auto";
-    layer.style.textAlign = "left";
   }
 }
 
