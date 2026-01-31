@@ -920,15 +920,14 @@ export async function exportFlipbook() {
 }
 
 #zoom-layer {
-  display: flex;
-  justify-content: center; /* Κεντράρισμα οριζόντια */
-  align-items: center;     /* Κεντράρισμα κάθετα */
+  display: grid;
+  place-items: center; /* Τέλειο κεντράρισμα */
   min-width: 100%;
   min-height: 100%;
-  padding: 150px;          /* Αέρας για το scroll */
+  padding: 100px;
   box-sizing: border-box;
   transition: transform 0.3s ease;
-  transform-origin: center center; /* Zoom από το κέντρο */
+  transform-origin: center center; /* Zoom από το κέντρο για να μη χάνεται η ισορροπία */
 }
 
 .book { 
@@ -959,14 +958,7 @@ export async function exportFlipbook() {
         body { background: white !important; overflow: visible !important; }
         .nav { display: none !important; }
         .viewport { display: block !important; perspective: none !important; padding: 0 !important; overflow: visible !important; }
-        
-        /* Επαναφορά του βιβλίου ώστε να μην έχει μετατόπιση */
-        .book { 
-          display: block !important; 
-          width: 100% !important; 
-          height: auto !important; 
-          transform: none !important; 
-        }
+      
         
         /* Τα φύλλα γίνονται στατικά, το ένα κάτω από το άλλο */
         .leaf { 
@@ -1109,27 +1101,24 @@ function updatePos() {
   const layer = document.getElementById('zoom-layer');
   const book = document.getElementById('book');
   
-  // 1. Εφαρμόζουμε το zoom scale
+  // 1. Εφαρμογή του Zoom
   layer.style.transform = "scale(" + zoom + ")";
   
-  // 2. Διορθώνουμε τη μετατόπιση για το άνοιγμα του βιβλίου
+  // 2. Μετατόπιση βιβλίου μόνο όταν είναι ανοιχτό
+  // Αντί για translateX, χρησιμοποιούμε margin-left για να "νιώθει" ο browser την αλλαγή στο μέγεθος
   if (cur > 0) {
-    // Όταν ανοίγει, μετακινούμε το βιβλίο ώστε η "ραφή" να είναι στο κέντρο.
-    // Χρησιμοποιούμε translateX(25%) γιατί το βιβλίο οπτικά διπλασιάζεται σε πλάτος.
-    book.style.transform = "translateX(25%)";
+    book.style.transform = "translateX(25%)"; 
   } else {
     book.style.transform = "translateX(0%)";
   }
 
-  // 3. ΕΥΘΥΓΡΑΜΜΙΣΗ ΓΙΑ ΤΟ SCROLL:
-  // Αν το zoom είναι μεγάλο, αλλάζουμε την ευθυγράμμιση σε flex-start 
-  // ώστε να εμφανιστούν οι μπάρες scroll και να μπορείς να πας τέρμα αριστερά/πάνω.
+  // 3. Διόρθωση για το Scroll
+  // Αν το zoom είναι πάνω από 1, αλλάζουμε το padding ώστε να μπορείς να κάνεις scroll 
+  // γύρω από το αντικείμενο χωρίς να "κλειδώνει" στην άκρη
   if (zoom > 1) {
-    layer.style.justifyContent = "flex-start";
-    layer.style.alignItems = "flex-start";
+    layer.style.padding = (200 * zoom) + "px";
   } else {
-    layer.style.justifyContent = "center";
-    layer.style.alignItems = "center";
+    layer.style.padding = "100px";
   }
 }
 
