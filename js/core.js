@@ -905,8 +905,6 @@ export async function exportFlipbook() {
       
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
       .btn:hover { background: #666; transform: translateY(-2px); }
-      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
-      select { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
       .viewport { 
         flex:1; width:100%; overflow: auto !important; 
@@ -915,7 +913,7 @@ export async function exportFlipbook() {
 
       #zoom-layer {
         display: flex; justify-content: center; align-items: center;
-        min-width: 100%; min-height: 100%; padding: 100px;
+        min-width: 100%; min-height: 100%; padding: 80px;
         box-sizing: border-box; transition: transform 0.3s ease;
         transform-origin: center center;
       }
@@ -935,15 +933,15 @@ export async function exportFlipbook() {
       /* Εφέ Κουβέρτας */
       .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
 
-      /* PRINT / PDF FIX */
+      /* PRINT / PDF FIX - ΕΔΩ ΕΙΝΑΙ Η ΔΙΟΡΘΩΣΗ */
       @media print {
         .nav { display: none !important; }
-        body, .viewport { background: white !important; overflow: visible !important; display: block !important; }
+        body, .viewport { background: white !important; overflow: visible !important; display: block !important; height: auto !important; }
         #zoom-layer { display: block !important; transform: none !important; padding: 0 !important; margin: 0 !important; }
-        .book { position: relative !important; left: 0 !important; margin: 0 !important; width: 100% !important; height: 100% !important; transform: none !important; }
+        .book { position: relative !important; left: 0 !important; margin: 0 !important; width: 100% !important; height: auto !important; transform: none !important; }
         .leaf { position: relative !important; display: block !important; transform: none !important; page-break-after: always !important; height: 100vh !important; width: 100% !important; z-index: auto !important; }
         .page { position: relative !important; transform: none !important; width: 100% !important; height: 100% !important; box-shadow: none !important; display: block !important; }
-        .page.back { display: block !important; }
+        .page.back { transform: none !important; display: block !important; }
         .page img { object-fit: contain !important; width: 100% !important; height: 100% !important; }
       }
     </style>
@@ -955,16 +953,11 @@ export async function exportFlipbook() {
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
-      <div class="control-group">
+      <div style="background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; display:flex; align-items:center; gap:8px;">
         <button class="btn" style="padding:5px 10px" onclick="changeZoom(-0.2)">−</button>
         <span id="zoomLvl" style="font-size:12px; min-width:35px; text-align:center">100%</span>
         <button class="btn" style="padding:5px 10px" onclick="changeZoom(0.2)">+</button>
       </div>
-      <select id="soundType">
-        <option value="snd1">Κλασικός Ήχος</option>
-        <option value="snd2">Απαλός Ήχος</option>
-        <option value="none">Σίγαση</option>
-      </select>
       <button class="btn" onclick="toggleFS()">📺 FULL SCREEN</button>
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
@@ -981,17 +974,8 @@ export async function exportFlipbook() {
       let cur = 0, zoom = 1.0;
       const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book'), layer = document.getElementById('zoom-layer');
 
-      function playSound() {
-        const type = document.getElementById('soundType').value;
-        if (type !== 'none') {
-          const s = document.getElementById(type);
-          s.currentTime = 0; s.play().catch(()=>{});
-        }
-      }
-
       function n() {
         if (cur < leafs.length) {
-          playSound();
           leafs[cur].classList.add('flipped');
           const target = leafs[cur];
           setTimeout(() => { target.style.zIndex = cur; }, 300);
@@ -1001,7 +985,6 @@ export async function exportFlipbook() {
 
       function p() {
         if (cur > 0) {
-          playSound();
           cur--;
           leafs[cur].classList.remove('flipped');
           leafs[cur].style.zIndex = leafs.length + 50 - cur;
@@ -1020,7 +1003,7 @@ export async function exportFlipbook() {
           layer.style.justifyContent = "center";
           layer.style.alignItems = "center";
         }
-        // Κεντράρισμα ανοιχτού βιβλίου
+        // Κεντράρισμα βιβλίου όταν ανοίγει (left: 20vh φέρνει τη ραφή στο κέντρο)
         book.style.left = (cur > 0) ? "20vh" : "0";
       }
 
@@ -1031,7 +1014,7 @@ export async function exportFlipbook() {
       }
 
       function toggleFS() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
         else document.exitFullscreen();
       }
 
@@ -1046,8 +1029,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
-
 
 
 
