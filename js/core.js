@@ -934,19 +934,47 @@ export async function exportFlipbook() {
 
 .book { 
   position: relative; 
-  /* Εδώ ορίζεις την αναλογία σου - π.χ. 80vh πλάτος, 56vh ύψος */
   width: 80vh; 
   height: 56vh; 
   transform-style: preserve-3d;
-  flex-shrink: 0; 
+  transition: left 0.6s ease; /* Ομαλή κίνηση */
 }
 
+@media print {
+  /* Κρύβουμε τα πάντα εκτός από το περιεχόμενο */
+  .nav, .viewport::-webkit-scrollbar { display: none !important; }
+  
+  body, .viewport { background: white !important; overflow: visible !important; }
 
-      
+  #zoom-layer { 
+    display: block !important;
+    transform: none !important; 
+    padding: 0 !important; 
+    margin: 0 !important;
+  }
 
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
-      .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
+  .book { 
+    left: 0 !important; /* Επαναφορά στο 0 για το PDF */
+    margin: 0 auto !important; 
+    width: 100vw !important; /* Χρήση όλου του πλάτους της σελίδας */
+    height: 70vh !important;
+    transform: none !important;
+  }
+
+  .leaf { 
+    position: relative !important; 
+    transform: none !important; 
+    display: block !important;
+    page-break-after: always;
+    width: 100% !important;
+  }
+  
+  .page img {
+    object-fit: contain !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
 
       /* Εφέ Κουβέρτας */
       .hard-cover-front .front { 
@@ -958,40 +986,8 @@ export async function exportFlipbook() {
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
-     @media print {
-  /* Κρύβουμε τα κουμπιά και το background */
-  .nav, .viewport::-webkit-scrollbar { display: none !important; }
+    
   
-  body, .viewport { 
-    background: white !important; 
-    overflow: visible !important;
-    display: block !important;
-  }
-
-  /* Ακυρώνουμε το zoom και τα margins στο layer */
-  #zoom-layer { 
-    transform: none !important; 
-    padding: 0 !important; 
-    margin: 0 !important;
-    display: block !important;
-  }
-
-  /* Κάνουμε το βιβλίο να πιάνει όλη τη σελίδα στην εκτύπωση */
-  .book { 
-    transform: none !important; 
-    margin: 0 !important; 
-    width: 100% !important; 
-    height: 100% !important;
-    position: relative !important;
-  }
-
-  /* Διασφαλίζουμε ότι κάθε φύλλο είναι επίπεδο και ορατό */
-  .leaf { 
-    position: relative !important; 
-    transform: none !important; 
-    display: block !important; 
-    page-break-after: always; /* Κάθε σελίδα σε νέο χαρτί PDF */
-  }
   
   .flipped { transform: none !important; }
 }
