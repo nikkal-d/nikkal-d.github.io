@@ -850,7 +850,6 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων (JPEG για μικρότερο μέγεθος αρχείου)
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -858,7 +857,7 @@ export async function exportFlipbook() {
         setTimeout(() => {
           images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.8, multiplier: 1.0 }));
           resolve();
-        }, 200);
+        }, 250);
       });
     });
   }
@@ -875,7 +874,7 @@ export async function exportFlipbook() {
     const isCover = (i === 0);
     const zIndex = Math.floor((images.length - i) / 2) + 50;
     leavesHtml += `
-      <div class="leaf ${isCover ? 'hard-cover' : ''}" style="z-index: ${zIndex}">
+      <div class="leaf ${isCover ? 'hard-cover-front' : ''}" style="z-index: ${zIndex}">
         <div class="page front"><img src="${images[i]}"></div>
         <div class="page back">
           ${images[i+1] ? `<img src="${images[i+1]}">` : '<div style="background:white;width:100%;height:100%"></div>'}
@@ -888,111 +887,165 @@ export async function exportFlipbook() {
   <html>
   <head>
     <meta charset="utf-8">
-    <title>Photobook Preview</title>
     <style>
-      :root { --bg: radial-gradient(circle, #2c3e50 0%, #000 100%); }
-      body { margin:0; background: var(--bg); color:white; font-family:sans-serif; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-      .nav { background:rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; gap:10px; z-index:100; border-bottom:1px solid #333; }
-      .btn { padding:8px 15px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; background:#444; color:white; font-size:12px; }
-      .btn:hover { background:#666; }
-      
-      .viewport { flex:1; overflow:auto; display:block; position:relative; }
-      #zoom-layer { 
-        display:flex; justify-content:center; align-items:center; 
-        min-width:100%; min-height:100%; padding:100px; box-sizing:border-box;
-        transition: transform 0.3s ease; transform-origin: center center;
+      :root { 
+        --bg-grad: radial-gradient(circle, #2c3e50 0%, #000000 100%); 
+        --cover-grad: linear-gradient(to bottom, #555, #111); 
       }
-      .book { position:relative; width:80vh; height:56vh; transform-style:preserve-3d; transition: transform 0.6s ease; }
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s ease; transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow:0 0 15px rgba(0,0,0,0.5); }
+      body { margin:0; background: var(--bg-grad); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+      .nav { width:100%; background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; }
+      .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
+      .btn:hover { background: #666; transform: translateY(-2px); }
+      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+      select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
+
+      .viewport { flex:1; width:100%; overflow: auto; display: block; background: var(--bg-grad); }
+      #zoom-layer { display: flex; justify-content: center; align-items: center; min-width: 100%; min-height: 100%; padding: 100px; box-sizing: border-box; transition: transform 0.3s ease; transform-origin: center center; }
+      
+      .book { 
+        position: relative; width: 80vh; height: 56vh; 
+        transform-style: preserve-3d; 
+        transition: margin-left 0.6s ease; 
+        perspective: 2000px;
+      }
+
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
       .page img { width:100%; height:100%; object-fit:contain; }
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
+      .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
+      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
+
       @media print {
-        .nav { display:none; }
-        body, .viewport { background:white; overflow:visible; display:block; }
-        #zoom-layer { display:block; transform:none!important; padding:0; }
-        .book { transform:none!important; width:100%; height:auto; }
-        .leaf { position:relative; display:block; transform:none!important; page-break-after:always; height:100vh; width:100%; }
-        .page { position:relative; transform:none!important; width:100%; height:100%; box-shadow:none; }
+        .nav { display: none !important; }
+        body, .viewport { background: white !important; overflow: visible !important; display: block !important; }
+        #zoom-layer { display: block !important; transform: none !important; padding: 0 !important; }
+        .book { margin: 0 !important; width: 100% !important; height: auto !important; transform: none !important; }
+        .leaf { position: relative !important; display: block !important; transform: none !important; page-break-after: always !important; height: 100vh !important; }
+        .page { position: relative !important; transform: none !important; width: 100% !important; height: 100% !important; box-shadow: none !important; }
       }
     </style>
   </head>
   <body>
+    <audio id="snd1" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3"></audio>
+    <audio id="snd2" src="https://www.soundjay.com/misc/sounds/page-flip-03.mp3"></audio>
+
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
-      <button class="btn" onclick="z(0.2)">+</button>
-      <button class="btn" onclick="z(-0.2)">-</button>
-      <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 ΑΠΟΘΗΚΕΥΣΗ (HTML)</button>
+      
+      <div class="control-group">
+        <button class="btn" style="padding:5px 10px" onclick="changeZoom(-0.2)">−</button>
+        <span id="zoomLvl" style="font-size:12px; min-width:35px; text-align:center">100%</span>
+        <button class="btn" style="padding:5px 10px" onclick="changeZoom(0.2)">+</button>
+      </div>
+
+      <div class="control-group">
+        <span style="font-size:10px">🔊:</span>
+        <select id="soundType">
+          <option value="snd1">Κλασικός</option>
+          <option value="snd2">Απαλός</option>
+          <option value="none">Σίγαση</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-grad', 'radial-gradient(circle,'+this.value+' 0%,#000 100%)')">
+        📘 <input type="color" value="#444444" onchange="document.documentElement.style.setProperty('--cover-grad', 'linear-gradient(to bottom,'+this.value+',#111)')">
+      </div>
+
+      <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
-      <button class="btn" style="background:#e67e22" onclick="exportToLink()">🔗 EXPORT LINK</button>
+      <button class="btn" style="background:#e67e22" onclick="exportToLink()">🔗 LINK</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
+
     <div class="viewport">
       <div id="zoom-layer">
         <div class="book" id="book">${leavesHtml}</div>
       </div>
     </div>
+
     <script>
       let cur = 0, zoom = 1.0;
       const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book'), layer = document.getElementById('zoom-layer');
 
+      function playSound() {
+        const type = document.getElementById('soundType').value;
+        if (type !== 'none') {
+          const s = document.getElementById(type);
+          s.currentTime = 0; s.play().catch(()=>{});
+        }
+      }
+
       function n() {
-        if(cur < leafs.length) {
+        if (cur < leafs.length) {
+          playSound();
           leafs[cur].classList.add('flipped');
-          leafs[cur].style.zIndex = cur;
+          const target = leafs[cur];
+          setTimeout(() => { target.style.zIndex = cur; }, 300);
           cur++; updatePos();
         }
       }
+
       function p() {
-        if(cur > 0) {
+        if (cur > 0) {
+          playSound();
           cur--;
           leafs[cur].classList.remove('flipped');
           leafs[cur].style.zIndex = leafs.length + 50 - cur;
           updatePos();
         }
       }
-      function z(v) { zoom = Math.max(0.5, Math.min(2.5, zoom+v)); updatePos(); }
-      
+
       function updatePos() {
-        layer.style.transform = "scale("+zoom+")";
-        layer.style.transformOrigin = zoom > 1 ? "top left" : "center center";
-        layer.style.justifyContent = zoom > 1 ? "flex-start" : "center";
-        // Σωστό κεντράρισμα: Μετακινούμε το βιβλίο μισό πλάτος δεξιά όταν ανοίγει
-        book.style.transform = cur > 0 ? "translateX(25%)" : "translateX(0)";
+        layer.style.transform = "scale(" + zoom + ")";
+        if (zoom > 1) {
+          layer.style.transformOrigin = "top left";
+          layer.style.justifyContent = "flex-start";
+        } else {
+          layer.style.transformOrigin = "center center";
+          layer.style.justifyContent = "center";
+        }
+        // Μετακίνηση βιβλίου δεξιά όταν ανοίγει για κεντράρισμα ραφής
+        book.style.marginLeft = (cur > 0) ? "40vh" : "0";
+      }
+
+      function changeZoom(v) {
+        zoom = Math.max(0.5, Math.min(2.5, zoom + v));
+        document.getElementById('zoomLvl').innerText = Math.round(zoom*100) + '%';
+        updatePos();
       }
 
       function saveAsHtml() {
-        // Καθαρίζουμε το HTML από scripts πριν το σώσουμε για να είναι πιο ελαφρύ
-        const content = document.documentElement.outerHTML;
-        const blob = new Blob([content], {type: 'text/html'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'MyPhotobook.html';
-        a.click();
+        const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
       }
 
       async function exportToLink() {
-        alert("Δημιουργία συνδέσμου... Παρακαλώ περιμένετε.");
-        const content = document.documentElement.outerHTML;
+        const btn = event.target;
+        btn.innerText = "⏳..."; 
+        const htmlContent = document.documentElement.outerHTML;
+        
         try {
-          // Χρήση μιας δωρεάν υπηρεσίας προσωρινής αποθήκευσης (Pastebin-like)
-          const response = await fetch('https://api.jsonbin.io/v3/b', {
+          const res = await fetch('https://api.paste.ee/v1/pastes', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Bin-Private': 'false'
-            },
-            body: JSON.stringify({ html: content })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              key: 'public', 
+              sections: [{ name: 'Photobook', contents: htmlContent }] 
+            })
           });
-          const data = await response.json();
-          const shareUrl = "https://jsonbin.io/v3/qs/" + data.metadata.id;
-          prompt("Το link σας είναι έτοιμο! Αντιγράψτε το:", shareUrl);
+          const data = await res.json();
+          if(data.success) {
+            const url = data.link.replace('/p/', '/r/'); // Raw link για να ανοίγει κατευθείαν
+            prompt("Αντιγράψτε το Link σας:", url);
+          } else { throw new Error(); }
         } catch (e) {
-          alert("Σφάλμα κατά τη δημιουργία link. Το αρχείο είναι πολύ μεγάλο.");
-        }
+          alert("Το αρχείο είναι πολύ μεγάλο για Link. Χρησιμοποιήστε το κουμπί HTML.");
+        } finally { btn.innerText = "🔗 LINK"; }
       }
     </script>
   </body>
@@ -1001,7 +1054,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
