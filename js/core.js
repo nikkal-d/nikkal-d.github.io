@@ -850,16 +850,16 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή εικόνων από το Canvas
+  // 1. Καθαρή εξαγωγή εικόνων από το Canvas
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
         App.canvas.renderAll();
         setTimeout(() => {
           App.canvas.renderAll();
-          images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.0 }));
+          images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.7, multiplier: 1.0 }));
           resolve();
-        }, 250);
+        }, 300);
       });
     });
   }
@@ -871,11 +871,12 @@ export async function exportFlipbook() {
   const frame = document.getElementById("flipPreviewFrame");
   if (!modal || !frame) return;
 
-  // 2. Δημιουργία Φύλλων Flipbook
+  // 2. Δημιουργία Φύλλων Flipbook (2 σελίδες ανά φύλλο)
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
-    const zIndex = Math.floor((images.length - i) / 2) + 50;
+    const zIndex = Math.floor((images.length - i) / 2) + 10;
+    
     leavesHtml += `
       <div class="leaf ${isCover ? 'hard-cover-front' : ''}" style="z-index: ${zIndex}">
         <div class="page front"><img src="${images[i]}"></div>
@@ -895,119 +896,42 @@ export async function exportFlipbook() {
         --bg-grad: radial-gradient(circle, #2c3e50 0%, #000000 100%); 
         --cover-grad: linear-gradient(to bottom, #555, #111); 
       }
-      
-      body { 
-        margin:0; background: var(--bg-grad); color:white; font-family: sans-serif; 
-        display:flex; flex-direction:column; height:100vh; overflow:hidden; 
-      }
-      
-      .nav { 
-        width:100%; background: rgba(0,0,0,0.9); padding:10px; 
-        display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999;
-        border-bottom: 1px solid #333;
-      }
-      
+      body { margin:0; background: var(--bg-grad); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+      .nav { width:100%; background: rgba(0,0,0,0.95); padding:10px; display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; }
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
       .btn:hover { background: #666; transform: translateY(-2px); }
+      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
+      select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; cursor: pointer; }
 
-      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+      .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; background: var(--bg-grad); }
+      #zoom-layer {
+        padding: 60vh 60vw; /* Χώρος για το scrolling στο zoom */
+        transition: transform 0.3s ease;
+        transform-origin: center center;
+        display: flex; justify-content: center; align-items: center;
+      }
       
-      select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
-
-      .viewport { 
-        flex:1; width:100%; display:flex; justify-content:center; align-items:center; 
-        perspective:3000px; overflow: auto; padding: 40px;
-      }
-
       .book { 
-  position: relative; 
-  width: 80vh;  /* Το πλάτος του βιβλίου (80% του ύψους της οθόνης) */
-  height: 56vh; /* Το ύψος του βιβλίου (56% του ύψους της οθόνης) */
-  transform-style: preserve-3d; 
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  perspective: 2500px;
-}
-
-#zoom-layer {
-  padding: 60vh 60vw; /* Αυτό δημιουργεί 60% κενό χώρο γύρω από το βιβλίο */
-  transition: transform 0.3s ease;
-  transform-origin: center center;
-  display: flex; 
-  justify-content: center; 
-  align-items: center;
-}
-
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
-      .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
-
-      /* Εφέ Κουβέρτας */
-      .hard-cover-front .front { 
-        border-radius: 0 5px 5px 0; border-right: 12px solid transparent;
-        border-image: var(--cover-grad) 1; box-shadow: 15px 0 35px rgba(0,0,0,0.6); 
+        position: relative; width: 80vh; height: 56vh; 
+        transform-style: preserve-3d; transition: transform 0.6s ease;
+        perspective: 3000px;
       }
-      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
 
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s ease, z-index 0.3s; transform-style:preserve-3d; }
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 30px rgba(0,0,0,0.4); }
+      .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
-
+      .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
+      
       @media print {
-        @page { size: auto; margin: 0mm; }
-        body { background: white !important; overflow: visible !important; }
         .nav { display: none !important; }
-        .viewport { display: block !important; perspective: none !important; padding: 0 !important; overflow: visible !important; }
-        
-        /* Επαναφορά του βιβλίου ώστε να μην έχει μετατόπιση */
-        .book { 
-          display: block !important; 
-          width: 100% !important; 
-          height: auto !important; 
-          transform: none !important; 
-        }
-        
-        /* Τα φύλλα γίνονται στατικά, το ένα κάτω από το άλλο */
-        .leaf { 
-          position: relative !important; 
-          display: block !important; 
-          width: 100% !important; 
-          height: auto !important; 
-          transform: none !important; 
-          z-index: auto !important; 
-        }
-        
-        /* Κάθε σελίδα (front και back) πιάνει όλη την οθόνη/χαρτί και αλλάζει σελίδα μετά */
-        .page { 
-          position: relative !important; 
-          display: flex !important; 
-          align-items: center;
-          justify-content: center;
-          width: 100% !important; 
-          height: 100vh !important; 
-          page-break-after: always !important; 
-          transform: none !important; 
-          border: none !important; 
-          box-shadow: none !important;
-          left: 0 !important; /* Μηδενισμός μετατόπισης */
-        }
-        
-        .page.back { 
-          transform: none !important; 
-          display: flex !important; 
-        }
-        
-        .page img { 
-          width: 100% !important; 
-          height: 100% !important; 
-          object-fit: contain !important; 
-        }
-        
-        /* Αφαίρεση των εφέ κουβέρτας στην εκτύπωση */
-        .hard-cover-front .front { 
-          border: none !important; 
-          box-shadow: none !important; 
-          border-radius: 0 !important;
-        }
-        .page.front::after { display: none !important; }
+        body, .viewport { background: white !important; overflow: visible !important; display: block !important; }
+        #zoom-layer { padding: 0 !important; transform: none !important; }
+        .book { transform: none !important; width: 100% !important; height: auto !important; }
+        .leaf { position: relative !important; display: block !important; transform: none !important; page-break-after: always !important; height: 100vh !important; }
+        .page { position: relative !important; transform: none !important; width: 100% !important; height: 100% !important; box-shadow: none !important; display: block !important; }
+        .page.back { transform: none !important; }
       }
     </style>
   </head>
@@ -1016,54 +940,46 @@ export async function exportFlipbook() {
     <audio id="snd2" src="https://www.soundjay.com/misc/sounds/page-flip-03.mp3"></audio>
 
     <div class="nav">
-      <button class="btn" onclick="p()">❮ ΠΙΣΩ (←)</button>
-      <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ (→)</button>
-      
+      <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
+      <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
       <div class="control-group">
-        <button class="btn" style="padding:5px 10px" onclick="changeZoom(-0.2)">−</button>
-        <span id="zoomLvl" style="font-size:12px; min-width:35px; text-align:center">100%</span>
-        <button class="btn" style="padding:5px 10px" onclick="changeZoom(0.2)">+</button>
+        <button class="btn" onclick="changeZoom(-0.2)">−</button>
+        <span id="zoomLvl">100%</span>
+        <button class="btn" onclick="changeZoom(0.2)">+</button>
       </div>
-
       <div class="control-group">
-        <span style="font-size:10px">🔊 Ήχος:</span>
+        <span>🔊</span>
         <select id="soundType">
           <option value="snd1">Κλασικός</option>
           <option value="snd2">Απαλός</option>
           <option value="none">Σίγαση</option>
         </select>
       </div>
-
       <div class="control-group">
         🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-grad', 'radial-gradient(circle,'+this.value+' 0%,#000 100%)')">
         📘 <input type="color" value="#444444" onchange="document.documentElement.style.setProperty('--cover-grad', 'linear-gradient(to bottom,'+this.value+',#111)')">
       </div>
-
-      <button class="btn" onclick="toggleFS()">📺 FULL SCREEN</button>
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
+      <button id="linkBtn" class="btn" style="background:#e67e22" onclick="exportToLink()">🔗 LINK</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
-    <div class="viewport">
-      <div class="book" id="book">${leavesHtml}</div>
+    <div class="viewport" id="vp">
+      <div id="zoom-layer">
+        <div class="book" id="book">${leavesHtml}</div>
+      </div>
     </div>
 
     <script>
       let cur = 0, zoom = 1.0;
-      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book');
-
-      // Βελάκια πληκτρολογίου
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight') n();
-        if (e.key === 'ArrowLeft') p();
-      });
+      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book'), layer = document.getElementById('zoom-layer'), vp = document.getElementById('vp');
 
       function playSound() {
         const type = document.getElementById('soundType').value;
         if (type !== 'none') {
           const s = document.getElementById(type);
-          s.currentTime = 0; s.play().catch(()=>{});
+          if(s) { s.currentTime = 0; s.play().catch(()=>{}); }
         }
       }
 
@@ -1071,8 +987,8 @@ export async function exportFlipbook() {
         if (cur < leafs.length) {
           playSound();
           leafs[cur].classList.add('flipped');
-          const target = leafs[cur];
-          setTimeout(() => { target.style.zIndex = cur; }, 300);
+          const idx = cur;
+          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 500);
           cur++; updatePos();
         }
       }
@@ -1082,33 +998,51 @@ export async function exportFlipbook() {
           playSound();
           cur--;
           leafs[cur].classList.remove('flipped');
-          leafs[cur].style.zIndex = leafs.length + 50 - cur;
+          leafs[cur].style.zIndex = leafs.length + 10 - cur;
           updatePos();
         }
       }
 
-     function changeZoom(v) {
-  // Το 0.4 είναι το ελάχιστο (40%) και το 3.0 το μέγιστο (300%)
-  zoom = Math.max(0.4, Math.min(3.0, zoom + v));
-  document.getElementById('zoomLvl').innerText = Math.round(zoom*100) + '%';
-  updatePos();
-}
-
-      function toggleFS() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
-        else document.exitFullscreen();
+      function updatePos() {
+        layer.style.transform = "scale(" + zoom + ")";
+        book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
       }
 
-    function updatePos() {
-  layer.style.transform = "scale(" + zoom + ")";
-  // Αν cur > 0 (δηλαδή αν έχουμε ανοίξει σελίδα), σπρώξε το βιβλίο 50% δεξιά
-  book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
-}
+      function changeZoom(v) {
+        zoom = Math.max(0.4, Math.min(3.0, zoom + v));
+        document.getElementById('zoomLvl').innerText = Math.round(zoom*100) + '%';
+        updatePos();
+      }
 
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
       }
+
+      async function exportToLink() {
+        const btn = document.getElementById('linkBtn');
+        btn.innerText = "⏳...";
+        const htmlContent = document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        try {
+          const formData = new FormData();
+          formData.append('file', blob, 'book.html');
+          const res = await fetch('https://file.io/?expires=1d', { method: 'POST', body: formData });
+          const data = await res.json();
+          if (data.success) { prompt("Link (24h):", data.link); } 
+          else { throw new Error(); }
+        } catch (e) {
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          alert("Το αρχείο είναι μεγάλο. Άνοιξε σε νέα καρτέλα!");
+        }
+        btn.innerText = "🔗 LINK";
+      }
+
+      window.onload = () => {
+        vp.scrollLeft = (vp.scrollWidth - vp.clientWidth) / 2;
+        vp.scrollTop = (vp.scrollHeight - vp.clientHeight) / 2;
+      };
     </script>
   </body>
   </html>`;
