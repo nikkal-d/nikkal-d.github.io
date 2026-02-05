@@ -848,7 +848,7 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
-  // 1. Εξαγωγή όλων των σελίδων
+  // 1. Εξαγωγή ΟΛΩΝ των σελίδων (για PDF και Flipbook)
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
@@ -873,7 +873,8 @@ export async function exportFlipbook() {
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
-    const zIndex = Math.floor((images.length - i) / 2) + 50;
+    // Ξεκινάμε με πολύ υψηλό z-index για τα πρώτα φύλλα
+    const zIndex = 100 - i;
     leavesHtml += `
       <div class="leaf ${isCover ? 'hard-cover-front' : ''}" style="z-index: ${zIndex}">
         <div class="page front">
@@ -887,7 +888,6 @@ export async function exportFlipbook() {
       </div>`;
   }
 
-  // 3. HTML Περιεχόμενο
   const html = `
   <!doctype html>
   <html>
@@ -909,7 +909,7 @@ export async function exportFlipbook() {
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
       .btn:hover { background: #666; transform: translateY(-2px); }
       
-      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
       select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
       .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; background: var(--bg-grad); }
@@ -923,16 +923,19 @@ export async function exportFlipbook() {
       .book { 
         position: relative; width: 80vh; height: 56vh; 
         transform-style: preserve-3d; transition: transform 0.6s ease;
-        perspective: 3000px;
+        perspective: 4000px; /* Αυξημένο για να μην περνάνε οι σελίδες η μία μέσα στην άλλη */
       }
 
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.3s; transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); overflow:hidden; }
+      .leaf { 
+        position:absolute; inset:0; transform-origin:left center; 
+        transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
+        transform-style:preserve-3d; 
+      }
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
       
-      /* Σκιές στη ραφή για ρεαλισμό */
-      .spine-shadow-front { position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.15), transparent); pointer-events:none; }
-      .spine-shadow-back { position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.15), transparent); pointer-events:none; }
+      .spine-shadow-front { position:absolute; left:0; top:0; bottom:0; width:50px; background:linear-gradient(to right, rgba(0,0,0,0.2), transparent); }
+      .spine-shadow-back { position:absolute; right:0; top:0; bottom:0; width:50px; background:linear-gradient(to left, rgba(0,0,0,0.2), transparent); }
 
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
@@ -958,9 +961,9 @@ export async function exportFlipbook() {
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
       
       <div class="control-group">
-        <button class="btn" style="padding:5px 10px" onclick="changeZoom(-0.2)">−</button>
-        <span id="zoomLvl" style="font-size:12px; min-width:35px; text-align:center">100%</span>
-        <button class="btn" style="padding:5px 10px" onclick="changeZoom(0.2)">+</button>
+        <button class="btn" onclick="changeZoom(-0.2)">−</button>
+        <span id="zoomLvl" style="min-width:40px; text-align:center">100%</span>
+        <button class="btn" onclick="changeZoom(0.2)">+</button>
       </div>
 
       <div class="control-group">
@@ -1008,9 +1011,10 @@ export async function exportFlipbook() {
       function n() {
         if (cur < leafs.length) {
           playSound();
-          leafs[cur].classList.add('flipped');
-          const idx = cur;
-          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 500);
+          const leaf = leafs[cur];
+          leaf.classList.add('flipped');
+          // Δυναμική αλλαγή z-index για να μην "πλακώνει" την επόμενη
+          setTimeout(() => { leaf.style.zIndex = cur; }, 400);
           cur++; updatePos();
         }
       }
@@ -1019,8 +1023,10 @@ export async function exportFlipbook() {
         if (cur > 0) {
           playSound();
           cur--;
-          leafs[cur].classList.remove('flipped');
-          leafs[cur].style.zIndex = leafs.length + 50 - cur;
+          const leaf = leafs[cur];
+          leaf.classList.remove('flipped');
+          // Επαναφορά υψηλού z-index όταν γυρίζει πίσω
+          leaf.style.zIndex = 100 - cur;
           updatePos();
         }
       }
@@ -1045,16 +1051,15 @@ export async function exportFlipbook() {
         const btn = document.getElementById('linkBtn');
         btn.innerText = "⏳...";
         const htmlContent = document.documentElement.outerHTML;
-        const blob = new Blob([htmlContent], { type: 'text/html' });
         try {
           const formData = new FormData();
-          formData.append('file', blob, 'book.html');
+          formData.append('file', new Blob([htmlContent], {type:'text/html'}), 'book.html');
           const res = await fetch('https://file.io/?expires=1d', { method: 'POST', body: formData });
           const data = await res.json();
-          if (data.success) { prompt("Link (24h):", data.link); } 
-          else { throw new Error(); }
+          if (data.success) prompt("Το Link σας (ισχύει για 24 ώρες):", data.link);
+          else throw new Error();
         } catch (e) {
-          const url = URL.createObjectURL(blob);
+          const url = URL.createObjectURL(new Blob([htmlContent], {type:'text/html'}));
           window.open(url, '_blank');
           alert("Το αρχείο είναι μεγάλο. Άνοιξε σε νέα καρτέλα!");
         }
@@ -1072,7 +1077,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
 export const previewFlipbook = exportFlipbook;
