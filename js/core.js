@@ -850,12 +850,13 @@ export async function exportFlipbook() {
   const wasAutosave = App.autosaveEnabled;
   App.autosaveEnabled = false;
 
+  // 1. Εξαγωγή εικόνων
   for (let i = 0; i < App.pages.length; i++) {
     await new Promise((resolve) => {
       App.canvas.loadFromJSON(App.pages[i].json, () => {
         App.canvas.renderAll();
         setTimeout(() => {
-          images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.8, multiplier: 1.0 }));
+          images.push(App.canvas.toDataURL({ format: 'jpeg', quality: 0.7, multiplier: 1.0 }));
           resolve();
         }, 250);
       });
@@ -899,30 +900,47 @@ export async function exportFlipbook() {
       .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
       select, input[type="color"] { background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
-      .viewport { flex:1; width:100%; overflow: auto; display: block; background: var(--bg-grad); }
-      #zoom-layer { display: flex; justify-content: center; align-items: center; min-width: 100%; min-height: 100%; padding: 100px; box-sizing: border-box; transition: transform 0.3s ease; transform-origin: center center; }
+      .viewport { 
+        flex:1; width:100%; overflow: auto; 
+        display: flex; justify-content: center; align-items: center; 
+        background: var(--bg-grad); 
+      }
+      
+      #zoom-container {
+        padding: 500px; /* Τεράστιο padding για να επιτρέπει scroll παντού στο zoom */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #zoom-layer {
+        transition: transform 0.3s ease;
+        transform-origin: center center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
       
       .book { 
         position: relative; width: 80vh; height: 56vh; 
         transform-style: preserve-3d; 
-        transition: margin-left 0.6s ease; 
-        perspective: 2000px;
+        transition: transform 0.6s ease;
+        perspective: 2500px;
       }
 
       .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 20px rgba(0,0,0,0.4); }
       .page img { width:100%; height:100%; object-fit:contain; }
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
       .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
-      .page.front::after { content: ""; position: absolute; top: 0; left: 0; width: 35px; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%); }
-
+      
       @media print {
         .nav { display: none !important; }
-        body, .viewport { background: white !important; overflow: visible !important; display: block !important; }
-        #zoom-layer { display: block !important; transform: none !important; padding: 0 !important; }
-        .book { margin: 0 !important; width: 100% !important; height: auto !important; transform: none !important; }
+        body, .viewport, #zoom-container { background: white !important; overflow: visible !important; display: block !important; padding:0 !important;}
+        #zoom-layer { transform: none !important; display: block !important; }
+        .book { transform: none !important; width: 100% !important; height: auto !important; margin:0 !important; }
         .leaf { position: relative !important; display: block !important; transform: none !important; page-break-after: always !important; height: 100vh !important; }
         .page { position: relative !important; transform: none !important; width: 100% !important; height: 100% !important; box-shadow: none !important; }
       }
@@ -943,7 +961,7 @@ export async function exportFlipbook() {
       </div>
 
       <div class="control-group">
-        <span style="font-size:10px">🔊:</span>
+        <span>🔊</span>
         <select id="soundType">
           <option value="snd1">Κλασικός</option>
           <option value="snd2">Απαλός</option>
@@ -958,13 +976,15 @@ export async function exportFlipbook() {
 
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
-      <button class="btn" style="background:#e67e22" onclick="exportToLink()">🔗 LINK</button>
+      <button id="linkBtn" class="btn" style="background:#e67e22" onclick="exportToLink()">🔗 LINK</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
-    <div class="viewport">
-      <div id="zoom-layer">
-        <div class="book" id="book">${leavesHtml}</div>
+    <div class="viewport" id="vp">
+      <div id="zoom-container">
+        <div id="zoom-layer">
+          <div class="book" id="book">${leavesHtml}</div>
+        </div>
       </div>
     </div>
 
@@ -1002,19 +1022,16 @@ export async function exportFlipbook() {
 
       function updatePos() {
         layer.style.transform = "scale(" + zoom + ")";
-        if (zoom > 1) {
-          layer.style.transformOrigin = "top left";
-          layer.style.justifyContent = "flex-start";
+        // Κεντράρισμα ραφής όταν το βιβλίο είναι ανοιχτό
+        if (cur > 0) {
+          book.style.transform = "translateX(50%)";
         } else {
-          layer.style.transformOrigin = "center center";
-          layer.style.justifyContent = "center";
+          book.style.transform = "translateX(0)";
         }
-        // Μετακίνηση βιβλίου δεξιά όταν ανοίγει για κεντράρισμα ραφής
-        book.style.marginLeft = (cur > 0) ? "40vh" : "0";
       }
 
       function changeZoom(v) {
-        zoom = Math.max(0.5, Math.min(2.5, zoom + v));
+        zoom = Math.max(0.5, Math.min(3.0, zoom + v));
         document.getElementById('zoomLvl').innerText = Math.round(zoom*100) + '%';
         updatePos();
       }
@@ -1025,28 +1042,43 @@ export async function exportFlipbook() {
       }
 
       async function exportToLink() {
-        const btn = event.target;
-        btn.innerText = "⏳..."; 
+        const btn = document.getElementById('linkBtn');
+        btn.innerText = "⏳ ΠΑΡΑΚΑΛΩ ΠΕΡΙΜΕΝΕΤΕ...";
+        btn.disabled = true;
+
         const htmlContent = document.documentElement.outerHTML;
         
         try {
-          const res = await fetch('https://api.paste.ee/v1/pastes', {
+          // Χρησιμοποιούμε το File.io που δέχεται μεγάλα αρχεία (έως 100MB)
+          const formData = new FormData();
+          const blob = new Blob([htmlContent], { type: 'text/html' });
+          formData.append('file', blob, 'book.html');
+
+          const res = await fetch('https://file.io/?expires=1d', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              key: 'public', 
-              sections: [{ name: 'Photobook', contents: htmlContent }] 
-            })
+            body: formData
           });
+          
           const data = await res.json();
-          if(data.success) {
-            const url = data.link.replace('/p/', '/r/'); // Raw link για να ανοίγει κατευθείαν
-            prompt("Αντιγράψτε το Link σας:", url);
-          } else { throw new Error(); }
+          if (data.success) {
+            prompt("Το Link σας είναι έτοιμο (λήγει σε 24 ώρες):", data.link);
+          } else {
+            throw new Error();
+          }
         } catch (e) {
-          alert("Το αρχείο είναι πολύ μεγάλο για Link. Χρησιμοποιήστε το κουμπί HTML.");
-        } finally { btn.innerText = "🔗 LINK"; }
+          alert("Αποτυχία Link. Το αρχείο είναι πολύ μεγάλο. Χρησιμοποιήστε το κουμπί HTML.");
+        } finally {
+          btn.innerText = "🔗 LINK";
+          btn.disabled = false;
+        }
       }
+
+      // Αρχικό κεντράρισμα στο scroll
+      window.onload = () => {
+        const vp = document.getElementById('vp');
+        vp.scrollLeft = (vp.scrollWidth - vp.clientWidth) / 2;
+        vp.scrollTop = (vp.scrollHeight - vp.clientHeight) / 2;
+      };
     </script>
   </body>
   </html>`;
@@ -1054,7 +1086,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
 export const previewFlipbook = exportFlipbook;
