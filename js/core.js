@@ -920,9 +920,22 @@ export async function exportFlipbook() {
       }
 
       .book { 
-        position:relative; width: 80vh; height: 56vh; 
-        transform-style:preserve-3d; transition: transform 0.6s ease;
-      }
+  position: relative; 
+  width: 80vh;  /* Το πλάτος του βιβλίου (80% του ύψους της οθόνης) */
+  height: 56vh; /* Το ύψος του βιβλίου (56% του ύψους της οθόνης) */
+  transform-style: preserve-3d; 
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  perspective: 2500px;
+}
+
+#zoom-layer {
+  padding: 60vh 60vw; /* Αυτό δημιουργεί 60% κενό χώρο γύρω από το βιβλίο */
+  transition: transform 0.3s ease;
+  transform-origin: center center;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+}
 
       .leaf { position:absolute; inset:0; transform-origin:left center; transition:transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style:preserve-3d; }
       .page { position:absolute; inset:0; background:white; backface-visibility:hidden; }
@@ -1074,21 +1087,23 @@ export async function exportFlipbook() {
         }
       }
 
-      function changeZoom(v) {
-        zoom = Math.max(0.5, Math.min(2.5, zoom + v));
-        document.getElementById('zoomLvl').innerText = Math.round(zoom*100) + '%';
-        updatePos();
-      }
+     function changeZoom(v) {
+  // Το 0.4 είναι το ελάχιστο (40%) και το 3.0 το μέγιστο (300%)
+  zoom = Math.max(0.4, Math.min(3.0, zoom + v));
+  document.getElementById('zoomLvl').innerText = Math.round(zoom*100) + '%';
+  updatePos();
+}
 
       function toggleFS() {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
         else document.exitFullscreen();
       }
 
-      function updatePos() {
-        let x = cur > 0 ? "50%" : "0%";
-        book.style.transform = \`scale(\${zoom}) translateX(\${x})\`;
-      }
+    function updatePos() {
+  layer.style.transform = "scale(" + zoom + ")";
+  // Αν cur > 0 (δηλαδή αν έχουμε ανοίξει σελίδα), σπρώξε το βιβλίο 50% δεξιά
+  book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
+}
 
       function saveAsHtml() {
         const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
