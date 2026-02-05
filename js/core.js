@@ -1074,7 +1074,7 @@ export async function exportFlipbook() {
   </html>`;
 
   frame.srcdoc = html;
-  modal.style.display = \"block\";
+  modal.style.display = "block";
 }
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
