@@ -866,9 +866,13 @@ export async function exportFlipbook() {
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
+    // Δίνουμε πραγματικό βάθος (translateZ) στην κάθε σελίδα ανάλογα με τη σειρά της
+    const depth = (images.length - i) * 0.1; 
     const zIndex = Math.floor((images.length - i) / 2) + 10;
+
     leavesHtml += `
-      <div class="leaf ${isCover ? 'hard-cover-front' : ''}" style="z-index: ${zIndex}">
+      <div class="leaf ${isCover ? 'hard-cover-front' : ''}" 
+           style="z-index: ${zIndex}; transform: translateZ(${depth}px);">
         <div class="page front">
           <img src="${images[i]}">
           <div class="spine-shadow-front"></div>
@@ -900,15 +904,24 @@ export async function exportFlipbook() {
       #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; }
       
       .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; perspective: 3000px; }
-      .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s ease-in-out; transform-style:preserve-3d; }
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+      
+      .leaf { 
+        position:absolute; inset:0; transform-origin:left center; 
+        transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
+        transform-style:preserve-3d; 
+      }
+      
+      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
       
       .spine-shadow-front { position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.1), transparent); }
       .spine-shadow-back { position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.1), transparent); }
 
       .back { transform:rotateY(180deg); }
-      .flipped { transform:rotateY(-180deg) !important; }
+      
+      /* Όταν γυρίζει η σελίδα, της δίνουμε ένα ελάχιστο TranslateZ για να μην ακουμπάει τις από κάτω */
+      .flipped { transform: rotateY(-180deg) translateZ(0.5px) !important; }
+      
       .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
 
       #pdf-area { display: none; }
@@ -969,8 +982,7 @@ export async function exportFlipbook() {
           
           const leaf = leafs[cur];
           leaf.classList.add('flipped');
-          
-          // Η ΔΙΟΡΘΩΣΗ: Αλλάζουμε το z-index ακριβώς στη μέση του animation
+          // Αλλαγή z-index ακριβώς στη μέση του γυρίσματος
           setTimeout(() => { leaf.style.zIndex = cur; }, 400);
           
           cur++; updatePos();
@@ -985,8 +997,6 @@ export async function exportFlipbook() {
           cur--;
           const leaf = leafs[cur];
           leaf.classList.remove('flipped');
-          
-          // Επαναφορά z-index
           setTimeout(() => { leaf.style.zIndex = 100 - cur; }, 400);
           
           updatePos();
