@@ -837,7 +837,6 @@ document.body.onclick = () => {
 
 
 
-
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
@@ -866,13 +865,11 @@ export async function exportFlipbook() {
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
-    // Δίνουμε πραγματικό βάθος (translateZ) στην κάθε σελίδα ανάλογα με τη σειρά της
-    const depth = (images.length - i) * 0.1; 
-    const zIndex = Math.floor((images.length - i) / 2) + 10;
-
+    // ΚΡΙΣΙΜΟ: Κάθε φύλλο έχει μια σταθερή θέση στο χώρο (0.5px διαφορά)
+    const leafDepth = i * 0.5; 
     leavesHtml += `
       <div class="leaf ${isCover ? 'hard-cover-front' : ''}" 
-           style="z-index: ${zIndex}; transform: translateZ(${depth}px);">
+           style="transform: translateZ(${-leafDepth}px); z-index: ${100 - i};">
         <div class="page front">
           <img src="${images[i]}">
           <div class="spine-shadow-front"></div>
@@ -890,46 +887,39 @@ export async function exportFlipbook() {
   <head>
     <meta charset="utf-8">
     <style>
-      :root { 
-        --bg-grad: radial-gradient(circle, #2c3e50 0%, #000000 100%); 
-        --cover-grad: linear-gradient(to bottom, #555, #111); 
-      }
-      body { margin:0; background: var(--bg-grad); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-      .nav { width:100%; background: rgba(0,0,0,0.95); padding:10px; display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; }
-      .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
-      .btn:hover { background: #666; transform: translateY(-2px); }
+      :root { --bg-grad: radial-gradient(circle, #2c3e50 0%, #000 100%); --cover-grad: linear-gradient(to bottom, #555, #111); }
+      body { margin:0; background: var(--bg-grad); color:white; font-family: sans-serif; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+      .nav { background: rgba(0,0,0,0.9); padding:10px; display:flex; justify-content:center; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; }
+      .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; }
       .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
       
-      .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; background: var(--bg-grad); }
-      #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; }
+      .viewport { flex:1; overflow: auto; display: grid; place-items: center; }
+      #zoom-layer { padding: 50vh 50vw; transition: transform 0.3s ease; transform-origin: center; display: flex; justify-content: center; }
       
-      .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; perspective: 3000px; }
+      .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; perspective: 3000px; transition: transform 0.6s ease; }
       
       .leaf { 
         position:absolute; inset:0; transform-origin:left center; 
         transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-        transform-style:preserve-3d; 
+        transform-style: preserve-3d;
       }
       
-      .page { position:absolute; inset:0; background:white; backface-visibility:hidden; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-      .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
+      .page { position:absolute; inset:0; background:white; backface-visibility: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+      .page img { width:100%; height:100%; object-fit:contain; }
+      .back { transform: rotateY(180deg); }
       
-      .spine-shadow-front { position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.1), transparent); }
-      .spine-shadow-back { position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.1), transparent); }
+      /* Η κλάση flipped τώρα αλλάζει και το βάθος (translateZ) για να μην "περνάει" μέσα από τις άλλες */
+      .flipped { transform: rotateY(-180deg) translateZ(1px) !important; }
 
-      .back { transform:rotateY(180deg); }
-      
-      /* Όταν γυρίζει η σελίδα, της δίνουμε ένα ελάχιστο TranslateZ για να μην ακουμπάει τις από κάτω */
-      .flipped { transform: rotateY(-180deg) translateZ(0.5px) !important; }
-      
-      .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
+      .spine-shadow-front { position:absolute; left:0; top:0; bottom:0; width:30px; background:linear-gradient(to right, rgba(0,0,0,0.1), transparent); }
+      .spine-shadow-back { position:absolute; right:0; top:0; bottom:0; width:30px; background:linear-gradient(to left, rgba(0,0,0,0.1), transparent); }
 
       #pdf-area { display: none; }
       @media print {
         .nav, .viewport { display: none !important; }
-        #pdf-area { display: block !important; background: white; }
-        .pdf-page { width: 100%; height: 100vh; page-break-after: always; display: flex; justify-content: center; align-items: center; }
-        .pdf-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #pdf-area { display: block !important; }
+        .pdf-page { page-break-after: always; text-align: center; }
+        .pdf-page img { max-width: 100%; }
       }
     </style>
   </head>
@@ -955,7 +945,6 @@ export async function exportFlipbook() {
       </div>
       <div class="control-group">
         🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-grad', 'radial-gradient(circle,'+this.value+' 0%,#000 100%)')">
-        📘 <input type="color" value="#444444" onchange="document.documentElement.style.setProperty('--cover-grad', 'linear-gradient(to bottom,'+this.value+',#111)')">
       </div>
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
@@ -963,7 +952,7 @@ export async function exportFlipbook() {
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
-    <div class="viewport" id="vp">
+    <div class="viewport">
       <div id="zoom-layer">
         <div class="book" id="book">${leavesHtml}</div>
       </div>
@@ -973,17 +962,17 @@ export async function exportFlipbook() {
 
     <script>
       let cur = 0, zoom = 1.0;
-      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book'), layer = document.getElementById('zoom-layer');
+      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book');
 
       function n() {
         if (cur < leafs.length) {
-          const type = document.getElementById('soundType').value;
-          if(type !== 'none') { const s = document.getElementById(type); s.currentTime = 0; s.play().catch(()=>{}); }
+          const s = document.getElementById(document.getElementById('soundType').value);
+          if(s) { s.currentTime=0; s.play().catch(()=>{}); }
           
-          const leaf = leafs[cur];
-          leaf.classList.add('flipped');
-          // Αλλαγή z-index ακριβώς στη μέση του γυρίσματος
-          setTimeout(() => { leaf.style.zIndex = cur; }, 400);
+          leafs[cur].classList.add('flipped');
+          // Χαμηλώνουμε το z-index μετά την κίνηση
+          const idx = cur;
+          setTimeout(() => { leafs[idx].style.zIndex = idx; }, 400);
           
           cur++; updatePos();
         }
@@ -991,20 +980,18 @@ export async function exportFlipbook() {
 
       function p() {
         if (cur > 0) {
-          const type = document.getElementById('soundType').value;
-          if(type !== 'none') { const s = document.getElementById(type); s.currentTime = 0; s.play().catch(()=>{}); }
+          const s = document.getElementById(document.getElementById('soundType').value);
+          if(s) { s.currentTime=0; s.play().catch(()=>{}); }
           
           cur--;
-          const leaf = leafs[cur];
-          leaf.classList.remove('flipped');
-          setTimeout(() => { leaf.style.zIndex = 100 - cur; }, 400);
-          
+          leafs[cur].classList.remove('flipped');
+          leafs[cur].style.zIndex = 100 - cur;
           updatePos();
         }
       }
 
       function updatePos() {
-        layer.style.transform = "scale(" + zoom + ")";
+        document.getElementById('zoom-layer').style.transform = "scale(" + zoom + ")";
         book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
       }
 
@@ -1021,18 +1008,15 @@ export async function exportFlipbook() {
 
       async function exportToLink() {
         const btn = document.getElementById('linkBtn'); btn.innerText = "⏳...";
-        const html = document.documentElement.outerHTML;
         try {
           const res = await fetch('https://file.io/?expires=1d', {
             method: 'POST',
-            body: new FormData().append('file', new Blob([html], {type:'text/html'}), 'book.html')
+            body: new FormData().append('file', new Blob([document.documentElement.outerHTML], {type:'text/html'}), 'book.html')
           });
           const data = await res.json();
-          if (data.success) prompt("Link (24h):", data.link);
+          if (data.success) prompt("Link:", data.link);
           else throw new Error();
-        } catch (e) {
-          window.open(URL.createObjectURL(new Blob([html], {type:'text/html'})), '_blank');
-        }
+        } catch (e) { alert("Το αρχείο είναι μεγάλο, κατέβασε το HTML."); }
         btn.innerText = "🔗 LINK";
       }
     </script>
@@ -1042,7 +1026,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 
 
