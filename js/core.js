@@ -896,9 +896,11 @@ export async function exportFlipbook() {
       
       /* Η ΛΥΣΗ: Το perspective μπαίνει εδώ για να βλέπει σωστά όλη τη σκηνή */
       .viewport { 
-        flex:1; width:100%; overflow: auto; display: grid; place-items: center; 
-        background: var(--bg-grad); 
+        flex:1; width:100%; overflow: auto; display: flex;
+        justify-content:center; align-items:cennter; 
         perspective: 3000px; 
+        overflow:auto;
+        padding: 40px;
       }
       
       #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
