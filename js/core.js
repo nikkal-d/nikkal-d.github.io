@@ -890,17 +890,13 @@ export async function exportFlipbook() {
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
       .btn:hover { background: #666; transform: translateY(-2px); }
       .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
-      
       .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; background: var(--bg-grad); perspective: 3500px; }
       #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
-      
       .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; }
       .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; will-change: transform; }
       .page { position:absolute; inset:0; background:white; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.3); overflow: hidden; }
-      
       .page.front::after { content:''; position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.15), transparent); z-index: 2; }
       .page.back::after { content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.15), transparent); z-index: 2; }
-
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
@@ -999,23 +995,31 @@ export async function exportFlipbook() {
         try {
           const htmlContent = document.documentElement.outerHTML;
           const blob = new Blob([htmlContent], {type:'text/html'});
+          
           const formData = new FormData();
           formData.append('reqtype', 'fileupload');
-          formData.append('fileToUpload', blob, 'photobook.html');
+          formData.append('fileToUpload', blob, 'book_' + Date.now() + '.html');
 
-          const res = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php'), {
+          // Χρήση του Proxy για παράκαμψη του CORS
+          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://catbox.moe/user/api.php');
+
+          const res = await fetch(proxyUrl, {
             method: 'POST',
             body: formData
           });
 
+          if (!res.ok) throw new Error("Server error");
+          
           const link = await res.text();
-          if (link.startsWith('http')) {
-             prompt("Αντιγράψτε το Link (Catbox):", link);
+          
+          if (link && link.includes('http')) {
+             prompt("ΕΤΟΙΜΟ! Το link δεν λήγει ποτέ:", link.trim());
           } else {
-             throw new Error(link);
+             throw new Error("Invalid response");
           }
         } catch (e) {
-          alert("Σφάλμα κατά το ανέβασμα. Δοκιμάστε το κουμπί HTML.");
+          console.error(e);
+          alert("Πρόβλημα σύνδεσης. Χρησιμοποίησε το κουμπί 💾 HTML για να το σώσεις τοπικά.");
         } finally {
           btn.innerText = originalText;
           btn.disabled = false;
