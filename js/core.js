@@ -895,20 +895,15 @@ export async function exportFlipbook() {
       #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
       
       .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; }
-      
       .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; will-change: transform; }
-      
       .page { position:absolute; inset:0; background:white; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.3); overflow: hidden; }
       
-      /* Η ΝΕΑ ΣΚΙΑ: Ενσωματωμένη για να μην τρεμοπαίζει */
       .page.front::after { content:''; position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.15), transparent); z-index: 2; }
       .page.back::after { content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.15), transparent); z-index: 2; }
 
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
-      
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
-
       .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
     </style>
   </head>
@@ -956,16 +951,11 @@ export async function exportFlipbook() {
         if (cur < leafs.length) {
           const type = document.getElementById('soundType').value;
           if(type !== 'none') { const s = document.getElementById(type); s.currentTime = 0; s.play().catch(()=>{}); }
-          
           const leaf = leafs[cur];
-          leaf.style.zIndex = 500; // Σηκώνεται ψηλά
+          leaf.style.zIndex = 500;
           leaf.classList.add('flipped');
-          
           const idx = cur;
-          setTimeout(() => {
-            leaf.style.zIndex = idx + 1; // "Κλειδώνει" κάτω μετά το γύρισμα
-          }, 800);
-          
+          setTimeout(() => { leaf.style.zIndex = idx + 1; }, 800);
           cur++; updatePos();
         }
       }
@@ -974,17 +964,12 @@ export async function exportFlipbook() {
         if (cur > 0) {
           const type = document.getElementById('soundType').value;
           if(type !== 'none') { const s = document.getElementById(type); s.currentTime = 0; s.play().catch(()=>{}); }
-          
           cur--;
           const leaf = leafs[cur];
           leaf.style.zIndex = 500;
           leaf.classList.remove('flipped');
-          
           const idx = cur;
-          setTimeout(() => {
-            leaf.style.zIndex = 100 - idx;
-          }, 800);
-          
+          setTimeout(() => { leaf.style.zIndex = 100 - idx; }, 800);
           updatePos();
         }
       }
@@ -1006,16 +991,35 @@ export async function exportFlipbook() {
       }
 
       async function exportToLink() {
-        const btn = document.getElementById('linkBtn'); btn.innerText = "⏳...";
+        const btn = document.getElementById('linkBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ Ανεβάζω...";
+        btn.disabled = true;
+
         try {
-          const res = await fetch('https://file.io/?expires=1d', {
+          const htmlContent = document.documentElement.outerHTML;
+          const blob = new Blob([htmlContent], {type:'text/html'});
+          const formData = new FormData();
+          formData.append('reqtype', 'fileupload');
+          formData.append('fileToUpload', blob, 'photobook.html');
+
+          const res = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php'), {
             method: 'POST',
-            body: new FormData().append('file', new Blob([document.documentElement.outerHTML], {type:'text/html'}), 'book.html')
+            body: formData
           });
-          const data = await res.json();
-          if (data.success) prompt("Link:", data.link);
-        } catch (e) {}
-        btn.innerText = "🔗 LINK";
+
+          const link = await res.text();
+          if (link.startsWith('http')) {
+             prompt("Αντιγράψτε το Link (Catbox):", link);
+          } else {
+             throw new Error(link);
+          }
+        } catch (e) {
+          alert("Σφάλμα κατά το ανέβασμα. Δοκιμάστε το κουμπί HTML.");
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
       }
     </script>
   </body>
