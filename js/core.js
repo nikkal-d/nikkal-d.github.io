@@ -864,6 +864,7 @@ export async function exportFlipbook() {
   let leavesHtml = "";
   for (let i = 0; i < images.length; i += 2) {
     const isCover = (i === 0);
+    // Αρχικό Z-index: Οι πρώτες σελίδες είναι πάνω-πάνω
     const zIndex = 100 - i;
     leavesHtml += `
       <div class="leaf ${isCover ? 'hard-cover-front' : ''}" style="z-index: ${zIndex}">
@@ -894,49 +895,24 @@ export async function exportFlipbook() {
       .btn:hover { background: #666; transform: translateY(-2px); }
       .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
       
-      /* Η ΛΥΣΗ: Το perspective μπαίνει εδώ για να βλέπει σωστά όλη τη σκηνή */
-      .viewport { 
-        flex:1; width:100%; overflow: auto; display: grid; place-items: center; 
-        background: var(--bg-grad); 
-        perspective: 3000px; 
-      }
-      
+      .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; background: var(--bg-grad); perspective: 3000px; }
       #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
       
-      .book { 
-        position: relative; width: 80vh; height: 56vh; 
-        transform-style: preserve-3d; transition: transform 0.6s ease;
-      }
-      
-      .leaf { 
-        position:absolute; inset:0; transform-origin:left center; 
-        transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-        transform-style: preserve-3d;
-      }
-      
-      .page { 
-        position:absolute; inset:0; background:white; 
-        backface-visibility: hidden; 
-        -webkit-backface-visibility: hidden;
-        box-shadow: 0 0 20px rgba(0,0,0,0.3); 
-      }
-      
+      .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; }
+      .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; }
+      .page { position:absolute; inset:0; background:white; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
-      .spine-shadow-front { position:absolute; left:0; top:0; bottom:0; width:50px; background:linear-gradient(to right, rgba(0,0,0,0.12), transparent); }
-      .spine-shadow-back { position:absolute; right:0; top:0; bottom:0; width:50px; background:linear-gradient(to left, rgba(0,0,0,0.12), transparent); }
+      
+      /* Σκιές στη ραφή */
+      .spine-shadow-front { position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.12), transparent); }
+      .spine-shadow-back { position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.12), transparent); }
 
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
-
       .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
 
-      #pdf-area { display: none; }
-      @media print {
-        .nav, .viewport { display: none !important; }
-        #pdf-area { display: block !important; background: white; }
-        .pdf-page { width: 100%; height: 100vh; page-break-after: always; display: flex; justify-content: center; align-items: center; }
-        .pdf-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
-      }
+      /* Force Hardware Acceleration */
+      .leaf { will-change: transform; }
     </style>
   </head>
   <body>
@@ -969,17 +945,15 @@ export async function exportFlipbook() {
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
     </div>
 
-    <div class="viewport" id="vp">
+    <div class="viewport">
       <div id="zoom-layer">
         <div class="book" id="book">${leavesHtml}</div>
       </div>
     </div>
 
-    <div id="pdf-area">${images.map(img => `<div class="pdf-page"><img src="${img}"></div>`).join('')}</div>
-
     <script>
       let cur = 0, zoom = 1.0;
-      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book'), layer = document.getElementById('zoom-layer');
+      const leafs = document.querySelectorAll('.leaf'), book = document.getElementById('book');
 
       function n() {
         if (cur < leafs.length) {
@@ -987,13 +961,13 @@ export async function exportFlipbook() {
           if(type !== 'none') { const s = document.getElementById(type); s.currentTime = 0; s.play().catch(()=>{}); }
           
           const leaf = leafs[cur];
-          leaf.style.zIndex = 1000; // Πάνω από όλα όσο κινείται
+          leaf.style.zIndex = 500; // Το βάζουμε πάνω από όλα την ώρα που κινείται
           leaf.classList.add('flipped');
           
-          const idx = cur;
+          const targetIdx = cur;
           setTimeout(() => {
-            leaf.style.zIndex = idx + 1; // Μετά την κίνηση μπαίνει στη σειρά του
-          }, 700);
+            leaf.style.zIndex = targetIdx + 1; // Μόλις κάτσει, παίρνει τη σωστή χαμηλή θέση
+          }, 800);
           
           cur++; updatePos();
         }
@@ -1006,21 +980,21 @@ export async function exportFlipbook() {
           
           cur--;
           const leaf = leafs[cur];
-          leaf.style.zIndex = 1000;
+          leaf.style.zIndex = 500; // Το βάζουμε πάνω από όλα
           leaf.classList.remove('flipped');
           
-          const idx = cur;
+          const targetIdx = cur;
           setTimeout(() => {
-            leaf.style.zIndex = 100 - idx;
-          }, 700);
+            leaf.style.zIndex = 100 - targetIdx; // Επαναφορά στην αρχική στοίβαξη
+          }, 800);
           
           updatePos();
         }
       }
 
       function updatePos() {
-        layer.style.transform = "scale(" + zoom + ")";
-        book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
+        document.getElementById('zoom-layer').style.transform = "scale(" + zoom + ")";
+        book.style.transform = (cur > 0) ? "translateX(25%)" : "translateX(0)";
       }
 
       function changeZoom(v) {
