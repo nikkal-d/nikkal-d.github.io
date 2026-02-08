@@ -875,6 +875,9 @@ export async function exportFlipbook() {
       </div>`;
   }
 
+  // Δημιουργία των σελίδων για το PDF (εκτύπωση)
+  const pdfHtml = images.map(img => `<div class="pdf-page"><img src="${img}"></div>`).join('');
+
   const html = `
   <!doctype html>
   <html>
@@ -890,17 +893,30 @@ export async function exportFlipbook() {
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; }
       .btn:hover { background: #666; transform: translateY(-2px); }
       .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
+      
       .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; background: var(--bg-grad); perspective: 3500px; }
       #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
+      
       .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; }
       .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; will-change: transform; }
       .page { position:absolute; inset:0; background:white; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.3); overflow: hidden; }
+      
       .page.front::after { content:''; position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.15), transparent); z-index: 2; }
       .page.back::after { content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.15), transparent); z-index: 2; }
+
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
       .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
+
+      /* CSS ΓΙΑ PDF */
+      #pdf-area { display: none; }
+      @media print {
+        .nav, .viewport { display: none !important; }
+        #pdf-area { display: block !important; background: white; }
+        .pdf-page { width: 100%; height: 100vh; page-break-after: always; display: flex; justify-content: center; align-items: center; }
+        .pdf-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
+      }
     </style>
   </head>
   <body>
@@ -938,6 +954,8 @@ export async function exportFlipbook() {
         <div class="book" id="book">${leavesHtml}</div>
       </div>
     </div>
+
+    <div id="pdf-area">${pdfHtml}</div>
 
     <script>
       let cur = 0, zoom = 1.0;
@@ -995,31 +1013,21 @@ export async function exportFlipbook() {
         try {
           const htmlContent = document.documentElement.outerHTML;
           const blob = new Blob([htmlContent], {type:'text/html'});
-          
           const formData = new FormData();
           formData.append('reqtype', 'fileupload');
-          formData.append('fileToUpload', blob, 'book_' + Date.now() + '.html');
+          // Βάζουμε ρητά κατάληξη .html για να μην το βγάζει σαν κείμενο
+          formData.append('fileToUpload', blob, 'my_photobook.html');
 
-          // Χρήση του Proxy για παράκαμψη του CORS
           const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://catbox.moe/user/api.php');
 
-          const res = await fetch(proxyUrl, {
-            method: 'POST',
-            body: formData
-          });
-
-          if (!res.ok) throw new Error("Server error");
-          
+          const res = await fetch(proxyUrl, { method: 'POST', body: formData });
           const link = await res.text();
           
           if (link && link.includes('http')) {
-             prompt("ΕΤΟΙΜΟ! Το link δεν λήγει ποτέ:", link.trim());
-          } else {
-             throw new Error("Invalid response");
-          }
+             prompt("Το Link σας (δεν λήγει):", link.trim());
+          } else { throw new Error(); }
         } catch (e) {
-          console.error(e);
-          alert("Πρόβλημα σύνδεσης. Χρησιμοποίησε το κουμπί 💾 HTML για να το σώσεις τοπικά.");
+          alert("Σφάλμα σύνδεσης. Χρησιμοποιήστε το κουμπί 💾 HTML.");
         } finally {
           btn.innerText = originalText;
           btn.disabled = false;
@@ -1032,6 +1040,7 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
+
 
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
 export const previewFlipbook = exportFlipbook;
