@@ -875,7 +875,6 @@ export async function exportFlipbook() {
       </div>`;
   }
 
-  // Δημιουργία των σελίδων για το PDF (εκτύπωση)
   const pdfHtml = images.map(img => `<div class="pdf-page"><img src="${img}"></div>`).join('');
 
   const html = `
@@ -883,6 +882,7 @@ export async function exportFlipbook() {
   <html>
   <head>
     <meta charset="utf-8">
+    <title>My Photobook</title>
     <style>
       :root { 
         --bg-grad: radial-gradient(circle, #2c3e50 0%, #000000 100%); 
@@ -907,14 +907,14 @@ export async function exportFlipbook() {
       .page img { width:100%; height:100%; object-fit:contain; pointer-events: none; }
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
-      .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: var(--cover-grad) 1; }
 
-      /* CSS ΓΙΑ PDF */
+      /* PDF Styles */
       #pdf-area { display: none; }
       @media print {
+        @page { size: auto; margin: 0; }
         .nav, .viewport { display: none !important; }
-        #pdf-area { display: block !important; background: white; }
-        .pdf-page { width: 100%; height: 100vh; page-break-after: always; display: flex; justify-content: center; align-items: center; }
+        #pdf-area { display: block !important; background: white; width: 100%; }
+        .pdf-page { width: 100%; height: 100vh; page-break-after: always; display: flex; justify-content: center; align-items: center; background: white; }
         .pdf-page img { max-width: 100%; max-height: 100%; object-fit: contain; }
       }
     </style>
@@ -938,10 +938,6 @@ export async function exportFlipbook() {
           <option value="snd2">Απαλός</option>
           <option value="none">Σίγαση</option>
         </select>
-      </div>
-      <div class="control-group">
-        🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-grad', 'radial-gradient(circle,'+this.value+' 0%,#000 100%)')">
-        📘 <input type="color" value="#444444" onchange="document.documentElement.style.setProperty('--cover-grad', 'linear-gradient(to bottom,'+this.value+',#111)')">
       </div>
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
@@ -989,8 +985,8 @@ export async function exportFlipbook() {
       }
 
       function updatePos() {
-        document.getElementById('zoom-layer').style.transform = "scale(" + zoom + ")";
-        book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
+        document.getElementById('zoom-layer').style.transform = \"scale(\" + zoom + \")\";
+        book.style.transform = (cur > 0) ? \"translateX(50%)\" : \"translateX(0)\";
       }
 
       function changeZoom(v) {
@@ -1006,30 +1002,33 @@ export async function exportFlipbook() {
 
       async function exportToLink() {
         const btn = document.getElementById('linkBtn');
-        const originalText = btn.innerText;
-        btn.innerText = "⏳ Ανεβάζω...";
+        btn.innerText = \"⏳ Ανεβάζω...\";
         btn.disabled = true;
 
         try {
-          const htmlContent = document.documentElement.outerHTML;
-          const blob = new Blob([htmlContent], {type:'text/html'});
+          // Καθαρίζουμε το HTML από περιττά scripts πριν το ανέβασμα
+          const docStr = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
+          const blob = new Blob([docStr], { type: 'text/html' });
+          
           const formData = new FormData();
           formData.append('reqtype', 'fileupload');
-          // Βάζουμε ρητά κατάληξη .html για να μην το βγάζει σαν κείμενο
-          formData.append('fileToUpload', blob, 'my_photobook.html');
+          // Δίνουμε ένα όνομα που τελειώνει σε .html οπωσδήποτε
+          formData.append('fileToUpload', blob, 'album_' + Math.floor(Date.now()/1000) + '.html');
 
           const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://catbox.moe/user/api.php');
 
           const res = await fetch(proxyUrl, { method: 'POST', body: formData });
           const link = await res.text();
           
-          if (link && link.includes('http')) {
-             prompt("Το Link σας (δεν λήγει):", link.trim());
-          } else { throw new Error(); }
+          if (link && link.trim().startsWith('http')) {
+             prompt(\"Το Link είναι έτοιμο και δεν λήγει!\", link.trim());
+          } else {
+             throw new Error();
+          }
         } catch (e) {
-          alert("Σφάλμα σύνδεσης. Χρησιμοποιήστε το κουμπί 💾 HTML.");
+          alert(\"Το αυτόματο ανέβασμα απέτυχε. Κατέβασε το HTML και ανέβασέ το χειροκίνητα στο Catbox.moe\");
         } finally {
-          btn.innerText = originalText;
+          btn.innerText = \"🔗 LINK\";
           btn.disabled = false;
         }
       }
