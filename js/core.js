@@ -893,11 +893,14 @@ export async function exportFlipbook() {
     <meta charset="utf-8">
     <style>
       :root { 
-        --bg-color-1: #2c3e50; --bg-color-2: #000000;
-        --cover-color-1: #555555; --cover-color-2: #111111;
+        --bg-c1: #2c3e50; --bg-c2: #000000;
+        --cov-c1: #555555; --cov-c2: #111111;
       }
-      body { margin:0; background: radial-gradient(circle, var(--bg-color-1) 0%, var(--bg-color-2) 100%); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-      
+      body { 
+        margin:0; 
+        background: radial-gradient(circle, var(--bg-c1) 0%, var(--bg-c2) 100%); 
+        color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; 
+      }
       .nav { width:100%; background: rgba(0,0,0,0.95); padding:10px; display:flex; justify-content: flex-start; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; box-sizing: border-box; }
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; white-space: nowrap; }
       .btn:hover { background: #666; transform: translateY(-2px); }
@@ -917,7 +920,10 @@ export async function exportFlipbook() {
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
-      .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: linear-gradient(to bottom, var(--cover-color-1), var(--cover-color-2)) 1; }
+      .hard-cover-front .front { 
+        border-radius: 0 5px 5px 0; border-right: 12px solid transparent; 
+        border-image: linear-gradient(to bottom, var(--cov-c1), var(--cov-c2)) 1; 
+      }
 
       #pdf-area { display: none; }
       @media print {
@@ -950,12 +956,14 @@ export async function exportFlipbook() {
         </select>
       </div>
       <div class="control-group">
-        🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-color-1', this.value)">
-        <input type="color" value="#000000" onchange="document.documentElement.style.setProperty('--bg-color-2', this.value)">
+        🎨 Φόντο: 
+        <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-c1', this.value)">
+        <input type="color" value="#000000" onchange="document.documentElement.style.setProperty('--bg-c2', this.value)">
       </div>
       <div class="control-group">
-        📘 <input type="color" value="#555555" onchange="document.documentElement.style.setProperty('--cover-color-1', this.value)">
-        <input type="color" value="#111111" onchange="document.documentElement.style.setProperty('--cover-color-2', this.value)">
+        📘 Ράχη: 
+        <input type="color" value="#555555" onchange="document.documentElement.style.setProperty('--cov-c1', this.value)">
+        <input type="color" value="#111111" onchange="document.documentElement.style.setProperty('--cov-c2', this.value)">
       </div>
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
