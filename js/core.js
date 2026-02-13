@@ -843,7 +843,6 @@ document.body.onclick = () => {
 
 
 
-
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
@@ -884,7 +883,7 @@ export async function exportFlipbook() {
       </div>`;
   }
 
-  const pdfHtml = images.map(img => `<div class="pdf-page"><img src="${img}"></div>`).join('');
+  const pdfHtml = images.map(img => `<div class="pdf-page"><img src="${images[i]}"></div>`).join('');
 
   const html = `
   <!doctype html>
@@ -896,11 +895,8 @@ export async function exportFlipbook() {
         --bg-c1: #2c3e50; --bg-c2: #000000;
         --cov-c1: #555555; --cov-c2: #111111;
       }
-      body { 
-        margin:0; 
-        background: radial-gradient(circle, var(--bg-c1) 0%, var(--bg-c2) 100%); 
-        color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; 
-      }
+      body { margin:0; background: radial-gradient(circle, var(--bg-c1) 0%, var(--bg-c2) 100%); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+      
       .nav { width:100%; background: rgba(0,0,0,0.95); padding:10px; display:flex; justify-content: flex-start; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; box-sizing: border-box; }
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; white-space: nowrap; }
       .btn:hover { background: #666; transform: translateY(-2px); }
@@ -911,7 +907,9 @@ export async function exportFlipbook() {
       
       .book { 
         position: relative; width: 80vh; height: 56vh; 
-        transform-style: preserve-3d; transition: transform 0.6s ease; 
+        transform-style: preserve-3d; transition: transform 0.6s ease;
+        /* Μόνιμη μετατόπιση αριστερά κατά το μισό πλάτος της σελίδας για τέλειο κεντράρισμα */
+        margin-left: -40vh; 
       }
       .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; will-change: transform; }
       .page { position:absolute; inset:0; background:white; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.3); overflow: hidden; }
@@ -923,10 +921,7 @@ export async function exportFlipbook() {
       .back { transform:rotateY(180deg); }
       .flipped { transform:rotateY(-180deg) !important; }
 
-      .hard-cover-front .front { 
-        border-radius: 0 5px 5px 0; border-right: 12px solid transparent; 
-        border-image: linear-gradient(to bottom, var(--cov-c1), var(--cov-c2)) 1; 
-      }
+      .hard-cover-front .front { border-radius: 0 5px 5px 0; border-right: 12px solid transparent; border-image: linear-gradient(to bottom, var(--cov-c1), var(--cov-c2)) 1; }
 
       #pdf-area { display: none; }
       @media print {
@@ -959,13 +954,11 @@ export async function exportFlipbook() {
         </select>
       </div>
       <div class="control-group">
-        🎨 Φόντο: 
-        <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-c1', this.value)">
+        🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-c1', this.value)">
         <input type="color" value="#000000" onchange="document.documentElement.style.setProperty('--bg-c2', this.value)">
       </div>
       <div class="control-group">
-        📘 Ράχη: 
-        <input type="color" value="#555555" onchange="document.documentElement.style.setProperty('--cov-c1', this.value)">
+        📘 <input type="color" value="#555555" onchange="document.documentElement.style.setProperty('--cov-c1', this.value)">
         <input type="color" value="#111111" onchange="document.documentElement.style.setProperty('--cov-c2', this.value)">
       </div>
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
@@ -978,7 +971,6 @@ export async function exportFlipbook() {
         <div class="book" id="book">${leavesHtml}</div>
       </div>
     </div>
-    <div id="pdf-area">${pdfHtml}</div>
 
     <script>
       let cur = 0, zoom = 1.0;
@@ -1013,7 +1005,7 @@ export async function exportFlipbook() {
 
       function updatePos() {
         document.getElementById('zoom-layer').style.transform = "scale(" + zoom + ")";
-        // Η ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ: 50% μετακίνηση για τέλεια ένωση στη ραφή
+        // ΕΔΩ Η ΔΙΟΡΘΩΣΗ: Επαναφορά στο 50% για τέλεια ραφή
         book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
       }
 
