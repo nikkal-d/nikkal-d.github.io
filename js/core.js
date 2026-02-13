@@ -909,7 +909,15 @@ export async function exportFlipbook() {
       .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; perspective: 3500px; }
       #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
       
-      .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; }
+      .book { 
+        position: relative; 
+        width: 80vh; height: 56vh; 
+        transform-style: preserve-3d; 
+        transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+        /* Αρχική θέση: Λίγο αριστερά από το κέντρο για να φαίνεται κεντραρισμένο το εξώφυλλο */
+        transform: translateX(0);
+      }
+      
       .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; will-change: transform; }
       .page { position:absolute; inset:0; background:white; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.3); overflow: hidden; }
       
@@ -1010,7 +1018,8 @@ export async function exportFlipbook() {
 
       function updatePos() {
         document.getElementById('zoom-layer').style.transform = "scale(" + zoom + ")";
-        book.style.transform = (cur > 0) ? "translateX(50%)" : "translateX(0)";
+        // Η αλλαγή: Μετακινούμε το βιβλίο κατά 25% αντί για 50% για τέλειο κεντράρισμα όταν είναι ανοιχτό
+        book.style.transform = (cur > 0) ? "translateX(25%)" : "translateX(0)";
       }
 
       function changeZoom(v) {
