@@ -1040,7 +1040,6 @@ export async function exportFlipbook() {
   modal.style.display = "block";
 }
 
-
 // Ορισμός των exports ΜΙΑ ΦΟΡΑ στο τέλος
 export const previewFlipbook = exportFlipbook;
 
