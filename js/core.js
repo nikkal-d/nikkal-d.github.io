@@ -896,31 +896,37 @@ export async function exportFlipbook() {
         --bg-c1: #2c3e50; --bg-c2: #000000;
         --cov-c1: #555555; --cov-c2: #111111;
       }
-      body { 
-        margin:0; 
-        background: radial-gradient(circle, var(--bg-c1) 0%, var(--bg-c2) 100%); 
-        color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; 
-      }
+      body { margin:0; background: radial-gradient(circle, var(--bg-c1) 0%, var(--bg-c2) 100%); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+      
       .nav { width:100%; background: rgba(0,0,0,0.95); padding:10px; display:flex; justify-content: flex-start; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; box-sizing: border-box; }
       .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; white-space: nowrap; }
       .btn:hover { background: #666; transform: translateY(-2px); }
       .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-size: 11px; }
 
-      .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; perspective: 3500px; }
-      #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
+      /* ΔΙΟΡΘΩΣΗ ΚΕΝΤΡΑΡΙΣΜΑΤΟΣ ΧΩΡΙΣ ΝΑ ΧΑΛΑΕΙ Η ΕΝΩΣΗ */
+      .viewport { flex:1; width:100%; overflow: auto; display: flex; justify-content: center; align-items: center; perspective: 3500px; }
+      #zoom-layer { 
+        padding: 60vh 60vw; 
+        transition: transform 0.3s ease; 
+        transform-origin: center center; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        transform-style: preserve-3d;
+      }
       
       .book { 
         position: relative; 
         width: 80vh; height: 56vh; 
         transform-style: preserve-3d; 
-        transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
-        /* Αρχική θέση: Λίγο αριστερά από το κέντρο για να φαίνεται κεντραρισμένο το εξώφυλλο */
-        transform: translateX(0);
+        transition: transform 0.6s ease;
+        transform: translateX(0) !important; /* ΕΔΩ: Καμία μετακίνηση για να μην κόβονται οι σελίδες */
       }
       
       .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; will-change: transform; }
       .page { position:absolute; inset:0; background:white; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.3); overflow: hidden; }
       
+      /* Η ραφή στη μέση */
       .page.front::after { content:''; position:absolute; left:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, rgba(0,0,0,0.15), transparent); z-index: 2; }
       .page.back::after { content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to left, rgba(0,0,0,0.15), transparent); z-index: 2; }
 
@@ -1018,8 +1024,8 @@ export async function exportFlipbook() {
 
       function updatePos() {
         document.getElementById('zoom-layer').style.transform = "scale(" + zoom + ")";
-        // Η αλλαγή: Μετακινούμε το βιβλίο κατά 25% αντί για 50% για τέλειο κεντράρισμα όταν είναι ανοιχτό
-        book.style.transform = (cur > 0) ? "translateX(25%)" : "translateX(0)";
+        // ΚΑΤΑΡΓΗΣΗ ΤΟΥ TRANSLATEX ΣΤΟ BOOK - ΧΡΗΣΙΜΟΠΟΙΟΥΜΕ ΜΟΝΟ ΤΟ ΚΕΝΤΡΑΡΙΣΜΑ ΤΟΥ VIEWPORT
+        book.style.transform = "translateX(0)";
       }
 
       function changeZoom(v) {
@@ -1039,7 +1045,6 @@ export async function exportFlipbook() {
   frame.srcdoc = html;
   modal.style.display = "block";
 }
-
 
 
 
