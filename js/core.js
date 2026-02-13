@@ -834,6 +834,16 @@ document.body.onclick = () => {
 }
 
 
+
+
+
+
+
+
+
+
+
+
 export async function exportFlipbook() {
   saveCurrentPage();
   const images = [];
@@ -881,7 +891,6 @@ export async function exportFlipbook() {
   <html>
   <head>
     <meta charset="utf-8">
-    <title>Photobook</title>
     <style>
       :root { 
         --bg-color-1: #2c3e50; --bg-color-2: #000000;
@@ -889,15 +898,13 @@ export async function exportFlipbook() {
       }
       body { margin:0; background: radial-gradient(circle, var(--bg-color-1) 0%, var(--bg-color-2) 100%); color:white; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
       
-      /* Μπάρα τέρμα αριστερά */
-      .nav { width:100%; background: rgba(0,0,0,0.95); padding:10px; display:flex; justify-content: flex-start; align-items:center; gap:10px; z-index:9999; border-bottom: 1px solid #333; box-sizing: border-box; }
-      
-      .btn { padding:8px 14px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; white-space: nowrap; }
+      .nav { width:100%; background: rgba(0,0,0,0.95); padding:10px; display:flex; justify-content: flex-start; align-items:center; gap:12px; z-index:9999; border-bottom: 1px solid #333; box-sizing: border-box; }
+      .btn { padding:10px 16px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; color:white; background: #444; font-size:11px; transition: 0.3s; white-space: nowrap; }
       .btn:hover { background: #666; transform: translateY(-2px); }
-      .control-group { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 20px; font-size: 11px; white-space: nowrap; }
-      
-      .viewport { flex:1; width:100%; overflow: auto; display: flex; justify-content: center; align-items: center; perspective: 3500px; }
-      #zoom-layer { display: flex; justify-content: center; align-items: center; transition: transform 0.3s ease; transform-origin: center center; }
+      .control-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-size: 11px; }
+
+      .viewport { flex:1; width:100%; overflow: auto; display: grid; place-items: center; perspective: 3500px; }
+      #zoom-layer { padding: 60vh 60vw; transition: transform 0.3s ease; transform-origin: center center; display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; }
       
       .book { position: relative; width: 80vh; height: 56vh; transform-style: preserve-3d; transition: transform 0.6s ease; }
       .leaf { position:absolute; inset:0; transform-origin:left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; will-change: transform; }
@@ -929,13 +936,11 @@ export async function exportFlipbook() {
     <div class="nav">
       <button class="btn" onclick="p()">❮ ΠΙΣΩ</button>
       <button class="btn" onclick="n()">ΕΠΟΜΕΝΟ ❯</button>
-      
       <div class="control-group">
         <button class="btn" onclick="changeZoom(-0.2)">−</button>
         <span id="zoomLvl">100%</span>
         <button class="btn" onclick="changeZoom(0.2)">+</button>
       </div>
-
       <div class="control-group">
         <span>🔊</span>
         <select id="soundType" style="background:transparent; color:white; border:none; font-size:11px;">
@@ -944,19 +949,14 @@ export async function exportFlipbook() {
           <option value="none">Σίγαση</option>
         </select>
       </div>
-
       <div class="control-group">
-        <span>🎨 Φόντο:</span>
-        <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-color-1', this.value)">
+        🎨 <input type="color" value="#2c3e50" onchange="document.documentElement.style.setProperty('--bg-color-1', this.value)">
         <input type="color" value="#000000" onchange="document.documentElement.style.setProperty('--bg-color-2', this.value)">
       </div>
-
       <div class="control-group">
-        <span>📘 Ράχη:</span>
-        <input type="color" value="#555555" onchange="document.documentElement.style.setProperty('--cover-color-1', this.value)">
+        📘 <input type="color" value="#555555" onchange="document.documentElement.style.setProperty('--cover-color-1', this.value)">
         <input type="color" value="#111111" onchange="document.documentElement.style.setProperty('--cover-color-2', this.value)">
       </div>
-
       <button class="btn" style="background:#27ae60" onclick="saveAsHtml()">💾 HTML</button>
       <button class="btn" style="background:#2980b9" onclick="window.print()">📄 PDF</button>
       <button class="btn" style="background:#e74c3c" onclick="window.parent.closeFlipbookPreview()">✖</button>
@@ -967,7 +967,6 @@ export async function exportFlipbook() {
         <div class="book" id="book">${leavesHtml}</div>
       </div>
     </div>
-
     <div id="pdf-area">${pdfHtml}</div>
 
     <script>
@@ -977,10 +976,7 @@ export async function exportFlipbook() {
       function n() {
         if (cur < leafs.length) {
           const type = document.getElementById('soundType').value;
-          if(type !== 'none') { 
-            const s = document.getElementById(type); 
-            s.currentTime = 0; s.play().catch(()=>{}); 
-          }
+          if(type !== 'none') { const s = document.getElementById(type); s.currentTime = 0; s.play().catch(()=>{}); }
           const leaf = leafs[cur];
           leaf.style.zIndex = 500;
           leaf.classList.add('flipped');
@@ -993,10 +989,7 @@ export async function exportFlipbook() {
       function p() {
         if (cur > 0) {
           const type = document.getElementById('soundType').value;
-          if(type !== 'none') { 
-            const s = document.getElementById(type); 
-            s.currentTime = 0; s.play().catch(()=>{}); 
-          }
+          if(type !== 'none') { const s = document.getElementById(type); s.currentTime = 0; s.play().catch(()=>{}); }
           cur--;
           const leaf = leafs[cur];
           leaf.style.zIndex = 500;
@@ -1027,8 +1020,18 @@ export async function exportFlipbook() {
   </html>`;
 
   frame.srcdoc = html;
-  modal.style.display = "block";
+  modal.style.display = \"block\";
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
