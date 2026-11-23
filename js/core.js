@@ -883,7 +883,7 @@ export async function exportFlipbook() {
       </div>`;
   }
 
-  const pdfHtml = images.map(img => `<div class="pdf-page"><img src="${images[i]}"></div>`).join('');
+  const pdfHtml = images.map(img => `<div class="pdf-page"><img src="${img}"></div>`).join('');
 
   const html = `
   <!doctype html>
@@ -971,6 +971,7 @@ export async function exportFlipbook() {
         <div class="book" id="book">${leavesHtml}</div>
       </div>
     </div>
+    <div id="pdf-area">${pdfHtml}</div>
 
     <script>
       let cur = 0, zoom = 1.0;
@@ -1016,8 +1017,15 @@ export async function exportFlipbook() {
       }
 
       function saveAsHtml() {
-        const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Photobook.html'; a.click();
+        const b = new Blob(['<!doctype html>\\n' + document.documentElement.outerHTML], {type:'text/html;charset=utf-8'});
+        const url = URL.createObjectURL(b);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Photobook-Flipbook.html';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
     </script>
   </body>
